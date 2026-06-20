@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vera – Salud femenina</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Cormorant+Garamond:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ivory:     #FBF9F4;
+      --card:      #FFFFFF;
+      --deep:      #3F584B;
+      --sage:      #8AA694;
+      --mist:      #E7EDE6;
+      --gold:      #C2A06B;
+      --gold-soft: #EADFC9;
+      --ink:       #2D2B26;
+      --ink-soft:  #6F6D64;
+      --line:      #ECE7DC;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Jost', -apple-system, sans-serif;
+      background: var(--ivory);
+      color: var(--ink);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    h1 {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 52px;
+      font-weight: 300;
+      color: var(--deep);
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .tagline {
+      font-size: 15px;
+      color: var(--ink-soft);
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .links {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .links a {
+      display: inline-block;
+      padding: 12px 28px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .link-primary {
+      background: var(--deep);
+      color: white;
+    }
+    .link-primary:hover { background: #2e4337; }
+    .link-secondary {
+      background: var(--card);
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+    .link-secondary:hover { background: var(--mist); }
+  </style>
+</head>
+<body>
+  <p class="eyebrow">Vera · Salud femenina</p>
+  <h1>Vera</h1>
+  <p class="tagline">Tu ciclo, tu cuerpo, tu bienestar.</p>
+  <div class="links">
+    <a href="support.html" class="link-primary">Soporte</a>
+    <a href="privacy.html" class="link-secondary">Política de Privacidad</a>
+  </div>
+</body>
+</html>

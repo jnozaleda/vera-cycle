@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Soporte – Vera</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600&family=Cormorant+Garamond:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --ivory:     #FBF9F4;
+      --card:      #FFFFFF;
+      --deep:      #3F584B;
+      --sage:      #8AA694;
+      --mist:      #E7EDE6;
+      --gold:      #C2A06B;
+      --gold-soft: #EADFC9;
+      --ink:       #2D2B26;
+      --ink-soft:  #6F6D64;
+      --rose:      #C38B7F;
+      --rose-soft: #F3E2DC;
+      --line:      #ECE7DC;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Jost', -apple-system, sans-serif;
+      background: var(--ivory);
+      color: var(--ink);
+      line-height: 1.75;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--deep);
+      color: white;
+      padding: 56px 24px 48px;
+      text-align: center;
+    }
+    .eyebrow {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 12px;
+    }
+    header h1 {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 38px;
+      font-weight: 300;
+      color: white;
+      line-height: 1.2;
+    }
+    header .subtitle {
+      margin-top: 8px;
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--sage);
+      letter-spacing: 0.5px;
+    }
+
+    /* ── Layout ── */
+    main {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 48px 24px 96px;
+    }
+
+    /* ── Card base ── */
+    .card {
+      background: var(--card);
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      box-shadow: 0 8px 24px rgba(63, 88, 75, 0.06);
+      padding: 28px;
+      margin-bottom: 16px;
+    }
+
+    .section-eyebrow {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    .card h2 {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 26px;
+      font-weight: 400;
+      color: var(--deep);
+      margin-bottom: 16px;
+    }
+
+    /* ── FAQ items ── */
+    .faq-item {
+      border-bottom: 1px solid var(--line);
+      padding: 20px 0;
+    }
+    .faq-item:first-of-type { padding-top: 0; }
+    .faq-item:last-of-type  { border-bottom: none; padding-bottom: 0; }
+
+    .faq-q {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--ink);
+      margin-bottom: 6px;
+    }
+    .faq-a {
+      font-size: 14.5px;
+      color: var(--ink-soft);
+    }
+    .faq-a ul {
+      padding-left: 0;
+      list-style: none;
+      margin-top: 8px;
+    }
+    .faq-a ul li {
+      padding: 5px 0 5px 18px;
+      position: relative;
+      font-size: 14px;
+      color: var(--ink-soft);
+    }
+    .faq-a ul li::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 13px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--sage);
+    }
+
+    /* ── Chip de categoría ── */
+    .chip {
+      display: inline-block;
+      background: var(--mist);
+      color: var(--deep);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 4px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      margin-bottom: 16px;
+    }
+
+    /* ── Contacto card ── */
+    .contact-card {
+      background: var(--gold-soft);
+      border-radius: 22px;
+      border: 1px solid var(--gold);
+      padding: 32px 28px;
+      text-align: center;
+    }
+    .contact-card .icon {
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+    .contact-card h2 {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-size: 26px;
+      font-weight: 400;
+      color: var(--deep);
+      margin-bottom: 8px;
+    }
+    .contact-card p {
+      font-size: 14px;
+      color: var(--ink-soft);
+      margin-bottom: 20px;
+    }
+    .contact-card a {
+      display: inline-block;
+      background: var(--deep);
+      color: white;
+      font-family: 'Jost', sans-serif;
+      font-size: 13.5px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      padding: 12px 28px;
+      border-radius: 14px;
+      text-decoration: none;
+      transition: background 0.2s;
+    }
+    .contact-card a:hover { background: #2e4337; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      padding: 0 24px 48px;
+      font-size: 12.5px;
+      color: var(--ink-soft);
+    }
+    footer a {
+      color: var(--gold);
+      text-decoration: none;
+    }
+    footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">Vera · Salud femenina</p>
+  <h1>Soporte</h1>
+  <p class="subtitle">Estamos aquí para ayudarte</p>
+</header>
+
+<main>
+
+  <!-- FAQ -->
+  <div class="card">
+    <p class="section-eyebrow">Preguntas frecuentes</p>
+    <h2>¿Cómo podemos ayudarte?</h2>
+
+    <div class="faq-item">
+      <span class="chip">Registro</span>
+      <p class="faq-q">¿Cómo registro mi ciclo?</p>
+      <p class="faq-a">Abre la app y pulsa el botón "+" en la pantalla principal. Puedes registrar el inicio y fin de tu periodo, síntomas y estado de ánimo.</p>
+    </div>
+
+    <div class="faq-item">
+      <span class="chip">Privacidad</span>
+      <p class="faq-q">¿Mis datos están seguros?</p>
+      <p class="faq-a">Sí. Tus datos de salud se almacenan cifrados y nunca los compartimos con terceros. Consulta nuestra <a href="privacy.html" style="color: var(--gold);">Política de Privacidad</a> para más detalles.</p>
+    </div>
+
+    <div class="faq-item">
+      <span class="chip">Cuenta</span>
+      <p class="faq-q">¿Cómo elimino mi cuenta?</p>
+      <p class="faq-a">Ve a Ajustes → Cuenta → Eliminar cuenta. Esta acción es irreversible y borrará todos tus datos permanentemente.</p>
+    </div>
+
+    <div class="faq-item">
+      <span class="chip">Notificaciones</span>
+      <p class="faq-q">¿Cómo desactivo las notificaciones?</p>
+      <p class="faq-a">Puedes gestionarlas en Ajustes → Notificaciones dentro de la app, o en Configuración → Notificaciones de tu iPhone.</p>
+    </div>
+
+    <div class="faq-item">
+      <span class="chip">Problemas técnicos</span>
+      <p class="faq-q">La app no funciona correctamente</p>
+      <p class="faq-a">Prueba estos pasos:
+        <ul>
+          <li>Cierra la app por completo y vuelve a abrirla.</li>
+          <li>Comprueba que tienes la última versión desde el App Store.</li>
+          <li>Reinicia tu iPhone.</li>
+          <li>Si el problema persiste, escríbenos indicando tu dispositivo y versión de iOS.</li>
+        </ul>
+      </p>
+    </div>
+
+  </div>
+
+  <!-- Contacto -->
+  <div class="contact-card">
+    <div class="icon">✉️</div>
+    <h2>¿Necesitas más ayuda?</h2>
+    <p>Escríbenos y te respondemos lo antes posible.</p>
+    <a href="mailto:j.nozaleda.pastor@gmail.com">Enviar un mensaje</a>
+  </div>
+
+</main>
+
+<footer>
+  Vera · Salud femenina &nbsp;·&nbsp;
+  <a href="privacy.html">Política de Privacidad</a>
+</footer>
+
+</body>
+</html>

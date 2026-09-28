@@ -1,0 +1,1191 @@
+// app.js
+// Interfaz de Vera web: navegación, pestañas Hoy / Ciclo / Patrones, ajustes, calendario y onboarding.
+// Port de ContentView, TodayView, CycleView, TrendsView, SettingsView y OnboardingView (SwiftUI).
+
+import {
+  PHASES, PHASE_TIPS, PHASE_SYMPTOMS, BLEEDING_SYMPTOMS, FLOW_OPTIONS, SYMPTOMS, MOODS, INTIMACY,
+  STRESS_LEVELS, CERVICAL_MUCUS, LH_TEST_RESULTS, HORMONAL_CONDITIONS,
+  cycleInfo, nextPeriodDN, dnFromISO, isoFromDN, todayDN, todayISO, partsFromDN, dnFromParts,
+  fmtDayMonthShort, fmtDayMonthLong, fmtDayMonthYear, fmtMonthYear, fmtWeekdayLong, fmtWeekdayNarrow,
+  averageCycleLength, settingsFromIrregularPeriods,
+} from './logic.js';
+import { QUALITY, BASIS, windowText, predictionNotices } from './predict.js';
+import { store } from './store.js';
+import { icon } from './icons.js';
+
+// MARK: - Utilidades
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const attr = esc;
+const plural = (n, one, many) => (n === 1 ? one : many);
+const fmtNum = (x, d) => x.toFixed(d).replace('.', ',');
+
+const PHASE_COLOR = { menstrual: 'rose', ovulation: 'gold', fertile: 'sage' };
+
+function firstOfMonth(dn) {
+  const p = partsFromDN(dn);
+  return dnFromParts(p.y, p.m, 1);
+}
+function addMonths(firstDN, n) {
+  const p = partsFromDN(firstDN);
+  const idx = p.y * 12 + (p.m - 1) + n;
+  return dnFromParts(Math.floor(idx / 12), (idx % 12) + 1, 1);
+}
+function daysInMonth(firstDN) {
+  return addMonths(firstDN, 1) - firstDN;
+}
+/** 0 = lunes … 6 = domingo */
+const mondayIndex = (dn) => (partsFromDN(dn).wd + 6) % 7;
+
+// MARK: - Estado de la interfaz
+
+function initialOnboarding() {
+  const t = todayDN();
+  const p = partsFromDN(t);
+  return {
+    step: 0,
+    isRegular: true,
+    lastPeriod: isoFromDN(t - 9),
+    month: firstOfMonth(t - 9),
+    cycleLen: 28,
+    periodLen: 5,
+    pastPeriods: [],
+    pickerDate: todayISO(),
+    profileSubStep: 0,
+    birthDate: `${p.y - 28}-${String(p.m).padStart(2, '0')}-${String(Math.min(p.d, 28)).padStart(2, '0')}`,
+    weightKg: 60,
+    hormonalCondition: 'Ninguna',
+  };
+}
+
+const ui = {
+  tab: 0,
+  sheet: null,            // 'settings' | 'calendar' | null
+  selectedDate: todayISO(),
+  weekOffset: 0,
+  showMoreSymptoms: false,
+  showMedForm: false,
+  newMed: { name: '', dose: '', hour: '09:00' },
+  calMonth: firstOfMonth(todayDN()),
+  draft: null,            // copia editable de settings en el sheet de ajustes
+  draftPicker: todayISO(),
+  ob: initialOnboarding(),
+};
+
+// =========================================================================
+// MARK: - Componentes
+// =========================================================================
+
+const eyebrow = (text) => `<div class="eyebrow">${esc(text)}</div>`;
+
+function chip(label, active, action, data = {}, tone = 'deep') {
+  const d = Object.entries(data).map(([k, v]) => `data-${k}="${attr(v)}"`).join(' ');
+  return `<button class="chip tone-${tone} ${active ? 'on' : ''}" aria-pressed="${active}" data-action="${action}" ${d}>${esc(label)}</button>`;
+}
+
+function statCard(value, label, color = 'deep') {
+  return `<div class="card stat"><div class="stat-v c-${color}">${esc(value)}</div><div class="stat-l">${label}</div></div>`;
+}
+
+function primaryButton(label, action, disabled = false, data = '') {
+  return `<button class="btn-primary" data-action="${action}" ${data} ${disabled ? 'disabled' : ''}>${esc(label)}</button>`;
+}
+
+function rangeRow({ key, min, max, step, value, tone = 'deep', out }) {
+  return `<input type="range" class="range tone-${tone}" data-range="${key}" min="${min}" max="${max}" step="${step}" value="${value}" style="--p:${rangePct(value, min, max)}" aria-label="${attr(key)}">
+    ${out != null ? `<output class="range-out" data-out="${key}">${esc(out)}</output>` : ''}`;
+}
+
+const rangePct = (v, min, max) => `${(((v - min) / (max - min)) * 100).toFixed(1)}%`;
+const capFirst = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+
+/** Rejilla de mes (lunes primero). cellFn(dn) devuelve el HTML de cada día. */
+function monthGrid(first, cellFn) {
+  const head = ['L', 'M', 'X', 'J', 'V', 'S', 'D'].map((d) => `<div class="mg-h">${d}</div>`).join('');
+  const offset = mondayIndex(first);
+  let cells = '';
+  for (let i = 0; i < offset; i++) cells += '<div class="mg-empty"></div>';
+  const total = daysInMonth(first);
+  for (let i = 0; i < total; i++) cells += cellFn(first + i);
+  return `<div class="month-grid">${head}${cells}</div>`;
+}
+
+// MARK: - Dial del ciclo
+
+function cycleDial(settings, info) {
+  const S = 290, cx = S / 2, cy = S / 2, r = 118;
+  const len = settings.cycleLen;
+  const ang = (day) => ((day / len) * 360 - 90) * Math.PI / 180;
+  const pt = (a, rad) => [cx + rad * Math.cos(a), cy + rad * Math.sin(a)];
+  const arc = (from, to, color, w) => {
+    const [x1, y1] = pt(ang(from), r);
+    const [x2, y2] = pt(ang(to), r);
+    const large = ((to - from) / len) * 360 > 180 ? 1 : 0;
+    return `<path d="M${x1.toFixed(2)} ${y1.toFixed(2)} A${r} ${r} 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}" stroke="var(--${color})" stroke-width="${w}" fill="none" stroke-linecap="round"/>`;
+  };
+  const ovu = len - 14;
+  let ticks = '';
+  for (let i = 0; i < len; i++) {
+    const a = ang(i);
+    const major = i % 7 === 0;
+    const [x1, y1] = pt(a, r + 14);
+    const [x2, y2] = pt(a, r + (major ? 24 : 19));
+    ticks += `<line x1="${x1.toFixed(2)}" y1="${y1.toFixed(2)}" x2="${x2.toFixed(2)}" y2="${y2.toFixed(2)}" stroke="var(--gold)" stroke-opacity="${major ? 0.9 : 0.45}" stroke-width="${major ? 1.6 : 0.8}" stroke-linecap="round"/>`;
+  }
+  const [dx, dy] = pt(ang(info.day - 1), r);
+  return `
+  <div class="dial" role="img" aria-label="Día ${info.day} del ciclo, ${attr(PHASES[info.phase].label)}">
+    <svg viewBox="0 0 ${S} ${S}" width="100%" height="100%">
+      <circle cx="${cx}" cy="${cy}" r="${r}" stroke="var(--mist)" stroke-width="10" fill="none"/>
+      ${arc(0.15, settings.periodLen - 0.15, 'rose', 10)}
+      ${arc(ovu - 5, ovu + 1.4, 'sage', 10)}
+      ${arc(ovu + 0.32, ovu + 0.72, 'gold', 13)}
+      ${ticks}
+      <circle cx="${dx.toFixed(2)}" cy="${dy.toFixed(2)}" r="9" fill="var(--deep)" stroke="var(--ivory)" stroke-width="3"/>
+    </svg>
+    <div class="dial-center">
+      <div class="dial-dia">DÍA</div>
+      <div class="dial-num">${info.day}</div>
+      <div class="dial-phase">${esc(PHASES[info.phase].label.toUpperCase())}</div>
+    </div>
+  </div>`;
+}
+
+// MARK: - Banner de recordatorios y nudge
+
+function reminderBanner() {
+  const pending = store.pendingMeds(todayISO());
+  if (!pending.length) return '';
+  return `<div class="stack-8 pad-x mb-8">${pending.map((m) => `
+    <div class="reminder">
+      <span class="reminder-bell" aria-hidden="true">🔔</span>
+      <div class="grow">
+        <div class="t-135 w-500">Toma pendiente · ${esc(m.name)}</div>
+        <div class="t-12 soft">${m.dose ? esc(m.dose) + ' · ' : ''}programada a las ${esc(m.hour)}</div>
+      </div>
+      <button class="pill-dark" data-action="take-med" data-id="${attr(m.id)}">Tomada ✓</button>
+    </div>`).join('')}</div>`;
+}
+
+function irregularNudge() {
+  const s = store.data.settings;
+  if (s.isRegular || s.pastPeriods.length >= 3) return '';
+  return `<div class="pad-x mb-8"><button class="nudge" data-action="open-settings">
+    <span class="nudge-ic">${icon('wave', 18)}</span>
+    <span class="grow left">
+      <span class="t-13 w-500 block">Mejora tus predicciones</span>
+      <span class="t-12 soft block">Añade tus últimas reglas para que Vera calcule tu ciclo medio.</span>
+    </span>
+    ${icon('right', 12, 'soft')}
+  </button></div>`;
+}
+
+// =========================================================================
+// MARK: - Pestaña HOY
+// =========================================================================
+
+function qualityChip(label, q, suffix) {
+  const tone = { insufficient: 'q0', low: 'q1', medium: 'q2', high: 'q3' }[q];
+  const filled = QUALITY[q].fraction * 4;
+  const dots = [0, 1, 2, 3].map((i) => `<i class="${i < filled ? 'on' : ''}"></i>`).join('');
+  return `<span class="qchip ${tone}"><span class="qdots">${dots}</span><span class="soft">${label}</span><b>${QUALITY[q].label}</b>${suffix ? `<span class="soft t-10">${suffix}</span>` : ''}</span>`;
+}
+
+function irregularPredictionCard(p) {
+  const ov = p.ovulationEstimate ?? (p.predictedDate - Math.round(p.lutealPhase.mean));
+  const fStart = ov - 5, fEnd = ov + 1;
+  let hint = null;
+  if (p.ovulationQuality === 'insufficient') hint = 'Haz un test LH para predecir tu ventana fértil';
+  else if (p.ovulationQuality === 'low') hint = 'Mejora con test LH en el ciclo actual';
+  else if (p.periodQuality === 'insufficient' || p.periodQuality === 'low') hint = 'Registra más ciclos para mejorar la precisión';
+  const high = BASIS[p.predictionBasis].high;
+
+  return `<div class="card pad stack-14 mt-6">
+    ${eyebrow('Tu próxima regla')}
+    <div class="row baseline between">
+      <div class="serif-34">${esc(fmtDayMonthLong(p.predictedDate))}</div>
+      <div class="row baseline gap-4"><span class="serif-34">${p.daysUntil}</span><span class="t-13 soft">días</span></div>
+    </div>
+    <div class="t-12 soft mt--8">${esc(windowText(p))}</div>
+    <hr>
+    <div class="row between center py-4">
+      <div class="stack-4">
+        <div class="row gap-5 t-11 soft"><span class="c-sage">${icon('leaf', 10)}</span>Ventana fértil</div>
+        <div class="t-14 w-500">${esc(fmtDayMonthShort(fStart))} – ${esc(fmtDayMonthShort(fEnd))}</div>
+      </div>
+      <div class="vsep"></div>
+      <div class="stack-4">
+        <div class="row gap-5 t-11 soft"><span class="c-gold">${icon('sparkle', 10)}</span>Ovulación</div>
+        <div class="t-14 w-500">${esc(fmtDayMonthShort(ov))}</div>
+      </div>
+    </div>
+    <hr>
+    <div class="row gap-10 center wrap">
+      ${qualityChip('Regla', p.periodQuality, p.confidenceDays > 0 ? `±${p.confidenceDays}d` : null)}
+      ${qualityChip('Fértil', p.ovulationQuality, null)}
+      <span class="grow"></span>
+      <span class="${high ? 'c-sage' : 'c-gold'}" title="${attr(BASIS[p.predictionBasis].label)}">${icon(high ? 'checkCircle' : 'bars', 13)}</span>
+    </div>
+    ${hint ? `<div class="row gap-5 t-11 soft"><span class="c-gold">${icon('arrowUp', 11)}</span>${esc(hint)}</div>` : ''}
+    ${predictionNotices(p).map((n) => `<div class="row gap-6 top t-11 soft lh-3"><span class="c-gold mt-1">${icon('info', 11)}</span><span>${esc(n)}</span></div>`).join('')}
+  </div>`;
+}
+
+function todayView() {
+  const settings = store.data.settings;
+  const info = cycleInfo(settings);
+  const phase = PHASES[info.phase];
+  let top;
+
+  if (settings.isRegular) {
+    const last = dnFromISO(settings.lastPeriod) ?? todayDN();
+    const ovDN = last + (settings.cycleLen - 14) - 1;
+    const next = nextPeriodDN(settings);
+    top = `
+    <div class="stack-14 mt-6 center-x">
+      ${cycleDial(settings, info)}
+      <div class="row gap-18 justify-center">
+        <span class="legend"><i class="bg-rose"></i>Regla</span>
+        <span class="legend"><i class="bg-sage"></i>Ventana fértil</span>
+        <span class="legend"><i class="bg-gold"></i>Ovulación</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="row gap-12 stat-row">
+        ${statCard(info.daysToNext, 'DÍAS PARA<br>LA REGLA')}
+        ${statCard(fmtDayMonthShort(next), 'PRÓXIMA<br>REGLA')}
+      </div>
+      <hr class="mx-12 mt-4">
+      <div class="px-8">
+        <div class="date-row"><span class="c-sage">${icon('leaf', 13)}</span><div><div class="t-12 soft">Ventana fértil</div><div class="t-14 w-500">${esc(fmtDayMonthShort(ovDN - 5))} – ${esc(fmtDayMonthShort(ovDN + 1))}</div></div></div>
+        <hr class="ml-36">
+        <div class="date-row"><span class="c-gold">${icon('sparkle', 13)}</span><div><div class="t-12 soft">Ovulación estimada</div><div class="t-14 w-500">${esc(fmtDayMonthLong(ovDN))}</div></div></div>
+      </div>
+    </div>`;
+  } else {
+    top = irregularPredictionCard(store.prediction);
+  }
+
+  // Resumen de la semana
+  const counts = {};
+  const t = todayDN();
+  for (let o = 0; o < 7; o++) for (const s of store.log(isoFromDN(t - o)).symptoms) counts[s] = (counts[s] || 0) + 1;
+  const topWeek = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => k);
+
+  const meds = store.data.meds;
+  let taken = 0, total = 0;
+  if (meds.length) {
+    for (let o = 0; o < 7; o++) {
+      const l = store.log(isoFromDN(t - o));
+      total += meds.length;
+      taken += meds.filter((m) => l.meds.includes(m.id)).length;
+    }
+  }
+  const pct = total ? taken / total : 0;
+
+  return `<div class="stack-18">
+    ${top}
+    <div class="card pad stack-14">
+      <div class="row baseline between">${eyebrow(`Estás en fase ${phase.label.toLowerCase()}`)}<span class="t-11 soft nowrap">Día ${info.day}</span></div>
+      <div class="serif-19">${esc(phase.insightTitle)}</div>
+      <p class="t-13 light soft lh-5">${esc(phase.insightText)}</p>
+      <hr>
+      <ul class="tips">${PHASE_TIPS[info.phase].map((tip) => `<li>${esc(tip)}</li>`).join('')}</ul>
+    </div>
+    <div class="card pad stack-14">
+      ${eyebrow('Esta semana')}
+      ${topWeek.length ? `<div class="stack-6"><div class="t-12 soft">Síntomas más frecuentes</div>
+        <div class="row gap-8 wrap">${topWeek.map((s) => `<span class="tag">${esc(s)}</span>`).join('')}</div></div>`
+        : '<div class="t-13 soft">Aún no hay síntomas registrados esta semana.</div>'}
+      ${total > 0 ? `<hr><div class="row between center">
+        <div><div class="t-12 soft">Medicación</div><div class="t-13 w-500">${taken} de ${total} tomas</div></div>
+        <div class="minibar"><i class="${pct > 0.75 ? 'bg-sage' : 'bg-gold'}" style="width:${(pct * 100).toFixed(1)}%"></i></div>
+      </div>` : ''}
+    </div>
+  </div>`;
+}
+
+// =========================================================================
+// MARK: - Pestaña CICLO (diario)
+// =========================================================================
+
+function weekStrip() {
+  const t = todayDN();
+  const weekStart = t - mondayIndex(t) + ui.weekOffset * 7;
+  const today = todayISO();
+  let days = '';
+  for (let i = 0; i < 7; i++) {
+    const dn = weekStart + i;
+    const ds = isoFromDN(dn);
+    const isSel = ds === ui.selectedDate;
+    const isToday = ds === today;
+    const isFuture = ds > today;
+    const info = cycleInfo(store.data.settings, dn);
+    const l = store.log(ds);
+    const hasLog = l.flow != null || l.symptoms.length > 0 || l.mood != null;
+    const pc = PHASE_COLOR[info.phase];
+    const cls = ['wday', isSel && 'sel', isToday && !isSel && 'today', isFuture && 'future', pc && `ph-${pc}`, hasLog && 'logged'].filter(Boolean).join(' ');
+    days += `<button class="${cls}" data-action="select-day" data-date="${ds}" ${isFuture ? 'disabled' : ''} aria-label="${attr(fmtWeekdayLong(dn))}">
+      <span class="wd-l">${esc(fmtWeekdayNarrow(dn))}</span>
+      <span class="wd-n">${partsFromDN(dn).d}</span>
+      <span class="wd-dot"></span>
+    </button>`;
+  }
+  return `<div class="card pad stack-10">
+    <div class="row between center">
+      <button class="sq-btn" data-action="week-prev" aria-label="Semana anterior">${icon('left', 12)}</button>
+      <div class="t-13 w-500 upper track-1 c-deep">${esc(fmtMonthYear(weekStart))}</div>
+      <button class="sq-btn" data-action="week-next" aria-label="Semana siguiente" ${ui.weekOffset >= 0 ? 'disabled' : ''}>${icon('right', 12)}</button>
+    </div>
+    <div class="week">${days}</div>
+    <button class="outline-gold" data-action="open-calendar">${icon('calendar', 11)} Ver mes completo</button>
+  </div>`;
+}
+
+function symptomChip(s, log) {
+  const tone = BLEEDING_SYMPTOMS.has(s) ? 'rose' : 'deep';
+  return chip(s, log.symptoms.includes(s), 'toggle-symptom', { s }, tone);
+}
+
+function trackingSlider(label, ic, tone, key, value, def, min, max, step, format) {
+  return `<div class="stack-8">
+    <div class="row gap-6 center"><span class="c-${tone === 'deep' ? 'deep' : tone}">${icon(ic, 13)}</span><span class="t-13 w-500 soft">${label}</span>${def.note || ''}</div>
+    <div class="row gap-12 center">
+      ${rangeRow({ key, min, max, step, value: value ?? def.value, tone })}
+      <span class="range-val" data-out="${key}">${value != null ? format(value) : '—'}</span>
+    </div>
+    ${value != null ? `<button class="link-soft" data-action="clear-field" data-field="${key}">Borrar</button>` : ''}
+  </div>`;
+}
+
+function cycleView() {
+  const ds = ui.selectedDate;
+  const isToday = ds === todayISO();
+  const log = store.log(ds);
+  const phaseInfo = cycleInfo(store.data.settings, dnFromISO(ds));
+  const phaseSymptoms = PHASE_SYMPTOMS[phaseInfo.phase] ?? SYMPTOMS;
+  const seen = new Set(phaseSymptoms);
+  const extra = [];
+  for (const s of [...Object.values(PHASE_SYMPTOMS).flat(), ...SYMPTOMS]) if (!seen.has(s)) { seen.add(s); extra.push(s); }
+  const bleeding = log.symptoms.some((s) => BLEEDING_SYMPTOMS.has(s));
+  const lhDefault = store.lhTestForCurrentCycle;
+  const effLH = log.lhTest ?? lhDefault;
+  const dw = store.defaultWeight;
+
+  const mood = `<div class="card pad-0">
+    <div class="px-20 pt-20">${eyebrow('Cómo te sentiste')}</div>
+    <div class="hscroll-wrap"><div class="hscroll">${MOODS.map((m) => chip(m, log.mood === m, 'set-mood', { v: m })).join('')}</div></div>
+  </div>`;
+
+  const symptoms = `<div class="card pad stack-14">
+    <div class="row baseline between">${eyebrow('Síntomas')}<span class="t-11 soft">${esc(PHASES[phaseInfo.phase].label)}</span></div>
+    <div class="chips">${phaseSymptoms.map((s) => symptomChip(s, log)).join('')}</div>
+    ${bleeding ? `<div class="flow-picker">
+      <div class="row gap-6 center wrap"><span class="c-rose">${icon('drop', 11)}</span><span class="t-12 w-500 soft">¿Cuánto estás usando?</span><span class="t-11 soft-70">(recambios de compresa/tampón)</span></div>
+      <div class="hscroll">${FLOW_OPTIONS.map((o) => `<button class="flow-opt ${log.flow === o.id ? 'on' : ''}" aria-pressed="${log.flow === o.id}" data-action="set-flow" data-v="${o.id}"><span class="t-13">${o.label}</span><span class="t-10">${o.sublabel}</span></button>`).join('')}</div>
+    </div>` : ''}
+    <button class="link-soft w-500 row gap-6 center" data-action="toggle-more">${icon(ui.showMoreSymptoms ? 'up' : 'down', 10)} ${ui.showMoreSymptoms ? 'Ocultar síntomas adicionales' : 'Más síntomas'}</button>
+    ${ui.showMoreSymptoms ? `<div class="stack-10"><hr><div class="chips">${extra.map((s) => symptomChip(s, log)).join('')}</div></div>` : ''}
+  </div>`;
+
+  const intimacy = `<div class="card pad stack-12">
+    ${eyebrow('Intimidad y flujo')}
+    <div class="chips">${INTIMACY.map((s) => chip(s, log.intimacy.includes(s), 'toggle-intimacy', { v: s }, 'gold')).join('')}</div>
+  </div>`;
+
+  const tracking = `<div class="card pad stack-16">
+    ${eyebrow('Seguimiento')}
+    <div class="stack-8">
+      <div class="row gap-6 center"><span class="c-gold">${icon('dotted', 13)}</span><span class="t-13 w-500 soft">Test LH</span>
+        ${lhDefault === 'Positivo' && log.lhTest == null ? '<span class="t-11 c-gold">· positivo este ciclo</span>' : ''}</div>
+      <div class="row gap-8">${LH_TEST_RESULTS.map((v) => chip(v, effLH === v, 'set-lh', { v }, v === 'Positivo' ? 'gold' : 'inksoft')).join('')}</div>
+    </div>
+    <hr>
+    ${trackingSlider('Temperatura basal', 'thermo', 'rose', 'basalTemp', log.basalTemp, { value: 36.5 }, 35.5, 38.5, 0.1, (v) => `${fmtNum(v, 1)} °C`)}
+    <hr>
+    <div class="stack-8">
+      <div class="row gap-6 center"><span class="c-deep">${icon('heartPulse', 13)}</span><span class="t-13 w-500 soft">Nivel de estrés</span></div>
+      <div class="row gap-8">${STRESS_LEVELS.map((v) => chip(v, log.stressLevel === v, 'set-stress', { v })).join('')}</div>
+    </div>
+    <hr>
+    ${trackingSlider('Horas de sueño', 'moon', 'deep', 'sleepHours', log.sleepHours, { value: 7 }, 3, 12, 0.5, (v) => `${fmtNum(v, 1)} h`)}
+    <hr>
+    ${trackingSlider('Peso', 'scale', 'deep', 'weight', log.weight,
+      { value: dw ?? 60, note: log.weight == null && dw != null ? `<span class="t-11 soft-70">· último: ${Math.trunc(dw)} kg</span>` : '' },
+      35, 150, 1, (v) => `${Math.trunc(v)} kg`)}
+    <hr>
+    <div class="stack-8">
+      <div class="row gap-6 center"><span class="c-sage">${icon('dropOutline', 13)}</span><span class="t-13 w-500 soft">Flujo cervical</span></div>
+      <div class="chips">${CERVICAL_MUCUS.map((v) => chip(v, log.cervicalMucus === v, 'set-mucus', { v }, 'sage')).join('')}</div>
+    </div>
+  </div>`;
+
+  return `<div class="stack-18">
+    ${weekStrip()}
+    ${!isToday ? `<div class="row gap-8 center px-4"><span class="c-gold">${icon('pencil', 14)}</span><span class="t-13 soft">Editando el ${esc(fmtWeekdayLong(dnFromISO(ds)))}</span></div>` : ''}
+    ${mood}${symptoms}${intimacy}${tracking}
+    ${isToday ? medicationSection(log) : ''}
+  </div>`;
+}
+
+function medicationSection(log) {
+  const meds = store.data.meds;
+  const notifSupported = 'Notification' in window;
+  const perm = notifSupported ? Notification.permission : 'unsupported';
+  return `<div class="card pad stack-14">
+    <div class="row between center">${eyebrow('Mi medicación')}
+      <button class="pill-outline" data-action="toggle-med-form">${ui.showMedForm ? 'Cerrar' : '+ Añadir'}</button></div>
+    ${ui.showMedForm ? `<div class="stack-10">
+      <input class="field" data-model="newMed.name" placeholder="Nombre (p. ej. Anticonceptivo, hierro…)" value="${attr(ui.newMed.name)}" maxlength="80">
+      <input class="field" data-model="newMed.dose" placeholder="Dosis (p. ej. 1 comprimido)" value="${attr(ui.newMed.dose)}" maxlength="80">
+      <label class="field row between center"><span class="t-135 soft">Hora de la toma</span><input type="time" class="time" data-model="newMed.hour" value="${attr(ui.newMed.hour)}"></label>
+      ${primaryButton('Guardar medicación', 'save-med')}
+    </div>` : ''}
+    ${!meds.length && !ui.showMedForm ? '<p class="t-14 soft">Añade tu anticonceptivo, suplementos o tratamientos para marcar cada toma diaria.</p>' : ''}
+    ${meds.map((m) => {
+      const taken = log.meds.includes(m.id);
+      return `<div class="med-row ${taken ? 'taken' : ''}">
+        <button class="med-check" data-action="toggle-med" data-id="${attr(m.id)}" aria-pressed="${taken}" aria-label="Marcar ${attr(m.name)} como tomada">${taken ? icon('check', 11) : ''}</button>
+        <div class="grow"><div class="t-15 w-500">${esc(m.name)}</div><div class="t-125 soft">${m.dose ? esc(m.dose) : '—'} · ${esc(m.hour)}</div></div>
+        <button class="icon-btn soft" data-action="delete-med" data-id="${attr(m.id)}" aria-label="Eliminar ${attr(m.name)}">${icon('x', 12)}</button>
+      </div>`;
+    }).join('')}
+    ${meds.length && perm === 'default' ? `<button class="outline-sage" data-action="enable-notifs">${icon('bell', 14)} Activar avisos de toma</button>` : ''}
+    ${meds.length && perm === 'granted' ? `<div class="t-125 c-sage text-center row gap-6 justify-center center">${icon('check', 12)} Avisos activados mientras Vera esté abierta</div>` : ''}
+  </div>`;
+}
+
+// =========================================================================
+// MARK: - Pestaña PATRONES
+// =========================================================================
+
+const BUBBLE_PHASES = [
+  { label: 'Menstrual', keys: ['Fase menstrual'], color: 'var(--rose)' },
+  { label: 'Folicular', keys: ['Fase folicular'], color: 'rgb(222,189,128)' },
+  { label: 'Fértil', keys: ['Ventana fértil', 'Ovulación'], color: 'var(--sage)' },
+  { label: 'Lútea', keys: ['Fase lútea'], color: 'rgb(173,135,102)' },
+];
+
+function computeStats() {
+  const { logs, settings } = store.data;
+  const symCounts = {}, moodCounts = {}, phaseSym = {};
+  let bleedDays = 0, loggedDays = 0;
+  for (const [ds, log] of Object.entries(logs)) {
+    const has = log.flow != null || log.symptoms.length || log.mood != null || log.intimacy.length;
+    if (!has) continue;
+    loggedDays++;
+    if (log.flow != null) bleedDays++;
+    if (log.mood) moodCounts[log.mood] = (moodCounts[log.mood] || 0) + 1;
+    const dn = dnFromISO(ds);
+    if (dn == null) continue;
+    const phase = PHASES[cycleInfo(settings, dn).phase].label;
+    for (const s of log.symptoms) {
+      symCounts[s] = (symCounts[s] || 0) + 1;
+      phaseSym[s] ??= {};
+      phaseSym[s][phase] = (phaseSym[s][phase] || 0) + 1;
+    }
+  }
+  const top = (o, n) => Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, n).map(([name, count]) => ({ name, count }));
+  const allDates = [...new Set([...settings.pastPeriods, settings.lastPeriod])].map(dnFromISO).filter((d) => d != null).sort((a, b) => a - b);
+  const cycles = allDates.map((d, i) => ({ start: d, length: i + 1 < allDates.length ? allDates[i + 1] - d : null }));
+  return { loggedDays, bleedDays, topSymptoms: top(symCounts, 6), topMoods: top(moodCounts, 5), phaseSym, cycles };
+}
+
+function cycleLearnedCard(p) {
+  const foll = p.follicularPhase, lut = p.lutealPhase;
+  const total = foll.mean + lut.mean;
+  const fw = total > 0 ? (foll.mean / total) * 100 : 50;
+  const n = p.periodCycleCount;
+  return `<div class="card pad stack-14">
+    ${eyebrow('Tu ciclo')}
+    <div class="row between center">
+      <div><div class="serif-28">~${Math.round(total)} días</div><div class="t-12 soft">duración media de tu ciclo</div></div>
+      ${n > 0 ? `<span class="t-12 soft">${n} ${plural(n, 'ciclo', 'ciclos')}</span>` : ''}
+    </div>
+    <div class="split-bar">
+      <div class="bg-goldsoft" style="width:${fw.toFixed(1)}%">${Math.round(foll.mean)}d</div>
+      <div class="bg-rose55" style="width:${(100 - fw).toFixed(1)}%">${Math.round(lut.mean)}d</div>
+    </div>
+    <div class="row gap-20">
+      <div class="row gap-6 center"><i class="swatch bg-goldsoft"></i><div><div class="t-11 soft">Folicular</div><div class="t-11 w-500">~${Math.round(foll.mean)}d · ±${fmtNum(foll.sd, 1)}d</div></div></div>
+      <div class="row gap-6 center"><i class="swatch bg-rose55"></i><div><div class="t-11 soft">Lútea</div><div class="t-11 w-500">~${Math.round(lut.mean)}d · ±${fmtNum(lut.sd, 1)}d</div></div></div>
+    </div>
+    ${n < 3 ? `<div class="row gap-6 top t-12 soft lh-3"><span class="c-gold mt-1">${icon('info', 11)}</span><span>${n === 0
+      ? 'Usando datos generales. Registra más ciclos para personalizar.'
+      : `Con ${n} ${plural(n, 'ciclo registrado', 'ciclos registrados')}. La precisión mejorará pronto.`}</span></div>` : ''}
+    ${n >= 3 && foll.n < 2 ? `<div class="row gap-6 top t-12 soft lh-3"><span class="c-gold mt-1">${icon('info', 11)}</span><span>El reparto folicular/lútea es una estimación — mejora con test LH o temperatura basal.</span></div>` : ''}
+  </div>`;
+}
+
+function cycleHistoryCard(cycles, periodLen, meanLength) {
+  const completed = cycles.filter((c) => c.length != null).slice(-8);
+  const current = [...cycles].reverse().find((c) => c.length == null);
+  const maxLen = Math.max(Math.max(28, ...completed.map((c) => c.length)), 35);
+  const pctOf = (d) => `${Math.max(0, Math.min(100, (d / maxLen) * 100)).toFixed(2)}%`;
+  const meanPct = pctOf(meanLength);
+
+  const bar = (c) => {
+    const len = c.length;
+    const bleed = Math.min(periodLen, len);
+    const rest = Math.max(0, len - periodLen);
+    return `<div class="hist-row">
+      <span class="hist-d">${esc(fmtDayMonthShort(c.start))}</span>
+      <div class="hist-track">
+        <i class="bg-rose70" style="width:${pctOf(bleed)}"></i>${rest > 0 ? `<i class="bg-goldsoft" style="width:${pctOf(rest)}"></i>` : ''}
+        ${meanLength <= maxLen ? `<b class="hist-mean" style="left:${meanPct}"></b>` : ''}
+      </div>
+      <span class="hist-n">${len}d</span>
+    </div>`;
+  };
+  let cur = '';
+  if (current) {
+    const elapsed = todayDN() - current.start;
+    const bleed = Math.min(periodLen, elapsed);
+    const rest = Math.max(0, elapsed - periodLen);
+    cur = `<div class="hist-row">
+      <span class="hist-d">${esc(fmtDayMonthShort(current.start))}</span>
+      <div class="hist-track current">
+        <i class="bg-rose45" style="width:${pctOf(bleed)}"></i>${rest > 0 ? `<i class="bg-goldsoft60" style="width:${pctOf(rest)}"></i>` : ''}
+        <b class="hist-now" style="left:${pctOf(bleed + rest)}"></b>
+      </div>
+      <span class="hist-n soft">→</span>
+    </div>`;
+  }
+  return `<div class="card pad stack-12">
+    <div class="row baseline between">${eyebrow('Historial de ciclos')}<span class="t-11 soft">${completed.length} ciclos</span></div>
+    <div class="hist-row"><span class="hist-d"></span><div class="hist-meanlabel"><span style="left:${meanPct}">${icon('minus', 8)} Media · ${Math.round(meanLength)}d</span></div><span class="hist-n"></span></div>
+    <div class="stack-7">${[...completed].reverse().map(bar).join('')}${cur}</div>
+    <div class="row gap-14"><span class="legend small"><i class="bg-rose70 sq"></i>Regla</span><span class="legend small"><i class="bg-goldsoft sq"></i>Resto del ciclo</span></div>
+  </div>`;
+}
+
+function bubbleCard(topSymptoms, phaseSym) {
+  const countFor = (name, col) => col.keys.reduce((a, k) => a + (phaseSym[name]?.[k] || 0), 0);
+  let mx = 1;
+  for (const s of topSymptoms) for (const c of BUBBLE_PHASES) mx = Math.max(mx, countFor(s.name, c));
+  const cell = (count, color) => {
+    const size = count === 0 ? 6 : Math.max(6, 28 * count / mx);
+    return `<span class="bubble" style="width:${size}px;height:${size}px;background:${color};opacity:${count === 0 ? 0.12 : 0.72}" title="${count}"></span>`;
+  };
+  let insight = '';
+  const topS = topSymptoms[0];
+  if (topS) {
+    const dom = BUBBLE_PHASES.reduce((best, c) => (countFor(topS.name, c) > countFor(topS.name, best) ? c : best), BUBBLE_PHASES[0]);
+    if (countFor(topS.name, dom) > 0) {
+      insight = `<div class="row gap-6 top mt-12 t-12 soft italic lh-3"><span class="c-gold mt-1">${icon('sparkle', 11)}</span><span>«${esc(topS.name)}» aparece más en tu fase ${dom.label.toLowerCase()}.</span></div>`;
+    }
+  }
+  return `<div class="card pad">
+    <div class="mb-14">${eyebrow('Cuándo aparecen tus síntomas')}</div>
+    <div class="bubble-grid">
+      <span></span>${BUBBLE_PHASES.map((c) => `<span class="bubble-h" style="color:${c.color};background:color-mix(in srgb, ${c.color} 12%, transparent)">${c.label}</span>`).join('')}
+      ${topSymptoms.map((s) => `<span class="bubble-name">${esc(s.name)}</span>${BUBBLE_PHASES.map((c) => `<span class="bubble-cell">${cell(countFor(s.name, c), c.color)}</span>`).join('')}`).join('')}
+    </div>
+    <div class="row justify-center gap-20 mt-14 center">
+      <span class="row gap-6 center t-10 soft"><span class="bubble" style="width:8px;height:8px;background:var(--ink-soft);opacity:.18"></span>poco frecuente</span>
+      <span class="row gap-6 center t-10 soft"><span class="bubble" style="width:22px;height:22px;background:var(--ink-soft);opacity:.45"></span>muy frecuente</span>
+    </div>
+    ${insight}
+  </div>`;
+}
+
+function alertsCard(alerts) {
+  return `<div class="card pad stack-14">
+    ${eyebrow('Alertas')}
+    <div class="stack-12">
+      ${alerts.flags.map((f) => `<div class="row gap-10 top"><span class="${f.severity === 'alta' ? 'c-rose' : 'c-gold'} mt-1">${icon(f.severity === 'alta' ? 'alertFill' : 'infoFill', 14)}</span><span class="t-13 lh-4">${esc(f.text)}</span></div>`).join('')}
+      ${alerts.esc ? `<hr><div class="row gap-10 top"><span class="c-rose mt-1">${icon('stethoscope', 14)}</span><span class="t-13 w-500 c-deep lh-4">Consulta con tu ginecóloga para revisar estos patrones.</span></div>` : ''}
+    </div>
+  </div>`;
+}
+
+function trendsView() {
+  const stats = computeStats();
+  const p = store.prediction;
+  const alerts = store.alerts;
+  const maxMood = stats.topMoods[0]?.count || 1;
+  return `<div class="stack-18">
+    <div class="row gap-12">
+      ${statCard(stats.loggedDays, 'DÍAS<br>REGISTRADOS')}
+      ${statCard(stats.bleedDays, 'DÍAS DE<br>SANGRADO', 'rose')}
+    </div>
+    ${cycleLearnedCard(p)}
+    ${stats.cycles.length >= 2 ? cycleHistoryCard(stats.cycles, store.data.settings.periodLen, p.follicularPhase.mean + p.lutealPhase.mean) : ''}
+    ${stats.loggedDays === 0 ? `<div class="card empty">
+      <div class="serif-22">Aún no hay registros</div>
+      <p class="t-14 soft lh-4">Registra tus síntomas y estado de ánimo en el Diario y aquí descubrirás los patrones de tu ciclo.</p>
+    </div>` : `
+      ${stats.topSymptoms.length ? bubbleCard(stats.topSymptoms, stats.phaseSym) : ''}
+      ${stats.topMoods.length ? `<div class="card pad stack-12">${eyebrow('Estado de ánimo')}
+        ${stats.topMoods.map((m) => `<div class="stack-6"><div class="row between"><span class="t-135">${esc(m.name)}</span><span class="t-125 soft">${m.count} ${plural(m.count, 'día', 'días')}</span></div>
+          <div class="vbar"><i style="width:${((m.count / maxMood) * 100).toFixed(1)}%"></i></div></div>`).join('')}
+      </div>` : ''}`}
+    ${alerts.flags.length ? alertsCard(alerts) : ''}
+  </div>`;
+}
+
+// =========================================================================
+// MARK: - Sheets: calendario y ajustes
+// =========================================================================
+
+function calendarSheet() {
+  const today = todayISO();
+  const grid = monthGrid(ui.calMonth, (dn) => {
+    const ds = isoFromDN(dn);
+    const info = cycleInfo(store.data.settings, dn);
+    const pc = PHASE_COLOR[info.phase];
+    const isPast = ds <= today;
+    const isSel = ds === ui.selectedDate;
+    const l = store.log(ds);
+    const hasLog = l.flow != null || l.symptoms.length > 0 || l.mood != null;
+    const cls = ['cal-cell', pc && `ph-${pc}`, isSel && 'sel', ds === today && !isSel && 'today', !isPast && 'future', hasLog && 'logged'].filter(Boolean).join(' ');
+    return `<button class="${cls}" data-action="cal-pick" data-date="${ds}" ${isPast ? '' : 'disabled'} aria-label="${attr(fmtWeekdayLong(dn))}">${partsFromDN(dn).d}</button>`;
+  });
+  return sheetFrame('Calendario', `
+    <div class="stack-16">
+      <div class="row between center">
+        <button class="nav-btn" data-action="cal-prev" aria-label="Mes anterior">‹</button>
+        <div class="serif-22 upper">${esc(fmtMonthYear(ui.calMonth))}</div>
+        <button class="nav-btn" data-action="cal-next" aria-label="Mes siguiente">›</button>
+      </div>
+      ${grid}
+      <div class="row gap-14 justify-center wrap">
+        <span class="legend box"><i class="ph-rose"></i>Regla</span>
+        <span class="legend box"><i class="ph-sage"></i>Fértil</span>
+        <span class="legend box"><i class="ph-gold"></i>Ovulación</span>
+        <span class="legend"><i class="dot"></i>Con registro</span>
+      </div>
+    </div>`);
+}
+
+function periodList(list, removeAction) {
+  return [...list].sort().reverse().map((ds) => `
+    <div class="period-item">
+      <span class="c-rose">${icon('drop', 10)}</span><span class="t-11 soft">Primer día de sangrado</span>
+      <span class="grow"></span>
+      <span class="t-13 w-500">${esc(fmtDayMonthYear(dnFromISO(ds)))}</span>
+      <button class="icon-btn soft" data-action="${removeAction}" data-date="${ds}" aria-label="Quitar fecha">${icon('xCircle', 16)}</button>
+    </div>`).join('');
+}
+
+function settingsSheet() {
+  const s = ui.draft;
+  const count = s.pastPeriods.length;
+  const typeBtn = (label, sel, val) => `<button class="type-btn ${sel ? 'on' : ''}" aria-pressed="${sel}" data-action="draft-type" data-v="${val}">${label}</button>`;
+  const body = s.isRegular ? `
+    <div class="stack-8">
+      <div class="row gap-6 center"><span class="c-rose">${icon('drop', 11)}</span><span class="t-13 soft">Primer día de tu última regla</span></div>
+      <input type="date" class="field date" data-model="draft.lastPeriod" value="${attr(s.lastPeriod)}" max="${todayISO()}">
+    </div>
+    <hr>
+    <div class="stack-8">
+      <div class="t-13 soft">Duración del ciclo: <span data-out="draft.cycleLen">${s.cycleLen}</span> días</div>
+      ${rangeRow({ key: 'draft.cycleLen', min: 21, max: 45, step: 1, value: s.cycleLen })}
+    </div>` : `
+    <div class="stack-8">
+      <div class="row gap-6 center"><span class="c-rose">${icon('drop', 11)}</span><span class="t-13 soft">Tus últimas reglas (primer día de sangrado)</span></div>
+      ${!count ? '<div class="t-12 soft-70">Añade al menos 3 fechas para calcular tu ciclo medio.</div>' : ''}
+      <div class="stack-8">${periodList(s.pastPeriods, 'draft-remove')}</div>
+      <input type="date" class="field date" data-model="draftPicker" value="${attr(ui.draftPicker)}" max="${todayISO()}">
+      <button class="outline-sage" data-action="draft-add">${icon('plusCircle', 14)} Añadir este día</button>
+      ${count >= 3
+        ? `<div class="note-mist"><span class="c-sage">${icon('checkCircle', 14)}</span><span>Ciclo medio: <b>${averageCycleLength(s.pastPeriods)} días</b> (calculado a partir de ${count} reglas)</span></div>`
+        : `<div class="t-12 soft-70">Añade ${3 - count} ${plural(3 - count, 'fecha', 'fechas')} más para calcular tu ciclo medio.</div>`}
+    </div>
+    <hr>`;
+
+  return sheetFrame('Mi ciclo', `
+    <div class="stack-20">
+      <div class="stack-10"><div class="t-13 soft">Tipo de ciclo</div>
+        <div class="row gap-10">${typeBtn('Regular', s.isRegular, 'regular')}${typeBtn('Irregular', !s.isRegular, 'irregular')}</div></div>
+      <hr>
+      ${body}
+      <div class="stack-8">
+        <div class="t-13 soft">Duración de la regla: <span data-out="draft.periodLen">${s.periodLen}</span> días</div>
+        ${rangeRow({ key: 'draft.periodLen', min: 2, max: 9, step: 1, value: s.periodLen, tone: 'rose' })}
+      </div>
+      <hr>
+      ${primaryButton('Guardar', 'save-settings')}
+      <div class="stack-10 data-box">
+        ${eyebrow('Tus datos')}
+        <p class="t-12 soft lh-3">Vera web guarda todo solo en este navegador. Nada sale de tu dispositivo. Haz una copia para no perder tus registros si borras los datos del navegador o cambias de equipo.</p>
+        <div class="row gap-8 wrap">
+          <button class="pill-outline row gap-6 center" data-action="export">${icon('download', 13)} Exportar copia</button>
+          <label class="pill-outline row gap-6 center" tabindex="0">${icon('upload', 13)} Importar copia<input type="file" accept="application/json,.json" data-action="import" hidden></label>
+        </div>
+        <button class="link-danger row gap-6 center" data-action="reset">${icon('trash', 12)} Borrar todos mis datos</button>
+        ${!store.storageOK ? '<p class="t-12 c-rose">Este navegador no permite guardar datos (¿modo privado?). Tus registros se perderán al cerrar la pestaña.</p>' : ''}
+      </div>
+    </div>`, true);
+}
+
+function sheetFrame(title, content, handle = false) {
+  return `<div class="sheet-backdrop" data-action="close-sheet"></div>
+  <div class="sheet ${ui.sheetAnim ? 'anim' : ''}" role="dialog" aria-modal="true" aria-label="${attr(title)}">
+    ${handle ? '<div class="sheet-handle"></div>' : ''}
+    <div class="sheet-head">
+      <div class="${handle ? 'serif-24' : 'sheet-title'}">${esc(title)}</div>
+      <button class="link-deep" data-action="close-sheet">Cerrar</button>
+    </div>
+    <div class="sheet-body">${content}</div>
+  </div>`;
+}
+
+// =========================================================================
+// MARK: - Onboarding
+// =========================================================================
+
+function onboardingView() {
+  const ob = ui.ob;
+  let content;
+  switch (ob.step) {
+    case 0:
+      content = `<div class="text-center stack-0">
+        <div class="ob-logo">Vera</div>
+        <div class="ob-tag">BIENESTAR FEMENINO</div>
+        <p class="t-17 light soft lh-6 mb-44">Tu ciclo, tus síntomas y tu medicación, acompañados por la posibilidad de consultar con tu ginecólogo cuando lo necesites.</p>
+        ${primaryButton('Comenzar', 'ob-next')}
+        <button class="link-soft mt-16" data-action="ob-demo">Explorar con datos de ejemplo</button>
+      </div>`;
+      break;
+    case 1: {
+      const opt = (title, sub, ic, sel, val) => `<button class="option ${sel ? 'on' : ''}" aria-pressed="${sel}" data-action="ob-regular" data-v="${val}">
+        <span class="opt-ic">${icon(ic, 20)}</span>
+        <span class="grow left"><span class="t-15 w-500 block">${title}</span><span class="t-13 soft block lh-3">${sub}</span></span>
+        <span class="opt-check">${icon(sel ? 'checkCircle' : 'circle', 20)}</span>
+      </button>`;
+      content = `<div>
+        <h2 class="ob-h">¿Cómo es tu ciclo?</h2>
+        <p class="t-14 soft lh-4 mb-30">Esto nos ayuda a predecir tus fases con mayor precisión.</p>
+        <div class="stack-12 mb-32">
+          ${opt('Regular', 'Mi ciclo suele durar más o menos los mismos días cada mes.', 'clock', ob.isRegular, 'regular')}
+          ${opt('Irregular', 'La duración de mis ciclos varía bastante de un mes a otro.', 'wave', !ob.isRegular, 'irregular')}
+        </div>
+        ${primaryButton('Continuar', 'ob-next')}
+      </div>`;
+      break;
+    }
+    case 2:
+      if (ob.isRegular) {
+        const today = todayDN();
+        const grid = monthGrid(ob.month, (dn) => {
+          const ds = isoFromDN(dn);
+          const cls = ['cal-cell', ds === ob.lastPeriod && 'sel', dn === today && ds !== ob.lastPeriod && 'today', dn > today && 'future'].filter(Boolean).join(' ');
+          return `<button class="${cls}" data-action="ob-pick-last" data-date="${ds}" ${dn > today ? 'disabled' : ''} aria-label="${attr(fmtWeekdayLong(dn))}">${partsFromDN(dn).d}</button>`;
+        });
+        const canNext = addMonths(ob.month, 1) <= today;
+        content = `<div>
+          <h2 class="ob-h">¿Cuándo empezó tu última regla?</h2>
+          <div class="row gap-8 center mb-22"><span class="c-rose">${icon('drop', 13)}</span><span class="t-13 soft">Indica el <b>primer día de sangrado</b>, aunque fuera manchado.</span></div>
+          <div class="card pad mb-28">
+            <div class="row between center mb-8">
+              <div class="t-15 w-500 c-deep">${esc(capFirst(fmtMonthYear(ob.month)))}</div>
+              <div class="row gap-8">
+                <button class="sq-btn" data-action="ob-month-prev" aria-label="Mes anterior">${icon('left', 12)}</button>
+                <button class="sq-btn" data-action="ob-month-next" aria-label="Mes siguiente" ${canNext ? '' : 'disabled'}>${icon('right', 12)}</button>
+              </div>
+            </div>
+            ${grid}
+          </div>
+          ${primaryButton('Continuar', 'ob-next')}
+        </div>`;
+      } else {
+        const count = ob.pastPeriods.length;
+        let progress;
+        if (count === 0) progress = '<div class="t-12 soft-70 text-center mb-16">Opcional — puedes añadirlas más tarde en Ajustes para mejorar las predicciones.</div>';
+        else if (count < 3) progress = `<div class="row gap-6 center justify-center t-12 soft mb-16"><span class="c-gold">${icon('info', 12)}</span>Con ${3 - count} ${plural(3 - count, 'fecha', 'fechas')} más las predicciones serán más precisas.</div>`;
+        else progress = `<div class="row gap-6 center justify-center t-12 soft mb-16"><span class="c-sage">${icon('checkCircle', 14)}</span><span>Ciclo medio: <b>${averageCycleLength(ob.pastPeriods)} días</b> calculado a partir de ${count} reglas</span></div>`;
+        content = `<div>
+          <h2 class="ob-h">Añade tus últimas reglas</h2>
+          <div class="row gap-8 center mb-6"><span class="c-rose">${icon('drop', 13)}</span><span class="t-13 soft">Para cada regla, indica el <b>primer día de sangrado</b>.</span></div>
+          <p class="t-12 soft-70 mb-20">Cuantas más fechas añadas, más precisas serán las predicciones. Puedes hacerlo ahora o más tarde.</p>
+          <div class="stack-8 mb-12">${periodList(ob.pastPeriods, 'ob-remove')}</div>
+          <div class="stack-8 mb-20">
+            <input type="date" class="field date" data-model="ob.pickerDate" value="${attr(ob.pickerDate)}" max="${todayISO()}" aria-label="Fecha de inicio de la regla">
+            <button class="outline-sage" data-action="ob-add">${icon('plusCircle', 14)} Añadir este día</button>
+          </div>
+          ${progress}
+          ${primaryButton('Continuar', 'ob-next')}
+        </div>`;
+      }
+      break;
+    case 3:
+      content = `<div>
+        <h2 class="ob-h mb-22">Tu ciclo habitual</h2>
+        ${ob.isRegular ? `
+          <div class="t-13 soft mb-8">Duración habitual del ciclo: <span data-out="ob.cycleLen">${ob.cycleLen}</span> días</div>
+          <div class="mb-20">${rangeRow({ key: 'ob.cycleLen', min: 21, max: 45, step: 1, value: ob.cycleLen })}</div>`
+        : `<div class="note-mist mb-20"><span class="c-sage">${icon('checkCircle', 14)}</span><span>Ciclo medio calculado automáticamente: <b>${averageCycleLength(ob.pastPeriods)} días</b></span></div>`}
+        <div class="t-13 soft mb-8">Duración habitual de la regla: <span data-out="ob.periodLen">${ob.periodLen}</span> días</div>
+        <div class="mb-8">${rangeRow({ key: 'ob.periodLen', min: 2, max: 9, step: 1, value: ob.periodLen, tone: 'rose' })}</div>
+        <p class="t-125 soft mb-32">Podrás ajustarlo cuando quieras desde los ajustes.</p>
+        ${primaryButton('Continuar', 'ob-next')}
+      </div>`;
+      break;
+    case 4: {
+      const dots = [0, 1, 2].map((i) => `<i class="${i === ob.profileSubStep ? 'on' : ''}"></i>`).join('');
+      let sub;
+      if (ob.profileSubStep === 0) {
+        const t = partsFromDN(todayDN());
+        const maxBirth = `${t.y - 10}-${String(t.m).padStart(2, '0')}-${String(t.d).padStart(2, '0')}`;
+        sub = `<h2 class="ob-h">¿Cuándo naciste?</h2>
+          <p class="t-14 soft lh-4 mb-32">Lo usamos para contextualizar mejor tus síntomas y fases.</p>
+          <input type="date" class="field date big mb-36" data-model="ob.birthDate" value="${attr(ob.birthDate)}" max="${maxBirth}" min="1920-01-01" aria-label="Fecha de nacimiento">
+          ${primaryButton('Continuar', 'ob-sub', false, 'data-v="1"')}`;
+      } else if (ob.profileSubStep === 1) {
+        sub = `<h2 class="ob-h">¿Cuánto pesas?</h2>
+          <p class="t-14 soft lh-4 mb-48">Un dato aproximado es suficiente. Lo puedes cambiar cuando quieras.</p>
+          <div class="ob-weight"><span data-out="ob.weightKg">${ob.weightKg}</span> kg</div>
+          <div class="mb-8">${rangeRow({ key: 'ob.weightKg', min: 35, max: 150, step: 1, value: ob.weightKg })}</div>
+          <div class="row between t-11 soft mb-44"><span>35 kg</span><span>150 kg</span></div>
+          ${primaryButton('Continuar', 'ob-sub', false, 'data-v="2"')}`;
+      } else {
+        sub = `<h2 class="ob-h">¿Tienes algún diagnóstico?</h2>
+          <p class="t-14 soft lh-4 mb-24">Esto nos ayuda a personalizar los síntomas sugeridos.</p>
+          <div class="stack-10 mb-28">${HORMONAL_CONDITIONS.map((o) => {
+            const sel = ob.hormonalCondition === o;
+            return `<button class="option compact ${sel ? 'on' : ''}" aria-pressed="${sel}" data-action="ob-condition" data-v="${attr(o)}"><span class="grow left t-15">${esc(o)}</span><span class="opt-check">${icon(sel ? 'checkCircle' : 'circle', 20)}</span></button>`;
+          }).join('')}</div>
+          ${primaryButton('Empezar a cuidarme', 'ob-finish')}`;
+      }
+      content = `<div><div class="sub-dots mb-28">${dots}</div>${sub}</div>`;
+      break;
+    }
+    default: content = '';
+  }
+  const steps = [0, 1, 2, 3, 4].map((i) => `<i class="${i === ob.step ? 'on' : ''}"></i>`).join('');
+  return `<div class="ob">
+    <div class="ob-top">${ob.step > 0 ? `<button class="link-soft row gap-6 center t-14" data-action="ob-back">${icon('left', 14)} Atrás</button>` : ''}</div>
+    <div class="ob-content" key="${ob.step}-${ob.profileSubStep}">${content}</div>
+    <div class="ob-steps">${steps}</div>
+  </div>`;
+}
+
+// =========================================================================
+// MARK: - Shell principal
+// =========================================================================
+
+const TABS = [
+  { icon: 'sparkles', label: 'HOY' },
+  { icon: 'dotted', label: 'CICLO' },
+  { icon: 'chart', label: 'PATRONES' },
+];
+
+function mainView() {
+  const view = [todayView, cycleView, trendsView][ui.tab]();
+  return `<div class="shell">
+    <header class="app-header">
+      <div><h1 class="brand">Vera</h1><div class="brand-tag">BIENESTAR FEMENINO</div></div>
+      <button class="gear" data-action="open-settings" aria-label="Ajustes del ciclo">${icon('gear', 16)}</button>
+    </header>
+    ${reminderBanner()}
+    ${irregularNudge()}
+    <main class="content">${view}</main>
+    <footer class="foot"><a href="../privacy.html">Privacidad</a> · <a href="../support.html">Soporte</a></footer>
+  </div>
+  <nav class="tabbar" aria-label="Secciones">
+    ${TABS.map((t, i) => `<button class="tab ${ui.tab === i ? 'on' : ''}" data-action="tab" data-i="${i}" aria-current="${ui.tab === i ? 'page' : 'false'}">${icon(t.icon, 20)}<span>${t.label}</span></button>`).join('')}
+  </nav>
+  ${ui.sheet === 'calendar' ? calendarSheet() : ''}
+  ${ui.sheet === 'settings' ? settingsSheet() : ''}`;
+}
+
+const root = document.getElementById('app');
+let lastScreen = null;
+
+function render() {
+  const screen = store.needsOnboarding ? 'ob' : 'main';
+  // Conserva el scroll interno del sheet al re-renderizar
+  const sheetBody = root.querySelector('.sheet-body');
+  const sheetScroll = sheetBody ? sheetBody.scrollTop : 0;
+  root.innerHTML = screen === 'ob' ? onboardingView() : mainView();
+  ui.sheetAnim = false;
+  const nb = root.querySelector('.sheet-body');
+  if (nb) nb.scrollTop = sheetScroll;
+  document.body.classList.toggle('sheet-open', !!ui.sheet && screen === 'main');
+  if (screen !== lastScreen) { window.scrollTo(0, 0); lastScreen = screen; }
+}
+
+store.subscribe(render);
+
+// =========================================================================
+// MARK: - Acciones
+// =========================================================================
+
+function toggleIn(arr, v) {
+  const i = arr.indexOf(v);
+  if (i >= 0) arr.splice(i, 1); else arr.push(v);
+}
+
+function openSettings() {
+  ui.draft = structuredClone(store.data.settings);
+  // En ciclo irregular la lista debe incluir la regla actual (si no, al guardar se perdería)
+  if (!ui.draft.isRegular && !ui.draft.pastPeriods.includes(ui.draft.lastPeriod)) {
+    ui.draft.pastPeriods = [...ui.draft.pastPeriods, ui.draft.lastPeriod].sort();
+  }
+  ui.sheetAnim = true;
+  ui.draftPicker = todayISO();
+  ui.sheet = 'settings';
+  render();
+}
+
+const actions = {
+  tab: (el) => { ui.tab = +el.dataset.i; ui.sheet = null; render(); window.scrollTo(0, 0); },
+  'open-settings': openSettings,
+  'close-sheet': () => { ui.sheet = null; render(); },
+  'take-med': (el) => store.updateLog(todayISO(), (l) => { if (!l.meds.includes(el.dataset.id)) l.meds.push(el.dataset.id); }),
+
+  // Ciclo — tira semanal y calendario
+  'select-day': (el) => { ui.selectedDate = el.dataset.date; render(); },
+  'week-prev': () => { ui.weekOffset -= 1; render(); },
+  'week-next': () => { if (ui.weekOffset < 0) { ui.weekOffset += 1; render(); } },
+  'open-calendar': () => { ui.calMonth = firstOfMonth(dnFromISO(ui.selectedDate)); ui.sheet = 'calendar'; ui.sheetAnim = true; render(); },
+  'cal-prev': () => { ui.calMonth = addMonths(ui.calMonth, -1); render(); },
+  'cal-next': () => { ui.calMonth = addMonths(ui.calMonth, 1); render(); },
+  'cal-pick': (el) => {
+    ui.selectedDate = el.dataset.date;
+    // Lleva la tira semanal a la semana del día elegido
+    const t = todayDN();
+    const sel = dnFromISO(ui.selectedDate);
+    ui.weekOffset = Math.floor(((sel - mondayIndex(sel)) - (t - mondayIndex(t))) / 7);
+    ui.sheet = null;
+    render();
+  },
+
+  // Ciclo — diario
+  'set-mood': (el) => store.updateLog(ui.selectedDate, (l) => { l.mood = l.mood === el.dataset.v ? null : el.dataset.v; }),
+  'toggle-symptom': (el) => store.updateLog(ui.selectedDate, (l) => {
+    const s = el.dataset.s;
+    if (l.symptoms.includes(s)) {
+      l.symptoms = l.symptoms.filter((x) => x !== s);
+      if (!l.symptoms.some((x) => BLEEDING_SYMPTOMS.has(x))) l.flow = null;
+    } else l.symptoms.push(s);
+  }),
+  'set-flow': (el) => store.updateLog(ui.selectedDate, (l) => { l.flow = l.flow === el.dataset.v ? null : el.dataset.v; }),
+  'toggle-more': () => { ui.showMoreSymptoms = !ui.showMoreSymptoms; render(); },
+  'toggle-intimacy': (el) => store.updateLog(ui.selectedDate, (l) => toggleIn(l.intimacy, el.dataset.v)),
+  'set-lh': (el) => {
+    const v = el.dataset.v;
+    const lhDefault = store.lhTestForCurrentCycle;
+    store.updateLog(ui.selectedDate, (l) => { l.lhTest = (l.lhTest === v && lhDefault !== v) ? null : v; });
+  },
+  'set-stress': (el) => store.updateLog(ui.selectedDate, (l) => { l.stressLevel = l.stressLevel === el.dataset.v ? null : el.dataset.v; }),
+  'set-mucus': (el) => store.updateLog(ui.selectedDate, (l) => { l.cervicalMucus = l.cervicalMucus === el.dataset.v ? null : el.dataset.v; }),
+  'clear-field': (el) => store.updateLog(ui.selectedDate, (l) => { l[el.dataset.field] = null; }),
+
+  // Medicación
+  'toggle-med-form': () => { ui.showMedForm = !ui.showMedForm; render(); },
+  'save-med': () => {
+    const name = ui.newMed.name.trim();
+    if (!name) { root.querySelector('[data-model="newMed.name"]')?.focus(); return; }
+    ui.showMedForm = false;
+    store.addMed({ name, dose: ui.newMed.dose.trim(), hour: ui.newMed.hour || '09:00' });
+    ui.newMed = { name: '', dose: '', hour: '09:00' };
+  },
+  'toggle-med': (el) => store.updateLog(ui.selectedDate, (l) => toggleIn(l.meds, el.dataset.id)),
+  'delete-med': (el) => store.removeMed(el.dataset.id),
+  'enable-notifs': async () => {
+    try { await Notification.requestPermission(); } catch { /* navegador sin soporte */ }
+    render();
+  },
+
+  // Ajustes
+  'draft-type': (el) => {
+    ui.draft.isRegular = el.dataset.v === 'regular';
+    if (!ui.draft.isRegular && !ui.draft.pastPeriods.includes(ui.draft.lastPeriod)) {
+      ui.draft.pastPeriods = [...ui.draft.pastPeriods, ui.draft.lastPeriod].sort();
+    }
+    render();
+  },
+  'draft-add': () => {
+    const d = ui.draftPicker;
+    if (dnFromISO(d) != null && d <= todayISO() && !ui.draft.pastPeriods.includes(d)) {
+      ui.draft.pastPeriods.push(d);
+      if (ui.draft.pastPeriods.length >= 2) ui.draft.cycleLen = averageCycleLength(ui.draft.pastPeriods);
+    }
+    render();
+  },
+  'draft-remove': (el) => {
+    ui.draft.pastPeriods = ui.draft.pastPeriods.filter((d) => d !== el.dataset.date);
+    if (ui.draft.pastPeriods.length >= 2) ui.draft.cycleLen = averageCycleLength(ui.draft.pastPeriods);
+    render();
+  },
+  'save-settings': () => {
+    const s = ui.draft;
+    const final = s.isRegular ? { ...s } : settingsFromIrregularPeriods(s.pastPeriods, s.periodLen);
+    ui.sheet = null;
+    store.updateSettings(final);
+  },
+  export: () => {
+    const blob = new Blob([store.exportJSON()], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `vera-copia-${todayISO()}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  },
+  reset: () => {
+    if (!confirm('¿Borrar todos tus datos de Vera en este navegador? Esta acción no se puede deshacer.')) return;
+    ui.sheet = null; ui.ob = initialOnboarding(); ui.tab = 0;
+    store.resetAll();
+  },
+
+  // Onboarding
+  'ob-next': () => { ui.ob.step += 1; render(); },
+  'ob-back': () => {
+    const ob = ui.ob;
+    if (ob.step === 4 && ob.profileSubStep > 0) ob.profileSubStep -= 1;
+    else { ob.profileSubStep = 0; ob.step -= 1; }
+    render();
+  },
+  'ob-regular': (el) => { ui.ob.isRegular = el.dataset.v === 'regular'; render(); },
+  'ob-pick-last': (el) => { ui.ob.lastPeriod = el.dataset.date; render(); },
+  'ob-month-prev': () => { ui.ob.month = addMonths(ui.ob.month, -1); render(); },
+  'ob-month-next': () => { ui.ob.month = addMonths(ui.ob.month, 1); render(); },
+  'ob-add': () => {
+    const d = ui.ob.pickerDate;
+    if (dnFromISO(d) != null && d <= todayISO() && !ui.ob.pastPeriods.includes(d)) ui.ob.pastPeriods.push(d);
+    render();
+  },
+  'ob-remove': (el) => { ui.ob.pastPeriods = ui.ob.pastPeriods.filter((d) => d !== el.dataset.date); render(); },
+  'ob-sub': (el) => { ui.ob.profileSubStep = +el.dataset.v; render(); },
+  'ob-condition': (el) => { ui.ob.hormonalCondition = el.dataset.v; render(); },
+  'ob-finish': () => {
+    const ob = ui.ob;
+    const settings = ob.isRegular
+      ? { lastPeriod: ob.lastPeriod, cycleLen: ob.cycleLen, periodLen: ob.periodLen, isRegular: true, pastPeriods: [] }
+      : settingsFromIrregularPeriods(ob.pastPeriods, ob.periodLen);
+    const profile = {
+      birthDate: dnFromISO(ob.birthDate) != null ? ob.birthDate : null,
+      weightKg: ob.weightKg,
+      hormonalCondition: ob.hormonalCondition === 'Ninguna' ? null : ob.hormonalCondition,
+    };
+    ui.tab = 0;
+    store.completeOnboarding(settings, profile);
+  },
+  'ob-demo': () => { ui.tab = 0; store.loadDemoData(); },
+};
+
+// Clicks
+root.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action]');
+  if (!el || el.disabled || el.tagName === 'INPUT') return;
+  const fn = actions[el.dataset.action];
+  if (fn) { e.preventDefault(); fn(el); }
+});
+
+// Teclado: Escape cierra el sheet; Enter/Espacio en el label de importar
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && ui.sheet) { ui.sheet = null; render(); }
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches?.('label.pill-outline')) {
+    e.preventDefault(); e.target.querySelector('input')?.click();
+  }
+});
+
+// Campos de texto / fecha / hora ligados al estado (sin re-render mientras se escribe)
+function setModel(path, value) {
+  const [head, key] = path.split('.');
+  if (head === 'newMed') ui.newMed[key] = value;
+  else if (head === 'draft') ui.draft[key] = value;
+  else if (head === 'draftPicker') ui.draftPicker = value;
+  else if (head === 'ob') ui.ob[key] = value;
+}
+root.addEventListener('input', (e) => {
+  const el = e.target;
+  if (el.dataset.model) { setModel(el.dataset.model, el.value); return; }
+  if (el.dataset.range) {
+    // Actualiza solo el valor mostrado mientras se arrastra
+    const key = el.dataset.range;
+    const v = parseFloat(el.value);
+    el.style.setProperty('--p', rangePct(v, +el.min, +el.max));
+    const fmtOut = {
+      basalTemp: (x) => `${fmtNum(x, 1)} °C`,
+      sleepHours: (x) => `${fmtNum(x, 1)} h`,
+      weight: (x) => `${Math.trunc(x)} kg`,
+    }[key] || ((x) => String(x));
+    root.querySelectorAll(`[data-out="${key}"]`).forEach((o) => { o.textContent = fmtOut(v); });
+  }
+});
+root.addEventListener('change', (e) => {
+  const el = e.target;
+  if (el.dataset.action === 'import') {
+    const file = el.files?.[0];
+    if (!file) return;
+    file.text().then((text) => {
+      if (!confirm('Importar esta copia sustituirá los datos actuales de este navegador. ¿Continuar?')) return;
+      try { ui.sheet = null; store.importJSON(text); } catch (err) { alert(`No se pudo importar la copia: ${err.message}`); }
+    });
+    return;
+  }
+  if (el.dataset.range) {
+    const key = el.dataset.range;
+    const v = parseFloat(el.value);
+    if (key.includes('.')) {
+      const [head, k] = key.split('.');
+      (head === 'draft' ? ui.draft : ui.ob)[k] = v;
+      return;
+    }
+    const rounders = { basalTemp: (x) => Math.round(x * 10) / 10, sleepHours: (x) => Math.round(x * 2) / 2, weight: (x) => Math.round(x) };
+    store.updateLog(ui.selectedDate, (l) => { l[key] = rounders[key](v); });
+    return;
+  }
+  if (el.dataset.model && el.type === 'date') {
+    // Fechas de ajustes: validar que no sea futura
+    if (el.value && el.value > todayISO()) { el.value = todayISO(); setModel(el.dataset.model, el.value); }
+  }
+});
+
+// =========================================================================
+// MARK: - Recordatorios en el navegador
+// =========================================================================
+
+const NOTIFIED_KEY = 'vera-notified';
+function notifiedSet() {
+  try {
+    const raw = JSON.parse(sessionStorage.getItem(NOTIFIED_KEY) || '{}');
+    return raw.date === todayISO() ? new Set(raw.ids) : new Set();
+  } catch { return new Set(); }
+}
+function saveNotified(set) {
+  try { sessionStorage.setItem(NOTIFIED_KEY, JSON.stringify({ date: todayISO(), ids: [...set] })); } catch { /* sin almacenamiento */ }
+}
+
+let lastTick = todayISO();
+function tick() {
+  // Nuevo día: vuelve a "hoy" si estaba en hoy
+  const today = todayISO();
+  if (today !== lastTick) {
+    if (ui.selectedDate === lastTick) ui.selectedDate = today;
+    lastTick = today;
+  }
+  if ('Notification' in window && Notification.permission === 'granted' && !store.needsOnboarding) {
+    const sent = notifiedSet();
+    for (const m of store.pendingMeds(today)) {
+      if (sent.has(m.id)) continue;
+      try {
+        new Notification('Vera · Recordatorio de medicación', {
+          body: `Es la hora de tu toma: ${m.name}${m.dose ? ` (${m.dose})` : ''}`,
+          icon: 'icons/icon-192.png',
+          tag: `med-${m.id}`,
+        });
+      } catch { /* algunos navegadores móviles solo permiten avisos desde el service worker */ }
+      sent.add(m.id);
+    }
+    saveNotified(sent);
+  }
+  // Refresca banners sin interrumpir si se está escribiendo o arrastrando
+  const a = document.activeElement;
+  if (!(a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA'))) render();
+}
+setInterval(tick, 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+
+// MARK: - Arranque
+
+if (new URLSearchParams(location.search).has('demo') && store.needsOnboarding) store.loadDemoData();
+render();
+
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  navigator.serviceWorker.register('sw.js').catch(() => { /* sin modo offline */ });
+}
+

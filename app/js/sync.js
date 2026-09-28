@@ -8,7 +8,7 @@
 // - Cada cambio lleva una marca de tiempo (_u); al sincronizar se combinan ambos lados
 //   quedándose con la versión más reciente de cada día, de los ajustes, del perfil y de cada medicación.
 
-import { GOOGLE_CLIENT_ID } from './config.js';
+import { GOOGLE_CLIENT_ID, SYNC_BETA_ONLY } from './config.js';
 import { store } from './store.js';
 
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
@@ -17,7 +17,17 @@ const FILE_NAME = 'vera-data.json';
 const PREFS_KEY = 'vera-sync';        // localStorage: { enabled, email }
 const TOKEN_KEY = 'vera-sync-token';  // sessionStorage: { token, exp }
 
-export const syncAvailable = () => !!GOOGLE_CLIENT_ID;
+const BETA_KEY = 'vera-beta';
+function betaEnabled() {
+  try {
+    const p = new URLSearchParams(location.search).get('beta');
+    if (p === 'off') localStorage.removeItem(BETA_KEY);
+    else if (p !== null) localStorage.setItem(BETA_KEY, '1');
+    return localStorage.getItem(BETA_KEY) === '1';
+  } catch { return false; }
+}
+const available = !!GOOGLE_CLIENT_ID && (!SYNC_BETA_ONLY || betaEnabled());
+export const syncAvailable = () => available;
 
 // MARK: - Estado
 
@@ -81,7 +91,8 @@ const payloadOf = (d) => ({ settings: d.settings, logs: d.logs, meds: d.meds, pr
 // MARK: - Google Identity Services (se carga bajo demanda)
 
 let gisPromise = null;
-function loadGis() {
+/** Precarga el script de Google (se llama al mostrar el botón, para que el toque abra la ventana al instante) */
+export function loadGis() {
   if (window.google?.accounts?.oauth2) return Promise.resolve();
   gisPromise ??= new Promise((resolve, reject) => {
     const s = document.createElement('script');
@@ -104,8 +115,10 @@ function restoreToken() {
 const tokenValid = () => token && tokenExp > Date.now() + 60000;
 
 /** Pide un token a Google. Debe llamarse desde un toque de la usuaria (abre una ventana de Google). */
-async function requestToken({ consent = false } = {}) {
-  await loadGis();
+function requestToken({ consent = false } = {}) {
+  // Si el script ya está cargado, la ventana de Google se abre en el mismo toque
+  // (Safari bloquea ventanas abiertas después de una espera).
+  if (!window.google?.accounts?.oauth2) return loadGis().then(() => requestToken({ consent }));
   return new Promise((resolve, reject) => {
     const client = google.accounts.oauth2.initTokenClient({
       client_id: GOOGLE_CLIENT_ID,
@@ -121,7 +134,10 @@ async function requestToken({ consent = false } = {}) {
         writeJSON(sessionStorage, TOKEN_KEY, { token, exp: tokenExp });
         resolve();
       },
-      error_callback: (err) => reject(new Error(err?.type === 'popup_closed' ? 'Has cerrado la ventana de Google.' : 'No se pudo iniciar sesión con Google.')),
+      error_callback: (err) => reject(new Error(
+        err?.type === 'popup_closed' ? 'Has cerrado la ventana de Google.'
+          : err?.type === 'popup_failed_to_open' ? 'Tu navegador ha bloqueado la ventana de Google. Permite las ventanas emergentes para esta web y vuelve a intentarlo.'
+            : 'No se pudo iniciar sesión con Google.')),
     });
     client.requestAccessToken({ prompt: consent ? 'consent' : '', login_hint: sync.email || undefined });
   });
@@ -229,9 +245,10 @@ store.subscribe(() => {
  * la primera vez y debe devolver 'merge' | 'drive' | null (cancelar).
  */
 export async function connect(chooseMode) {
+  const auth = requestToken({ consent: !sync.email });
   setStatus('syncing');
   try {
-    await requestToken({ consent: !sync.email });
+    await auth;
     const email = await fetchEmail();
     fileId = null;
     const remote = await download();
@@ -259,8 +276,9 @@ export async function connect(chooseMode) {
 
 /** Vuelve a pedir permiso a Google (tras caducar la sesión de 1 hora) y sincroniza */
 export async function reauthorize() {
+  const auth = requestToken();
   try {
-    await requestToken();
+    await auth;
     await syncNow();
   } catch (err) {
     setStatus('needs-auth', err.message);

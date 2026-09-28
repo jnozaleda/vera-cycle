@@ -12,7 +12,7 @@ import {
 import { QUALITY, BASIS, windowText, predictionNotices } from './predict.js';
 import { store } from './store.js';
 import { icon } from './icons.js';
-import { sync, syncAvailable, onSyncChange, initSync, connect, reauthorize, disconnect, deleteRemote, syncNow } from './sync.js';
+import { sync, syncAvailable, onSyncChange, initSync, connect, reauthorize, disconnect, deleteRemote, syncNow, loadGis } from './sync.js';
 
 const CONTACT_EMAIL = 'contact.gineped@gmail.com';
 const CONTACT_HREF = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Consulta desde Vera web')}`;
@@ -1010,6 +1010,7 @@ function render() {
   const nb = root.querySelector('.sheet-body');
   if (nb) nb.scrollTop = sheetScroll;
   document.body.classList.toggle('sheet-open', !!ui.sheet && screen === 'main');
+  if (root.querySelector('[data-action=sync-connect], [data-action=sync-reauth]')) loadGis().catch(() => {});
   if (screen !== lastScreen) { window.scrollTo(0, 0); lastScreen = screen; }
 }
 

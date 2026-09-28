@@ -197,6 +197,7 @@ a { color: inherit; }
   border-radius: 12px; color: var(--deep); font-size: 13px; font-weight: 500; padding: 11px;
   border: 1px solid var(--sage);
 }
+a.outline-sage { text-decoration: none; }
 .outline-gold { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 35%, transparent); font-size: 12px; font-weight: 400; padding: 6px; border-radius: 10px; gap: 5px; }
 .link-soft { color: var(--ink-soft); font-size: 12px; align-self: flex-start; }
 .link-soft.row { display: inline-flex; }

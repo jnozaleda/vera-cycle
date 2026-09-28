@@ -13,6 +13,9 @@ import { QUALITY, BASIS, windowText, predictionNotices } from './predict.js';
 import { store } from './store.js';
 import { icon } from './icons.js';
 
+const CONTACT_EMAIL = 'contact.gineped@gmail.com';
+const CONTACT_HREF = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Consulta desde Vera web')}`;
+
 // MARK: - Utilidades
 
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -707,6 +710,12 @@ function settingsSheet() {
       <hr>
       ${primaryButton('Guardar', 'save-settings')}
       <div class="stack-10 data-box">
+        ${eyebrow('Contacto')}
+        <p class="t-13 soft lh-4">¿Tienes dudas sobre tu salud, sobre cómo usar Vera o quieres darnos tu opinión? Escríbenos cuando quieras.</p>
+        <a class="outline-sage" href="${CONTACT_HREF}">${icon('mail', 14)} ${CONTACT_EMAIL}</a>
+        <p class="t-11 soft-70 lh-3">No atendemos urgencias: si tienes un sangrado muy abundante, dolor intenso o fiebre, acude a tu médico o a urgencias. Nuestras respuestas son orientativas y no sustituyen una consulta.</p>
+      </div>
+      <div class="stack-10 data-box">
         ${eyebrow('Tus datos')}
         <p class="t-12 soft lh-3">Vera web guarda todo solo en este navegador. Nada sale de tu dispositivo. Haz una copia para no perder tus registros si borras los datos del navegador o cambias de equipo.</p>
         <div class="row gap-8 wrap">
@@ -881,7 +890,7 @@ function mainView() {
     ${reminderBanner()}
     ${irregularNudge()}
     <main class="content">${view}</main>
-    <footer class="foot"><a href="../privacy.html">Privacidad</a> · <a href="../support.html">Soporte</a></footer>
+    <footer class="foot"><a href="${CONTACT_HREF}">Contacto</a> · <a href="../support.html">Soporte</a> · <a href="../privacy.html">Privacidad</a></footer>
   </div>
   <nav class="tabbar" aria-label="Secciones">
     ${TABS.map((t, i) => `<button class="tab ${ui.tab === i ? 'on' : ''}" data-action="tab" data-i="${i}" aria-current="${ui.tab === i ? 'page' : 'false'}">${icon(t.icon, 20)}<span>${t.label}</span></button>`).join('')}

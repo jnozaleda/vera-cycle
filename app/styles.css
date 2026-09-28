@@ -198,6 +198,10 @@ a { color: inherit; }
   border: 1px solid var(--sage);
 }
 a.outline-sage { text-decoration: none; }
+a.gear { text-decoration: none; }
+.bg-white { background: #fff; }
+.contact-card { padding: 18px 20px; border-radius: 22px; background: var(--mist); border: 1px solid var(--sage); }
+.contact-ic { width: 36px; height: 36px; border-radius: 50%; background: #fff; color: var(--deep); display: grid; place-items: center; flex: none; }
 .outline-gold { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 35%, transparent); font-size: 12px; font-weight: 400; padding: 6px; border-radius: 10px; gap: 5px; }
 .link-soft { color: var(--ink-soft); font-size: 12px; align-self: flex-start; }
 .link-soft.row { display: inline-flex; }

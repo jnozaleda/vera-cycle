@@ -305,6 +305,17 @@ function todayView() {
         <div class="minibar"><i class="${pct > 0.75 ? 'bg-sage' : 'bg-gold'}" style="width:${(pct * 100).toFixed(1)}%"></i></div>
       </div>` : ''}
     </div>
+    <div class="contact-card stack-12">
+      <div class="row gap-12 top">
+        <span class="contact-ic">${icon('message', 16)}</span>
+        <div class="stack-4">
+          <div class="t-14 w-500">¿Dudas sobre tu ciclo o la app?</div>
+          <div class="t-13 soft lh-3">Salud, uso de Vera o sugerencias: escríbenos cuando quieras, te leemos.</div>
+        </div>
+      </div>
+      <a class="outline-sage bg-white" href="${CONTACT_HREF}">${icon('mail', 14)} Escríbenos</a>
+      <div class="t-11 soft-70 lh-3">No atendemos urgencias: ante un sangrado muy abundante, dolor intenso o fiebre, acude a tu médico.</div>
+    </div>
   </div>`;
 }
 
@@ -885,7 +896,10 @@ function mainView() {
   return `<div class="shell">
     <header class="app-header">
       <div><h1 class="brand">Vera</h1><div class="brand-tag">BIENESTAR FEMENINO</div></div>
-      <button class="gear" data-action="open-settings" aria-label="Ajustes del ciclo">${icon('gear', 16)}</button>
+      <div class="row gap-8">
+        <a class="gear" href="${CONTACT_HREF}" aria-label="Escríbenos: ${CONTACT_EMAIL}" title="Escríbenos">${icon('mail', 16)}</a>
+        <button class="gear" data-action="open-settings" aria-label="Ajustes del ciclo">${icon('gear', 16)}</button>
+      </div>
     </header>
     ${reminderBanner()}
     ${irregularNudge()}

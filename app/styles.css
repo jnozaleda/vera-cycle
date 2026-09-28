@@ -200,6 +200,17 @@ a { color: inherit; }
 a.outline-sage { text-decoration: none; }
 a.gear { text-decoration: none; }
 .bg-white { background: #fff; }
+.google-btn {
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 12px; border-radius: 12px; background: #fff; border: 1px solid #dadce0;
+  font-size: 14px; font-weight: 500; color: #3c4043;
+}
+.google-btn:hover { background: #f8faff; }
+.sync-box { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: #fff; border: 1px solid var(--line); }
+.sync-pill { display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 500; color: var(--sage); background: #fff; border: 1px solid var(--line); }
+.sync-pill.warn { color: var(--rose); border-color: color-mix(in srgb, var(--rose) 40%, transparent); }
+.sheet.dialog { max-width: 400px; }
+@media (max-width: 699px) { .sheet.dialog { border-radius: 22px 22px 0 0; } }
 .contact-card { padding: 18px 20px; border-radius: 22px; background: var(--mist); border: 1px solid var(--sage); }
 .contact-ic { width: 36px; height: 36px; border-radius: 50%; background: #fff; color: var(--deep); display: grid; place-items: center; flex: none; }
 .outline-gold { color: var(--gold); border-color: color-mix(in srgb, var(--gold) 35%, transparent); font-size: 12px; font-weight: 400; padding: 6px; border-radius: 10px; gap: 5px; }

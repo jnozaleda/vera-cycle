@@ -28,7 +28,7 @@ export function emptyLog() {
 }
 
 function defaultData() {
-  return { settings: defaultSettings(), logs: {}, meds: [], profile: {} };
+  return { settings: defaultSettings(), logs: {}, meds: [], profile: {}, settingsU: 0, profileU: 0, deletedMeds: {} };
 }
 
 /** Normaliza datos importados/guardados para tolerar campos ausentes */
@@ -53,8 +53,14 @@ function normalize(raw) {
     logs,
     meds: Array.isArray(raw.meds) ? raw.meds.filter((m) => m && m.id && m.name) : [],
     profile: raw.profile && typeof raw.profile === 'object' ? raw.profile : {},
+    // Marcas de tiempo para combinar datos entre dispositivos (sincronización)
+    settingsU: Number(raw.settingsU) || 0,
+    profileU: Number(raw.profileU) || 0,
+    deletedMeds: raw.deletedMeds && typeof raw.deletedMeds === 'object' ? raw.deletedMeds : {},
   };
 }
+
+export { normalize };
 
 function uuid() {
   if (crypto.randomUUID) return crypto.randomUUID();
@@ -97,6 +103,7 @@ class Store {
     const log = { ...emptyLog(), ...this.log(date) };
     log.symptoms = [...log.symptoms]; log.intimacy = [...log.intimacy]; log.meds = [...log.meds];
     fn(log);
+    log._u = Date.now();
     this.data.logs[date] = log;
     this.save();
   }
@@ -104,22 +111,31 @@ class Store {
   // MARK: Medicaciones
 
   addMed({ name, dose, hour }) {
-    this.data.meds.push({ id: uuid(), name, dose, hour });
+    this.data.meds.push({ id: uuid(), name, dose, hour, _u: Date.now() });
     this.save();
   }
 
   removeMed(id) {
     this.data.meds = this.data.meds.filter((m) => m.id !== id);
+    this.data.deletedMeds = { ...this.data.deletedMeds, [id]: Date.now() };
     this.save();
   }
 
   // MARK: Ajustes y perfil
 
-  updateSettings(settings) { this.data.settings = settings; this.save(); }
-  updateProfile(profile) { this.data.profile = profile; this.save(); }
+  updateSettings(settings) { this.data.settings = settings; this.data.settingsU = Date.now(); this.save(); }
+  updateProfile(profile) { this.data.profile = profile; this.data.profileU = Date.now(); this.save(); }
+
+  /** Sustituye todos los datos (p. ej. tras combinar con Google Drive) */
+  replaceData(data) {
+    this.data = normalize(data);
+    this.needsOnboarding = false;
+    this.save();
+  }
 
   completeOnboarding(settings, profile = {}) {
-    this.data = { settings, logs: {}, meds: [], profile };
+    const now = Date.now();
+    this.data = { settings, logs: {}, meds: [], profile, settingsU: now, profileU: now, deletedMeds: {} };
     this.needsOnboarding = false;
     this.save();
   }
@@ -169,6 +185,7 @@ class Store {
 
   importJSON(text) {
     this.data = normalize(JSON.parse(text));
+    this.data.settingsU = this.data.profileU = Date.now();
     this.needsOnboarding = false;
     this.save();
   }
@@ -239,7 +256,7 @@ class Store {
     add(p2 + 10, { lhTest: 'Negativo', cervicalMucus: 'Cremoso' });
     add(p2 + 12, { lhTest: 'Positivo', cervicalMucus: 'Elástico', basalTemp: 36.40 });
 
-    this.data = { settings, logs, meds: [], profile: { birthDate: '1993-04-12', weightKg: 63.0, hormonalCondition: null } };
+    this.data = { settings, logs, meds: [], profile: { birthDate: '1993-04-12', weightKg: 63.0, hormonalCondition: null }, settingsU: Date.now(), profileU: Date.now(), deletedMeds: {} };
     this.needsOnboarding = false;
     this.save();
   }

@@ -12,6 +12,7 @@ import {
 import { QUALITY, BASIS, windowText, predictionNotices } from './predict.js';
 import { store } from './store.js';
 import { icon } from './icons.js';
+import { sync, syncAvailable, onSyncChange, initSync, connect, reauthorize, disconnect, deleteRemote, syncNow } from './sync.js';
 
 const CONTACT_EMAIL = 'contact.gineped@gmail.com';
 const CONTACT_HREF = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Consulta desde Vera web')}`;
@@ -73,6 +74,7 @@ const ui = {
   draft: null,            // copia editable de settings en el sheet de ajustes
   draftPicker: todayISO(),
   ob: initialOnboarding(),
+  syncChoice: null,       // resolver del diálogo "combinar datos" al conectar Google
 };
 
 // =========================================================================
@@ -682,6 +684,82 @@ function periodList(list, removeAction) {
     </div>`).join('');
 }
 
+const GOOGLE_G = '<svg class="ic" width="16" height="16" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.3-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.2-.1-2.3-.4-3.5z"/></svg>';
+
+function syncStatusText() {
+  const ago = (t) => {
+    if (!t) return '';
+    const m = Math.round((Date.now() - t) / 60000);
+    if (m < 1) return 'ahora mismo';
+    if (m < 60) return `hace ${m} min`;
+    const h = Math.round(m / 60);
+    return h < 24 ? `hace ${h} h` : `hace ${Math.round(h / 24)} d`;
+  };
+  switch (sync.status) {
+    case 'syncing': return 'Sincronizando…';
+    case 'ok': return `Sincronizado ${ago(sync.lastSync)}`;
+    case 'needs-auth': return 'Sincronización en pausa: vuelve a conectar con Google.';
+    case 'offline': return 'Sin conexión: se sincronizará al volver a tener internet.';
+    case 'error': return `No se pudo sincronizar${sync.error ? `: ${sync.error}` : ''}`;
+    default: return sync.lastSync ? `Última sincronización ${ago(sync.lastSync)}` : '';
+  }
+}
+
+function syncPill() {
+  if (!sync.enabled) return '';
+  if (sync.status === 'needs-auth' || sync.status === 'error') {
+    return `<button class="sync-pill warn" data-action="sync-reauth">${icon('cloud', 14)} Sincronizar</button>`;
+  }
+  if (sync.status === 'syncing') return `<span class="sync-pill" aria-label="Sincronizando">${icon('cloud', 14)}</span>`;
+  return '';
+}
+
+function syncSection() {
+  if (!sync.enabled) {
+    return `<div class="stack-10 data-box">
+      ${eyebrow('Sincronización')}
+      <p class="t-13 soft lh-4">Guarda tus datos en tu propio Google Drive para verlos desde cualquier dispositivo. Es opcional: sin cuenta, Vera funciona igual.</p>
+      <button class="google-btn" data-action="sync-connect">${GOOGLE_G} Continuar con Google</button>
+      ${sync.error ? `<p class="t-12 c-rose">${esc(sync.error)}</p>` : ''}
+      <p class="t-11 soft-70 lh-3">Tus datos se guardan en una carpeta privada de tu Google Drive a la que solo accede Vera. No aparece entre tus archivos. Vera no tiene servidores: nosotros no vemos tus datos.</p>
+    </div>`;
+  }
+  const warn = sync.status === 'needs-auth' || sync.status === 'error' || sync.status === 'offline';
+  return `<div class="stack-10 data-box">
+    ${eyebrow('Sincronización')}
+    <div class="sync-box">
+      <span class="c-sage">${icon('cloud', 18)}</span>
+      <div class="grow">
+        <div class="t-13 w-500">Conectada con Google Drive</div>
+        ${sync.email ? `<div class="t-12 soft">${esc(sync.email)}</div>` : ''}
+        <div class="t-12 ${warn ? 'c-rose' : 'soft'} mt-4">${esc(syncStatusText())}</div>
+      </div>
+    </div>
+    <div class="row gap-8 wrap">
+      ${sync.status === 'needs-auth' || sync.status === 'error'
+        ? `<button class="pill-outline row gap-6 center" data-action="sync-reauth">${icon('cloud', 13)} Volver a conectar</button>`
+        : `<button class="pill-outline row gap-6 center" data-action="sync-now" ${sync.status === 'syncing' ? 'disabled' : ''}>${icon('cloud', 13)} Sincronizar ahora</button>`}
+      <button class="pill-outline" data-action="sync-disconnect">Cerrar sesión</button>
+    </div>
+    <button class="link-danger row gap-6 center" data-action="sync-delete">${icon('trash', 12)} Borrar mis datos de Google Drive</button>
+  </div>`;
+}
+
+function syncChoiceDialog() {
+  return `<div class="sheet-backdrop"></div>
+  <div class="sheet dialog anim" role="dialog" aria-modal="true" aria-label="Datos encontrados en Google Drive">
+    <div class="sheet-body stack-14 pt-20">
+      <div class="serif-22">Ya tienes datos en Google Drive</div>
+      <p class="t-13 soft lh-4">Este dispositivo también tiene registros de Vera. ¿Qué quieres hacer?</p>
+      <button class="btn-primary" data-action="sync-choice" data-v="merge">Combinar ambos</button>
+      <p class="t-11 soft-70 lh-3 mt--8">Se juntan los registros de los dos. Si un mismo día tiene cambios en ambos, se queda el más reciente.</p>
+      <button class="outline-sage" data-action="sync-choice" data-v="drive">Usar solo los de Google Drive</button>
+      <p class="t-11 soft-70 lh-3 mt--8">Los datos de este dispositivo se sustituyen por los de tu Drive.</p>
+      <button class="link-soft" data-action="sync-choice" data-v="">Cancelar</button>
+    </div>
+  </div>`;
+}
+
 function settingsSheet() {
   const s = ui.draft;
   const count = s.pastPeriods.length;
@@ -720,6 +798,7 @@ function settingsSheet() {
       </div>
       <hr>
       ${primaryButton('Guardar', 'save-settings')}
+      ${syncAvailable() ? syncSection() : ''}
       <div class="stack-10 data-box">
         ${eyebrow('Contacto')}
         <p class="t-13 soft lh-4">¿Tienes dudas sobre tu salud, sobre cómo usar Vera o quieres darnos tu opinión? Escríbenos cuando quieras.</p>
@@ -765,7 +844,9 @@ function onboardingView() {
         <div class="ob-tag">BIENESTAR FEMENINO</div>
         <p class="t-17 light soft lh-6 mb-44">Tu ciclo, tus síntomas y tu medicación, acompañados por la posibilidad de consultar con tu ginecólogo cuando lo necesites.</p>
         ${primaryButton('Comenzar', 'ob-next')}
+        ${syncAvailable() ? `<button class="google-btn mt-16" data-action="sync-connect">${GOOGLE_G} ¿Ya usas Vera? Recuperar mis datos</button>` : ''}
         <button class="link-soft mt-16" data-action="ob-demo">Explorar con datos de ejemplo</button>
+        ${sync.error ? `<p class="t-12 c-rose mt-12">${esc(sync.error)}</p>` : ''}
       </div>`;
       break;
     case 1: {
@@ -878,7 +959,8 @@ function onboardingView() {
     <div class="ob-top">${ob.step > 0 ? `<button class="link-soft row gap-6 center t-14" data-action="ob-back">${icon('left', 14)} Atrás</button>` : ''}</div>
     <div class="ob-content" key="${ob.step}-${ob.profileSubStep}">${content}</div>
     <div class="ob-steps">${steps}</div>
-  </div>`;
+  </div>
+  ${ui.syncChoice ? syncChoiceDialog() : ''}`;
 }
 
 // =========================================================================
@@ -896,7 +978,8 @@ function mainView() {
   return `<div class="shell">
     <header class="app-header">
       <div><h1 class="brand">Vera</h1><div class="brand-tag">BIENESTAR FEMENINO</div></div>
-      <div class="row gap-8">
+      <div class="row gap-8 center">
+        ${syncPill()}
         <a class="gear" href="${CONTACT_HREF}" aria-label="Escríbenos: ${CONTACT_EMAIL}" title="Escríbenos">${icon('mail', 16)}</a>
         <button class="gear" data-action="open-settings" aria-label="Ajustes del ciclo">${icon('gear', 16)}</button>
       </div>
@@ -910,7 +993,8 @@ function mainView() {
     ${TABS.map((t, i) => `<button class="tab ${ui.tab === i ? 'on' : ''}" data-action="tab" data-i="${i}" aria-current="${ui.tab === i ? 'page' : 'false'}">${icon(t.icon, 20)}<span>${t.label}</span></button>`).join('')}
   </nav>
   ${ui.sheet === 'calendar' ? calendarSheet() : ''}
-  ${ui.sheet === 'settings' ? settingsSheet() : ''}`;
+  ${ui.sheet === 'settings' ? settingsSheet() : ''}
+  ${ui.syncChoice ? syncChoiceDialog() : ''}`;
 }
 
 const root = document.getElementById('app');
@@ -1048,9 +1132,34 @@ const actions = {
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   },
   reset: () => {
-    if (!confirm('¿Borrar todos tus datos de Vera en este navegador? Esta acción no se puede deshacer.')) return;
+    const extra = sync.enabled ? '\n\nTu copia en Google Drive no se borra: para eso usa «Borrar mis datos de Google Drive». Este dispositivo dejará de sincronizar.' : '';
+    if (!confirm(`¿Borrar todos tus datos de Vera en este navegador? Esta acción no se puede deshacer.${extra}`)) return;
     ui.sheet = null; ui.ob = initialOnboarding(); ui.tab = 0;
+    if (sync.enabled) disconnect();
     store.resetAll();
+  },
+
+  // Sincronización con Google Drive
+  'sync-connect': async () => {
+    const ok = await connect(() => new Promise((resolve) => { ui.syncChoice = resolve; render(); }));
+    if (ok) ui.tab = 0;
+    render();
+  },
+  'sync-choice': (el) => {
+    const resolve = ui.syncChoice;
+    ui.syncChoice = null;
+    render();
+    resolve?.(el.dataset.v || null);
+  },
+  'sync-now': () => syncNow(),
+  'sync-reauth': () => reauthorize(),
+  'sync-disconnect': () => {
+    if (!confirm('¿Dejar de sincronizar este dispositivo? Tus datos seguirán en este navegador y en tu Google Drive.')) return;
+    disconnect();
+  },
+  'sync-delete': async () => {
+    if (!confirm('¿Borrar tu copia de Vera de Google Drive? Los datos de este navegador se mantienen. Esta acción no se puede deshacer.')) return;
+    try { await deleteRemote(); alert('Tu copia en Google Drive se ha borrado.'); } catch (err) { alert(`No se pudo borrar: ${err.message}`); }
   },
 
   // Onboarding
@@ -1206,6 +1315,8 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) tick
 // MARK: - Arranque
 
 if (new URLSearchParams(location.search).has('demo') && store.needsOnboarding) store.loadDemoData();
+onSyncChange(render);
+initSync();
 render();
 
 if ('serviceWorker' in navigator && location.protocol === 'https:') {

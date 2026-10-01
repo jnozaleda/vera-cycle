@@ -475,3 +475,54 @@ label.field { padding: 8px 14px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ── Embarazo y posparto ────────────────────────────── */
+.urgent-pill {
+  display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 11px; border-radius: 999px;
+  font-size: 12px; font-weight: 500; color: #fff; background: var(--rose);
+}
+.urgent-card {
+  width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 18px; text-align: left;
+  background: var(--rose-soft); border: 1px solid color-mix(in srgb, var(--rose) 45%, transparent);
+}
+.urgent-ic { width: 36px; height: 36px; border-radius: 50%; background: #fff; color: var(--rose); display: grid; place-items: center; flex: none; }
+.alarm-list { display: flex; flex-direction: column; gap: 8px; }
+.alarm-list li { position: relative; padding-left: 18px; font-size: 13.5px; line-height: 1.45; }
+.alarm-list li::before { content: ''; position: absolute; left: 2px; top: 7px; width: 7px; height: 7px; border-radius: 50%; background: var(--rose); }
+.btn-urgent {
+  display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px; border-radius: 14px;
+  background: var(--rose); color: #fff; font-size: 15px; font-weight: 500; text-decoration: none;
+}
+.btn-urgent.small { display: inline-flex; padding: 8px 14px; font-size: 13px; border-radius: 999px; }
+.alarm-banner {
+  display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 18px;
+  background: var(--rose-soft); border: 1.5px solid var(--rose);
+}
+.preg-weeks { font-family: var(--serif); font-weight: 300; font-size: 76px; line-height: .9; color: var(--deep); font-variant-numeric: lining-nums; }
+.preg-bar { height: 6px; margin-top: 6px; }
+.preg-bar i { background: var(--rose); }
+.tl-item { display: flex; gap: 12px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); }
+.tl-item.now { background: var(--mist); border-color: color-mix(in srgb, var(--sage) 60%, transparent); }
+.tl-weeks { flex: none; width: 64px; font-size: 11px; font-weight: 500; color: var(--gold); letter-spacing: .5px; padding-top: 2px; }
+.faq-link {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; text-align: left;
+  padding: 11px 0; border-bottom: 1px solid var(--line); font-size: 14px; color: var(--ink);
+}
+.faq-link:last-of-type { border-bottom: 0; }
+.now-tag { font-size: 11px; font-weight: 500; color: #fff; background: var(--sage); padding: 3px 9px; border-radius: 999px; }
+.faq { display: flex; flex-direction: column; }
+.faq-item { border-top: 1px solid var(--line); }
+.faq-item summary {
+  list-style: none; cursor: pointer; padding: 13px 26px 13px 0; font-size: 14px; font-weight: 500; color: var(--ink); position: relative; line-height: 1.4;
+}
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::after {
+  content: ''; position: absolute; right: 4px; top: 50%; width: 8px; height: 8px; margin-top: -6px;
+  border-right: 1.5px solid var(--ink-soft); border-bottom: 1.5px solid var(--ink-soft); transform: rotate(45deg); transition: transform .2s;
+}
+.faq-item[open] summary::after { transform: rotate(-135deg); margin-top: -2px; }
+.faq-a { padding: 0 0 14px; font-size: 13.5px; line-height: 1.6; color: var(--ink-soft); display: flex; flex-direction: column; gap: 8px; }
+.faq-a .tips li { font-size: 13.5px; color: var(--ink-soft); }
+.search { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); background: #fff; }
+.search input { flex: 1; border: 0; outline: 0; background: transparent; font-size: 14px; }
+.guide-sec[hidden], .faq-item[hidden] { display: none; }

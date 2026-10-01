@@ -23,12 +23,26 @@ export function emptyLog() {
   return {
     flow: null, symptoms: [], mood: null, intimacy: [], meds: [],
     basalTemp: null, stressLevel: null, sleepHours: null, weight: null,
-    lhTest: null, cervicalMucus: null,
+    lhTest: null, cervicalMucus: null, babyMovement: null,
   };
 }
 
+export function defaultStage() {
+  return { mode: 'cycle', pregnancy: null, postpartum: null, history: [] };
+}
+
 function defaultData() {
-  return { settings: defaultSettings(), logs: {}, meds: [], profile: {}, settingsU: 0, profileU: 0, deletedMeds: {} };
+  return { settings: defaultSettings(), logs: {}, meds: [], profile: {}, settingsU: 0, profileU: 0, deletedMeds: {}, stage: defaultStage(), stageU: 0 };
+}
+
+function normalizeStage(st) {
+  if (!st || typeof st !== 'object' || !['cycle', 'pregnancy', 'postpartum'].includes(st.mode)) return defaultStage();
+  return {
+    mode: st.mode,
+    pregnancy: st.pregnancy && typeof st.pregnancy === 'object' ? st.pregnancy : null,
+    postpartum: st.postpartum && typeof st.postpartum === 'object' ? st.postpartum : null,
+    history: Array.isArray(st.history) ? st.history.filter((h) => h && dnFromISO(h.from) != null && dnFromISO(h.to) != null) : [],
+  };
 }
 
 /** Normaliza datos importados/guardados para tolerar campos ausentes */
@@ -57,6 +71,9 @@ function normalize(raw) {
     settingsU: Number(raw.settingsU) || 0,
     profileU: Number(raw.profileU) || 0,
     deletedMeds: raw.deletedMeds && typeof raw.deletedMeds === 'object' ? raw.deletedMeds : {},
+    // Etapa: ciclo, embarazo o posparto
+    stage: normalizeStage(raw.stage),
+    stageU: Number(raw.stageU) || 0,
   };
 }
 
@@ -126,6 +143,10 @@ class Store {
   updateSettings(settings) { this.data.settings = settings; this.data.settingsU = Date.now(); this.save(); }
   updateProfile(profile) { this.data.profile = profile; this.data.profileU = Date.now(); this.save(); }
 
+  get stage() { return this.data.stage ?? defaultStage(); }
+  get mode() { return this.stage.mode; }
+  updateStage(stage) { this.data.stage = normalizeStage(stage); this.data.stageU = Date.now(); this.save(); }
+
   /** Sustituye todos los datos (p. ej. tras combinar con Google Drive) */
   replaceData(data) {
     this.data = normalize(data);
@@ -133,9 +154,9 @@ class Store {
     this.save();
   }
 
-  completeOnboarding(settings, profile = {}) {
+  completeOnboarding(settings, profile = {}, stage = defaultStage()) {
     const now = Date.now();
-    this.data = { settings, logs: {}, meds: [], profile, settingsU: now, profileU: now, deletedMeds: {} };
+    this.data = { settings, logs: {}, meds: [], profile, settingsU: now, profileU: now, deletedMeds: {}, stage: normalizeStage(stage), stageU: now };
     this.needsOnboarding = false;
     this.save();
   }
@@ -256,7 +277,7 @@ class Store {
     add(p2 + 10, { lhTest: 'Negativo', cervicalMucus: 'Cremoso' });
     add(p2 + 12, { lhTest: 'Positivo', cervicalMucus: 'Elástico', basalTemp: 36.40 });
 
-    this.data = { settings, logs, meds: [], profile: { birthDate: '1993-04-12', weightKg: 63.0, hormonalCondition: null }, settingsU: Date.now(), profileU: Date.now(), deletedMeds: {} };
+    this.data = { settings, logs, meds: [], profile: { birthDate: '1993-04-12', weightKg: 63.0, hormonalCondition: null }, settingsU: Date.now(), profileU: Date.now(), deletedMeds: {}, stage: defaultStage(), stageU: Date.now() };
     this.needsOnboarding = false;
     this.save();
   }

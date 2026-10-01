@@ -12,6 +12,15 @@ import {
 import { QUALITY, BASIS, windowText, predictionNotices } from './predict.js';
 import { store } from './store.js';
 import { icon } from './icons.js';
+import {
+  gestation, sinceBirth, TRIMESTER_LABEL, TRIMESTER_TEXT, timelineFor, fluCampaign, dueFromLmp,
+  PREGNANCY_SYMPTOMS, PREGNANCY_ALARMS, BABY_MOVEMENT, POSTPARTUM_SYMPTOMS, POSTPARTUM_ALARMS,
+  URGENT_PREGNANCY, URGENT_POSTPARTUM, pregnancyMedWarnings,
+} from './pregnancy.js';
+import { GUIDE_INTRO, PREGNANCY_GUIDE, POSTPARTUM_GUIDE, guideSectionFor } from './guide.js';
+import { spansPregnancy } from './predict.js';
+import { PREGNANCY_BETA_ONLY } from './config.js';
+import { isBeta } from './beta.js';
 import { sync, syncAvailable, onSyncChange, initSync, connect, reauthorize, disconnect, deleteRemote, syncNow, loadGis } from './sync.js';
 
 const CONTACT_EMAIL = 'contact.gineped@gmail.com';
@@ -59,6 +68,11 @@ function initialOnboarding() {
     birthDate: `${p.y - 28}-${String(p.m).padStart(2, '0')}-${String(Math.min(p.d, 28)).padStart(2, '0')}`,
     weightKg: 60,
     hormonalCondition: 'Ninguna',
+    stageChosen: false,     // ya ha elegido qué seguir (ciclo / embarazo / posparto)
+    flow: 'cycle',
+    dueDate: '',
+    lmp: '',
+    birthDate2: '',         // fecha del parto (posparto)
   };
 }
 
@@ -75,6 +89,10 @@ const ui = {
   draftPicker: todayISO(),
   ob: initialOnboarding(),
   syncChoice: null,       // resolver del diálogo "combinar datos" al conectar Google
+  draftStage: null,       // borrador de la etapa (ciclo / embarazo / posparto) en ajustes
+  draftLmp: '',
+  guideQuery: '',
+  openDetails: new Set(), // preguntas abiertas en la guía
 };
 
 // =========================================================================
@@ -289,6 +307,7 @@ function todayView() {
   const pct = total ? taken / total : 0;
 
   return `<div class="stack-18">
+    ${postpartumCycleNote()}
     ${top}
     <div class="card pad stack-14">
       <div class="row baseline between">${eyebrow(`Estás en fase ${phase.label.toLowerCase()}`)}<span class="t-11 soft nowrap">Día ${info.day}</span></div>
@@ -307,17 +326,7 @@ function todayView() {
         <div class="minibar"><i class="${pct > 0.75 ? 'bg-sage' : 'bg-gold'}" style="width:${(pct * 100).toFixed(1)}%"></i></div>
       </div>` : ''}
     </div>
-    <div class="contact-card stack-12">
-      <div class="row gap-12 top">
-        <span class="contact-ic">${icon('message', 16)}</span>
-        <div class="stack-4">
-          <div class="t-14 w-500">¿Dudas sobre tu ciclo o la app?</div>
-          <div class="t-13 soft lh-3">Salud, uso de Vera o sugerencias: escríbenos cuando quieras, te leemos.</div>
-        </div>
-      </div>
-      <a class="outline-sage bg-white" href="${CONTACT_HREF}">${icon('mail', 14)} Escríbenos</a>
-      <div class="t-11 soft-70 lh-3">No atendemos urgencias: ante un sangrado muy abundante, dolor intenso o fiebre, acude a tu médico.</div>
-    </div>
+    ${contactCard()}
   </div>`;
 }
 
@@ -325,7 +334,7 @@ function todayView() {
 // MARK: - Pestaña CICLO (diario)
 // =========================================================================
 
-function weekStrip() {
+function weekStrip(phaseColors = true) {
   const t = todayDN();
   const weekStart = t - mondayIndex(t) + ui.weekOffset * 7;
   const today = todayISO();
@@ -339,7 +348,7 @@ function weekStrip() {
     const info = cycleInfo(store.data.settings, dn);
     const l = store.log(ds);
     const hasLog = l.flow != null || l.symptoms.length > 0 || l.mood != null;
-    const pc = PHASE_COLOR[info.phase];
+    const pc = phaseColors ? PHASE_COLOR[info.phase] : null;
     const cls = ['wday', isSel && 'sel', isToday && !isSel && 'today', isFuture && 'future', pc && `ph-${pc}`, hasLog && 'logged'].filter(Boolean).join(' ');
     days += `<button class="${cls}" data-action="select-day" data-date="${ds}" ${isFuture ? 'disabled' : ''} aria-label="${attr(fmtWeekdayLong(dn))}">
       <span class="wd-l">${esc(fmtWeekdayNarrow(dn))}</span>
@@ -503,7 +512,9 @@ function computeStats() {
   }
   const top = (o, n) => Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, n).map(([name, count]) => ({ name, count }));
   const allDates = [...new Set([...settings.pastPeriods, settings.lastPeriod])].map(dnFromISO).filter((d) => d != null).sort((a, b) => a - b);
-  const cycles = allDates.map((d, i) => ({ start: d, length: i + 1 < allDates.length ? allDates[i + 1] - d : null }));
+  const cycles = allDates
+    .map((d, i) => ({ start: d, length: i + 1 < allDates.length ? allDates[i + 1] - d : null }))
+    .filter((c) => c.length == null || !spansPregnancy(c.start, c.start + c.length, store.stage));
   return { loggedDays, bleedDays, topSymptoms: top(symCounts, 6), topMoods: top(moodCounts, 5), phaseSym, cycles };
 }
 
@@ -649,7 +660,7 @@ function calendarSheet() {
   const grid = monthGrid(ui.calMonth, (dn) => {
     const ds = isoFromDN(dn);
     const info = cycleInfo(store.data.settings, dn);
-    const pc = PHASE_COLOR[info.phase];
+    const pc = store.mode === 'cycle' ? PHASE_COLOR[info.phase] : null;
     const isPast = ds <= today;
     const isSel = ds === ui.selectedDate;
     const l = store.log(ds);
@@ -786,9 +797,8 @@ function settingsSheet() {
     </div>
     <hr>`;
 
-  return sheetFrame('Mi ciclo', `
-    <div class="stack-20">
-      <div class="stack-10"><div class="t-13 soft">Tipo de ciclo</div>
+  const dm = ui.draftStage.mode;
+  const cycleForm = `<div class="stack-10"><div class="t-13 soft">Tipo de ciclo</div>
         <div class="row gap-10">${typeBtn('Regular', s.isRegular, 'regular')}${typeBtn('Irregular', !s.isRegular, 'irregular')}</div></div>
       <hr>
       ${body}
@@ -796,7 +806,12 @@ function settingsSheet() {
         <div class="t-13 soft">Duración de la regla: <span data-out="draft.periodLen">${s.periodLen}</span> días</div>
         ${rangeRow({ key: 'draft.periodLen', min: 2, max: 9, step: 1, value: s.periodLen, tone: 'rose' })}
       </div>
-      <hr>
+      <hr>`;
+  const title = { cycle: 'Mi ciclo', pregnancy: 'Mi embarazo', postpartum: 'Mi posparto' }[dm];
+  return sheetFrame(title, `
+    <div class="stack-20">
+      ${stageUI() ? stageSection() : ''}
+      ${dm === 'pregnancy' ? pregnancyForm() : dm === 'postpartum' ? postpartumForm() : cycleForm}
       ${primaryButton('Guardar', 'save-settings')}
       ${syncAvailable() ? syncSection() : ''}
       <div class="stack-10 data-box">
@@ -849,7 +864,41 @@ function onboardingView() {
         ${sync.error ? `<p class="t-12 c-rose mt-12">${esc(sync.error)}</p>` : ''}
       </div>`;
       break;
-    case 1: {
+    case 1: if (stageUI() && !ob.stageChosen) {
+      const opt = (title, sub, ic, val) => `<button class="option" data-action="ob-stage" data-v="${val}">
+        <span class="opt-ic">${icon(ic, 20)}</span>
+        <span class="grow left"><span class="t-15 w-500 block">${title}</span><span class="t-13 soft block lh-3">${sub}</span></span>
+        ${icon('right', 14, 'soft')}
+      </button>`;
+      content = `<div>
+        <h2 class="ob-h">¿Qué quieres seguir?</h2>
+        <p class="t-14 soft lh-4 mb-30">Podrás cambiarlo cuando quieras desde los ajustes.</p>
+        <div class="stack-12">
+          ${opt('Mi ciclo menstrual', 'Reglas, ventana fértil, síntomas y medicación.', 'dotted', 'cycle')}
+          ${opt('Estoy embarazada', 'Semanas, pruebas de cada etapa y dudas frecuentes.', 'heart', 'pregnancy')}
+          ${opt('He tenido a mi bebé', 'Recuperación, lactancia y vuelta de la regla.', 'sparkles', 'postpartum')}
+        </div>
+      </div>`;
+      break;
+    } else if (ob.flow === 'pregnancy') {
+      content = `<div>
+        <h2 class="ob-h">Tu embarazo</h2>
+        <p class="t-14 soft lh-4 mb-22">¿Cuál es tu fecha probable de parto? Si tu matrona la ha ajustado con la ecografía, usa esa.</p>
+        <input type="date" class="field date big mb-12" data-model="ob.dueDate" value="${attr(ob.dueDate)}" min="${isoFromDN(todayDN() - 100)}" max="${isoFromDN(todayDN() + 300)}" aria-label="Fecha probable de parto">
+        <p class="t-13 soft mb-8">¿No la sabes? Indica el primer día de tu última regla y la calculamos:</p>
+        <input type="date" class="field date mb-32" data-model="ob.lmp" value="${attr(ob.lmp)}" max="${todayISO()}" aria-label="Primer día de la última regla">
+        ${primaryButton('Empezar', 'ob-finish-stage')}
+      </div>`;
+      break;
+    } else if (ob.flow === 'postpartum') {
+      content = `<div>
+        <h2 class="ob-h">¿Cuándo nació tu bebé?</h2>
+        <p class="t-14 soft lh-4 mb-22">Te acompañaremos en la recuperación y cuando vuelva tu regla.</p>
+        <input type="date" class="field date big mb-32" data-model="ob.birthDate2" value="${attr(ob.birthDate2)}" max="${todayISO()}" aria-label="Fecha del parto">
+        ${primaryButton('Empezar', 'ob-finish-stage')}
+      </div>`;
+      break;
+    } else {
       const opt = (title, sub, ic, sel, val) => `<button class="option ${sel ? 'on' : ''}" aria-pressed="${sel}" data-action="ob-regular" data-v="${val}">
         <span class="opt-ic">${icon(ic, 20)}</span>
         <span class="grow left"><span class="t-15 w-500 block">${title}</span><span class="t-13 soft block lh-3">${sub}</span></span>
@@ -967,33 +1016,393 @@ function onboardingView() {
 // MARK: - Shell principal
 // =========================================================================
 
+// =========================================================================
+// MARK: - Embarazo y posparto
+// =========================================================================
+
+const stageUI = () => !PREGNANCY_BETA_ONLY || isBeta() || store.mode !== 'cycle';
+const MODE_TAG = { cycle: 'BIENESTAR FEMENINO', pregnancy: 'EMBARAZO', postpartum: 'POSPARTO' };
+
+function contactCard(title = '¿Dudas sobre tu ciclo o la app?') {
+  return `<div class="contact-card stack-12">
+      <div class="row gap-12 top">
+        <span class="contact-ic">${icon('message', 16)}</span>
+        <div class="stack-4">
+          <div class="t-14 w-500">${esc(title)}</div>
+          <div class="t-13 soft lh-3">Salud, uso de Vera o sugerencias: escríbenos cuando quieras, te leemos.</div>
+        </div>
+      </div>
+      <a class="outline-sage bg-white" href="${CONTACT_HREF}">${icon('mail', 14)} Escríbenos</a>
+      <div class="t-11 soft-70 lh-3">No atendemos urgencias: si algo no va bien, acude a tu médico o a urgencias.</div>
+    </div>`;
+}
+
+function urgentCard() {
+  return `<button class="urgent-card" data-action="open-urgent">
+    <span class="urgent-ic">${icon('alertFill', 18)}</span>
+    <span class="grow left"><span class="t-14 w-500 block">¿Algo no va bien?</span>
+      <span class="t-12 soft block lh-3">Cuándo ir a urgencias sin esperar a tu próxima cita.</span></span>
+    ${icon('right', 12, 'soft')}
+  </button>`;
+}
+
+function urgentSheet() {
+  const pp = store.mode === 'postpartum';
+  const list = pp ? URGENT_POSTPARTUM : URGENT_PREGNANCY;
+  return sheetFrame('Cuándo ir a urgencias', `
+    <div class="stack-14">
+      <p class="t-13 soft lh-4">Ve a urgencias de tu hospital o contacta con tu unidad ${pp ? 'de maternidad' : 'obstétrica'}, sin esperar a la siguiente cita, si notas:</p>
+      <ul class="alarm-list">${list.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+      <a class="btn-urgent" href="tel:112">${icon('phone', 16)} Llamar al 112</a>
+      ${pp ? `<a class="outline-sage" href="tel:024">${icon('phone', 14)} 024 · Línea de atención a la conducta suicida</a>` : ''}
+      <p class="t-12 soft lh-3">Ante la duda, es mejor consultar: nadie te va a reprochar ir y que todo esté bien.</p>
+    </div>`);
+}
+
+function timelineItem(t, now) {
+  return `<div class="tl-item ${now ? 'now' : ''}">
+    <div class="tl-weeks">${t.from === t.to ? `Sem. ${t.from}` : `Sem. ${t.from}–${t.to}`}</div>
+    <div class="stack-4"><div class="t-14 w-500">${esc(t.title)}</div><div class="t-12 soft lh-3">${esc(t.text)}</div></div>
+  </div>`;
+}
+
+function pregnancyToday() {
+  const p = store.stage.pregnancy;
+  const g = gestation(p);
+  if (!g || g.totalDays < 0 || g.totalDays > 310) {
+    return `<div class="stack-18">
+      <div class="card pad stack-14">${eyebrow('Tu embarazo')}
+        <div class="serif-22">Indica tu fecha probable de parto</div>
+        <p class="t-13 soft lh-4">Con ella calcularemos tus semanas y lo que toca en cada momento.</p>
+        ${primaryButton('Añadir fecha', 'open-settings')}
+      </div>
+      ${urgentCard()}
+    </div>`;
+  }
+  const { now, next } = timelineFor(g.weeks, p.rh);
+  const section = guideSectionFor(g.weeks);
+  const pct = Math.min(100, (g.totalDays / 280) * 100);
+  const overdue = g.daysLeft < 0;
+  return `<div class="stack-18">
+    <div class="card pad stack-12 preg-hero">
+      ${eyebrow(TRIMESTER_LABEL[g.trimester])}
+      <div class="row baseline gap-10">
+        <span class="preg-weeks">${g.weeks}</span>
+        <span class="stack-0"><span class="serif-24">${plural(g.weeks, 'semana', 'semanas')}</span><span class="t-13 soft">+ ${g.days} ${plural(g.days, 'día', 'días')}</span></span>
+      </div>
+      <div class="vbar preg-bar"><i style="width:${pct.toFixed(1)}%"></i></div>
+      <div class="row between t-11 soft"><span>Inicio</span><span>40 semanas</span></div>
+      <hr>
+      <div class="row between center">
+        <div><div class="t-12 soft">Fecha probable de parto</div><div class="t-15 w-500">${esc(fmtDayMonthLong(g.due))} ${partsFromDN(g.due).y}</div></div>
+        <div class="text-center"><div class="serif-28">${Math.abs(g.daysLeft)}</div><div class="t-11 soft">${overdue ? 'días pasada' : plural(g.daysLeft, 'día', 'días')}</div></div>
+      </div>
+      ${overdue ? '<p class="t-12 soft lh-3">Dar a luz hasta la semana 41 y 6 días es normal. A partir de la 40 tu equipo te hará controles más frecuentes.</p>' : ''}
+      ${p.multiple === 'multiple' ? '<p class="t-12 soft lh-3">En un embarazo múltiple el seguimiento suele ser más frecuente y las fechas pueden adelantarse: sigue las indicaciones de tu equipo.</p>' : ''}
+    </div>
+    <div class="card pad stack-10">
+      ${eyebrow('Esta etapa')}
+      <p class="t-13 soft lh-5">${esc(TRIMESTER_TEXT[g.trimester])}</p>
+    </div>
+    <div class="card pad stack-12">
+      ${eyebrow('Lo que toca ahora')}
+      ${now.length ? now.map((t) => timelineItem(t, true)).join('') : '<p class="t-13 soft">Ahora mismo no hay ninguna prueba prevista en el calendario habitual.</p>'}
+      ${fluCampaign() ? `<div class="tl-item now"><div class="tl-weeks">Campaña</div><div class="stack-4"><div class="t-14 w-500">Vacunas de la gripe y la COVID-19</div><div class="t-12 soft lh-3">Se recomiendan durante la campaña de otoño e invierno, en cualquier trimestre.</div></div></div>` : ''}
+      ${next.length ? `<div class="t-11 soft upper track-1 mt-4">Próximamente</div>${next.map((t) => timelineItem(t, false)).join('')}` : ''}
+      <p class="t-11 soft-70 lh-3">El calendario concreto lo indica tu equipo; puede variar según tu comunidad y tu hospital.</p>
+    </div>
+    <div class="card pad stack-12">
+      <div class="row baseline between">${eyebrow('Dudas de ahora')}<span class="t-11 soft">${esc(section.title)}</span></div>
+      ${section.items.slice(0, 3).map((it) => `<button class="faq-link" data-action="open-guide" data-section="${section.id}" data-q="${attr(it.q)}">${esc(it.q)} ${icon('right', 12, 'soft')}</button>`).join('')}
+      <button class="link-soft" data-action="open-guide" data-section="${section.id}">Ver todas las dudas →</button>
+    </div>
+    ${urgentCard()}
+    ${contactCard('¿Tienes alguna duda sobre tu embarazo?')}
+  </div>`;
+}
+
+function postpartumToday() {
+  const pp = store.stage.postpartum;
+  const s = sinceBirth(pp);
+  if (!s) {
+    return `<div class="stack-18"><div class="card pad stack-14">${eyebrow('Posparto')}
+      <div class="serif-22">¿Cuándo nació tu bebé?</div>
+      ${primaryButton('Añadir fecha', 'open-settings')}</div>${urgentCard()}</div>`;
+  }
+  const early = s.weeks < 6;
+  return `<div class="stack-18">
+    <div class="card pad stack-10 preg-hero">
+      ${eyebrow('Desde el parto')}
+      <div class="row baseline gap-10">
+        <span class="preg-weeks">${s.weeks}</span>
+        <span class="stack-0"><span class="serif-24">${plural(s.weeks, 'semana', 'semanas')}</span><span class="t-13 soft">+ ${s.days} ${plural(s.days, 'día', 'días')}</span></span>
+      </div>
+      <div class="t-12 soft">Tu bebé nació el ${esc(fmtDayMonthLong(s.birth))}</div>
+    </div>
+    <div class="card pad stack-10">
+      ${eyebrow(early ? 'Las primeras semanas' : 'Tu recuperación')}
+      <p class="t-13 soft lh-5">${early
+        ? 'Tu cuerpo se está recuperando: el sangrado (loquios) se irá aclarando y disminuyendo durante unas 4 a 6 semanas. Descansa siempre que puedas, acepta ayuda y pide apoyo pronto si la lactancia duele o no va bien.'
+        : 'Hacia las 6 semanas suele hacerse la revisión posparto con tu matrona: un buen momento para hablar de cómo te encuentras, la lactancia, el suelo pélvico y la anticoncepción.'}</p>
+      <p class="t-13 soft lh-5">Los cambios de humor de los primeros días son frecuentes. Si la tristeza dura más de dos semanas, va a más o no disfrutas de nada, coméntalo: tiene tratamiento.</p>
+    </div>
+    <div class="card pad stack-12">
+      ${eyebrow('Cuando vuelva tu regla')}
+      <p class="t-13 soft lh-5">Si no das el pecho suele volver a las 6 a 8 semanas; con lactancia materna puede tardar meses. Los primeros ciclos son irregulares. Puedes ovular antes de la primera regla: si no buscas otro embarazo, habla de anticoncepción con tu matrona.</p>
+      <button class="outline-sage" data-action="stage-back-cycle">${icon('drop', 13)} Ha vuelto mi regla: seguir mi ciclo</button>
+    </div>
+    <div class="card pad stack-12">
+      ${eyebrow('Dudas del posparto')}
+      ${POSTPARTUM_GUIDE[0].items.slice(0, 3).map((it) => `<button class="faq-link" data-action="open-guide" data-section="pp" data-q="${attr(it.q)}">${esc(it.q)} ${icon('right', 12, 'soft')}</button>`).join('')}
+    </div>
+    ${urgentCard()}
+    ${contactCard('¿Tienes alguna duda sobre tu posparto?')}
+  </div>`;
+}
+
+/** Aviso en Hoy (ciclo) durante los 6 meses siguientes al posparto */
+function postpartumCycleNote() {
+  const end = dnFromISO(store.stage.postpartum?.endedAt);
+  if (end == null || todayDN() - end > 183) return '';
+  return `<div class="card pad stack-8">
+    <div class="row gap-8 center"><span class="c-gold">${icon('info', 14)}</span><span class="t-13 w-500">Tus primeros ciclos tras el parto</span></div>
+    <p class="t-12 soft lh-4">Después del parto y durante la lactancia los ciclos suelen ser irregulares. Las predicciones serán poco fiables hasta que registres dos o tres reglas.</p>
+  </div>`;
+}
+
+function alarmBanner(active, pp) {
+  if (!active.length) return '';
+  const selfHarm = active.includes('Pensamientos de hacerme daño');
+  return `<div class="alarm-banner">
+    <div class="row gap-8 top"><span class="c-rose mt-1">${icon('alertFill', 16)}</span>
+      <div class="stack-6">
+        <div class="t-14 w-500">Esto necesita valoración sin esperar</div>
+        <div class="t-13 lh-4">${selfHarm
+          ? 'No estás sola y tiene tratamiento. Llama ahora al 024 (atención a la conducta suicida) o al 112, o ve a urgencias.'
+          : `Contacta con tu unidad ${pp ? 'de maternidad' : 'obstétrica'} o ve a urgencias. Si es una emergencia, llama al 112.`}</div>
+      </div>
+    </div>
+    <div class="row gap-8 wrap">
+      <a class="btn-urgent small" href="tel:${selfHarm ? '024' : '112'}">${icon('phone', 14)} Llamar al ${selfHarm ? '024' : '112'}</a>
+      <button class="pill-outline" data-action="open-urgent">Ver señales de alarma</button>
+    </div>
+  </div>`;
+}
+
+function stageDiary() {
+  const pp = store.mode === 'postpartum';
+  const ds = ui.selectedDate;
+  const isToday = ds === todayISO();
+  const log = store.log(ds);
+  const symptoms = pp ? POSTPARTUM_SYMPTOMS : PREGNANCY_SYMPTOMS;
+  const alarms = pp ? POSTPARTUM_ALARMS : PREGNANCY_ALARMS;
+  const activeAlarms = alarms.filter((a) => log.symptoms.includes(a));
+  const g = pp ? null : gestation(store.stage.pregnancy, dnFromISO(ds));
+  const reducedMoves = log.babyMovement === 'Menos de lo habitual';
+  const dw = store.defaultWeight;
+  const warnings = pp ? [] : pregnancyMedWarnings(store.data.meds);
+  const moods = ['Tranquila', 'Con energía', 'Sensible', 'Cansada', 'Preocupada', 'Triste'];
+
+  return `<div class="stack-18">
+    ${weekStrip(false)}
+    ${!isToday ? `<div class="row gap-8 center px-4"><span class="c-gold">${icon('pencil', 14)}</span><span class="t-13 soft">Editando el ${esc(fmtWeekdayLong(dnFromISO(ds)))}</span></div>` : ''}
+    ${alarmBanner(reducedMoves ? [...activeAlarms, 'mov'] : activeAlarms, pp)}
+    <div class="card pad-0">
+      <div class="px-20 pt-20">${eyebrow('Cómo te sientes')}</div>
+      <div class="hscroll-wrap"><div class="hscroll">${moods.map((m) => chip(m, log.mood === m, 'set-mood', { v: m })).join('')}</div></div>
+    </div>
+    <div class="card pad stack-14">
+      <div class="row baseline between">${eyebrow('Síntomas')}${g && g.totalDays >= 0 ? `<span class="t-11 soft">Semana ${g.weeks}</span>` : ''}</div>
+      <div class="chips">${symptoms.map((s) => chip(s, log.symptoms.includes(s), 'toggle-symptom', { s })).join('')}</div>
+      <hr>
+      <div class="row gap-6 center"><span class="c-rose">${icon('alertFill', 13)}</span><span class="t-13 w-500 soft">Señales de alarma</span></div>
+      <div class="chips">${alarms.map((s) => chip(s, log.symptoms.includes(s), 'toggle-symptom', { s }, 'rose')).join('')}</div>
+    </div>
+    ${!pp && g && g.weeks >= 20 ? `<div class="card pad stack-12">
+      ${eyebrow('Movimientos del bebé')}
+      <p class="t-12 soft lh-3">No hay un número exacto: lo importante es que conozcas su patrón habitual.</p>
+      <div class="row gap-8 wrap">${BABY_MOVEMENT.map((v) => chip(v, log.babyMovement === v, 'set-movement', { v }, v === 'Como siempre' ? 'sage' : 'rose')).join('')}</div>
+      ${reducedMoves ? '<p class="t-12 lh-3 c-rose">Túmbate de lado un rato y concéntrate en sus movimientos. Si sigues notándolo menos, ve a urgencias hoy mismo: no esperes al día siguiente.</p>' : ''}
+    </div>` : ''}
+    <div class="card pad stack-16">
+      ${eyebrow('Seguimiento')}
+      ${trackingSlider('Peso', 'scale', 'deep', 'weight', log.weight,
+        { value: dw ?? 60, note: log.weight == null && dw != null ? `<span class="t-11 soft-70">· último: ${Math.trunc(dw)} kg</span>` : '' },
+        35, 150, 1, (v) => `${Math.trunc(v)} kg`)}
+      <hr>
+      ${trackingSlider('Horas de sueño', 'moon', 'deep', 'sleepHours', log.sleepHours, { value: 7 }, 3, 12, 0.5, (v) => `${fmtNum(v, 1)} h`)}
+    </div>
+    ${warnings.length ? `<div class="card pad stack-10">${eyebrow('Tu medicación en el embarazo')}
+      ${warnings.map((w) => `<div class="row gap-8 top t-13 lh-4"><span class="c-gold mt-1">${icon('info', 13)}</span><span>${esc(w)}</span></div>`).join('')}
+      <p class="t-11 soft-70 lh-3">No dejes ni cambies ninguna medicación por tu cuenta: coméntalo con quien te la receta.</p></div>` : ''}
+    ${isToday ? medicationSection(log) : ''}
+  </div>`;
+}
+
+function answerHTML(a) {
+  return a.map((b) => (Array.isArray(b) ? `<ul class="tips">${b.map((li) => `<li>${esc(li)}</li>`).join('')}</ul>` : `<p>${esc(b)}</p>`)).join('');
+}
+
+function guideView() {
+  const pp = store.mode === 'postpartum';
+  const g = pp ? null : gestation(store.stage.pregnancy);
+  const current = g ? guideSectionFor(g.weeks).id : (pp ? 'pp' : null);
+  const sections = pp ? [...POSTPARTUM_GUIDE, ...PREGNANCY_GUIDE] : [...PREGNANCY_GUIDE, ...POSTPARTUM_GUIDE];
+  const isOpen = (id) => ui.openDetails.has(id);
+  return `<div class="stack-18">
+    <div class="card pad stack-12">
+      ${eyebrow('Guía')}
+      <div class="serif-22">${pp ? 'Dudas del posparto y del embarazo' : 'Dudas del embarazo, semana a semana'}</div>
+      <p class="t-12 soft lh-4">${esc(GUIDE_INTRO)}</p>
+      <label class="search">${icon('search', 14, 'soft')}<input type="search" data-guide-search placeholder="Busca: café, ecografía, vacunas…" value="${attr(ui.guideQuery)}" aria-label="Buscar en la guía"></label>
+    </div>
+    ${urgentCard()}
+    ${sections.map((sec) => `<section class="card pad stack-10 guide-sec" data-sec="${sec.id}">
+      <div class="row baseline between">${eyebrow(sec.title)}${sec.id === current ? '<span class="now-tag">Ahora</span>' : ''}</div>
+      <div class="t-13 soft">${esc(sec.subtitle)}</div>
+      <div class="faq">${sec.items.map((it, i) => {
+        const id = `${sec.id}-${i}`;
+        return `<details class="faq-item" data-id="${id}" data-text="${attr((it.q + ' ' + it.a.flat().join(' ')).toLowerCase())}" ${isOpen(id) ? 'open' : ''}>
+          <summary>${esc(it.q)}</summary><div class="faq-a">${answerHTML(it.a)}</div></details>`;
+      }).join('')}</div>
+    </section>`).join('')}
+    <p class="guide-empty t-13 soft text-center" hidden>No hemos encontrado nada. Prueba con otra palabra o escríbenos.</p>
+    ${contactCard('¿Tu duda no está aquí?')}
+  </div>`;
+}
+
+/** Filtra la guía en el DOM sin re-renderizar (para no perder el foco del buscador) */
+function applyGuideFilter() {
+  const q = ui.guideQuery.trim().toLowerCase();
+  let any = false;
+  root.querySelectorAll('.guide-sec').forEach((sec) => {
+    let shown = 0;
+    sec.querySelectorAll('.faq-item').forEach((d) => {
+      const hit = !q || d.dataset.text.includes(q);
+      d.hidden = !hit;
+      if (hit) shown++;
+    });
+    sec.hidden = shown === 0;
+    if (shown) any = true;
+  });
+  const empty = root.querySelector('.guide-empty');
+  if (empty) empty.hidden = any;
+}
+
+// MARK: - Ajustes de etapa
+
+function stageSection() {
+  const d = ui.draftStage;
+  const btn = (label, val) => `<button class="type-btn ${d.mode === val ? 'on' : ''}" aria-pressed="${d.mode === val}" data-action="draft-stage" data-v="${val}">${label}</button>`;
+  return `<div class="stack-10"><div class="t-13 soft">¿Qué quieres seguir?</div>
+    <div class="row gap-8">${btn('Ciclo', 'cycle')}${btn('Embarazo', 'pregnancy')}${btn('Posparto', 'postpartum')}</div></div>
+    ${store.mode !== 'cycle' && d.mode === 'cycle' ? `<div class="note-mist lh-3"><span class="c-sage">${icon('info', 14)}</span><span>${store.mode === 'pregnancy'
+      ? 'Si tu embarazo ha terminado, cuídate y date tiempo; puedes escribirnos cuando quieras. Indica abajo tu última regla cuando vuelva.'
+      : 'Indica abajo el primer día de tu última regla. Los primeros ciclos tras el parto suelen ser irregulares.'}</span></div>` : ''}
+    <hr>`;
+}
+
+function optRow(label, field, options, value) {
+  return `<div class="stack-8"><div class="t-13 soft">${label}</div>
+    <div class="row gap-8 wrap">${options.map(([v, l]) => chip(l, value === v, 'draft-stage-field', { f: field, v }, 'deep')).join('')}</div></div>`;
+}
+
+function pregnancyForm() {
+  const p = ui.draftStage.pregnancy;
+  const g = gestation(p);
+  return `<div class="stack-8">
+      <div class="t-13 soft">Fecha probable de parto</div>
+      <input type="date" class="field date" data-model="draftStage.dueDate" value="${attr(p.dueDate || '')}" min="${isoFromDN(todayDN() - 100)}" max="${isoFromDN(todayDN() + 300)}">
+      ${g && g.totalDays >= 0 ? `<div class="t-12 soft">Hoy estarías de ${g.weeks} semanas y ${g.days} ${plural(g.days, 'día', 'días')}.</div>` : ''}
+      <p class="t-12 soft-70 lh-3">Si tu matrona o tu ginecólogo la han ajustado con la ecografía, usa esa fecha.</p>
+    </div>
+    <div class="stack-8">
+      <div class="t-13 soft">¿No la sabes? Calcúlala con el primer día de tu última regla</div>
+      <div class="row gap-8 center"><input type="date" class="field date grow" data-model="draftLmp" value="${attr(ui.draftLmp)}" max="${todayISO()}">
+        <button class="pill-outline" data-action="draft-due-from-lmp">Calcular</button></div>
+    </div>
+    <hr>
+    ${optRow('Tipo de embarazo', 'multiple', [['single', 'Un bebé'], ['multiple', 'Más de uno'], ['unknown', 'Aún no lo sé']], p.multiple)}
+    ${optRow('Tu grupo Rh (está en tu primera analítica)', 'rh', [['pos', 'Positivo'], ['neg', 'Negativo'], ['unknown', 'No lo sé']], p.rh)}
+    ${optRow('Toxoplasmosis', 'toxo', [['immune', 'Soy inmune'], ['not', 'No soy inmune'], ['unknown', 'No lo sé']], p.toxo)}
+    <p class="t-11 soft-70 lh-3">Son opcionales: los usamos para mostrarte solo lo que te aplica.</p>
+    <hr>`;
+}
+
+function postpartumForm() {
+  const pp = ui.draftStage.postpartum;
+  return `<div class="stack-8">
+      <div class="t-13 soft">Fecha del parto</div>
+      <input type="date" class="field date" data-model="draftStage.birthDate" value="${attr(pp.birthDate || '')}" max="${todayISO()}" min="${isoFromDN(todayDN() - 730)}">
+    </div>
+    ${optRow('Lactancia', 'feeding', [['breast', 'Materna'], ['mixed', 'Mixta'], ['formula', 'Artificial'], ['na', 'Prefiero no decirlo']], pp.feeding)}
+    <hr>`;
+}
+
+/** Calcula la nueva etapa a partir del borrador. Devuelve { stage } o { error } */
+function buildStage() {
+  const cur = store.stage;
+  const d = ui.draftStage;
+  const today = todayDN();
+  const history = [...cur.history];
+  const closePregnancy = (to) => {
+    const due = dnFromISO(cur.pregnancy?.dueDate);
+    if (cur.mode === 'pregnancy' && due != null) history.push({ from: isoFromDN(due - 280), to });
+  };
+  if (d.mode === 'pregnancy') {
+    const due = dnFromISO(d.pregnancy.dueDate);
+    if (due == null || due < today - 100 || due > today + 300) return { error: 'Indica una fecha probable de parto válida (o calcúlala con tu última regla).' };
+    return { stage: { ...cur, mode: 'pregnancy', pregnancy: { ...d.pregnancy }, history } };
+  }
+  if (d.mode === 'postpartum') {
+    const birth = dnFromISO(d.postpartum.birthDate);
+    if (birth == null || birth > today) return { error: 'Indica la fecha del parto.' };
+    closePregnancy(isoFromDN(birth));
+    return { stage: { ...cur, mode: 'postpartum', pregnancy: null, postpartum: { birthDate: d.postpartum.birthDate, feeding: d.postpartum.feeding ?? null }, history } };
+  }
+  closePregnancy(todayISO());
+  const postpartum = cur.mode === 'postpartum' && cur.postpartum ? { ...cur.postpartum, endedAt: todayISO() } : cur.postpartum;
+  return { stage: { ...cur, mode: 'cycle', pregnancy: null, postpartum, history } };
+}
+
 const TABS = [
   { icon: 'sparkles', label: 'HOY' },
   { icon: 'dotted', label: 'CICLO' },
   { icon: 'chart', label: 'PATRONES' },
 ];
+const STAGE_TABS = [
+  { icon: 'sparkles', label: 'HOY' },
+  { icon: 'calendar', label: 'DIARIO' },
+  { icon: 'book', label: 'GUÍA' },
+];
 
 function mainView() {
-  const view = [todayView, cycleView, trendsView][ui.tab]();
+  const mode = store.mode;
+  const tabs = mode === 'cycle' ? TABS : STAGE_TABS;
+  const views = mode === 'cycle' ? [todayView, cycleView, trendsView]
+    : [mode === 'pregnancy' ? pregnancyToday : postpartumToday, stageDiary, guideView];
+  const view = views[ui.tab]();
   return `<div class="shell">
     <header class="app-header">
-      <div><h1 class="brand">Vera</h1><div class="brand-tag">BIENESTAR FEMENINO</div></div>
+      <div><h1 class="brand">Vera</h1><div class="brand-tag">${MODE_TAG[mode]}</div></div>
       <div class="row gap-8 center">
         ${syncPill()}
+        ${mode !== 'cycle' ? `<button class="urgent-pill" data-action="open-urgent" aria-label="Cuándo ir a urgencias">${icon('phone', 13)} Urgencias</button>` : ''}
         <a class="gear" href="${CONTACT_HREF}" aria-label="Escríbenos: ${CONTACT_EMAIL}" title="Escríbenos">${icon('mail', 16)}</a>
-        <button class="gear" data-action="open-settings" aria-label="Ajustes del ciclo">${icon('gear', 16)}</button>
+        <button class="gear" data-action="open-settings" aria-label="Ajustes">${icon('gear', 16)}</button>
       </div>
     </header>
     ${reminderBanner()}
-    ${irregularNudge()}
+    ${mode === 'cycle' ? irregularNudge() : ''}
     <main class="content">${view}</main>
     <footer class="foot"><a href="${CONTACT_HREF}">Contacto</a> · <a href="../support.html">Soporte</a> · <a href="../privacy.html">Privacidad</a></footer>
   </div>
   <nav class="tabbar" aria-label="Secciones">
-    ${TABS.map((t, i) => `<button class="tab ${ui.tab === i ? 'on' : ''}" data-action="tab" data-i="${i}" aria-current="${ui.tab === i ? 'page' : 'false'}">${icon(t.icon, 20)}<span>${t.label}</span></button>`).join('')}
+    ${tabs.map((t, i) => `<button class="tab ${ui.tab === i ? 'on' : ''}" data-action="tab" data-i="${i}" aria-current="${ui.tab === i ? 'page' : 'false'}">${icon(t.icon, 20)}<span>${t.label}</span></button>`).join('')}
   </nav>
   ${ui.sheet === 'calendar' ? calendarSheet() : ''}
   ${ui.sheet === 'settings' ? settingsSheet() : ''}
+  ${ui.sheet === 'urgent' ? urgentSheet() : ''}
   ${ui.syncChoice ? syncChoiceDialog() : ''}`;
 }
 
@@ -1012,7 +1421,15 @@ function render() {
   document.body.classList.toggle('sheet-open', !!ui.sheet && screen === 'main');
   if (root.querySelector('[data-action=sync-connect], [data-action=sync-reauth]')) loadGis().catch(() => {});
   if (screen !== lastScreen) { window.scrollTo(0, 0); lastScreen = screen; }
+  if (ui.guideQuery) applyGuideFilter();
 }
+
+// Recuerda qué preguntas de la guía están abiertas entre renders
+root.addEventListener('toggle', (e) => {
+  const id = e.target?.dataset?.id;
+  if (!id) return;
+  if (e.target.open) ui.openDetails.add(id); else ui.openDetails.delete(id);
+}, true);
 
 store.subscribe(render);
 
@@ -1031,6 +1448,13 @@ function openSettings() {
   if (!ui.draft.isRegular && !ui.draft.pastPeriods.includes(ui.draft.lastPeriod)) {
     ui.draft.pastPeriods = [...ui.draft.pastPeriods, ui.draft.lastPeriod].sort();
   }
+  const st = store.stage;
+  ui.draftStage = {
+    mode: st.mode,
+    pregnancy: { dueDate: '', multiple: null, rh: null, toxo: null, ...(st.pregnancy || {}) },
+    postpartum: { birthDate: '', feeding: null, ...(st.mode === 'postpartum' ? st.postpartum : {}) },
+  };
+  ui.draftLmp = '';
   ui.sheetAnim = true;
   ui.draftPicker = todayISO();
   ui.sheet = 'settings';
@@ -1119,11 +1543,50 @@ const actions = {
     render();
   },
   'save-settings': () => {
+    const prevMode = store.mode;
+    if (stageUI() && ui.draftStage) {
+      const { stage, error } = buildStage();
+      if (error) { alert(error); return; }
+      if (JSON.stringify(stage) !== JSON.stringify(store.stage)) {
+        if (stage.mode !== prevMode) ui.tab = 0;
+        store.updateStage(stage);
+      }
+      if (stage.mode !== 'cycle') { ui.sheet = null; render(); return; }
+    }
     const s = ui.draft;
     const final = s.isRegular ? { ...s } : settingsFromIrregularPeriods(s.pastPeriods, s.periodLen);
     ui.sheet = null;
     store.updateSettings(final);
   },
+  'draft-stage': (el) => { ui.draftStage.mode = el.dataset.v; render(); },
+  'draft-stage-field': (el) => {
+    const target = ui.draftStage.mode === 'postpartum' ? ui.draftStage.postpartum : ui.draftStage.pregnancy;
+    target[el.dataset.f] = target[el.dataset.f] === el.dataset.v ? null : el.dataset.v;
+    render();
+  },
+  'draft-due-from-lmp': () => {
+    const lmp = dnFromISO(ui.draftLmp);
+    if (lmp == null || lmp > todayDN()) { alert('Indica el primer día de tu última regla.'); return; }
+    ui.draftStage.pregnancy.dueDate = isoFromDN(dueFromLmp(lmp));
+    render();
+  },
+  'stage-back-cycle': () => { openSettings(); ui.draftStage.mode = 'cycle'; render(); },
+  'open-urgent': () => { ui.sheet = 'urgent'; ui.sheetAnim = true; render(); },
+  'open-guide': (el) => {
+    ui.tab = 2;
+    ui.guideQuery = '';
+    const sec = el.dataset.section;
+    const q = el.dataset.q;
+    const all = [...PREGNANCY_GUIDE, ...POSTPARTUM_GUIDE];
+    const section = all.find((x) => x.id === sec);
+    const idx = q && section ? section.items.findIndex((it) => it.q === q) : -1;
+    if (idx >= 0) ui.openDetails.add(`${sec}-${idx}`);
+    render();
+    const target = root.querySelector(idx >= 0 ? `[data-id="${sec}-${idx}"]` : `[data-sec="${sec}"]`);
+    (target || root).scrollIntoView({ block: 'start' });
+    window.scrollBy(0, -12);
+  },
+  'set-movement': (el) => store.updateLog(ui.selectedDate, (l) => { l.babyMovement = l.babyMovement === el.dataset.v ? null : el.dataset.v; }),
   export: () => {
     const blob = new Blob([store.exportJSON()], { type: 'application/json' });
     const a = document.createElement('a');
@@ -1167,6 +1630,7 @@ const actions = {
   'ob-next': () => { ui.ob.step += 1; render(); },
   'ob-back': () => {
     const ob = ui.ob;
+    if (ob.step === 1 && ob.stageChosen && stageUI()) { ob.stageChosen = false; ob.flow = 'cycle'; render(); return; }
     if (ob.step === 4 && ob.profileSubStep > 0) ob.profileSubStep -= 1;
     else { ob.profileSubStep = 0; ob.step -= 1; }
     render();
@@ -1196,6 +1660,27 @@ const actions = {
     ui.tab = 0;
     store.completeOnboarding(settings, profile);
   },
+  'ob-stage': (el) => { ui.ob.flow = el.dataset.v; ui.ob.stageChosen = true; render(); },
+  'ob-finish-stage': () => {
+    const ob = ui.ob;
+    const today = todayDN();
+    const settings = { lastPeriod: isoFromDN(today - 9), cycleLen: 28, periodLen: 5, isRegular: true, pastPeriods: [] };
+    let stage;
+    if (ob.flow === 'pregnancy') {
+      let due = dnFromISO(ob.dueDate);
+      const lmp = dnFromISO(ob.lmp);
+      if (due == null && lmp != null && lmp <= today) due = dueFromLmp(lmp);
+      if (due == null || due < today - 100 || due > today + 300) { alert('Indica tu fecha probable de parto o el primer día de tu última regla.'); return; }
+      if (lmp != null && lmp <= today) settings.lastPeriod = ob.lmp;
+      stage = { mode: 'pregnancy', pregnancy: { dueDate: isoFromDN(due), multiple: null, rh: null, toxo: null }, postpartum: null, history: [] };
+    } else {
+      const birth = dnFromISO(ob.birthDate2);
+      if (birth == null || birth > today) { alert('Indica la fecha del parto.'); return; }
+      stage = { mode: 'postpartum', pregnancy: null, postpartum: { birthDate: ob.birthDate2, feeding: null }, history: [{ from: isoFromDN(birth - 280), to: ob.birthDate2 }] };
+    }
+    ui.tab = 0;
+    store.completeOnboarding(settings, {}, stage);
+  },
   'ob-demo': () => { ui.tab = 0; store.loadDemoData(); },
 };
 
@@ -1222,10 +1707,16 @@ function setModel(path, value) {
   else if (head === 'draft') ui.draft[key] = value;
   else if (head === 'draftPicker') ui.draftPicker = value;
   else if (head === 'ob') ui.ob[key] = value;
+  else if (head === 'draftLmp') ui.draftLmp = value;
+  else if (head === 'draftStage') {
+    if (key === 'dueDate') ui.draftStage.pregnancy.dueDate = value;
+    else if (key === 'birthDate') ui.draftStage.postpartum.birthDate = value;
+  }
 }
 root.addEventListener('input', (e) => {
   const el = e.target;
   if (el.dataset.model) { setModel(el.dataset.model, el.value); return; }
+  if (el.matches('[data-guide-search]')) { ui.guideQuery = el.value; applyGuideFilter(); return; }
   if (el.dataset.range) {
     // Actualiza solo el valor mostrado mientras se arrastra
     const key = el.dataset.range;
@@ -1262,6 +1753,7 @@ root.addEventListener('change', (e) => {
     store.updateLog(ui.selectedDate, (l) => { l[key] = rounders[key](v); });
     return;
   }
+  if (el.dataset.model === 'draftStage.dueDate') { render(); return; }
   if (el.dataset.model && el.type === 'date') {
     // Fechas de ajustes: validar que no sea futura
     if (el.value && el.value > todayISO()) { el.value = todayISO(); setModel(el.dataset.model, el.value); }

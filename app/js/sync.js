@@ -10,6 +10,7 @@
 
 import { GOOGLE_CLIENT_ID, SYNC_BETA_ONLY } from './config.js';
 import { store } from './store.js';
+import { isBeta } from './beta.js';
 
 const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
 const SCOPES = `${DRIVE_SCOPE} openid email`;
@@ -17,16 +18,7 @@ const FILE_NAME = 'vera-data.json';
 const PREFS_KEY = 'vera-sync';        // localStorage: { enabled, email }
 const TOKEN_KEY = 'vera-sync-token';  // sessionStorage: { token, exp }
 
-const BETA_KEY = 'vera-beta';
-function betaEnabled() {
-  try {
-    const p = new URLSearchParams(location.search).get('beta');
-    if (p === 'off') localStorage.removeItem(BETA_KEY);
-    else if (p !== null) localStorage.setItem(BETA_KEY, '1');
-    return localStorage.getItem(BETA_KEY) === '1';
-  } catch { return false; }
-}
-const available = !!GOOGLE_CLIENT_ID && (!SYNC_BETA_ONLY || betaEnabled());
+const available = !!GOOGLE_CLIENT_ID && (!SYNC_BETA_ONLY || isBeta());
 export const syncAvailable = () => available;
 
 // MARK: - Estado
@@ -59,6 +51,7 @@ export function mergeData(local, remote) {
   const out = { ...local };
   if ((remote.settingsU || 0) > (local.settingsU || 0)) { out.settings = remote.settings; out.settingsU = remote.settingsU; }
   if ((remote.profileU || 0) > (local.profileU || 0)) { out.profile = remote.profile; out.profileU = remote.profileU; }
+  if ((remote.stageU || 0) > (local.stageU || 0)) { out.stage = remote.stage; out.stageU = remote.stageU; }
 
   out.logs = { ...local.logs };
   for (const [date, log] of Object.entries(remote.logs || {})) {
@@ -86,7 +79,7 @@ function canonical(value) {
   }
   return JSON.stringify(value ?? null);
 }
-const payloadOf = (d) => ({ settings: d.settings, logs: d.logs, meds: d.meds, profile: d.profile, settingsU: d.settingsU, profileU: d.profileU, deletedMeds: d.deletedMeds });
+const payloadOf = (d) => ({ settings: d.settings, logs: d.logs, meds: d.meds, profile: d.profile, settingsU: d.settingsU, profileU: d.profileU, deletedMeds: d.deletedMeds, stage: d.stage, stageU: d.stageU });
 
 // MARK: - Google Identity Services (se carga bajo demanda)
 

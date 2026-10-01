@@ -431,13 +431,27 @@ function analyzeMedications(meds) {
 // MARK: - Alertas clínicas
 // =========================================================================
 
+/** ¿El intervalo [a, b] contiene un embarazo registrado (o el actual)? */
+export function spansPregnancy(a, b, stage) {
+  const ranges = [...(stage?.history || [])].map((h) => [dnFromISO(h.from), dnFromISO(h.to)]);
+  if (stage?.mode && stage.mode !== 'cycle' && stage.pregnancy?.dueDate) {
+    const due = dnFromISO(stage.pregnancy.dueDate);
+    if (due != null) ranges.push([due - 280, Infinity]);
+  }
+  return ranges.some(([from, to]) => from != null && from < b && (to ?? Infinity) > a);
+}
+
 export function clinicalAlerts(data) {
   const empty = { flags: [], esc: false };
   const periodDates = extractPeriodDates(data.settings, data.logs);
   if (periodDates.length < 3) return empty;
 
   const allLengths = [];
-  for (let i = 1; i < periodDates.length; i++) allLengths.push(periodDates[i] - periodDates[i - 1]);
+  for (let i = 1; i < periodDates.length; i++) {
+    // Los intervalos que incluyen un embarazo no son ciclos
+    if (spansPregnancy(periodDates[i - 1], periodDates[i], data.stage)) continue;
+    allLengths.push(periodDates[i] - periodDates[i - 1]);
+  }
   const recent = allLengths.slice(-6);
   if (recent.length < 2) return empty;
 

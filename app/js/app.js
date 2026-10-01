@@ -875,9 +875,9 @@ function onboardingView() {
         <h2 class="ob-h">¿Qué quieres seguir?</h2>
         <p class="t-14 soft lh-4 mb-30">Podrás cambiarlo cuando quieras desde los ajustes.</p>
         <div class="stack-12">
-          ${opt('Mi ciclo menstrual', 'Reglas, ventana fértil, síntomas y medicación.', 'dotted', 'cycle')}
-          ${opt('Estoy embarazada', 'Semanas, pruebas de cada etapa y dudas frecuentes.', 'heart', 'pregnancy')}
-          ${opt('He tenido a mi bebé', 'Recuperación, lactancia y vuelta de la regla.', 'sparkles', 'postpartum')}
+          ${opt('Mi ciclo menstrual', 'Reglas, ventana fértil, síntomas y medicación.', 'moon', 'cycle')}
+          ${opt('Estoy embarazada', 'Semanas, pruebas de cada etapa y dudas frecuentes.', 'sprout', 'pregnancy')}
+          ${opt('He tenido a mi bebé', 'Recuperación, lactancia y vuelta de la regla.', 'flower', 'postpartum')}
         </div>
       </div>`;
       break;
@@ -1312,7 +1312,7 @@ function stageSection() {
       ${icon(ic, 18)}<span>${label}</span>${store.mode === val ? `<em class="stage-current">${icon('check', 10)} Actual</em>` : ''}
     </button>`;
   return `<div class="stack-10"><div class="t-13 soft">¿Qué quieres seguir?</div>
-    <div class="row gap-8">${btn('Ciclo', 'cycle', 'dotted')}${btn('Embarazo', 'pregnancy', 'heart')}${btn('Posparto', 'postpartum', 'sparkles')}</div></div>
+    <div class="row gap-8">${btn('Ciclo', 'cycle', 'moon')}${btn('Embarazo', 'pregnancy', 'sprout')}${btn('Posparto', 'postpartum', 'flower')}</div></div>
     ${store.mode !== 'cycle' && d.mode === 'cycle' ? `<div class="note-mist lh-3"><span class="c-sage">${icon('info', 14)}</span><span>${store.mode === 'pregnancy'
       ? 'Si tu embarazo ha terminado, cuídate y date tiempo; puedes escribirnos cuando quieras. Indica abajo tu última regla cuando vuelva.'
       : 'Indica abajo el primer día de tu última regla. Los primeros ciclos tras el parto suelen ser irregulares.'}</span></div>` : ''}

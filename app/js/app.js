@@ -6,7 +6,7 @@ import {
   PHASES, PHASE_TIPS, PHASE_SYMPTOMS, BLEEDING_SYMPTOMS, FLOW_OPTIONS, SYMPTOMS, MOODS, INTIMACY,
   STRESS_LEVELS, CERVICAL_MUCUS, LH_TEST_RESULTS, HORMONAL_CONDITIONS,
   cycleInfo, nextPeriodDN, dnFromISO, isoFromDN, todayDN, todayISO, partsFromDN, dnFromParts,
-  fmtDayMonthShort, fmtDayMonthLong, fmtDayMonthYear, fmtMonthYear, fmtWeekdayLong, fmtWeekdayNarrow,
+  fmtDayMonthShort, fmtDayMonthLong, fmtDayMonthYear, fmtMonthYear, fmtMonthShort, fmtWeekdayLong, fmtWeekdayNarrow,
   averageCycleLength, settingsFromIrregularPeriods,
 } from './logic.js';
 import { QUALITY, BASIS, windowText, predictionNotices } from './predict.js';
@@ -17,6 +17,8 @@ import {
   PREGNANCY_SYMPTOMS, PREGNANCY_ALARMS, BABY_MOVEMENT, POSTPARTUM_SYMPTOMS, POSTPARTUM_ALARMS,
   URGENT_PREGNANCY, URGENT_POSTPARTUM, pregnancyMedWarnings,
 } from './pregnancy.js';
+import { babyWeek, BABY_MEDIA, mediaFor } from './baby.js';
+import { FOODS, FOOD_CATEGORIES, FOOD_STATUS, foodFor, bmi, gainRange, gainBandAt, appointmentICS } from './care.js';
 import { GUIDE_INTRO, PREGNANCY_GUIDE, POSTPARTUM_GUIDE, guideSectionFor } from './guide.js';
 import { spansPregnancy } from './predict.js';
 import { PREGNANCY_BETA_ONLY } from './config.js';
@@ -32,6 +34,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const attr = esc;
 const plural = (n, one, many) => (n === 1 ? one : many);
 const fmtNum = (x, d) => x.toFixed(d).replace('.', ',');
+const fmtKg = (x) => (Number.isInteger(x) ? String(x) : fmtNum(x, 1));
 
 const PHASE_COLOR = { menstrual: 'rose', ovulation: 'gold', fertile: 'sage' };
 
@@ -94,6 +97,13 @@ const ui = {
   dueMode: 'due',         // campo de fecha del embarazo: 'due' (fecha de parto) o 'lmp' (última regla)
   guideQuery: '',
   openDetails: new Set(), // preguntas abiertas en la guía
+  babyWeek: null,         // semana que se está viendo en «Mi bebé» (null = la actual)
+  babyMedia: 'illustration',
+  careSection: 'agenda',
+  newAppt: { title: '', date: '', time: '' },
+  careForm: { height: '', preWeight: '', weight: '' },
+  foodQuery: '',
+  foodCat: 'Todos',
 };
 
 // =========================================================================
@@ -1099,6 +1109,7 @@ function pregnancyToday() {
       ${overdue ? '<p class="t-12 soft lh-3">Dar a luz hasta la semana 41 y 6 días es normal. A partir de la 40 tu equipo te hará controles más frecuentes.</p>' : ''}
       ${p.multiple === 'multiple' ? '<p class="t-12 soft lh-3">En un embarazo múltiple el seguimiento suele ser más frecuente y las fechas pueden adelantarse: sigue las indicaciones de tu equipo.</p>' : ''}
     </div>
+    ${nextAppointmentCard()}
     <div class="card pad stack-10">
       ${eyebrow('Esta etapa')}
       <p class="t-13 soft lh-5">${esc(TRIMESTER_TEXT[g.trimester])}</p>
@@ -1138,6 +1149,7 @@ function postpartumToday() {
       </div>
       <div class="t-12 soft">Tu bebé nació el ${esc(fmtDayMonthLong(s.birth))}</div>
     </div>
+    ${nextAppointmentCard()}
     <div class="card pad stack-10">
       ${eyebrow(early ? 'Las primeras semanas' : 'Tu recuperación')}
       <p class="t-13 soft lh-5">${early
@@ -1346,6 +1358,10 @@ function pregnancyForm() {
   const p = ui.draftStage.pregnancy;
   return `${dueField({ ctx: 'draftStage', mode: ui.dueMode, dueValue: p.dueDate, lmpValue: ui.draftLmp })}
     <hr>
+    <div class="row gap-8">
+      <label class="grow stack-4"><span class="t-13 soft">Altura (cm)</span><input type="number" inputmode="decimal" class="field" data-model="draftStage.height" value="${attr(p.height ?? '')}" min="120" max="220"></label>
+      <label class="grow stack-4"><span class="t-13 soft">Peso antes del embarazo (kg)</span><input type="number" inputmode="decimal" class="field" data-model="draftStage.preWeight" value="${attr(p.preWeight ?? '')}" min="35" max="200"></label>
+    </div>
     ${optRow('Tipo de embarazo', 'multiple', [['single', 'Un bebé'], ['multiple', 'Más de uno'], ['unknown', 'Aún no lo sé']], p.multiple)}
     ${optRow('Tu grupo Rh (está en tu primera analítica)', 'rh', [['pos', 'Positivo'], ['neg', 'Negativo'], ['unknown', 'No lo sé']], p.rh)}
     ${optRow('Toxoplasmosis', 'toxo', [['immune', 'Soy inmune'], ['not', 'No soy inmune'], ['unknown', 'No lo sé']], p.toxo)}
@@ -1389,23 +1405,250 @@ function buildStage() {
   return { stage: { ...cur, mode: 'cycle', pregnancy: null, postpartum, history } };
 }
 
+// =========================================================================
+// MARK: - Mi bebé (embarazo)
+// =========================================================================
+
+function babyView() {
+  const g = gestation(store.stage.pregnancy);
+  const current = g && g.totalDays >= 0 ? Math.min(40, Math.max(4, g.weeks)) : null;
+  const week = ui.babyWeek ?? current ?? 12;
+  const b = babyWeek(week);
+  const trimester = week < 14 ? 1 : week < 28 ? 2 : 3;
+  const media = mediaFor(ui.babyMedia, week);
+  const seg = (v, label) => `<button class="seg ${ui.babyMedia === v ? 'on' : ''}" aria-pressed="${ui.babyMedia === v}" data-action="baby-media" data-v="${v}">${label}</button>`;
+  const chips = Array.from({ length: 37 }, (_, i) => i + 4).map((w) =>
+    `<button class="bw-chip ${w === week ? 'on' : ''} ${w === current ? 'cur' : ''}" data-action="baby-week" data-w="${w}" aria-label="Semana ${w}">${w}</button>`).join('');
+  return `<div class="stack-18">
+    <div class="card pad stack-12">
+      <div class="row between center">
+        <button class="sq-btn" data-action="baby-week" data-w="${Math.max(4, week - 1)}" aria-label="Semana anterior" ${week <= 4 ? 'disabled' : ''}>${icon('left', 12)}</button>
+        <div class="text-center"><div class="serif-24">Semana ${week}</div><div class="t-11 soft upper track-1">${esc(TRIMESTER_LABEL[trimester])}</div></div>
+        <button class="sq-btn" data-action="baby-week" data-w="${Math.min(40, week + 1)}" aria-label="Semana siguiente" ${week >= 40 ? 'disabled' : ''}>${icon('right', 12)}</button>
+      </div>
+      <div class="bw-strip">${chips}</div>
+      ${current != null && week !== current ? `<button class="link-soft" data-action="baby-week" data-w="${current}">Volver a mi semana (${current})</button>` : ''}
+      ${current != null && week === current ? '<span class="now-tag self-start">Tu semana</span>' : ''}
+    </div>
+    <div class="card pad stack-12">
+      <div class="row between center wrap gap-8">${eyebrow('Cómo es')}<span class="segs">${seg('illustration', 'Ilustración')}${seg('ultrasound', 'Ecografía')}</span></div>
+      ${media ? `<figure class="baby-fig ${ui.babyMedia}">
+          <img src="${media.src}" alt="${attr(media.alt || `Ilustración de un feto de ${media.week} semanas`)}" loading="lazy">
+        </figure>
+        ${media.week !== week ? `<p class="t-11 soft lh-3">Imagen de referencia de la semana ${media.week}: no representa exactamente la semana ${week}.</p>` : ''}
+        <p class="t-11 soft-70"><a href="${media.url}" target="_blank" rel="noopener">${esc(media.credit)}</a>, vía Wikimedia Commons</p>`
+        : `<p class="t-13 soft lh-4">No tenemos una ecografía de ejemplo cercana a esta semana. Prueba con la ilustración o con las semanas 12, 17, 20 o 24.</p>`}
+    </div>
+    <div class="card pad stack-12">
+      ${eyebrow('Su desarrollo')}
+      <p class="t-14 lh-5">${esc(b.text)}</p>
+      <hr>
+      <div class="row gap-12">
+        <div class="grow"><div class="serif-28">≈ ${fmtNum(b.cm, b.cm < 10 ? 1 : 1)} cm</div><div class="t-11 soft">${esc(b.measure)}</div></div>
+        <div class="grow"><div class="serif-28">${b.g < 1 ? '&lt; 1 g' : `≈ ${b.g >= 1000 ? fmtNum(b.g / 1000, 2) + ' kg' : b.g + ' g'}`}</div><div class="t-11 soft">Peso aproximado</div></div>
+      </div>
+      <p class="t-11 soft-70 lh-3">Valores medios orientativos, no una medición de tu bebé: cada bebé crece a su ritmo. Si tienes dudas sobre su crecimiento, coméntalo en tu próxima visita.</p>
+    </div>
+    <details class="card pad credits"><summary class="t-12 soft">Créditos de las imágenes</summary>
+      <ul class="t-11 soft lh-4">${[...BABY_MEDIA.illustration, ...BABY_MEDIA.ultrasound].map((m) => `<li>Semana ${m.week}: <a href="${m.url}" target="_blank" rel="noopener">${esc(m.credit)}</a></li>`).join('')}</ul>
+      <p class="t-11 soft-70 lh-3">Imágenes de Wikimedia Commons con sus licencias originales (CC BY-SA 2.5, CC BY-SA 3.0, CC BY 2.0 o dominio público).</p>
+    </details>
+  </div>`;
+}
+
+// =========================================================================
+// MARK: - Cuidados: agenda, peso y alimentación
+// =========================================================================
+
+const APPT_SUGGESTIONS = ['Visita con la matrona', 'Visita con mi obstetra', 'Analítica', 'Ecografía', "Test de O'Sullivan",
+  'Vacuna', 'Clases de preparación al parto', 'Monitorización', 'Revisión posparto', 'Visita del bebé con pediatría'];
+
+function upcomingAppointments() {
+  const today = todayISO();
+  return [...(store.stage.appointments || [])].filter((a) => a.date >= today)
+    .sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')));
+}
+
+function nextAppointmentCard() {
+  const next = upcomingAppointments()[0];
+  if (!next) return '';
+  const dn = dnFromISO(next.date);
+  const days = dn - todayDN();
+  return `<div class="card pad stack-8">
+    <div class="row baseline between">${eyebrow('Mi próxima cita')}<span class="t-11 soft">${days === 0 ? 'Hoy' : days === 1 ? 'Mañana' : `En ${days} días`}</span></div>
+    <div class="t-15 w-500">${esc(next.title)}</div>
+    <div class="t-13 soft">${esc(capFirst(fmtWeekdayLong(dn)))}${next.time ? ` · ${esc(next.time)}` : ''}</div>
+    <button class="link-soft" data-action="open-care" data-v="agenda">Ver mi agenda →</button>
+  </div>`;
+}
+
+function apptRow(a, past) {
+  const dn = dnFromISO(a.date);
+  const p = partsFromDN(dn);
+  return `<div class="appt ${past ? 'past' : ''}">
+    <div class="appt-date"><b>${p.d}</b><span>${esc(fmtMonthShort(dn))}</span></div>
+    <div class="grow"><div class="t-14 w-500">${esc(a.title)}</div><div class="t-12 soft">${esc(capFirst(fmtWeekdayLong(dn)).split(',')[0])}${a.time ? ` · ${esc(a.time)}` : ''}</div></div>
+    ${past ? '' : `<button class="icon-btn c-deep" data-action="appt-ics" data-id="${attr(a.id)}" aria-label="Añadir ${attr(a.title)} al calendario" title="Añadir al calendario">${icon('calendar', 15)}</button>`}
+    <button class="icon-btn soft" data-action="appt-delete" data-id="${attr(a.id)}" aria-label="Eliminar ${attr(a.title)}">${icon('x', 12)}</button>
+  </div>`;
+}
+
+function agendaSection() {
+  const all = store.stage.appointments || [];
+  const up = upcomingAppointments();
+  const past = all.filter((a) => a.date < todayISO()).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
+  return `<div class="card pad stack-12">
+    ${eyebrow('Mi agenda')}
+    ${up.length ? up.map((a) => apptRow(a, false)).join('') : '<p class="t-13 soft">Aún no has guardado ninguna cita.</p>'}
+    <hr>
+    <div class="stack-8">
+      <div class="t-13 w-500">Añadir una cita</div>
+      <input class="field" list="appt-suggest" data-model="newAppt.title" placeholder="Visita con la matrona, ecografía…" value="${attr(ui.newAppt.title)}" maxlength="80">
+      <datalist id="appt-suggest">${APPT_SUGGESTIONS.map((t) => `<option value="${attr(t)}">`).join('')}</datalist>
+      <div class="row gap-8">
+        <input type="date" class="field date grow" data-model="newAppt.date" value="${attr(ui.newAppt.date)}" min="${todayISO()}" aria-label="Fecha de la cita">
+        <input type="time" class="field date appt-time" data-model="newAppt.time" value="${attr(ui.newAppt.time)}" aria-label="Hora (opcional)">
+      </div>
+      <button class="outline-sage" data-action="appt-add">${icon('plusCircle', 14)} Añadir a mi agenda</button>
+    </div>
+    ${past.length ? `<details class="faq-item"><summary>Citas anteriores</summary><div class="stack-8 pt-4">${past.map((a) => apptRow(a, true)).join('')}</div></details>` : ''}
+    <p class="t-11 soft-70 lh-3">Las citas y pruebas las indica tu equipo. Con el icono de calendario puedes añadirlas a la agenda de tu móvil para recibir avisos.</p>
+  </div>`;
+}
+
+function weightChart(range, points) {
+  const W = 320, H = 190, L = 34, R = 10, T = 14, B = 24;
+  const maxY = Math.max(range ? range.high + 2 : 16, ...points.map((p) => p.gain + 1), 6);
+  const minY = Math.min(-2, ...points.map((p) => p.gain - 1));
+  const x = (w) => L + (w / 40) * (W - L - R);
+  const y = (kg) => T + (1 - (kg - minY) / (maxY - minY)) * (H - T - B);
+  let band = '';
+  if (range) {
+    const weeks = Array.from({ length: 41 }, (_, i) => i);
+    const top = weeks.map((w) => `${x(w).toFixed(1)},${y(gainBandAt(w, range).high).toFixed(1)}`);
+    const bot = weeks.reverse().map((w) => `${x(w).toFixed(1)},${y(gainBandAt(w, range).low).toFixed(1)}`);
+    band = `<polygon points="${[...top, ...bot].join(' ')}" fill="var(--gold-soft)" opacity=".9"/>`;
+  }
+  const yTicks = [];
+  for (let k = Math.ceil(minY / 5) * 5; k <= maxY; k += 5) yTicks.push(k);
+  return `<svg class="wchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Gráfica de kilos ganados por semana de embarazo">
+    ${yTicks.map((k) => `<line x1="${L}" x2="${W - R}" y1="${y(k)}" y2="${y(k)}" stroke="var(--line)"/><text x="${L - 6}" y="${y(k) + 3}" text-anchor="end" class="wc-t">${k}</text>`).join('')}
+    ${[0, 10, 20, 30, 40].map((w) => `<text x="${x(w)}" y="${H - 10}" text-anchor="middle" class="wc-t">${w}</text>`).join('')}
+    ${band}
+    ${points.length > 1 ? `<polyline points="${points.map((p) => `${x(p.week).toFixed(1)},${y(p.gain).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--rose)" stroke-width="1.5"/>` : ''}
+    ${points.map((p) => `<circle cx="${x(p.week).toFixed(1)}" cy="${y(p.gain).toFixed(1)}" r="3.5" fill="var(--rose)"><title>Semana ${Math.floor(p.week)}: ${p.gain >= 0 ? '+' : ''}${fmtNum(p.gain, 1)} kg</title></circle>`).join('')}
+    <text x="${L - 6}" y="${T - 1}" text-anchor="end" class="wc-t">kg</text>
+  </svg>
+  <div class="t-11 soft text-center">Semanas de embarazo</div>`;
+}
+
+function weightSection() {
+  const p = store.stage.pregnancy || {};
+  if (p.hideWeight) {
+    return `<div class="card pad stack-10">${eyebrow('Mi peso')}<p class="t-13 soft">Has ocultado la gráfica de peso.</p>
+      <button class="pill-outline self-start" data-action="weight-toggle">Mostrar la gráfica</button></div>`;
+  }
+  const needs = !(p.height > 0) || !(p.preWeight > 0);
+  if (needs) {
+    return `<div class="card pad stack-12">${eyebrow('Mi peso')}
+      <p class="t-13 soft lh-4">Para ver tu evolución con una referencia orientativa, indica tu altura y tu peso antes del embarazo.</p>
+      <div class="row gap-8">
+        <label class="grow stack-4"><span class="t-12 soft">Altura (cm)</span><input type="number" inputmode="decimal" class="field" data-model="careForm.height" value="${attr(p.height || '')}" min="120" max="220"></label>
+        <label class="grow stack-4"><span class="t-12 soft">Peso previo (kg)</span><input type="number" inputmode="decimal" class="field" data-model="careForm.preWeight" value="${attr(p.preWeight || '')}" min="35" max="200"></label>
+      </div>
+      <button class="outline-sage" data-action="weight-profile-save">Guardar</button>
+      <button class="link-soft" data-action="weight-toggle">Prefiero no ver mi peso</button></div>`;
+  }
+  const due = dnFromISO(p.dueDate);
+  const start = due - 280;
+  const points = Object.entries(store.data.logs)
+    .filter(([k, l]) => l.weight != null && dnFromISO(k) >= start && dnFromISO(k) <= Math.min(todayDN(), due + 14))
+    .map(([k, l]) => ({ week: (dnFromISO(k) - start) / 7, gain: l.weight - p.preWeight }))
+    .sort((a, b) => a.week - b.week);
+  const b = bmi(p.height, p.preWeight);
+  const range = gainRange(b, p.multiple);
+  const last = points[points.length - 1];
+  return `<div class="card pad stack-12">
+    <div class="row between center">${eyebrow('Mi peso')}<button class="link-soft" data-action="weight-toggle">Ocultar</button></div>
+    ${range
+      ? `<p class="t-13 soft lh-4">Referencia de ganancia total: <b>${fmtKg(range.low)}–${fmtKg(range.high)} kg</b> para tu IMC previo de ${fmtNum(b, 1)}${p.multiple === 'multiple' ? ' y embarazo múltiple' : ''}.</p>`
+      : '<p class="t-13 soft lh-4">Para tu situación no hay una referencia general: tu equipo te orientará.</p>'}
+    ${weightChart(range, points)}
+    <div class="row gap-14 wrap t-11 soft"><span class="legend"><i class="bg-goldsoft sq"></i>Orientación poblacional</span><span class="legend"><i class="dot-rose"></i>Tus registros</span></div>
+    ${last ? `<div class="t-13">Última: <b>${last.gain >= 0 ? '+' : ''}${fmtNum(last.gain, 1)} kg</b> en la semana ${Math.floor(last.week)}</div>` : ''}
+    <div class="row gap-8 center">
+      <input type="number" inputmode="decimal" step="0.1" class="field grow" data-model="careForm.weight" placeholder="Peso de hoy (kg)" value="${attr(ui.careForm.weight)}">
+      <button class="pill-outline" data-action="weight-log">Guardar</button>
+    </div>
+    <p class="t-11 soft-70 lh-3">La banda es una orientación poblacional, no un límite semanal. Tu evolución la valora tu equipo: no uses esta gráfica para hacer dieta.</p>
+  </div>`;
+}
+
+function foodSection() {
+  const toxo = store.stage.pregnancy?.toxo;
+  const cats = ['Todos', ...FOOD_CATEGORIES];
+  const items = FOODS.filter((f) => ui.foodCat === 'Todos' || f.cat === ui.foodCat).map((f) => foodFor(f, toxo));
+  return `<div class="card pad stack-12">
+    ${eyebrow('¿Puedo comer esto?')}
+    <label class="search">${icon('search', 14, 'soft')}<input type="search" data-food-search placeholder="Salmón, queso, café…" value="${attr(ui.foodQuery)}" aria-label="Buscar alimento"></label>
+    <div class="hscroll flat">${cats.map((c) => chip(c, ui.foodCat === c, 'food-cat', { v: c })).join('')}</div>
+    ${toxo !== 'immune' && toxo !== 'not' ? `<div class="note-mist lh-3"><span class="c-gold">${icon('info', 14)}</span><span>Indica en Ajustes si eres inmune a la toxoplasmosis para personalizar esta lista.</span></div>` : ''}
+    <div class="foods">${items.map((f) => `<div class="food" data-text="${attr((f.name + ' ' + (f.note || '') + ' ' + f.cat).toLowerCase())}">
+      <div class="grow"><div class="t-14">${esc(f.name)}</div>${f.note ? `<div class="t-12 soft lh-3">${esc(f.note)}</div>` : ''}</div>
+      <span class="food-tag tone-${FOOD_STATUS[f.status].tone}">${FOOD_STATUS[f.status].label}</span>
+    </div>`).join('')}</div>
+    <p class="food-empty t-13 soft" hidden>No lo encontramos. Pregúntalo en tu próxima visita o escríbenos.</p>
+    <p class="t-11 soft-70 lh-3">Lo más importante: carne y pescado bien cocinados, lácteos pasteurizados, fruta y verdura bien lavadas y nada de alcohol. Adapta la lista a tus alergias y a las indicaciones de tu equipo.</p>
+  </div>`;
+}
+
+function applyFoodFilter() {
+  const q = ui.foodQuery.trim().toLowerCase();
+  let any = false;
+  root.querySelectorAll('.food').forEach((el) => { const hit = !q || el.dataset.text.includes(q); el.hidden = !hit; if (hit) any = true; });
+  const empty = root.querySelector('.food-empty');
+  if (empty) empty.hidden = any;
+}
+
+function careView() {
+  if (store.mode === 'postpartum') return `<div class="stack-18">${agendaSection()}${contactCard('¿Tienes alguna duda?')}</div>`;
+  const seg = (v, label) => `<button class="seg ${ui.careSection === v ? 'on' : ''}" aria-pressed="${ui.careSection === v}" data-action="care-section" data-v="${v}">${label}</button>`;
+  const section = { agenda: agendaSection, weight: weightSection, food: foodSection }[ui.careSection]();
+  return `<div class="stack-18">
+    <div class="segs wide">${seg('agenda', 'Agenda')}${seg('weight', 'Peso')}${seg('food', 'Alimentación')}</div>
+    ${section}
+  </div>`;
+}
+
 const TABS = [
   { icon: 'sparkles', label: 'HOY' },
   { icon: 'dotted', label: 'CICLO' },
   { icon: 'chart', label: 'PATRONES' },
 ];
-const STAGE_TABS = [
-  { icon: 'sparkles', label: 'HOY' },
-  { icon: 'calendar', label: 'DIARIO' },
-  { icon: 'book', label: 'GUÍA' },
-];
+const STAGE_TAB = {
+  today: { icon: 'sparkles', label: 'HOY' },
+  baby: { icon: 'sprout', label: 'BEBÉ' },
+  diary: { icon: 'pencil', label: 'DIARIO' },
+  care: { icon: 'heart', label: 'CUIDADOS' },
+  guide: { icon: 'book', label: 'GUÍA' },
+};
+const STAGE_TAB_IDS = { pregnancy: ['today', 'baby', 'diary', 'care', 'guide'], postpartum: ['today', 'diary', 'care', 'guide'] };
+const tabIndex = (id) => Math.max(0, (STAGE_TAB_IDS[store.mode] || []).indexOf(id));
 
 function mainView() {
   const mode = store.mode;
-  const tabs = mode === 'cycle' ? TABS : STAGE_TABS;
-  const views = mode === 'cycle' ? [todayView, cycleView, trendsView]
-    : [mode === 'pregnancy' ? pregnancyToday : postpartumToday, stageDiary, guideView];
-  const view = views[ui.tab]();
+  let tabs, view;
+  if (mode === 'cycle') {
+    tabs = TABS;
+    ui.tab = Math.min(ui.tab, 2);
+    view = [todayView, cycleView, trendsView][ui.tab]();
+  } else {
+    const ids = STAGE_TAB_IDS[mode];
+    ui.tab = Math.min(ui.tab, ids.length - 1);
+    tabs = ids.map((id) => STAGE_TAB[id]);
+    const fns = { today: mode === 'pregnancy' ? pregnancyToday : postpartumToday, baby: babyView, diary: stageDiary, care: careView, guide: guideView };
+    view = fns[ids[ui.tab]]();
+  }
   return `<div class="shell">
     <header class="app-header">
       <div><h1 class="brand">Vera</h1><div class="brand-tag">${MODE_TAG[mode]}</div></div>
@@ -1421,7 +1664,7 @@ function mainView() {
     <main class="content">${view}</main>
     <footer class="foot"><a href="${CONTACT_HREF}">Contacto</a> · <a href="../support.html">Soporte</a> · <a href="../privacy.html">Privacidad</a></footer>
   </div>
-  <nav class="tabbar" aria-label="Secciones">
+  <nav class="tabbar ${tabs.length > 3 ? 'many' : ''}" aria-label="Secciones">
     ${tabs.map((t, i) => `<button class="tab ${ui.tab === i ? 'on' : ''}" data-action="tab" data-i="${i}" aria-current="${ui.tab === i ? 'page' : 'false'}">${icon(t.icon, 20)}<span>${t.label}</span></button>`).join('')}
   </nav>
   ${ui.sheet === 'calendar' ? calendarSheet() : ''}
@@ -1446,6 +1689,8 @@ function render() {
   if (root.querySelector('[data-action=sync-connect], [data-action=sync-reauth]')) loadGis().catch(() => {});
   if (screen !== lastScreen) { window.scrollTo(0, 0); lastScreen = screen; }
   if (ui.guideQuery) applyGuideFilter();
+  if (ui.foodQuery) applyFoodFilter();
+  root.querySelector('.bw-chip.on')?.scrollIntoView({ block: 'nearest', inline: 'center' });
 }
 
 // Recuerda qué preguntas de la guía están abiertas entre renders
@@ -1604,9 +1849,54 @@ const actions = {
     if (el.dataset.ctx === 'ob') ui.ob.dueMode = el.dataset.v; else ui.dueMode = el.dataset.v;
     render();
   },
+  'baby-week': (el) => { ui.babyWeek = +el.dataset.w; render(); },
+  'baby-media': (el) => { ui.babyMedia = el.dataset.v; render(); },
+  'care-section': (el) => { ui.careSection = el.dataset.v; render(); },
+  'open-care': (el) => { ui.tab = tabIndex('care'); ui.careSection = el.dataset.v || 'agenda'; render(); window.scrollTo(0, 0); },
+  'food-cat': (el) => { ui.foodCat = el.dataset.v; render(); },
+  'appt-add': () => {
+    const { title, date, time } = ui.newAppt;
+    if (!title.trim()) { root.querySelector('[data-model="newAppt.title"]')?.focus(); return; }
+    if (dnFromISO(date) == null) { alert('Indica la fecha de la cita.'); return; }
+    const id = crypto.randomUUID ? crypto.randomUUID() : `a${Date.now()}`;
+    const appointments = [...(store.stage.appointments || []), { id, title: title.trim().slice(0, 80), date, time: time || null }];
+    ui.newAppt = { title: '', date: '', time: '' };
+    store.updateStage({ ...store.stage, appointments });
+  },
+  'appt-delete': (el) => {
+    if (!confirm('¿Eliminar esta cita de tu agenda?')) return;
+    store.updateStage({ ...store.stage, appointments: (store.stage.appointments || []).filter((a) => a.id !== el.dataset.id) });
+  },
+  'appt-ics': (el) => {
+    const appt = (store.stage.appointments || []).find((a) => a.id === el.dataset.id);
+    if (!appt) return;
+    const blob = new Blob([appointmentICS(appt)], { type: 'text/calendar;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `vera-cita-${appt.date}.ics`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  },
+  'weight-toggle': () => {
+    const p = store.stage.pregnancy || {};
+    store.updateStage({ ...store.stage, pregnancy: { ...p, hideWeight: !p.hideWeight } });
+  },
+  'weight-profile-save': () => {
+    const p0 = store.stage.pregnancy || {};
+    const h = parseFloat(String(ui.careForm.height || p0.height || '').replace(',', '.'));
+    const w = parseFloat(String(ui.careForm.preWeight || p0.preWeight || '').replace(',', '.'));
+    if (!(h >= 120 && h <= 220) || !(w >= 35 && w <= 200)) { alert('Revisa la altura (en cm) y el peso (en kg).'); return; }
+    store.updateStage({ ...store.stage, pregnancy: { ...store.stage.pregnancy, height: h, preWeight: w } });
+  },
+  'weight-log': () => {
+    const w = parseFloat(String(ui.careForm.weight).replace(',', '.'));
+    if (!(w >= 35 && w <= 200)) { alert('Indica tu peso en kg.'); return; }
+    ui.careForm.weight = '';
+    store.updateLog(todayISO(), (l) => { l.weight = Math.round(w * 10) / 10; });
+  },
   'open-urgent': () => { ui.sheet = 'urgent'; ui.sheetAnim = true; render(); },
   'open-guide': (el) => {
-    ui.tab = 2;
+    ui.tab = tabIndex('guide');
     ui.guideQuery = '';
     const sec = el.dataset.section;
     const q = el.dataset.q;
@@ -1741,8 +2031,11 @@ function setModel(path, value) {
   else if (head === 'draftPicker') ui.draftPicker = value;
   else if (head === 'ob') ui.ob[key] = value;
   else if (head === 'draftLmp') ui.draftLmp = value;
+  else if (head === 'newAppt') ui.newAppt[key] = value;
+  else if (head === 'careForm') ui.careForm[key] = value;
   else if (head === 'draftStage') {
     if (key === 'dueDate') ui.draftStage.pregnancy.dueDate = value;
+    else if (key === 'height' || key === 'preWeight') ui.draftStage.pregnancy[key] = value === '' ? null : parseFloat(value.replace(',', '.'));
     else if (key === 'lmp') {
       ui.draftLmp = value;
       const lmp = dnFromISO(value);
@@ -1755,6 +2048,7 @@ root.addEventListener('input', (e) => {
   const el = e.target;
   if (el.dataset.model) { setModel(el.dataset.model, el.value); return; }
   if (el.matches('[data-guide-search]')) { ui.guideQuery = el.value; applyGuideFilter(); return; }
+  if (el.matches('[data-food-search]')) { ui.foodQuery = el.value; applyFoodFilter(); return; }
   if (el.dataset.range) {
     // Actualiza solo el valor mostrado mientras se arrastra
     const key = el.dataset.range;

@@ -547,3 +547,43 @@ label.field { padding: 8px 14px; }
 .segs { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--mist); }
 .seg { font-size: 12px; padding: 5px 11px; border-radius: 999px; color: var(--ink-soft); }
 .seg.on { background: #fff; color: var(--deep); font-weight: 500; box-shadow: 0 1px 3px rgba(63,88,75,.12); }
+
+/* ── Mi bebé y Cuidados ─────────────────────────────── */
+.tabbar.many .tab span { font-size: 9px; letter-spacing: .6px; }
+.self-start { align-self: flex-start; }
+.pt-4 { padding-top: 4px; }
+.bw-strip { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 2px; scroll-snap-type: x proximity; }
+.bw-strip::-webkit-scrollbar { display: none; }
+.bw-chip {
+  flex: none; width: 36px; height: 36px; border-radius: 50%; font-size: 13px; color: var(--ink-soft);
+  border: 1px solid var(--line); background: #fff; scroll-snap-align: center; font-variant-numeric: lining-nums;
+}
+.bw-chip.cur { border-color: var(--sage); color: var(--deep); font-weight: 500; }
+.bw-chip.on { background: var(--deep); border-color: var(--deep); color: #fff; }
+.baby-fig { margin: 0; border-radius: 16px; overflow: hidden; display: grid; place-items: center; min-height: 160px; background: var(--mist); }
+.baby-fig.ultrasound { background: #111; }
+.baby-fig img { display: block; max-width: 100%; max-height: 280px; object-fit: contain; }
+.baby-fig.illustration { background: #fff; border: 1px solid var(--line); }
+.baby-fig.illustration img { width: 160px; height: 160px; }
+.segs.wide { display: flex; width: 100%; }
+.segs.wide .seg { flex: 1; padding: 8px 6px; font-size: 13px; }
+.appt { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.appt.past { opacity: .6; }
+.appt-date { flex: none; width: 46px; height: 50px; border-radius: 12px; background: var(--mist); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--deep); }
+.appt-date b { font-family: var(--serif); font-weight: 400; font-size: 22px; line-height: 1; font-variant-numeric: lining-nums; }
+.appt-date span { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+.appt-time { flex: none; width: 112px; }
+.wchart { width: 100%; height: auto; display: block; }
+.wc-t { font-size: 9px; fill: var(--ink-soft); font-family: var(--sans); }
+.legend i.dot-rose { width: 8px; height: 8px; border-radius: 50%; background: var(--rose); }
+.hscroll.flat { padding: 0; }
+.foods { display: flex; flex-direction: column; }
+.food { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--line); }
+.food[hidden] { display: none; }
+.food-tag { flex: none; font-size: 11px; font-weight: 500; padding: 4px 9px; border-radius: 999px; white-space: nowrap; }
+.food-tag.tone-sage { color: #3F584B; background: var(--mist); }
+.food-tag.tone-gold { color: #7a5f30; background: var(--gold-soft); }
+.food-tag.tone-rose { color: #8a4f44; background: var(--rose-soft); }
+.credits summary { cursor: pointer; list-style: none; }
+.credits ul { margin-top: 8px; padding-left: 16px; list-style: disc; }
+.credits a, .baby-fig + p a { color: inherit; }

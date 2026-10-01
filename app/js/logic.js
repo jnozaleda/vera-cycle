@@ -69,6 +69,8 @@ export const fmtDayMonthShort = (dn) => fmt({ day: 'numeric', month: 'short' }).
 export const fmtDayMonthLong = (dn) => fmt({ day: 'numeric', month: 'long' }).format(jsDate(dn));
 /** "7 oct 2026" */
 export const fmtDayMonthYear = (dn) => fmt({ day: 'numeric', month: 'short', year: 'numeric' }).format(jsDate(dn)).replace('.', '');
+/** "oct" */
+export const fmtMonthShort = (dn) => fmt({ month: 'short' }).format(jsDate(dn)).replace('.', '');
 /** "octubre de 2026" */
 export const fmtMonthYear = (dn) => fmt({ month: 'long', year: 'numeric' }).format(jsDate(dn));
 /** "martes, 7 de octubre" */

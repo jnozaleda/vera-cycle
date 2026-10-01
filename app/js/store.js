@@ -42,6 +42,8 @@ function normalizeStage(st) {
     pregnancy: st.pregnancy && typeof st.pregnancy === 'object' ? st.pregnancy : null,
     postpartum: st.postpartum && typeof st.postpartum === 'object' ? st.postpartum : null,
     history: Array.isArray(st.history) ? st.history.filter((h) => h && dnFromISO(h.from) != null && dnFromISO(h.to) != null) : [],
+    appointments: Array.isArray(st.appointments)
+      ? st.appointments.filter((x) => x && x.id && typeof x.title === 'string' && dnFromISO(x.date) != null) : [],
   };
 }
 

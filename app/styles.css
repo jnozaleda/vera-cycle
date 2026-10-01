@@ -526,3 +526,19 @@ label.field { padding: 8px 14px; }
 .search { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); background: #fff; }
 .search input { flex: 1; border: 0; outline: 0; background: transparent; font-size: 14px; }
 .guide-sec[hidden], .faq-item[hidden] { display: none; }
+
+/* Selector de etapa y barra de guardar */
+.stage-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 12px 6px 10px;
+  border-radius: 12px; background: #fff; border: 1.5px solid var(--line); font-size: 13px; color: var(--ink-soft); transition: all .15s;
+}
+.stage-btn.on { background: var(--mist); border-color: var(--sage); color: var(--deep); font-weight: 500; }
+.stage-current {
+  font-style: normal; display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 500;
+  color: #fff; background: var(--sage); padding: 2px 7px; border-radius: 999px;
+}
+.save-bar {
+  flex: none; display: flex; align-items: center; gap: 12px; padding: 12px 22px calc(12px + env(safe-area-inset-bottom));
+  background: var(--gold-soft); border-top: 1px solid var(--gold); border-radius: 0 0 22px 22px;
+}
+@media (max-width: 699px) { .save-bar { border-radius: 0; } }

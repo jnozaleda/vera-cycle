@@ -842,6 +842,7 @@ function sheetFrame(title, content, handle = false) {
       <button class="link-deep" data-action="close-sheet">Cerrar</button>
     </div>
     <div class="sheet-body">${content}</div>
+    ${ui.sheet === 'settings' ? saveBar() : ''}
   </div>`;
 }
 
@@ -1291,11 +1292,27 @@ function applyGuideFilter() {
 
 // MARK: - Ajustes de etapa
 
+const STAGE_NAME = { cycle: 'Ciclo', pregnancy: 'Embarazo', postpartum: 'Posparto' };
+const settingsSnapshot = () => JSON.stringify({ d: ui.draft, s: ui.draftStage });
+const settingsDirty = () => ui.sheet === 'settings' && ui.settingsBaseline != null && settingsSnapshot() !== ui.settingsBaseline;
+
+/** Barra fija con «Guardar» cuando hay cambios sin guardar en ajustes */
+function saveBar() {
+  if (!settingsDirty()) return '';
+  const changing = stageUI() && ui.draftStage && ui.draftStage.mode !== store.mode;
+  return `<div class="save-bar">
+    <span class="t-13 grow">${changing ? `Pasarás a seguir: <b>${STAGE_NAME[ui.draftStage.mode]}</b>` : 'Tienes cambios sin guardar'}</span>
+    <button class="pill-dark" data-action="save-settings">Guardar</button>
+  </div>`;
+}
+
 function stageSection() {
   const d = ui.draftStage;
-  const btn = (label, val) => `<button class="type-btn ${d.mode === val ? 'on' : ''}" aria-pressed="${d.mode === val}" data-action="draft-stage" data-v="${val}">${label}</button>`;
+  const btn = (label, val, ic) => `<button class="stage-btn ${d.mode === val ? 'on' : ''}" aria-pressed="${d.mode === val}" data-action="draft-stage" data-v="${val}">
+      ${icon(ic, 18)}<span>${label}</span>${store.mode === val ? `<em class="stage-current">${icon('check', 10)} Actual</em>` : ''}
+    </button>`;
   return `<div class="stack-10"><div class="t-13 soft">¿Qué quieres seguir?</div>
-    <div class="row gap-8">${btn('Ciclo', 'cycle')}${btn('Embarazo', 'pregnancy')}${btn('Posparto', 'postpartum')}</div></div>
+    <div class="row gap-8">${btn('Ciclo', 'cycle', 'dotted')}${btn('Embarazo', 'pregnancy', 'heart')}${btn('Posparto', 'postpartum', 'sparkles')}</div></div>
     ${store.mode !== 'cycle' && d.mode === 'cycle' ? `<div class="note-mist lh-3"><span class="c-sage">${icon('info', 14)}</span><span>${store.mode === 'pregnancy'
       ? 'Si tu embarazo ha terminado, cuídate y date tiempo; puedes escribirnos cuando quieras. Indica abajo tu última regla cuando vuelva.'
       : 'Indica abajo el primer día de tu última regla. Los primeros ciclos tras el parto suelen ser irregulares.'}</span></div>` : ''}
@@ -1455,6 +1472,7 @@ function openSettings() {
     postpartum: { birthDate: '', feeding: null, ...(st.mode === 'postpartum' ? st.postpartum : {}) },
   };
   ui.draftLmp = '';
+  ui.settingsBaseline = settingsSnapshot();
   ui.sheetAnim = true;
   ui.draftPicker = todayISO();
   ui.sheet = 'settings';
@@ -1464,7 +1482,10 @@ function openSettings() {
 const actions = {
   tab: (el) => { ui.tab = +el.dataset.i; ui.sheet = null; render(); window.scrollTo(0, 0); },
   'open-settings': openSettings,
-  'close-sheet': () => { ui.sheet = null; render(); },
+  'close-sheet': () => {
+    if (settingsDirty() && !confirm('Tienes cambios sin guardar. ¿Salir sin guardarlos?')) return;
+    ui.sheet = null; render();
+  },
   'take-med': (el) => store.updateLog(todayISO(), (l) => { if (!l.meds.includes(el.dataset.id)) l.meds.push(el.dataset.id); }),
 
   // Ciclo — tira semanal y calendario
@@ -1694,7 +1715,7 @@ root.addEventListener('click', (e) => {
 
 // Teclado: Escape cierra el sheet; Enter/Espacio en el label de importar
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && ui.sheet) { ui.sheet = null; render(); }
+  if (e.key === 'Escape' && ui.sheet) actions['close-sheet']();
   if ((e.key === 'Enter' || e.key === ' ') && e.target.matches?.('label.pill-outline')) {
     e.preventDefault(); e.target.querySelector('input')?.click();
   }
@@ -1747,6 +1768,7 @@ root.addEventListener('change', (e) => {
     if (key.includes('.')) {
       const [head, k] = key.split('.');
       (head === 'draft' ? ui.draft : ui.ob)[k] = v;
+      if (head === 'draft') render();
       return;
     }
     const rounders = { basalTemp: (x) => Math.round(x * 10) / 10, sleepHours: (x) => Math.round(x * 2) / 2, weight: (x) => Math.round(x) };
@@ -1754,6 +1776,7 @@ root.addEventListener('change', (e) => {
     return;
   }
   if (el.dataset.model === 'draftStage.dueDate') { render(); return; }
+  if (el.dataset.model && /^draft/.test(el.dataset.model) && ui.sheet === 'settings') { render(); return; }
   if (el.dataset.model && el.type === 'date') {
     // Fechas de ajustes: validar que no sea futura
     if (el.value && el.value > todayISO()) { el.value = todayISO(); setModel(el.dataset.model, el.value); }

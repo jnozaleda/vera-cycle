@@ -12,3 +12,17 @@ export const SYNC_BETA_ONLY = false;
 
 // Modo embarazo y posparto: solo visible con ?beta hasta que el contenido clínico esté revisado.
 export const PREGNANCY_BETA_ONLY = false;
+
+// Consulta con el ginecólogo. Rellenar cuando estén disponibles:
+// - photo: ruta de la foto (p. ej. 'img/gonzalo.jpg'); vacío = círculo con iniciales.
+// - colegiado: número de colegiado; vacío = no se muestra.
+// - whatsapp: número en formato internacional sin '+' (p. ej. '34600111222'); vacío = sin botón de WhatsApp.
+export const CONSULT = {
+  name: 'Dr. Gonzalo Nozaleda',
+  initials: 'GN',
+  role: 'Ginecólogo',
+  colegiado: '',
+  photo: '',
+  whatsapp: '',
+  responseHours: 48,
+};

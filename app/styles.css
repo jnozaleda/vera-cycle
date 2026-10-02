@@ -587,3 +587,36 @@ label.field { padding: 8px 14px; }
 .credits summary { cursor: pointer; list-style: none; }
 .credits ul { margin-top: 8px; padding-left: 16px; list-style: disc; }
 .credits a, .baby-fig + p a { color: inherit; }
+
+/* ── Consulta con el ginecólogo (ayuda contextual discreta) ── */
+.cav {
+  flex: none; border-radius: 50%; background: var(--sage); color: #fff; display: inline-grid; place-items: center;
+  font-weight: 500; object-fit: cover; letter-spacing: .3px;
+}
+.cav.xs { width: 20px; height: 20px; font-size: 8px; }
+.cav.sm { width: 30px; height: 30px; font-size: 11px; background: var(--deep); }
+.cav.lg { width: 52px; height: 52px; font-size: 17px; background: var(--deep); }
+.avatar-btn { padding: 0; overflow: hidden; border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line); }
+.ask-link {
+  display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+  margin-top: 4px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--ink-soft);
+}
+.ask-link u, .inline-link { text-decoration: none; color: var(--deep); border-bottom: 1px solid var(--sage); }
+.text-center > .ask-link { justify-content: center; border-top: 0; }
+.faq-a .ask-link { margin-top: 2px; }
+.inline-link { font-size: inherit; padding: 0; }
+.soft-note {
+  font-size: 13px; line-height: 1.5; color: var(--ink); padding: 12px 14px; border-radius: 14px;
+  background: #F7EFEC; border: 1px solid color-mix(in srgb, var(--rose) 25%, transparent);
+}
+.soft-note .inline-link { border-color: var(--rose); color: #8a4f44; margin-left: 2px; }
+.soft-note a { color: inherit; }
+.urgent-sec { padding-top: 6px; padding-bottom: 6px; border-top: 1px solid var(--line); }
+.urgent-sec summary { color: var(--ink-soft); font-weight: 500; }
+.urgent-sec .faq-a a { color: var(--deep); }
+.ctx-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 5px 10px; border-radius: 999px; background: var(--gold-soft); color: #7a5f30; }
+.ask-text { resize: vertical; min-height: 110px; line-height: 1.5; font-family: inherit; }
+.ask-check { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+.ask-check input { margin-top: 3px; accent-color: var(--deep); width: 16px; height: 16px; flex: none; }
+.ask-done { align-items: center; padding: 10px 0 20px; }
+.self-center { align-self: center; }

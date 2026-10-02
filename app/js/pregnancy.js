@@ -42,7 +42,7 @@ export const PREGNANCY_TIMELINE = [
   { from: 4, to: 10, title: 'Primera visita con la matrona', text: 'Pide cita en tu centro de salud en cuanto tengas el test positivo: te abrirán la cartilla y te pedirán la primera analítica. Lo ideal es antes de la semana 10.' },
   { from: 11, to: 14, title: 'Ecografía del primer trimestre y cribado', text: 'Se confirma que todo está bien situado, cuántos bebés hay y se ajusta la fecha de parto. El cribado combinado calcula una probabilidad, no da un diagnóstico.' },
   { from: 19, to: 22, title: 'Ecografía morfológica', text: 'La más detallada del embarazo: se revisan los órganos del bebé, la placenta y el líquido.' },
-  { from: 24, to: 28, title: 'Test de O\'Sullivan', text: 'Detecta la diabetes del embarazo. No hace falta ir en ayunas. Si sale alterado, se confirma con una prueba más larga.' },
+  { from: 24, to: 28, title: 'Test de O\'Sullivan', text: 'Detecta la diabetes del embarazo. Hay que ir en ayunas. Si sale alterado, se confirma con una prueba más larga.' },
   { from: 27, to: 28, title: 'Vacuna de la tosferina (dTpa)', text: 'En cada embarazo, preferiblemente entre las semanas 27 y 28: tus defensas protegerán al bebé en sus primeros meses.' },
   { from: 26, to: 28, title: 'Inyección anti-D', text: 'Como eres Rh negativo, te la pondrán hacia la semana 28 (y tras el parto si el bebé es Rh positivo).', rh: 'neg' },
   { from: 28, to: 30, title: 'Clases de preparación al parto', text: 'Las organiza la matrona de tu centro de salud. Son gratuitas y tu acompañante puede ir contigo.' },

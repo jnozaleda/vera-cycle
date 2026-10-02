@@ -60,7 +60,7 @@ export const PREGNANCY_GUIDE = [
   {
     id: 's24', from: 24, to: 28, title: 'Semanas 24 a 28', subtitle: 'Control del azúcar y vacunas',
     items: [
-      { q: '¿Qué es el test de O\'Sullivan?', a: ['Es una prueba para detectar la diabetes del embarazo. Se hace entre las semanas 24 y 28: te sacan sangre una hora después de tomar una bebida con azúcar. No hace falta ir en ayunas. Si tienes factores de riesgo, como sobrepeso o diabetes en la familia, puede que te la hagan también en el primer trimestre.'] },
+      { q: '¿Qué es el test de O\'Sullivan?', a: ['Es una prueba para detectar la diabetes del embarazo. Se hace entre las semanas 24 y 28: te sacan sangre una hora después de tomar una bebida con azúcar. Hay que ir en ayunas. Si tienes factores de riesgo, como sobrepeso o diabetes en la familia, puede que te la hagan también en el primer trimestre.'] },
       { q: '¿Y si el O\'Sullivan sale alterado?', a: ['No quiere decir que tengas diabetes. Solo indica que hay que hacer una prueba más larga (la sobrecarga oral de glucosa), que sí confirma o descarta el diagnóstico. La mayoría de las mujeres con un O\'Sullivan alterado no tienen diabetes.'] },
       { q: 'Soy Rh negativo, ¿qué significa?', rh: true, a: ['Si tú eres Rh negativo y el bebé es Rh positivo, tu cuerpo podría fabricar defensas contra su sangre, lo que afectaría a futuros embarazos. Para evitarlo te pondrán una inyección de inmunoglobulina anti-D hacia la semana 28 y otra tras el parto si el bebé es Rh positivo. También si tienes un sangrado, un golpe en la tripa o una amniocentesis.'] },
       { q: '¿Qué vacunas me tengo que poner?', a: ['Tres, todas seguras en el embarazo:', [

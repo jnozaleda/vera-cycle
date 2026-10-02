@@ -105,6 +105,7 @@ const ui = {
   foodQuery: '',
   foodCat: 'Todos',
   ask: { context: '', include: true, text: '', sent: null }, // hoja «Pregúntale a Gonzalo»
+  babyForm: { birth: '', date: '', weight: '' },          // peso del recién nacido
 };
 
 // =========================================================================
@@ -1222,6 +1223,13 @@ function postpartumToday() {
         <span class="stack-0"><span class="serif-24">${plural(s.weeks, 'semana', 'semanas')}</span><span class="t-13 soft">+ ${s.days} ${plural(s.days, 'día', 'días')}</span></span>
       </div>
       <div class="t-12 soft">Tu bebé nació el ${esc(fmtDayMonthLong(s.birth))}</div>
+      ${(() => {
+        const bb = store.stage.postpartum?.baby;
+        if (!bb?.birthWeight) return `<button class="link-soft" data-action="open-care" data-v="baby">Apuntar su peso al nacer →</button>`;
+        const ws = [...(bb.weights || [])].sort((a, b) => a.date.localeCompare(b.date));
+        const lw = ws[ws.length - 1];
+        return `<button class="link-soft" data-action="open-care" data-v="baby">Peso al nacer ${fmtBabyKg(bb.birthWeight)}${lw ? ` · último ${fmtBabyKg(lw.g)}` : ''} →</button>`;
+      })()}
     </div>
     ${nextAppointmentCard()}
     <div class="card pad stack-10">
@@ -1468,7 +1476,7 @@ function buildStage() {
     const birth = dnFromISO(d.postpartum.birthDate);
     if (birth == null || birth > today) return { error: 'Indica la fecha del parto.' };
     closePregnancy(isoFromDN(birth));
-    return { stage: { ...cur, mode: 'postpartum', pregnancy: null, postpartum: { birthDate: d.postpartum.birthDate, feeding: d.postpartum.feeding ?? null }, history } };
+    return { stage: { ...cur, mode: 'postpartum', pregnancy: null, postpartum: { ...(cur.mode === 'postpartum' ? cur.postpartum : {}), birthDate: d.postpartum.birthDate, feeding: d.postpartum.feeding ?? null }, history } };
   }
   closePregnancy(todayISO());
   const postpartum = cur.mode === 'postpartum' && cur.postpartum ? { ...cur.postpartum, endedAt: todayISO() } : cur.postpartum;
@@ -1681,10 +1689,107 @@ function applyFoodFilter() {
   if (empty) empty.hidden = any;
 }
 
+
+// MARK: - Peso del recién nacido (posparto)
+
+const fmtBabyKg = (g) => `${fmtNum(g / 1000, 2)} kg`;
+/** Acepta «3,25», «3.25», «3.250» (kg) o «3250» (g). Devuelve gramos o null */
+function parseBabyWeight(str) {
+  const v = parseFloat(String(str).trim().replace(/\s/g, '').replace(',', '.'));
+  if (!Number.isFinite(v)) return null;
+  const g = v < 30 ? Math.round(v * 1000) : Math.round(v);
+  return g >= 400 && g <= 15000 ? g : null;
+}
+
+function babyWeightChart(birthG, entries, birthDN) {
+  const W = 320, H = 170, L = 40, R = 10, T = 12, B = 24;
+  const pts = [{ day: 0, g: birthG }, ...entries.map((e) => ({ day: dnFromISO(e.date) - birthDN, g: e.g }))];
+  const maxDay = Math.max(28, ...pts.map((p) => p.day));
+  const gs = pts.map((p) => p.g);
+  const minG = Math.min(...gs, birthG * 0.88), maxG = Math.max(...gs, birthG * 1.12);
+  const x = (d) => L + (d / maxDay) * (W - L - R);
+  const y = (g) => T + (1 - (g - minG) / (maxG - minG)) * (H - T - B);
+  const ticks = [minG, birthG, maxG].map((g) => Math.round(g / 50) * 50);
+  return `<svg class="wchart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolución del peso del bebé desde el nacimiento">
+    ${ticks.map((g) => `<text x="${L - 6}" y="${y(g) + 3}" text-anchor="end" class="wc-t">${fmtNum(g / 1000, 2)}</text>`).join('')}
+    <line x1="${L}" x2="${W - R}" y1="${y(birthG)}" y2="${y(birthG)}" stroke="var(--sage)" stroke-dasharray="4 4"/>
+    <line x1="${L}" x2="${W - R}" y1="${y(birthG * 0.9)}" y2="${y(birthG * 0.9)}" stroke="var(--line)"/>
+    <text x="${W - R}" y="${y(birthG) - 4}" text-anchor="end" class="wc-t">peso al nacer</text>
+    <text x="${W - R}" y="${y(birthG * 0.9) - 4}" text-anchor="end" class="wc-t">−10 %</text>
+    ${[0, 7, 14, 21, 28].filter((d) => d <= maxDay).map((d) => `<text x="${x(d)}" y="${H - 8}" text-anchor="middle" class="wc-t">${d}</text>`).join('')}
+    <polyline points="${pts.map((p) => `${x(p.day).toFixed(1)},${y(p.g).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--rose)" stroke-width="1.5"/>
+    ${pts.map((p) => `<circle cx="${x(p.day).toFixed(1)}" cy="${y(p.g).toFixed(1)}" r="3.5" fill="var(--rose)"><title>Día ${p.day}: ${fmtBabyKg(p.g)}</title></circle>`).join('')}
+  </svg>
+  <div class="t-11 soft text-center">Peso en kg · días desde el nacimiento</div>`;
+}
+
+/** Mensaje orientativo según el último peso (pendiente de revisión clínica) */
+function babyWeightNote(birthG, last, birthDN) {
+  if (!last) return '';
+  const day = dnFromISO(last.date) - birthDN;
+  const pct = ((last.g - birthG) / birthG) * 100;
+  if (pct <= -10) return `<div class="soft-note">Ha perdido un ${fmtNum(-pct, 0)} % de su peso al nacer. Una pérdida del 10 % o más conviene comentarla hoy con tu matrona o su pediatra.</div>`;
+  if (pct < 0 && day >= 14) return `<div class="soft-note">A los ${day} días aún está un ${fmtNum(-pct, 0)} % por debajo de su peso al nacer: coméntalo con su pediatra.</div>`;
+  if (pct < 0) return `<p class="t-12 soft lh-4">Está un ${fmtNum(-pct, 0)} % por debajo de su peso al nacer. Perder peso en los primeros días es normal (hasta un 7 % aproximadamente) y la mayoría lo recupera hacia los 10 a 14 días.</p>`;
+  return `<p class="t-12 soft lh-4">${day <= 21 ? 'Ya ha recuperado su peso al nacer.' : 'Está por encima de su peso al nacer.'} Su pediatra valora su curva de crecimiento en cada revisión.</p>`;
+}
+
+function babyWeightSection() {
+  const pp = store.stage.postpartum || {};
+  const birthDN = dnFromISO(pp.birthDate);
+  const baby = pp.baby || {};
+  const f = ui.babyForm;
+  if (!baby.birthWeight) {
+    return `<div class="card pad stack-12">${eyebrow('Peso del bebé')}
+      <p class="t-13 soft lh-4">Apunta su peso al nacer y los pesos que le tomen en las revisiones para ver cómo evoluciona.</p>
+      <label class="stack-4"><span class="t-12 soft">Peso al nacer</span>
+        <input class="field" inputmode="decimal" data-model="babyForm.birth" value="${attr(f.birth)}" placeholder="3,25 kg o 3250 g"></label>
+      <button class="outline-sage" data-action="bw-birth">Guardar</button>
+      <button class="link-soft" data-action="open-guide" data-section="rn">Dudas sobre su peso →</button>
+    </div>`;
+  }
+  const entries = [...(baby.weights || [])].sort((a, b) => a.date.localeCompare(b.date));
+  const last = entries[entries.length - 1];
+  const row = (e) => {
+    const day = dnFromISO(e.date) - birthDN;
+    const pct = ((e.g - baby.birthWeight) / baby.birthWeight) * 100;
+    return `<div class="appt"><div class="appt-date"><b>${day}</b><span>${plural(day, 'día', 'días')}</span></div>
+      <div class="grow"><div class="t-14 w-500">${fmtBabyKg(e.g)}</div><div class="t-12 soft">${esc(fmtDayMonthShort(dnFromISO(e.date)))} · ${pct >= 0 ? '+' : '−'}${fmtNum(Math.abs(pct), 1)} % respecto al nacimiento</div></div>
+      <button class="icon-btn soft" data-action="bw-delete" data-id="${attr(e.id)}" aria-label="Eliminar este peso">${icon('x', 12)}</button></div>`;
+  };
+  return `<div class="card pad stack-12">
+    <div class="row between center">${eyebrow('Peso del bebé')}<button class="link-soft" data-action="bw-edit-birth">Cambiar peso al nacer</button></div>
+    <div class="row gap-12">
+      <div class="grow"><div class="serif-28">${fmtBabyKg(baby.birthWeight)}</div><div class="t-11 soft">Al nacer</div></div>
+      ${last ? `<div class="grow"><div class="serif-28">${fmtBabyKg(last.g)}</div><div class="t-11 soft">Último · día ${dnFromISO(last.date) - birthDN}</div></div>` : ''}
+    </div>
+    ${entries.length ? babyWeightChart(baby.birthWeight, entries, birthDN) : ''}
+    ${babyWeightNote(baby.birthWeight, last, birthDN)}
+    ${entries.length ? `<div>${[...entries].reverse().map(row).join('')}</div>` : ''}
+    <div class="stack-8">
+      <div class="t-13 w-500">Añadir un peso</div>
+      <div class="row gap-8">
+        <input type="date" class="field date grow" data-model="babyForm.date" value="${attr(f.date || todayISO())}" min="${attr(pp.birthDate || '')}" max="${todayISO()}" aria-label="Fecha">
+        <input class="field baby-w" inputmode="decimal" data-model="babyForm.weight" value="${attr(f.weight)}" placeholder="kg o g" aria-label="Peso">
+      </div>
+      <button class="outline-sage" data-action="bw-add">${icon('plusCircle', 14)} Guardar peso</button>
+    </div>
+    <p class="t-11 soft-70 lh-3">Mejor los pesos de las revisiones que los de casa: las básculas domésticas no son precisas. Es una orientación, no sustituye la valoración de su pediatra.</p>
+    <button class="link-soft" data-action="open-guide" data-section="rn">Dudas sobre su peso →</button>
+    ${askLink('', '¿Te preocupa su peso?', 'Peso del bebé')}
+  </div>`;
+}
+
 function careView() {
-  if (store.mode === 'postpartum') return `<div class="stack-18">${agendaSection()}<div class="text-center">${askLink('¿Tienes alguna duda?', 'Pregúntale a Gonzalo', 'Posparto')}</div></div>`;
   const seg = (v, label) => `<button class="seg ${ui.careSection === v ? 'on' : ''}" aria-pressed="${ui.careSection === v}" data-action="care-section" data-v="${v}">${label}</button>`;
-  const section = { agenda: agendaSection, weight: weightSection, food: foodSection }[ui.careSection]();
+  if (store.mode === 'postpartum') {
+    const sec = ui.careSection === 'baby' ? 'baby' : 'agenda';
+    return `<div class="stack-18">
+      <div class="segs wide">${seg('agenda', 'Agenda')}${seg('baby', 'Peso del bebé')}</div>
+      ${sec === 'baby' ? babyWeightSection() : agendaSection()}
+    </div>`;
+  }
+  const section = { agenda: agendaSection, weight: weightSection, food: foodSection }[ui.careSection === 'baby' ? 'agenda' : ui.careSection]();
   return `<div class="stack-18">
     <div class="segs wide">${seg('agenda', 'Agenda')}${seg('weight', 'Peso')}${seg('food', 'Alimentación')}</div>
     ${section}
@@ -1993,6 +2098,38 @@ const actions = {
     }
     render();
   },
+  'bw-birth': () => {
+    const g = parseBabyWeight(ui.babyForm.birth);
+    if (!g) { alert('Indica el peso al nacer, por ejemplo 3,25 kg o 3250 g.'); return; }
+    const pp = store.stage.postpartum || {};
+    ui.babyForm.birth = '';
+    store.updateStage({ ...store.stage, postpartum: { ...pp, baby: { ...(pp.baby || {}), birthWeight: g, weights: pp.baby?.weights || [] } } });
+  },
+  'bw-edit-birth': () => {
+    const pp = store.stage.postpartum || {};
+    const v = prompt('Peso al nacer (kg o g)', pp.baby?.birthWeight ? fmtNum(pp.baby.birthWeight / 1000, 2) : '');
+    if (v == null) return;
+    const g = parseBabyWeight(v);
+    if (!g) { alert('Peso no válido. Ejemplo: 3,25 kg o 3250 g.'); return; }
+    store.updateStage({ ...store.stage, postpartum: { ...pp, baby: { ...(pp.baby || {}), birthWeight: g } } });
+  },
+  'bw-add': () => {
+    const pp = store.stage.postpartum || {};
+    const g = parseBabyWeight(ui.babyForm.weight);
+    const date = ui.babyForm.date || todayISO();
+    if (!g) { alert('Indica el peso, por ejemplo 3,40 kg o 3400 g.'); return; }
+    if (dnFromISO(date) == null || date > todayISO() || (pp.birthDate && date < pp.birthDate)) { alert('Revisa la fecha.'); return; }
+    const id = crypto.randomUUID ? crypto.randomUUID() : `w${Date.now()}`;
+    const weights = [...(pp.baby?.weights || []).filter((w) => w.date !== date), { id, date, g }];
+    ui.babyForm = { ...ui.babyForm, weight: '', date: '' };
+    store.updateStage({ ...store.stage, postpartum: { ...pp, baby: { ...(pp.baby || {}), weights } } });
+  },
+  'bw-delete': (el) => {
+    if (!confirm('¿Eliminar este peso?')) return;
+    const pp = store.stage.postpartum || {};
+    const weights = (pp.baby?.weights || []).filter((w) => w.id !== el.dataset.id);
+    store.updateStage({ ...store.stage, postpartum: { ...pp, baby: { ...(pp.baby || {}), weights } } });
+  },
   'open-urgent': () => { ui.sheet = 'urgent'; ui.sheetAnim = true; render(); },
   'open-guide': (el) => {
     ui.tab = tabIndex('guide');
@@ -2134,6 +2271,7 @@ function setModel(path, value) {
   else if (head === 'newAppt') ui.newAppt[key] = value;
   else if (head === 'careForm') ui.careForm[key] = value;
   else if (head === 'ask') ui.ask[key] = value;
+  else if (head === 'babyForm') ui.babyForm[key] = value;
   else if (head === 'draftStage') {
     if (key === 'dueDate') ui.draftStage.pregnancy.dueDate = value;
     else if (key === 'height' || key === 'preWeight') ui.draftStage.pregnancy[key] = value === '' ? null : parseFloat(value.replace(',', '.'));

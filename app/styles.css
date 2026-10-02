@@ -645,3 +645,5 @@ label.field { padding: 8px 14px; }
 
 .num-label { display: flex; align-items: flex-start; gap: 6px; min-width: 0; }
 .num-label .ic { margin-top: 3px; }
+
+.baby-w { flex: none; width: 110px; }

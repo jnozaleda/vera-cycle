@@ -128,6 +128,17 @@ export const POSTPARTUM_GUIDE = [
     ],
   },
   {
+    id: 'rn', title: 'El recién nacido', subtitle: 'Su peso',
+    items: [
+      { draft: true, q: '¿Cuánto pesa un recién nacido?', a: ['Un bebé nacido a término suele pesar entre 2,5 y 4 kg. Al nacer lo pesan y lo miden, y el dato queda anotado en su cartilla de salud: apúntalo también en Vera para seguir su evolución.'] },
+      { draft: true, q: '¿Es normal que pierda peso los primeros días?', a: ['Sí. Casi todos los bebés pierden peso en los primeros días mientras se pone en marcha la alimentación. Lo habitual es perder hasta un 7 % del peso al nacer, con el punto más bajo hacia el tercer o cuarto día. Si la pérdida se acerca o supera el 10 %, tu matrona o su pediatra lo valorarán.'] },
+      { draft: true, q: '¿Cuándo recupera el peso del nacimiento?', a: ['La mayoría lo recupera hacia los 10 a 14 días; algunos tardan hasta las 3 semanas. Por eso son importantes las primeras revisiones con la matrona y el pediatra.'] },
+      { draft: true, q: '¿Cuánto debe ganar después?', a: ['Durante los primeros meses, de forma orientativa, entre 150 y 250 g a la semana. Cada bebé tiene su ritmo: lo importante es que siga su propia curva de crecimiento, que el pediatra valora en cada revisión.'] },
+      { draft: true, q: '¿Cómo sé si come lo suficiente?', a: ['Son señales tranquilizadoras que, a partir del quinto día, moje al menos 6 pañales al día y haga deposiciones amarillas, que esté activo en las tomas y que se quede tranquilo después. Consulta pronto si moja pocos pañales, está muy dormido y cuesta despertarlo para comer, tiene la piel o los ojos cada vez más amarillos o no ha recuperado el peso al nacer a las 2 o 3 semanas.'] },
+      { draft: true, q: '¿Tengo que pesarlo en casa?', a: ['No hace falta. Las básculas domésticas no son precisas y el peso de un bebé varía mucho de un día para otro (según haya comido o mojado el pañal). Es mejor apuntar los pesos que le toman en las revisiones.'] },
+    ],
+  },
+  {
     id: 'ppc', title: 'La regla y la anticoncepción', subtitle: 'Cuando vuelva tu ciclo',
     items: [
       { draft: true, q: '¿Cuándo vuelve la regla?', a: ['Si no das el pecho, suele volver entre 6 y 8 semanas después del parto. Si das lactancia materna, puede tardar meses, sobre todo si es exclusiva. Los primeros ciclos suelen ser irregulares, así que las predicciones de Vera serán poco fiables hasta que registres dos o tres reglas.'] },

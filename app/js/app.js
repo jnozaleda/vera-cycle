@@ -384,14 +384,36 @@ function symptomChip(s, log) {
   return chip(s, log.symptoms.includes(s), 'toggle-symptom', { s }, tone);
 }
 
-function trackingSlider(label, ic, tone, key, value, def, min, max, step, format) {
-  return `<div class="stack-8">
-    <div class="row gap-6 center"><span class="c-${tone === 'deep' ? 'deep' : tone}">${icon(ic, 13)}</span><span class="t-13 w-500 soft">${label}</span>${def.note || ''}</div>
-    <div class="row gap-12 center">
-      ${rangeRow({ key, min, max, step, value: value ?? def.value, tone })}
-      <span class="range-val" data-out="${key}">${value != null ? format(value) : '—'}</span>
+// Campos numéricos del diario: se escribe el número o se ajusta con − / +
+const NUM_FIELDS = {
+  basalTemp: { unit: '°C', step: 0.1, min: 34, max: 42, round: 0.1, def: 36.5, fixed: 1 },
+  sleepHours: { unit: 'h', step: 0.5, min: 0, max: 16, round: 0.5, def: 7 },
+  weight: { unit: 'kg', step: 0.5, min: 30, max: 200, round: 0.1, def: 60 },
+};
+const fmtField = (key, v) => (NUM_FIELDS[key].fixed != null ? fmtNum(v, NUM_FIELDS[key].fixed)
+  : Number.isInteger(v) ? String(v) : fmtNum(v, 1));
+const numDefault = (key) => (key === 'weight' ? (store.defaultWeight ?? NUM_FIELDS.weight.def) : NUM_FIELDS[key].def);
+const roundField = (key, v) => {
+  const f = NUM_FIELDS[key];
+  return Math.min(f.max, Math.max(f.min, Number((Math.round(v / f.round) * f.round).toFixed(2))));
+};
+
+function trackingSlider(label, ic, tone, key, value, def) {
+  const f = NUM_FIELDS[key];
+  return `<div class="stack-6">
+    <div class="num-row">
+      <div class="num-label grow"><span class="c-${tone === 'deep' ? 'deep' : tone}">${icon(ic, 13)}</span><span><span class="t-13 w-500 soft">${label}</span>${def.note ? `<span class="block">${def.note}</span>` : ''}</span></div>
+      <div class="stepper">
+        <button class="step-btn" data-action="num-step" data-key="${key}" data-dir="-1" aria-label="Menos ${attr(label.toLowerCase())}">−</button>
+        <label class="num-box ${value != null ? 'filled' : ''}">
+          <input class="num-input" data-num="${key}" inputmode="decimal" enterkeyhint="done" autocomplete="off"
+            value="${value != null ? attr(fmtField(key, value)) : ''}" placeholder="${attr(fmtField(key, numDefault(key)))}" aria-label="${attr(label)} en ${f.unit}">
+          <span>${f.unit}</span>
+        </label>
+        <button class="step-btn" data-action="num-step" data-key="${key}" data-dir="1" aria-label="Más ${attr(label.toLowerCase())}">+</button>
+      </div>
     </div>
-    ${value != null ? `<button class="link-soft" data-action="clear-field" data-field="${key}">Borrar</button>` : ''}
+    ${value != null ? `<button class="link-soft self-end" data-action="clear-field" data-field="${key}">Borrar</button>` : ''}
   </div>`;
 }
 
@@ -1826,6 +1848,13 @@ const actions = {
   },
   'set-stress': (el) => store.updateLog(ui.selectedDate, (l) => { l.stressLevel = l.stressLevel === el.dataset.v ? null : el.dataset.v; }),
   'set-mucus': (el) => store.updateLog(ui.selectedDate, (l) => { l.cervicalMucus = l.cervicalMucus === el.dataset.v ? null : el.dataset.v; }),
+  'num-step': (el) => {
+    const key = el.dataset.key;
+    const cur = store.log(ui.selectedDate)[key];
+    // Primer toque con el campo vacío: rellena con la sugerencia
+    const next = cur == null ? numDefault(key) : cur + Number(el.dataset.dir) * NUM_FIELDS[key].step;
+    store.updateLog(ui.selectedDate, (l) => { l[key] = roundField(key, next); });
+  },
   'clear-field': (el) => store.updateLog(ui.selectedDate, (l) => { l[el.dataset.field] = null; }),
 
   // Medicación
@@ -2087,6 +2116,7 @@ root.addEventListener('click', (e) => {
 
 // Teclado: Escape cierra el sheet; Enter/Espacio en el label de importar
 document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target.matches?.('.num-input')) { e.preventDefault(); e.target.blur(); return; }
   if (e.key === 'Escape' && ui.sheet) actions['close-sheet']();
   if ((e.key === 'Enter' || e.key === ' ') && e.target.matches?.('label.pill-outline')) {
     e.preventDefault(); e.target.querySelector('input')?.click();
@@ -2145,6 +2175,16 @@ root.addEventListener('change', (e) => {
     return;
   }
   if (el.matches('[data-ask-include]')) { ui.ask.include = el.checked; return; }
+  if (el.dataset.num) {
+    const key = el.dataset.num;
+    const raw = el.value.trim().replace(',', '.');
+    const v = parseFloat(raw);
+    if (raw === '') store.updateLog(ui.selectedDate, (l) => { l[key] = null; });
+    else if (Number.isFinite(v) && v >= NUM_FIELDS[key].min && v <= NUM_FIELDS[key].max) {
+      store.updateLog(ui.selectedDate, (l) => { l[key] = roundField(key, v); });
+    } else render(); // valor no válido: vuelve al anterior
+    return;
+  }
   if (el.dataset.range) {
     const key = el.dataset.range;
     const v = parseFloat(el.value);

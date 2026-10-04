@@ -18,6 +18,7 @@ import {
   URGENT_PREGNANCY, URGENT_POSTPARTUM, pregnancyMedWarnings,
 } from './pregnancy.js';
 import { babyWeek, BABY_MEDIA, mediaFor } from './baby.js';
+import { mountFetus, FETUS_MIN_WEEK } from './fetus3d.js';
 import { FOODS, FOOD_CATEGORIES, FOOD_STATUS, foodFor, bmi, gainRange, gainBandAt, appointmentICS } from './care.js';
 import { GUIDE_INTRO, PREGNANCY_GUIDE, POSTPARTUM_GUIDE, guideSectionFor } from './guide.js';
 import { PREGNANCY_LINE, pregnancyNormal, pregnancyFaqs, postpartumLine, postpartumNormal, postpartumFaqs } from './today.js';
@@ -1521,13 +1522,24 @@ function buildStage() {
 // MARK: - Mi bebé (embarazo)
 // =========================================================================
 
+function fetusBlock(week) {
+  if (week < FETUS_MIN_WEEK) return `<p class="t-13 soft lh-4">El modelo 3D está disponible desde la semana ${FETUS_MIN_WEEK}. Antes de esa semana, prueba con la ilustración.</p>`;
+  return `<div class="fetus-stage" data-fetus-week="${week}" data-state="loading">
+      <div class="fetus-msg fetus-loading">Modelando la semana ${week}…</div>
+      <div class="fetus-msg fetus-error">Tu navegador no puede mostrar el modelo 3D. Prueba con la ilustración o la ecografía.</div>
+      <div class="fetus-hint">Arrastra para girar<br>Pellizca para acercar</div>
+    </div>
+    <p class="t-11 soft-70 lh-3">Modelo generado por ordenador: refleja proporciones y cambios generales del desarrollo, no la anatomía exacta de tu bebé.</p>`;
+}
+
 function babyView() {
   const g = gestation(store.stage.pregnancy);
   const current = g && g.totalDays >= 0 ? Math.min(40, Math.max(4, g.weeks)) : null;
   const week = ui.babyWeek ?? current ?? 12;
   const b = babyWeek(week);
   const trimester = week < 14 ? 1 : week < 28 ? 2 : 3;
-  const media = mediaFor(ui.babyMedia, week);
+  const is3d = ui.babyMedia === '3d';
+  const media = is3d ? null : mediaFor(ui.babyMedia, week);
   const seg = (v, label) => `<button class="seg ${ui.babyMedia === v ? 'on' : ''}" aria-pressed="${ui.babyMedia === v}" data-action="baby-media" data-v="${v}">${label}</button>`;
   const chips = Array.from({ length: 37 }, (_, i) => i + 4).map((w) =>
     `<button class="bw-chip ${w === week ? 'on' : ''} ${w === current ? 'cur' : ''}" data-action="baby-week" data-w="${w}" aria-label="Semana ${w}">${w}</button>`).join('');
@@ -1543,8 +1555,8 @@ function babyView() {
       ${current != null && week === current ? '<span class="now-tag self-start">Tu semana</span>' : ''}
     </div>
     <div class="card pad stack-12">
-      <div class="row between center wrap gap-8">${eyebrow('Cómo es')}<span class="segs">${seg('illustration', 'Ilustración')}${seg('ultrasound', 'Ecografía')}</span></div>
-      ${media ? `<figure class="baby-fig ${ui.babyMedia}">
+      <div class="row between center wrap gap-8">${eyebrow('Cómo es')}<span class="segs">${seg('illustration', 'Ilustración')}${seg('ultrasound', 'Ecografía')}${seg('3d', '3D')}</span></div>
+      ${is3d ? fetusBlock(week) : media ? `<figure class="baby-fig ${ui.babyMedia}">
           <img src="${media.src}" alt="${attr(media.alt || `Ilustración de un feto de ${media.week} semanas`)}" loading="lazy">
         </figure>
         ${media.week !== week ? `<p class="t-11 soft lh-3">Imagen de referencia de la semana ${media.week}: no representa exactamente la semana ${week}.</p>` : ''}
@@ -1905,6 +1917,8 @@ function render() {
   if (screen !== lastScreen) { window.scrollTo(0, 0); lastScreen = screen; }
   if (ui.guideQuery) applyGuideFilter();
   if (ui.foodQuery) applyFoodFilter();
+  const fs = root.querySelector('[data-fetus-week]');
+  if (fs) mountFetus(fs, +fs.dataset.fetusWeek);
   root.querySelector('.bw-chip.on')?.scrollIntoView({ block: 'nearest', inline: 'center' });
 }
 

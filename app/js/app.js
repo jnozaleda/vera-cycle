@@ -1648,8 +1648,8 @@ function weightChart(range, points) {
     ${yTicks.map((k) => `<line x1="${L}" x2="${W - R}" y1="${y(k)}" y2="${y(k)}" stroke="var(--line)"/><text x="${L - 6}" y="${y(k) + 3}" text-anchor="end" class="wc-t">${k}</text>`).join('')}
     ${[0, 10, 20, 30, 40].map((w) => `<text x="${x(w)}" y="${H - 10}" text-anchor="middle" class="wc-t">${w}</text>`).join('')}
     ${band}
-    ${points.length > 1 ? `<polyline points="${points.map((p) => `${x(p.week).toFixed(1)},${y(p.gain).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--rose)" stroke-width="1.5"/>` : ''}
-    ${points.map((p) => `<circle cx="${x(p.week).toFixed(1)}" cy="${y(p.gain).toFixed(1)}" r="3.5" fill="var(--rose)"><title>Semana ${Math.floor(p.week)}: ${p.gain >= 0 ? '+' : ''}${fmtNum(p.gain, 1)} kg</title></circle>`).join('')}
+    ${points.length > 1 ? `<polyline points="${points.map((p) => `${x(p.week).toFixed(1)},${y(p.gain).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--st-mid)" stroke-width="1.5"/>` : ''}
+    ${points.map((p) => `<circle cx="${x(p.week).toFixed(1)}" cy="${y(p.gain).toFixed(1)}" r="3.5" fill="var(--st-mid)"><title>Semana ${Math.floor(p.week)}: ${p.gain >= 0 ? '+' : ''}${fmtNum(p.gain, 1)} kg</title></circle>`).join('')}
     <text x="${L - 6}" y="${T - 1}" text-anchor="end" class="wc-t">kg</text>
   </svg>
   <div class="t-11 soft text-center">Semanas de embarazo</div>`;
@@ -1751,8 +1751,8 @@ function babyWeightChart(birthG, entries, birthDN) {
     <text x="${W - R}" y="${y(birthG) - 4}" text-anchor="end" class="wc-t">peso al nacer</text>
     <text x="${W - R}" y="${y(birthG * 0.9) - 4}" text-anchor="end" class="wc-t">−10 %</text>
     ${[0, 7, 14, 21, 28].filter((d) => d <= maxDay).map((d) => `<text x="${x(d)}" y="${H - 8}" text-anchor="middle" class="wc-t">${d}</text>`).join('')}
-    <polyline points="${pts.map((p) => `${x(p.day).toFixed(1)},${y(p.g).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--rose)" stroke-width="1.5"/>
-    ${pts.map((p) => `<circle cx="${x(p.day).toFixed(1)}" cy="${y(p.g).toFixed(1)}" r="3.5" fill="var(--rose)"><title>Día ${p.day}: ${fmtBabyKg(p.g)}</title></circle>`).join('')}
+    <polyline points="${pts.map((p) => `${x(p.day).toFixed(1)},${y(p.g).toFixed(1)}`).join(' ')}" fill="none" stroke="var(--st-mid)" stroke-width="1.5"/>
+    ${pts.map((p) => `<circle cx="${x(p.day).toFixed(1)}" cy="${y(p.g).toFixed(1)}" r="3.5" fill="var(--st-mid)"><title>Día ${p.day}: ${fmtBabyKg(p.g)}</title></circle>`).join('')}
   </svg>
   <div class="t-11 soft text-center">Peso en kg · días desde el nacimiento</div>`;
 }
@@ -1889,7 +1889,10 @@ let lastScreen = null;
 function render() {
   const screen = store.needsOnboarding ? 'ob' : 'main';
   // Color de la etapa (ciclo rosa · embarazo verde · crianza azul)
-  document.body.dataset.stage = store.needsOnboarding ? (ui.ob.stageChosen ? ui.ob.flow : 'pregnancy') : store.mode;
+  const stageNow = store.needsOnboarding ? (ui.ob.stageChosen ? ui.ob.flow : 'pregnancy') : store.mode;
+  document.body.dataset.stage = stageNow;
+  const tc = document.querySelector('meta[name=theme-color]');
+  if (tc) tc.content = { cycle: '#8E4B42', pregnancy: '#3F584B', postpartum: '#3F5F78' }[stageNow] || '#3F584B';
   // Conserva el scroll interno del sheet al re-renderizar
   const sheetBody = root.querySelector('.sheet-body');
   const sheetScroll = sheetBody ? sheetBody.scrollTop : 0;

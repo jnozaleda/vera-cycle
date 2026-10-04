@@ -108,6 +108,7 @@ const ui = {
   foodCat: 'Todos',
   ask: { context: '', include: true, text: '', sent: null }, // hoja «Pregúntale a Gonzalo»
   babyForm: { birth: '', date: '', weight: '' },          // peso del recién nacido
+  hoyView: 'me',         // embarazo · Hoy: 'me' | 'baby' (el desarrollo del bebé vive dentro de Hoy)
   hoyFaq: 'mom',          // posparto · dudas de Hoy: 'mom' | 'baby'
 };
 
@@ -1204,7 +1205,17 @@ function pregnancyToday() {
     ...(fluCampaign() ? [todoRow(flu, 'Vacunas de la gripe y la COVID-19', 'Campaña de otoño e invierno', 'Se recomiendan durante la campaña de otoño e invierno, en cualquier trimestre del embarazo.')] : [])];
   const upcoming = next.slice(0, 1).map((t) => todoRow(todoKey(t), t.title, todoWeeks(t), t.text, true));
   const pending = pastItems(g.weeks, p.rh).filter((t) => !p.done?.[todoKey(t)]);
+  const vseg = (v, label) => `<button class="seg ${ui.hoyView === v ? 'on' : ''}" aria-pressed="${ui.hoyView === v}" data-action="hoy-view" data-v="${v}">${label}</button>`;
+  const switcher = `<div class="segs wide">${vseg('me', 'Tú')}${vseg('baby', 'Tu bebé')}</div>`;
+  if (ui.hoyView === 'baby') return `<div class="stack-14">${switcher}${babyView()}</div>`;
+  const bw = babyWeek(Math.min(40, Math.max(4, g.weeks)));
+  const babyCard = `<div class="card pad stack-6">
+      <div class="row between center">${eyebrow('Tu bebé esta semana')}<span class="t-12 soft">≈ ${fmtNum(bw.cm, 1)} cm · ${bw.g < 1 ? '&lt; 1 g' : bw.g >= 1000 ? fmtNum(bw.g / 1000, 2) + ' kg' : bw.g + ' g'}</span></div>
+      <p class="t-14 lh-5">${esc(bw.text)}</p>
+      <button class="link-soft" data-action="hoy-view" data-v="baby">Ver cómo es (ilustración, ecografía y 3D) →</button>
+    </div>`;
   return `<div class="stack-14">
+    ${switcher}
     <div class="card pad stack-10 preg-hero">
       ${eyebrow(TRIMESTER_LABEL[g.trimester])}
       <div class="row between center">
@@ -1220,6 +1231,7 @@ function pregnancyToday() {
       ${overdue ? '<p class="t-11 soft-70 lh-3">Dar a luz hasta la semana 41 y 6 días es normal. Desde la 40 tu equipo te hará controles más frecuentes.</p>' : ''}
       ${p.multiple === 'multiple' ? '<p class="t-11 soft-70 lh-3">Embarazo múltiple: el seguimiento suele ser más frecuente. Sigue las indicaciones de tu equipo.</p>' : ''}
     </div>
+    ${babyCard}
     ${normalCard(pregnancyNormal(g.weeks))}
     ${nextAppointmentCard()}
     <div class="card pad stack-6">
@@ -1854,7 +1866,7 @@ const STAGE_TAB = {
   care: { icon: 'heart', label: 'CUIDADOS' },
   guide: { icon: 'book', label: 'GUÍA' },
 };
-const STAGE_TAB_IDS = { pregnancy: ['today', 'baby', 'diary', 'care', 'guide'], postpartum: ['today', 'diary', 'care', 'guide'] };
+const STAGE_TAB_IDS = { pregnancy: ['today', 'diary', 'care', 'guide'], postpartum: ['today', 'diary', 'care', 'guide'] };
 const tabIndex = (id) => Math.max(0, (STAGE_TAB_IDS[store.mode] || []).indexOf(id));
 
 function mainView() {
@@ -2086,6 +2098,7 @@ const actions = {
     render();
   },
   'baby-week': (el) => { ui.babyWeek = +el.dataset.w; render(); },
+  'hoy-view': (el) => { ui.hoyView = el.dataset.v; render(); window.scrollTo(0, 0); },
   'baby-media': (el) => { ui.babyMedia = el.dataset.v; render(); },
   'care-section': (el) => { ui.careSection = el.dataset.v; render(); },
   'open-care': (el) => { ui.tab = tabIndex('care'); ui.careSection = el.dataset.v || 'agenda'; render(); window.scrollTo(0, 0); },

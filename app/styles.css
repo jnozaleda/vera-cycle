@@ -649,3 +649,4 @@ label.field { padding: 8px 14px; }
 .baby-w { flex: none; width: 110px; }
 
 .faq-ext { color: var(--deep); text-decoration: none; border-bottom: 1px solid var(--sage); }
+.ob-tag { letter-spacing: 3.5px; white-space: nowrap; font-size: 11px; }

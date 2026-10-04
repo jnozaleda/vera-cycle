@@ -21,7 +21,7 @@ import { babyWeek, BABY_MEDIA, mediaFor } from './baby.js';
 import { FOODS, FOOD_CATEGORIES, FOOD_STATUS, foodFor, bmi, gainRange, gainBandAt, appointmentICS } from './care.js';
 import { GUIDE_INTRO, PREGNANCY_GUIDE, POSTPARTUM_GUIDE, guideSectionFor } from './guide.js';
 import { spansPregnancy } from './predict.js';
-import { PREGNANCY_BETA_ONLY, CONSULT } from './config.js';
+import { PREGNANCY_BETA_ONLY, CONSULT, TAGLINE } from './config.js';
 import { isBeta } from './beta.js';
 import { sync, syncAvailable, onSyncChange, initSync, connect, reauthorize, disconnect, deleteRemote, syncNow, loadGis } from './sync.js';
 
@@ -892,8 +892,8 @@ function onboardingView() {
     case 0:
       content = `<div class="text-center stack-0">
         <div class="ob-logo">Vera</div>
-        <div class="ob-tag">BIENESTAR FEMENINO</div>
-        <p class="t-17 light soft lh-6 mb-44">Tu ciclo, tus síntomas y tu medicación, acompañados por la posibilidad de consultar con tu ginecólogo cuando lo necesites.</p>
+        <div class="ob-tag">EMBARAZO · POSPARTO · BEBÉ</div>
+        <p class="t-17 light soft lh-6 mb-44">${esc(TAGLINE)} Con respuestas para cada semana y la posibilidad de preguntarle tus dudas cuando lo necesites.</p>
         ${primaryButton('Comenzar', 'ob-next')}
         ${syncAvailable() ? `<button class="google-btn mt-16" data-action="sync-connect">${GOOGLE_G} ¿Ya usas Vera? Recuperar mis datos</button>` : ''}
         <button class="link-soft mt-16" data-action="ob-demo">Explorar con datos de ejemplo</button>
@@ -907,12 +907,12 @@ function onboardingView() {
         ${icon('right', 14, 'soft')}
       </button>`;
       content = `<div>
-        <h2 class="ob-h">¿Qué quieres seguir?</h2>
-        <p class="t-14 soft lh-4 mb-30">Podrás cambiarlo cuando quieras desde los ajustes.</p>
+        <h2 class="ob-h">¿En qué momento estás?</h2>
+        <p class="t-14 soft lh-4 mb-30">Vera se adapta a cada etapa. Podrás cambiarla cuando quieras desde los ajustes.</p>
         <div class="stack-12">
-          ${opt('Mi ciclo menstrual', 'Reglas, ventana fértil, síntomas y medicación.', 'moon', 'cycle')}
-          ${opt('Estoy embarazada', 'Semanas, pruebas de cada etapa y dudas frecuentes.', 'sprout', 'pregnancy')}
-          ${opt('He tenido a mi bebé', 'Recuperación, lactancia y vuelta de la regla.', 'flower', 'postpartum')}
+          ${opt('Estoy embarazada', 'Tus semanas, el desarrollo de tu bebé, las pruebas de cada etapa y las dudas frecuentes.', 'sprout', 'pregnancy')}
+          ${opt('He tenido a mi bebé', 'Tu recuperación, la lactancia y el peso, la salud y la alimentación de tu bebé.', 'flower', 'postpartum')}
+          ${opt('Quiero seguir mi ciclo', 'Reglas, ventana fértil, síntomas y medicación.', 'moon', 'cycle')}
         </div>
       </div>`;
       break;
@@ -1129,7 +1129,7 @@ function askSheet() {
 }
 
 const stageUI = () => !PREGNANCY_BETA_ONLY || isBeta() || store.mode !== 'cycle';
-const MODE_TAG = { cycle: 'BIENESTAR FEMENINO', pregnancy: 'EMBARAZO', postpartum: 'POSPARTO' };
+const MODE_TAG = { cycle: 'MI CICLO', pregnancy: 'EMBARAZO', postpartum: 'POSPARTO' };
 
 
 
@@ -1406,8 +1406,8 @@ function stageSection() {
   const btn = (label, val, ic) => `<button class="stage-btn ${d.mode === val ? 'on' : ''}" aria-pressed="${d.mode === val}" data-action="draft-stage" data-v="${val}">
       ${icon(ic, 18)}<span>${label}</span>${store.mode === val ? `<em class="stage-current">${icon('check', 10)} Actual</em>` : ''}
     </button>`;
-  return `<div class="stack-10"><div class="t-13 soft">¿Qué quieres seguir?</div>
-    <div class="row gap-8">${btn('Ciclo', 'cycle', 'moon')}${btn('Embarazo', 'pregnancy', 'sprout')}${btn('Posparto', 'postpartum', 'flower')}</div></div>
+  return `<div class="stack-10"><div class="t-13 soft">¿En qué momento estás?</div>
+    <div class="row gap-8">${btn('Embarazo', 'pregnancy', 'sprout')}${btn('Posparto', 'postpartum', 'flower')}${btn('Ciclo', 'cycle', 'moon')}</div></div>
     ${store.mode !== 'cycle' && d.mode === 'cycle' ? `<div class="note-mist lh-3"><span class="c-sage">${icon('info', 14)}</span><span>${store.mode === 'pregnancy'
       ? 'Si tu embarazo ha terminado, cuídate y date tiempo; puedes escribirnos cuando quieras. Indica abajo tu última regla cuando vuelva.'
       : 'Indica abajo el primer día de tu última regla. Los primeros ciclos tras el parto suelen ser irregulares.'}</span></div>` : ''}

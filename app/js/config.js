@@ -26,3 +26,7 @@ export const CONSULT = {
   whatsapp: '',
   responseHours: 48,
 };
+
+// Mensaje principal de Vera (bienvenida, ajustes de etapa). Cuando la pediatra esté en la
+// consulta (vera-backlog#33), cambiar a «…con tu ginecólogo y tu pediatra».
+export const TAGLINE = 'Embarazo, posparto y tu bebé, acompañada por tu ginecólogo.';

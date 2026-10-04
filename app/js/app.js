@@ -1155,11 +1155,19 @@ function hoyRow(id, head, body, extra = '', cls = '') {
     <summary>${head}</summary><div class="hq-a">${body}${extra}</div></details>`;
 }
 
-function timelineRow(t, now) {
-  const weeks = t.from === t.to ? `Sem. ${t.from}` : `Sem. ${t.from}–${t.to}`;
-  return hoyRow(`hoy-tl-${slug(t.title)}`, `<span class="tl-w">${esc(weeks)}</span><span class="grow">${esc(t.title)}</span>`,
-    `<p>${esc(t.text)}</p>`, '', now ? 'now' : '');
+/** Tarea de «Lo que toca ahora»: se marca como hecha y se puede desplegar para ver el detalle */
+function todoRow(key, title, sub, text, later = false) {
+  const done = !!store.stage.pregnancy?.done?.[key];
+  const id = `hoy-todo-${key}`;
+  return `<details class="hq todo ${done ? 'done' : ''} ${later ? 'later' : ''}" data-id="${attr(id)}" ${ui.openDetails.has(id) ? 'open' : ''}>
+    <summary>
+      <button class="todo-check ${done ? 'on' : ''}" data-action="todo-toggle" data-key="${attr(key)}" role="checkbox" aria-checked="${done}" aria-label="${done ? 'Marcar como pendiente' : 'Marcar como hecha'}: ${attr(title)}">${done ? icon('check', 12) : ''}</button>
+      <span class="grow"><span class="todo-t">${esc(title)}</span><span class="todo-s">${esc(sub)}</span></span>
+    </summary><div class="hq-a todo-a">${text ? `<p>${esc(text)}</p>` : ''}</div></details>`;
 }
+
+const todoWeeks = (t) => (t.from === t.to ? `Semana ${t.from}` : `Semanas ${t.from}–${t.to}`);
+const todoKey = (t) => slug(t.title);
 
 /** Dudas con respuesta corta desplegable; «Ver respuesta completa» abre la Guía */
 function hoyFaqList(items) {
@@ -1187,11 +1195,12 @@ function pregnancyToday() {
   const pct = Math.min(100, (g.totalDays / 280) * 100);
   const overdue = g.daysLeft < 0;
   const faqs = pregnancyFaqs(g.weeks, p);
-  const rows = [...now.map((t) => timelineRow(t, true)),
-    ...(fluCampaign() ? [hoyRow('hoy-tl-gripe', '<span class="tl-w">Campaña</span><span class="grow">Vacunas de la gripe y la COVID-19</span>',
-      '<p>Se recomiendan durante la campaña de otoño e invierno, en cualquier trimestre.</p>', '', 'now')] : []),
-    ];
-  const upcoming = next.slice(0, 1).map((t) => timelineRow(t, false));
+  const flu = `gripe-covid-${new Date().getFullYear()}`;
+  const keys = [...now.map(todoKey), ...(fluCampaign() ? [flu] : [])];
+  const doneCount = keys.filter((k) => p.done?.[k]).length;
+  const rows = [...now.map((t) => todoRow(todoKey(t), t.title, todoWeeks(t), t.text)),
+    ...(fluCampaign() ? [todoRow(flu, 'Vacunas de la gripe y la COVID-19', 'Campaña de otoño e invierno', 'Se recomiendan durante la campaña de otoño e invierno, en cualquier trimestre del embarazo.')] : [])];
+  const upcoming = next.slice(0, 1).map((t) => todoRow(todoKey(t), t.title, todoWeeks(t), t.text, true));
   return `<div class="stack-14">
     <div class="card pad stack-10 preg-hero">
       ${eyebrow(TRIMESTER_LABEL[g.trimester])}
@@ -1211,7 +1220,7 @@ function pregnancyToday() {
     ${normalCard(pregnancyNormal(g.weeks))}
     ${nextAppointmentCard()}
     <div class="card pad stack-6">
-      ${eyebrow('Lo que toca ahora')}
+      <div class="row between center">${eyebrow('Lo que toca ahora')}${keys.length ? `<span class="t-11 ${doneCount === keys.length ? 'c-sage w-500' : 'soft'}">${doneCount === keys.length ? 'Todo al día' : `${doneCount} de ${keys.length}`}</span>` : ''}</div>
       ${rows.length ? `<div class="hq-list">${rows.join('')}</div>` : '<p class="t-13 soft">Ahora mismo no hay ninguna prueba prevista en el calendario habitual.</p>'}
       ${upcoming.length ? `<div class="t-11 soft upper track-1 mt-4">Próximamente</div><div class="hq-list">${upcoming.join('')}</div>` : ''}
       <p class="t-11 soft-70 lh-3">El calendario concreto lo indica tu equipo; puede variar según tu comunidad y tu hospital.</p>
@@ -2147,6 +2156,13 @@ const actions = {
     const pp = store.stage.postpartum || {};
     const weights = (pp.baby?.weights || []).filter((w) => w.id !== el.dataset.id);
     store.updateStage({ ...store.stage, postpartum: { ...pp, baby: { ...(pp.baby || {}), weights } } });
+  },
+  'todo-toggle': (el) => {
+    const p = store.stage.pregnancy || {};
+    const key = el.dataset.key;
+    const done = { ...(p.done || {}) };
+    if (done[key]) delete done[key]; else done[key] = true;
+    store.updateStage({ ...store.stage, pregnancy: { ...p, done } });
   },
   'hoy-faq': (el) => { ui.hoyFaq = el.dataset.v; render(); },
   'open-urgent': () => { ui.sheet = 'urgent'; ui.sheetAnim = true; render(); },

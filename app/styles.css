@@ -670,3 +670,19 @@ label.field { padding: 8px 14px; }
 .hq-a { padding: 0 0 12px; display: flex; flex-direction: column; gap: 8px; font-size: 13px; line-height: 1.55; color: var(--ink-soft); }
 .hq.now summary .tl-w { color: var(--sage); }
 .tl-w { flex: none; min-width: 62px; font-size: 11px; font-weight: 500; color: var(--gold); letter-spacing: .4px; }
+
+/* Lista de tareas: Lo que toca ahora */
+.hq.todo summary { align-items: flex-start; gap: 12px; padding-top: 11px; padding-bottom: 11px; }
+.todo-check {
+  flex: none; width: 24px; height: 24px; margin-top: 1px; border-radius: 50%; display: grid; place-items: center;
+  border: 1.5px solid color-mix(in srgb, var(--ink-soft) 55%, transparent); background: #fff; color: #fff; transition: all .15s;
+}
+.todo-check:active { transform: scale(.92); }
+.todo-check.on { background: var(--deep); border-color: var(--deep); }
+.todo-t { display: block; font-size: 14px; font-weight: 500; line-height: 1.3; color: var(--ink); }
+.todo-s { display: block; font-size: 11.5px; font-weight: 400; color: var(--ink-soft); margin-top: 2px; }
+.hq.todo.done .todo-t { text-decoration: line-through; color: var(--ink-soft); font-weight: 400; }
+.hq.todo.done .todo-s { opacity: .7; }
+.hq.todo.later .todo-t { color: var(--ink-soft); }
+.hq.todo.later .todo-check { border-color: var(--line); }
+.todo-a { padding-left: 36px; }

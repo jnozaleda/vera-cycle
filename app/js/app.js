@@ -713,9 +713,9 @@ function calendarSheet() {
       </div>
       ${grid}
       <div class="row gap-14 justify-center wrap">
-        <span class="legend box"><i class="ph-rose"></i>Regla</span>
+        ${store.mode === 'cycle' ? `<span class="legend box"><i class="ph-rose"></i>Regla</span>
         <span class="legend box"><i class="ph-sage"></i>Fértil</span>
-        <span class="legend box"><i class="ph-gold"></i>Ovulación</span>
+        <span class="legend box"><i class="ph-gold"></i>Ovulación</span>` : ''}
         <span class="legend"><i class="dot"></i>Con registro</span>
       </div>
     </div>`);

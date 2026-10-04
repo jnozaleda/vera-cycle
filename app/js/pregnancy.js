@@ -49,6 +49,7 @@ export const PREGNANCY_TIMELINE = [
   { from: 32, to: 36, title: 'Ecografía del tercer trimestre', text: 'Sirve para ver cómo crece el bebé, su postura y la placenta. El peso estimado tiene un margen de error del 10 a 15 %.' },
   { from: 32, to: 36, title: 'Plan de parto', text: 'Escribe tus preferencias (acompañante, anestesia, piel con piel…) y repásalas con tu matrona.' },
   { from: 35, to: 37, title: 'Exudado vaginal y rectal', text: 'Detecta el estreptococo del grupo B. Si sale positivo, te pondrán antibiótico durante el parto.' },
+  { from: 36, to: 36, title: 'Cuándo ir al hospital', text: 'Contracciones regulares y dolorosas, rotura de bolsa, sangrado, menos movimientos, dolor de cabeza fuerte o picor intenso en palmas y plantas. Lo tienes explicado en la Guía.' },
   { from: 40, to: 40, title: 'Monitorización', text: 'Registro del latido del bebé y de las contracciones durante unos 20 a 30 minutos.' },
   { from: 41, to: 41, title: 'Si el parto no ha empezado', text: 'Lo habitual es proponerte inducirlo durante la semana 41, para no llegar a la 42.' },
 ];

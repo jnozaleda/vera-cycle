@@ -46,8 +46,8 @@ export function foodFor(item, toxo) {
   if (toxo === 'immune') return { ...item, status: 'ok', note: 'Como eres inmune a la toxoplasmosis, puedes tomarlos.' };
   return { ...item, status: toxo === 'not' ? 'avoid' : 'care',
     note: toxo === 'not'
-      ? 'Como no eres inmune a la toxoplasmosis, evítalos o tómalos solo si se han congelado antes.'
-      : 'Depende de si eres inmune a la toxoplasmosis (te lo dirá la primera analítica). Si no lo eres, evítalos o tómalos solo congelados antes.' };
+      ? 'Como no eres inmune a la toxoplasmosis, evítalos. Congelarlos reduce el riesgo de toxoplasmosis, pero no elimina la listeria.'
+      : 'Depende de si eres inmune a la toxoplasmosis (te lo dirá la primera analítica). Si no lo eres, evítalos: congelarlos reduce el riesgo de toxoplasmosis, pero no elimina la listeria.' };
 }
 
 // MARK: - Ganancia de peso (referencia poblacional por IMC previo)

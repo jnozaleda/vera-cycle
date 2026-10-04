@@ -1319,12 +1319,19 @@ function stageDiary() {
     ${warnings.length ? `<div class="card pad stack-10">${eyebrow('Tu medicación en el embarazo')}
       ${warnings.map((w) => `<div class="row gap-8 top t-13 lh-4"><span class="c-gold mt-1">${icon('info', 13)}</span><span>${esc(w)}</span></div>`).join('')}
       <p class="t-11 soft-70 lh-3">No dejes ni cambies ninguna medicación por tu cuenta: coméntalo con quien te la receta.</p></div>` : ''}
+    ${pp && store.data.meds.length && store.stage.postpartum?.feeding !== 'formula' ? `<div class="card pad stack-8">${eyebrow('Tu medicación y la lactancia')}
+      <p class="t-13 lh-4">La mayoría de los medicamentos son compatibles con la lactancia. Puedes comprobar cada uno en e-lactancia.org y comentarlo con quien te lo receta.</p>
+      <a class="faq-ext self-start t-13" href="https://www.e-lactancia.org/" target="_blank" rel="noopener">Consultar en e-lactancia.org ↗</a></div>` : ''}
     ${isToday ? medicationSection(log) : ''}
   </div>`;
 }
 
 function answerHTML(a) {
-  return a.map((b) => (Array.isArray(b) ? `<ul class="tips">${b.map((li) => `<li>${esc(li)}</li>`).join('')}</ul>` : `<p>${esc(b)}</p>`)).join('');
+  return a.map((b) => {
+    if (Array.isArray(b)) return `<ul class="tips">${b.map((li) => `<li>${esc(li)}</li>`).join('')}</ul>`;
+    if (b && typeof b === 'object') return `<p><a class="faq-ext" href="${attr(b.link)}" target="_blank" rel="noopener">${esc(b.text)} ↗</a></p>`;
+    return `<p>${esc(b)}</p>`;
+  }).join('');
 }
 
 function guideView() {
@@ -1351,7 +1358,7 @@ function guideView() {
       <div class="t-13 soft">${esc(sec.subtitle)}</div>
       <div class="faq">${sec.items.map((it, i) => {
         const id = `${sec.id}-${i}`;
-        return `<details class="faq-item" data-id="${id}" data-text="${attr((it.q + ' ' + it.a.flat().join(' ')).toLowerCase())}" ${isOpen(id) ? 'open' : ''}>
+        return `<details class="faq-item" data-id="${id}" data-text="${attr((it.q + ' ' + it.a.flat().map((b) => (b && typeof b === 'object' ? b.text : b)).join(' ')).toLowerCase())}" ${isOpen(id) ? 'open' : ''}>
           <summary>${esc(it.q)}</summary><div class="faq-a">${answerHTML(it.a)}${askLink('', '¿Te queda alguna duda?', it.q)}</div></details>`;
       }).join('')}</div>
     </section>`).join('')}

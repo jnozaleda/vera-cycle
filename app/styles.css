@@ -647,3 +647,5 @@ label.field { padding: 8px 14px; }
 .num-label .ic { margin-top: 3px; }
 
 .baby-w { flex: none; width: 110px; }
+
+.faq-ext { color: var(--deep); text-decoration: none; border-bottom: 1px solid var(--sage); }

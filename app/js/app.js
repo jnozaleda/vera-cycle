@@ -1250,7 +1250,7 @@ function postpartumToday() {
       ${askLink('¿Otra duda?', 'Pregúntale a Gonzalo', `Posparto · semana ${s.weeks}`)}
     </div>
     ${(() => {
-      const sec = POSTPARTUM_GUIDE.find((x) => x.id === (s.weeks < 4 ? 'b0' : 'bsl'));
+      const sec = POSTPARTUM_GUIDE.find((x) => x.id === (s.weeks < 4 ? 'b0' : s.weeks < 12 ? 'bsl' : 'bdes'));
       if (!sec) return '';
       return `<div class="card pad stack-12">
         <div class="row baseline between">${eyebrow('Dudas sobre tu bebé')}<span class="t-11 soft">${esc(sec.title)}</span></div>

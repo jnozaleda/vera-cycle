@@ -13,7 +13,7 @@ import { QUALITY, BASIS, windowText, predictionNotices } from './predict.js';
 import { store } from './store.js';
 import { icon } from './icons.js';
 import {
-  gestation, sinceBirth, TRIMESTER_LABEL, TRIMESTER_TEXT, timelineFor, fluCampaign, dueFromLmp,
+  gestation, sinceBirth, TRIMESTER_LABEL, TRIMESTER_TEXT, timelineFor, pastItems, fluCampaign, dueFromLmp,
   PREGNANCY_SYMPTOMS, PREGNANCY_ALARMS, BABY_MOVEMENT, POSTPARTUM_SYMPTOMS, POSTPARTUM_ALARMS,
   URGENT_PREGNANCY, URGENT_POSTPARTUM, pregnancyMedWarnings,
 } from './pregnancy.js';
@@ -1201,6 +1201,7 @@ function pregnancyToday() {
   const rows = [...now.map((t) => todoRow(todoKey(t), t.title, todoWeeks(t), t.text)),
     ...(fluCampaign() ? [todoRow(flu, 'Vacunas de la gripe y la COVID-19', 'Campaña de otoño e invierno', 'Se recomiendan durante la campaña de otoño e invierno, en cualquier trimestre del embarazo.')] : [])];
   const upcoming = next.slice(0, 1).map((t) => todoRow(todoKey(t), t.title, todoWeeks(t), t.text, true));
+  const pending = pastItems(g.weeks, p.rh).filter((t) => !p.done?.[todoKey(t)]);
   return `<div class="stack-14">
     <div class="card pad stack-10 preg-hero">
       ${eyebrow(TRIMESTER_LABEL[g.trimester])}
@@ -1223,6 +1224,11 @@ function pregnancyToday() {
       <div class="row between center">${eyebrow('Lo que toca ahora')}${keys.length ? `<span class="t-11 ${doneCount === keys.length ? 'c-sage w-500' : 'soft'}">${doneCount === keys.length ? 'Todo al día' : `${doneCount} de ${keys.length}`}</span>` : ''}</div>
       ${rows.length ? `<div class="hq-list">${rows.join('')}</div>` : '<p class="t-13 soft">Ahora mismo no hay ninguna prueba prevista en el calendario habitual.</p>'}
       ${upcoming.length ? `<div class="t-11 soft upper track-1 mt-4">Próximamente</div><div class="hq-list">${upcoming.join('')}</div>` : ''}
+      ${pending.length ? `<details class="pend" data-id="hoy-pend" ${ui.openDetails.has('hoy-pend') ? 'open' : ''}>
+        <summary><span class="grow">Pendientes de semanas anteriores</span><span class="pend-n">${pending.length}</span></summary>
+        <div class="hq-list">${pending.map((t) => todoRow(todoKey(t), t.title, todoWeeks(t), t.text)).join('')}</div>
+        <button class="link-soft" data-action="todo-all-past">Ya las hice todas</button>
+      </details>` : ''}
       <p class="t-11 soft-70 lh-3">El calendario concreto lo indica tu equipo; puede variar según tu comunidad y tu hospital.</p>
     </div>
     <div class="card pad stack-6">
@@ -2162,6 +2168,14 @@ const actions = {
     const key = el.dataset.key;
     const done = { ...(p.done || {}) };
     if (done[key]) delete done[key]; else done[key] = true;
+    store.updateStage({ ...store.stage, pregnancy: { ...p, done } });
+  },
+  'todo-all-past': () => {
+    const p = store.stage.pregnancy || {};
+    const g = gestation(p);
+    if (!g) return;
+    const done = { ...(p.done || {}) };
+    for (const t of pastItems(g.weeks, p.rh)) done[todoKey(t)] = true;
     store.updateStage({ ...store.stage, pregnancy: { ...p, done } });
   },
   'hoy-faq': (el) => { ui.hoyFaq = el.dataset.v; render(); },

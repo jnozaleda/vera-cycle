@@ -686,3 +686,17 @@ label.field { padding: 8px 14px; }
 .hq.todo.later .todo-t { color: var(--ink-soft); }
 .hq.todo.later .todo-check { border-color: var(--line); }
 .todo-a { padding-left: 36px; }
+
+/* Pendientes de semanas anteriores */
+.pend { border-top: 1px dashed var(--line); margin-top: 6px; padding-top: 2px; }
+.pend > summary {
+  list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 10px 22px 10px 0; position: relative;
+  font-size: 13px; font-weight: 500; color: var(--ink-soft);
+}
+.pend > summary::-webkit-details-marker { display: none; }
+.pend > summary::after {
+  content: ''; position: absolute; right: 4px; top: 50%; width: 7px; height: 7px; margin-top: -6px;
+  border-right: 1.5px solid var(--ink-soft); border-bottom: 1.5px solid var(--ink-soft); transform: rotate(45deg); transition: transform .2s;
+}
+.pend[open] > summary::after { transform: rotate(-135deg); margin-top: -2px; }
+.pend-n { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 999px; background: var(--gold-soft); color: #7a5f30; }

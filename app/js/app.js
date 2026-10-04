@@ -1249,6 +1249,15 @@ function postpartumToday() {
       ${POSTPARTUM_GUIDE[0].items.slice(0, 3).map((it) => `<button class="faq-link" data-action="open-guide" data-section="pp" data-q="${attr(it.q)}">${esc(it.q)} ${icon('right', 12, 'soft')}</button>`).join('')}
       ${askLink('¿Otra duda?', 'Pregúntale a Gonzalo', `Posparto · semana ${s.weeks}`)}
     </div>
+    ${(() => {
+      const sec = POSTPARTUM_GUIDE.find((x) => x.id === (s.weeks < 4 ? 'b0' : 'bsl'));
+      if (!sec) return '';
+      return `<div class="card pad stack-12">
+        <div class="row baseline between">${eyebrow('Dudas sobre tu bebé')}<span class="t-11 soft">${esc(sec.title)}</span></div>
+        ${sec.items.slice(0, 3).map((it) => `<button class="faq-link" data-action="open-guide" data-section="${sec.id}" data-q="${attr(it.q)}">${esc(it.q)} ${icon('right', 12, 'soft')}</button>`).join('')}
+        <button class="link-soft" data-action="open-guide" data-section="${sec.id}">Ver todas las dudas →</button>
+      </div>`;
+    })()}
   </div>`;
 }
 

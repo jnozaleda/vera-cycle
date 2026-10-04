@@ -785,3 +785,10 @@ body[data-stage="postpartum"] { --st: #3F5F78; --st-mid: #4F7189; --st-soft: #E4
 .fetus-stage[data-state="loading"] .fetus-loading, .fetus-stage[data-state="error"] .fetus-error { display: flex; }
 .fetus-hint { position: absolute; right: 14px; bottom: 10px; font-size: 12px; color: rgba(255,255,255,.7); text-align: right; pointer-events: none; transition: opacity .6s; }
 .fetus-stage[data-state="error"] .fetus-hint, .fetus-stage[data-state="loading"] .fetus-hint { display: none; }
+
+/* Acceso a la consulta en la cabecera: avatar + texto, para que se vea que es un botón */
+.ask-pill { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px 0 5px; border-radius: 999px;
+  background: #fff; border: 1px solid color-mix(in srgb, var(--st) 35%, transparent); color: var(--st); font-size: 12.5px; font-weight: 500; white-space: nowrap; }
+.ask-pill .cav { flex: none; }
+@media (max-width: 359px) { .ask-pill span { display: none; } .ask-pill { padding: 0 5px; } }
+.app-header .row:has(.sync-pill) .ask-pill span { display: none; } .app-header .row:has(.sync-pill) .ask-pill { padding: 0 5px; }

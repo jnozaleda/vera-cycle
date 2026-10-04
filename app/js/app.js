@@ -1888,7 +1888,7 @@ function mainView() {
       <div><h1 class="brand">Vera</h1><div class="brand-tag">${MODE_TAG[mode]}</div></div>
       <div class="row gap-8 center">
         ${syncPill()}
-        <button class="gear avatar-btn" data-action="open-ask" data-ctx="" aria-label="Pregúntale a ${attr(CONSULT.name)}" title="Pregúntale a Gonzalo">${consultAvatar('sm')}</button>
+        <button class="ask-pill" data-action="open-ask" data-ctx="" aria-label="Pregúntale a ${attr(CONSULT.name)}" title="Pregúntale a Gonzalo">${consultAvatar('sm')}<span>Pregunta a Gonzalo</span></button>
         <button class="gear" data-action="open-settings" aria-label="Ajustes">${icon('gear', 16)}</button>
       </div>
     </header>

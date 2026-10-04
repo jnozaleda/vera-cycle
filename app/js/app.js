@@ -179,7 +179,7 @@ function cycleDial(settings, info) {
       ${arc(ovu - 5, ovu + 1.4, 'sage', 10)}
       ${arc(ovu + 0.32, ovu + 0.72, 'gold', 13)}
       ${ticks}
-      <circle cx="${dx.toFixed(2)}" cy="${dy.toFixed(2)}" r="9" fill="var(--deep)" stroke="var(--ivory)" stroke-width="3"/>
+      <circle cx="${dx.toFixed(2)}" cy="${dy.toFixed(2)}" r="9" fill="var(--st)" stroke="var(--ivory)" stroke-width="3"/>
     </svg>
     <div class="dial-center">
       <div class="dial-dia">DÍA</div>
@@ -238,34 +238,32 @@ function irregularPredictionCard(p) {
   else if (p.periodQuality === 'insufficient' || p.periodQuality === 'low') hint = 'Registra más ciclos para mejorar la precisión';
   const high = BASIS[p.predictionBasis].high;
 
-  return `<div class="card pad stack-14 mt-6">
-    ${eyebrow('Tu próxima regla')}
-    <div class="row baseline between">
-      <div class="serif-34">${esc(fmtDayMonthLong(p.predictedDate))}</div>
-      <div class="row baseline gap-4"><span class="serif-34">${p.daysUntil}</span><span class="t-13 soft">días</span></div>
-    </div>
-    <div class="t-12 soft mt--8">${esc(windowText(p))}</div>
-    <hr>
-    <div class="row between center py-4">
-      <div class="stack-4">
-        <div class="row gap-5 t-11 soft"><span class="c-sage">${icon('leaf', 10)}</span>Ventana fértil</div>
-        <div class="t-14 w-500">${esc(fmtDayMonthShort(fStart))} – ${esc(fmtDayMonthShort(fEnd))}</div>
+  return `<div class="stack-14 mt-6">
+    <div class="card pad stack-10 preg-hero">
+      ${eyebrow('Tu próxima regla')}
+      <div class="row between center">
+        <div class="row baseline gap-10">
+          <span class="preg-weeks sm">${p.daysUntil}</span>
+          <span class="stack-0"><span class="serif-22">${plural(p.daysUntil, 'día', 'días')}</span><span class="t-12 soft">para la regla</span></span>
+        </div>
+        <div class="text-right"><div class="t-11 soft">Prevista el</div><div class="t-14 w-500">${esc(fmtDayMonthShort(p.predictedDate))}</div><div class="t-11 soft">${esc(windowText(p))}</div></div>
       </div>
-      <div class="vsep"></div>
-      <div class="stack-4">
-        <div class="row gap-5 t-11 soft"><span class="c-gold">${icon('sparkle', 10)}</span>Ovulación</div>
-        <div class="t-14 w-500">${esc(fmtDayMonthShort(ov))}</div>
+      <hr>
+      <div class="hero-dates">
+        <div>${icon('leaf', 14)}<div><div class="t-11 soft">Ventana fértil</div><div class="t-14 w-500">${esc(fmtDayMonthShort(fStart))} – ${esc(fmtDayMonthShort(fEnd))}</div></div></div>
+        <div>${icon('sparkle', 14)}<div><div class="t-11 soft">Ovulación</div><div class="t-14 w-500">${esc(fmtDayMonthShort(ov))}</div></div></div>
       </div>
     </div>
-    <hr>
-    <div class="row gap-10 center wrap">
-      ${qualityChip('Regla', p.periodQuality, p.confidenceDays > 0 ? `±${p.confidenceDays}d` : null)}
-      ${qualityChip('Fértil', p.ovulationQuality, null)}
-      <span class="grow"></span>
-      <span class="${high ? 'c-sage' : 'c-gold'}" title="${attr(BASIS[p.predictionBasis].label)}">${icon(high ? 'checkCircle' : 'bars', 13)}</span>
+    <div class="card pad stack-10">
+      <div class="row gap-10 center wrap">
+        ${qualityChip('Regla', p.periodQuality, p.confidenceDays > 0 ? `±${p.confidenceDays}d` : null)}
+        ${qualityChip('Fértil', p.ovulationQuality, null)}
+        <span class="grow"></span>
+        <span class="${high ? 'c-sage' : 'c-gold'}" title="${attr(BASIS[p.predictionBasis].label)}">${icon(high ? 'checkCircle' : 'bars', 14)}</span>
+      </div>
+      ${hint ? `<div class="row gap-5 t-12 soft"><span class="c-gold">${icon('arrowUp', 12)}</span>${esc(hint)}</div>` : ''}
+      ${predictionNotices(p).map((n) => `<div class="row gap-6 top t-12 soft lh-3"><span class="c-gold mt-1">${icon('info', 12)}</span><span>${esc(n)}</span></div>`).join('')}
     </div>
-    ${hint ? `<div class="row gap-5 t-11 soft"><span class="c-gold">${icon('arrowUp', 11)}</span>${esc(hint)}</div>` : ''}
-    ${predictionNotices(p).map((n) => `<div class="row gap-6 top t-11 soft lh-3"><span class="c-gold mt-1">${icon('info', 11)}</span><span>${esc(n)}</span></div>`).join('')}
   </div>`;
 }
 
@@ -288,16 +286,19 @@ function todayView() {
         <span class="legend"><i class="bg-gold"></i>Ovulación</span>
       </div>
     </div>
-    <div class="card">
-      <div class="row gap-12 stat-row">
-        ${statCard(info.daysToNext, 'DÍAS PARA<br>LA REGLA')}
-        ${statCard(fmtDayMonthShort(next), 'PRÓXIMA<br>REGLA')}
+    <div class="card pad stack-10 preg-hero">
+      ${eyebrow('Tu próxima regla')}
+      <div class="row between center">
+        <div class="row baseline gap-10">
+          <span class="preg-weeks sm">${info.daysToNext}</span>
+          <span class="stack-0"><span class="serif-22">${plural(info.daysToNext, 'día', 'días')}</span><span class="t-12 soft">para la regla</span></span>
+        </div>
+        <div class="text-right"><div class="t-11 soft">Prevista el</div><div class="t-14 w-500">${esc(fmtDayMonthShort(next))}</div></div>
       </div>
-      <hr class="mx-12 mt-4">
-      <div class="px-8">
-        <div class="date-row"><span class="c-sage">${icon('leaf', 13)}</span><div><div class="t-12 soft">Ventana fértil</div><div class="t-14 w-500">${esc(fmtDayMonthShort(ovDN - 5))} – ${esc(fmtDayMonthShort(ovDN + 1))}</div></div></div>
-        <hr class="ml-36">
-        <div class="date-row"><span class="c-gold">${icon('sparkle', 13)}</span><div><div class="t-12 soft">Ovulación estimada</div><div class="t-14 w-500">${esc(fmtDayMonthLong(ovDN))}</div></div></div>
+      <hr>
+      <div class="hero-dates">
+        <div>${icon('leaf', 14)}<div><div class="t-11 soft">Ventana fértil</div><div class="t-14 w-500">${esc(fmtDayMonthShort(ovDN - 5))} – ${esc(fmtDayMonthShort(ovDN + 1))}</div></div></div>
+        <div>${icon('sparkle', 14)}<div><div class="t-11 soft">Ovulación estimada</div><div class="t-14 w-500">${esc(fmtDayMonthShort(ovDN))}</div></div></div>
       </div>
     </div>`;
   } else {
@@ -1176,7 +1177,7 @@ function hoyFaqList(items) {
     `<button class="inline-link self-start t-12" data-action="open-guide" data-section="${it.ref.s}" data-q="${attr(it.ref.q)}">Ver respuesta completa ›</button>`)).join('');
 }
 
-const normalCard = (items) => `<div class="card pad stack-10">${eyebrow('Lo normal ahora')}
+const normalCard = (items) => `<div class="card pad stack-10 soft-card">${eyebrow('Lo normal ahora')}
     <ul class="tips">${items.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>`;
 
 function pregnancyToday() {
@@ -1887,6 +1888,8 @@ let lastScreen = null;
 
 function render() {
   const screen = store.needsOnboarding ? 'ob' : 'main';
+  // Color de la etapa (ciclo rosa · embarazo verde · crianza azul)
+  document.body.dataset.stage = store.needsOnboarding ? (ui.ob.stageChosen ? ui.ob.flow : 'pregnancy') : store.mode;
   // Conserva el scroll interno del sheet al re-renderizar
   const sheetBody = root.querySelector('.sheet-body');
   const sheetScroll = sheetBody ? sheetBody.scrollTop : 0;

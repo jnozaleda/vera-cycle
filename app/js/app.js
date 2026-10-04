@@ -95,7 +95,7 @@ const ui = {
   syncChoice: null,       // resolver del diálogo "combinar datos" al conectar Google
   draftStage: null,       // borrador de la etapa (ciclo / embarazo / posparto) en ajustes
   draftLmp: '',
-  dueMode: 'due',         // campo de fecha del embarazo: 'due' (fecha de parto) o 'lmp' (última regla)
+  dueMode: 'lmp',         // campo de fecha del embarazo: 'lmp' (última regla, por defecto) o 'due' (fecha de parto)
   guideQuery: '',
   openDetails: new Set(), // preguntas abiertas en la guía
   babyWeek: null,         // semana que se está viendo en «Mi bebé» (null = la actual)
@@ -922,7 +922,7 @@ function onboardingView() {
       content = `<div>
         <h2 class="ob-h">Tu embarazo</h2>
         <p class="t-14 soft lh-4 mb-22">Indica tu fecha probable de parto. Si no la sabes, usa el primer día de tu última regla y la calculamos.</p>
-        <div class="mb-32">${dueField({ ctx: 'ob', mode: ob.dueMode || 'due', dueValue: ob.dueDate, lmpValue: ob.lmp })}</div>
+        <div class="mb-32">${dueField({ ctx: 'ob', mode: ob.dueMode || 'lmp', dueValue: ob.dueDate, lmpValue: ob.lmp })}</div>
         ${primaryButton('Empezar', 'ob-finish-stage')}
       </div>`;
       break;
@@ -1442,7 +1442,7 @@ function dueField({ ctx, mode, dueValue, lmpValue }) {
     : `<input type="date" class="field date" data-model="${ctx}.dueDate" value="${attr(dueValue || '')}" min="${isoFromDN(todayDN() - 100)}" max="${isoFromDN(todayDN() + 300)}" aria-label="Fecha probable de parto">`;
   return `<div class="stack-8">
       <div class="row between center wrap gap-8"><span class="t-13 soft">${mode === 'lmp' ? 'Primer día de tu última regla' : 'Fecha probable de parto'}</span>
-        <span class="segs">${seg('due', 'Fecha de parto')}${seg('lmp', 'Última regla')}</span></div>
+        <span class="segs">${seg('lmp', 'Última regla')}${seg('due', 'Fecha de parto')}</span></div>
       ${input}
       ${valid
         ? `<div class="t-12 soft">${mode === 'lmp' ? `Parto previsto el <b>${esc(fmtDayMonthYear(due))}</b> · ` : 'Hoy: '}${g.weeks} semanas + ${g.days} ${plural(g.days, 'día', 'días')}</div>`
@@ -1918,7 +1918,7 @@ function openSettings() {
     postpartum: { birthDate: '', feeding: null, ...(st.mode === 'postpartum' ? st.postpartum : {}) },
   };
   ui.draftLmp = '';
-  ui.dueMode = 'due';
+  ui.dueMode = st.pregnancy?.dueDate ? 'due' : 'lmp';
   ui.settingsBaseline = settingsSnapshot();
   ui.sheetAnim = true;
   ui.draftPicker = todayISO();
@@ -2245,8 +2245,9 @@ const actions = {
     const settings = { lastPeriod: isoFromDN(today - 9), cycleLen: 28, periodLen: 5, isRegular: true, pastPeriods: [] };
     let stage;
     if (ob.flow === 'pregnancy') {
-      const lmp = (ob.dueMode === 'lmp') ? dnFromISO(ob.lmp) : null;
-      let due = ob.dueMode === 'lmp' ? null : dnFromISO(ob.dueDate);
+      const useLmp = (ob.dueMode || 'lmp') === 'lmp';
+      const lmp = useLmp ? dnFromISO(ob.lmp) : null;
+      let due = useLmp ? null : dnFromISO(ob.dueDate);
       if (lmp != null && lmp <= today) due = dueFromLmp(lmp);
       if (due == null || due < today - 100 || due > today + 300) { alert('Indica tu fecha probable de parto o el primer día de tu última regla.'); return; }
       if (lmp != null && lmp <= today) settings.lastPeriod = ob.lmp;

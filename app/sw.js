@@ -2,7 +2,7 @@
 // Service worker de Vera web: permite abrir la app sin conexión.
 // Estrategia "red primero": siempre intenta la versión más reciente y usa la caché si no hay red.
 
-const CACHE = 'vera-web-v21';
+const CACHE = 'vera-web-v23';
 const SHELL = [
   './',
   'index.html',
@@ -20,6 +20,7 @@ const SHELL = [
   'js/guide.js',
   'js/baby.js',
   'js/care.js',
+  'js/today.js',
   'fonts/jost.woff2',
   'fonts/cormorant.woff2',
   'icons/icon-192.png',

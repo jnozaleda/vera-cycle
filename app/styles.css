@@ -650,3 +650,23 @@ label.field { padding: 8px 14px; }
 
 .faq-ext { color: var(--deep); text-decoration: none; border-bottom: 1px solid var(--sage); }
 .ob-tag { letter-spacing: 3.5px; white-space: nowrap; font-size: 11px; }
+
+/* Hoy compacto (embarazo y posparto) */
+.preg-weeks.sm { font-size: 56px; }
+.text-right { text-align: right; }
+.hq-list { display: flex; flex-direction: column; }
+.hq { border-top: 1px solid var(--line); }
+.hq-list .hq:first-child { border-top: 0; }
+.hq summary {
+  list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; position: relative;
+  padding: 12px 22px 12px 0; font-size: 14px; font-weight: 500; line-height: 1.35; color: var(--ink);
+}
+.hq summary::-webkit-details-marker { display: none; }
+.hq summary::after {
+  content: ''; position: absolute; right: 4px; top: 50%; width: 7px; height: 7px; margin-top: -6px;
+  border-right: 1.5px solid var(--ink-soft); border-bottom: 1.5px solid var(--ink-soft); transform: rotate(45deg); transition: transform .2s;
+}
+.hq[open] summary::after { transform: rotate(-135deg); margin-top: -2px; }
+.hq-a { padding: 0 0 12px; display: flex; flex-direction: column; gap: 8px; font-size: 13px; line-height: 1.55; color: var(--ink-soft); }
+.hq.now summary .tl-w { color: var(--sage); }
+.tl-w { flex: none; min-width: 62px; font-size: 11px; font-weight: 500; color: var(--gold); letter-spacing: .4px; }

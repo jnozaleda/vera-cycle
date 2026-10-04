@@ -20,6 +20,7 @@ import {
 import { babyWeek, BABY_MEDIA, mediaFor } from './baby.js';
 import { FOODS, FOOD_CATEGORIES, FOOD_STATUS, foodFor, bmi, gainRange, gainBandAt, appointmentICS } from './care.js';
 import { GUIDE_INTRO, PREGNANCY_GUIDE, POSTPARTUM_GUIDE, guideSectionFor } from './guide.js';
+import { PREGNANCY_LINE, pregnancyNormal, pregnancyFaqs, postpartumLine, postpartumNormal, postpartumFaqs } from './today.js';
 import { spansPregnancy } from './predict.js';
 import { PREGNANCY_BETA_ONLY, CONSULT, TAGLINE } from './config.js';
 import { isBeta } from './beta.js';
@@ -106,6 +107,7 @@ const ui = {
   foodCat: 'Todos',
   ask: { context: '', include: true, text: '', sent: null }, // hoja «Pregúntale a Gonzalo»
   babyForm: { birth: '', date: '', weight: '' },          // peso del recién nacido
+  hoyFaq: 'mom',          // posparto · dudas de Hoy: 'mom' | 'baby'
 };
 
 // =========================================================================
@@ -1145,12 +1147,29 @@ function urgentSheet() {
     </div>`);
 }
 
-function timelineItem(t, now) {
-  return `<div class="tl-item ${now ? 'now' : ''}">
-    <div class="tl-weeks">${t.from === t.to ? `Sem. ${t.from}` : `Sem. ${t.from}–${t.to}`}</div>
-    <div class="stack-4"><div class="t-14 w-500">${esc(t.title)}</div><div class="t-12 soft lh-3">${esc(t.text)}</div></div>
-  </div>`;
+const slug = (t) => t.toLowerCase().replace(/[^a-z0-9áéíóúñü]+/g, '-').slice(0, 48);
+
+/** Fila desplegable de Hoy: título (y semanas) y detalle sin salir de la pantalla */
+function hoyRow(id, head, body, extra = '', cls = '') {
+  return `<details class="hq ${cls}" data-id="${attr(id)}" ${ui.openDetails.has(id) ? 'open' : ''}>
+    <summary>${head}</summary><div class="hq-a">${body}${extra}</div></details>`;
 }
+
+function timelineRow(t, now) {
+  const weeks = t.from === t.to ? `Sem. ${t.from}` : `Sem. ${t.from}–${t.to}`;
+  return hoyRow(`hoy-tl-${slug(t.title)}`, `<span class="tl-w">${esc(weeks)}</span><span class="grow">${esc(t.title)}</span>`,
+    `<p>${esc(t.text)}</p>`, '', now ? 'now' : '');
+}
+
+/** Dudas con respuesta corta desplegable; «Ver respuesta completa» abre la Guía */
+function hoyFaqList(items) {
+  return items.map((it) => hoyRow(`hoy-q-${slug(it.q)}`, `<span class="grow">${esc(it.q)}</span>`,
+    `<p>${esc(it.short)}</p>`,
+    `<button class="inline-link self-start t-12" data-action="open-guide" data-section="${it.ref.s}" data-q="${attr(it.ref.q)}">Ver respuesta completa ›</button>`)).join('');
+}
+
+const normalCard = (items) => `<div class="card pad stack-10">${eyebrow('Lo normal ahora')}
+    <ul class="tips">${items.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>`;
 
 function pregnancyToday() {
   const p = store.stage.pregnancy;
@@ -1165,42 +1184,41 @@ function pregnancyToday() {
     </div>`;
   }
   const { now, next } = timelineFor(g.weeks, p.rh);
-  const section = guideSectionFor(g.weeks);
   const pct = Math.min(100, (g.totalDays / 280) * 100);
   const overdue = g.daysLeft < 0;
-  return `<div class="stack-18">
-    <div class="card pad stack-12 preg-hero">
+  const faqs = pregnancyFaqs(g.weeks, p);
+  const rows = [...now.map((t) => timelineRow(t, true)),
+    ...(fluCampaign() ? [hoyRow('hoy-tl-gripe', '<span class="tl-w">Campaña</span><span class="grow">Vacunas de la gripe y la COVID-19</span>',
+      '<p>Se recomiendan durante la campaña de otoño e invierno, en cualquier trimestre.</p>', '', 'now')] : []),
+    ];
+  const upcoming = next.slice(0, 1).map((t) => timelineRow(t, false));
+  return `<div class="stack-14">
+    <div class="card pad stack-10 preg-hero">
       ${eyebrow(TRIMESTER_LABEL[g.trimester])}
-      <div class="row baseline gap-10">
-        <span class="preg-weeks">${g.weeks}</span>
-        <span class="stack-0"><span class="serif-24">${plural(g.weeks, 'semana', 'semanas')}</span><span class="t-13 soft">+ ${g.days} ${plural(g.days, 'día', 'días')}</span></span>
+      <div class="row between center">
+        <div class="row baseline gap-10">
+          <span class="preg-weeks sm">${g.weeks}</span>
+          <span class="stack-0"><span class="serif-22">${plural(g.weeks, 'semana', 'semanas')}</span><span class="t-12 soft">+ ${g.days} ${plural(g.days, 'día', 'días')}</span></span>
+        </div>
+        <div class="text-right"><div class="t-11 soft">Parto previsto</div><div class="t-14 w-500">${esc(fmtDayMonthShort(g.due))} ${partsFromDN(g.due).y}</div>
+          <div class="t-11 soft">${overdue ? `hace ${Math.abs(g.daysLeft)} ${plural(Math.abs(g.daysLeft), 'día', 'días')}` : `en ${g.daysLeft} ${plural(g.daysLeft, 'día', 'días')}`}</div></div>
       </div>
       <div class="vbar preg-bar"><i style="width:${pct.toFixed(1)}%"></i></div>
-      <div class="row between t-11 soft"><span>Inicio</span><span>40 semanas</span></div>
-      <hr>
-      <div class="row between center">
-        <div><div class="t-12 soft">Fecha probable de parto</div><div class="t-15 w-500">${esc(fmtDayMonthLong(g.due))} ${partsFromDN(g.due).y}</div></div>
-        <div class="text-center"><div class="serif-28">${Math.abs(g.daysLeft)}</div><div class="t-11 soft">${overdue ? 'días pasada' : plural(g.daysLeft, 'día', 'días')}</div></div>
-      </div>
-      ${overdue ? '<p class="t-12 soft lh-3">Dar a luz hasta la semana 41 y 6 días es normal. A partir de la 40 tu equipo te hará controles más frecuentes.</p>' : ''}
-      ${p.multiple === 'multiple' ? '<p class="t-12 soft lh-3">En un embarazo múltiple el seguimiento suele ser más frecuente y las fechas pueden adelantarse: sigue las indicaciones de tu equipo.</p>' : ''}
+      <p class="t-13 soft lh-4">${esc(PREGNANCY_LINE[g.trimester])}</p>
+      ${overdue ? '<p class="t-11 soft-70 lh-3">Dar a luz hasta la semana 41 y 6 días es normal. Desde la 40 tu equipo te hará controles más frecuentes.</p>' : ''}
+      ${p.multiple === 'multiple' ? '<p class="t-11 soft-70 lh-3">Embarazo múltiple: el seguimiento suele ser más frecuente. Sigue las indicaciones de tu equipo.</p>' : ''}
     </div>
+    ${normalCard(pregnancyNormal(g.weeks))}
     ${nextAppointmentCard()}
-    <div class="card pad stack-10">
-      ${eyebrow('Esta etapa')}
-      <p class="t-13 soft lh-5">${esc(TRIMESTER_TEXT[g.trimester])}</p>
-    </div>
-    <div class="card pad stack-12">
+    <div class="card pad stack-6">
       ${eyebrow('Lo que toca ahora')}
-      ${now.length ? now.map((t) => timelineItem(t, true)).join('') : '<p class="t-13 soft">Ahora mismo no hay ninguna prueba prevista en el calendario habitual.</p>'}
-      ${fluCampaign() ? `<div class="tl-item now"><div class="tl-weeks">Campaña</div><div class="stack-4"><div class="t-14 w-500">Vacunas de la gripe y la COVID-19</div><div class="t-12 soft lh-3">Se recomiendan durante la campaña de otoño e invierno, en cualquier trimestre.</div></div></div>` : ''}
-      ${next.length ? `<div class="t-11 soft upper track-1 mt-4">Próximamente</div>${next.map((t) => timelineItem(t, false)).join('')}` : ''}
+      ${rows.length ? `<div class="hq-list">${rows.join('')}</div>` : '<p class="t-13 soft">Ahora mismo no hay ninguna prueba prevista en el calendario habitual.</p>'}
+      ${upcoming.length ? `<div class="t-11 soft upper track-1 mt-4">Próximamente</div><div class="hq-list">${upcoming.join('')}</div>` : ''}
       <p class="t-11 soft-70 lh-3">El calendario concreto lo indica tu equipo; puede variar según tu comunidad y tu hospital.</p>
     </div>
-    <div class="card pad stack-12">
-      <div class="row baseline between">${eyebrow('Dudas de ahora')}<span class="t-11 soft">${esc(section.title)}</span></div>
-      ${section.items.slice(0, 3).map((it) => `<button class="faq-link" data-action="open-guide" data-section="${section.id}" data-q="${attr(it.q)}">${esc(it.q)} ${icon('right', 12, 'soft')}</button>`).join('')}
-      <button class="link-soft" data-action="open-guide" data-section="${section.id}">Ver todas las dudas →</button>
+    <div class="card pad stack-6">
+      ${eyebrow('Dudas de esta semana')}
+      <div class="hq-list">${hoyFaqList(faqs)}</div>
       ${askLink('¿Otra duda?', 'Pregúntale a Gonzalo', `Semana ${g.weeks} de embarazo`)}
     </div>
   </div>`;
@@ -1214,50 +1232,34 @@ function postpartumToday() {
       <div class="serif-22">¿Cuándo nació tu bebé?</div>
       ${primaryButton('Añadir fecha', 'open-settings')}</div></div>`;
   }
-  const early = s.weeks < 6;
-  return `<div class="stack-18">
+  const kind = ui.hoyFaq === 'baby' ? 'baby' : 'mom';
+  const seg = (v, label) => `<button class="seg ${kind === v ? 'on' : ''}" aria-pressed="${kind === v}" data-action="hoy-faq" data-v="${v}">${label}</button>`;
+  const bb = pp?.baby;
+  const ws = [...(bb?.weights || [])].sort((a, b) => a.date.localeCompare(b.date));
+  const lw = ws[ws.length - 1];
+  return `<div class="stack-14">
     <div class="card pad stack-10 preg-hero">
       ${eyebrow('Desde el parto')}
-      <div class="row baseline gap-10">
-        <span class="preg-weeks">${s.weeks}</span>
-        <span class="stack-0"><span class="serif-24">${plural(s.weeks, 'semana', 'semanas')}</span><span class="t-13 soft">+ ${s.days} ${plural(s.days, 'día', 'días')}</span></span>
+      <div class="row between center">
+        <div class="row baseline gap-10">
+          <span class="preg-weeks sm">${s.weeks}</span>
+          <span class="stack-0"><span class="serif-22">${plural(s.weeks, 'semana', 'semanas')}</span><span class="t-12 soft">+ ${s.days} ${plural(s.days, 'día', 'días')}</span></span>
+        </div>
+        <div class="text-right"><div class="t-11 soft">Tu bebé nació el</div><div class="t-14 w-500">${esc(fmtDayMonthShort(s.birth))}</div></div>
       </div>
-      <div class="t-12 soft">Tu bebé nació el ${esc(fmtDayMonthLong(s.birth))}</div>
-      ${(() => {
-        const bb = store.stage.postpartum?.baby;
-        if (!bb?.birthWeight) return `<button class="link-soft" data-action="open-care" data-v="baby">Apuntar su peso al nacer →</button>`;
-        const ws = [...(bb.weights || [])].sort((a, b) => a.date.localeCompare(b.date));
-        const lw = ws[ws.length - 1];
-        return `<button class="link-soft" data-action="open-care" data-v="baby">Peso al nacer ${fmtBabyKg(bb.birthWeight)}${lw ? ` · último ${fmtBabyKg(lw.g)}` : ''} →</button>`;
-      })()}
+      <p class="t-13 soft lh-4">${esc(postpartumLine(s.weeks))}</p>
     </div>
+    ${normalCard(postpartumNormal(s.weeks))}
     ${nextAppointmentCard()}
-    <div class="card pad stack-10">
-      ${eyebrow(early ? 'Las primeras semanas' : 'Tu recuperación')}
-      <p class="t-13 soft lh-5">${early
-        ? 'Tu cuerpo se está recuperando: el sangrado (loquios) se irá aclarando y disminuyendo durante unas 4 a 6 semanas. Descansa siempre que puedas, acepta ayuda y pide apoyo pronto si la lactancia duele o no va bien.'
-        : 'Hacia las 6 semanas suele hacerse la revisión posparto con tu matrona: un buen momento para hablar de cómo te encuentras, la lactancia, el suelo pélvico y la anticoncepción.'}</p>
-      <p class="t-13 soft lh-5">Los cambios de humor de los primeros días son frecuentes. Si la tristeza dura más de dos semanas, va a más o no disfrutas de nada, coméntalo: tiene tratamiento.</p>
-    </div>
-    <div class="card pad stack-12">
-      ${eyebrow('Cuando vuelva tu regla')}
-      <p class="t-13 soft lh-5">Si no das el pecho suele volver a las 6 a 8 semanas; con lactancia materna puede tardar meses. Los primeros ciclos son irregulares. Puedes ovular antes de la primera regla: si no buscas otro embarazo, habla de anticoncepción con tu matrona.</p>
-      <button class="outline-sage" data-action="stage-back-cycle">${icon('drop', 13)} Ha vuelto mi regla: seguir mi ciclo</button>
-    </div>
-    <div class="card pad stack-12">
-      ${eyebrow('Dudas del posparto')}
-      ${POSTPARTUM_GUIDE[0].items.slice(0, 3).map((it) => `<button class="faq-link" data-action="open-guide" data-section="pp" data-q="${attr(it.q)}">${esc(it.q)} ${icon('right', 12, 'soft')}</button>`).join('')}
+    <div class="card pad stack-6">
+      <div class="row between center wrap gap-8">${eyebrow('Dudas de esta semana')}<span class="segs">${seg('mom', 'Tú')}${seg('baby', 'Tu bebé')}</span></div>
+      <div class="hq-list">${hoyFaqList(postpartumFaqs(s.weeks, kind))}</div>
       ${askLink('¿Otra duda?', 'Pregúntale a Gonzalo', `Posparto · semana ${s.weeks}`)}
     </div>
-    ${(() => {
-      const sec = POSTPARTUM_GUIDE.find((x) => x.id === (s.weeks < 4 ? 'b0' : s.weeks < 12 ? 'bsl' : 'bdes'));
-      if (!sec) return '';
-      return `<div class="card pad stack-12">
-        <div class="row baseline between">${eyebrow('Dudas sobre tu bebé')}<span class="t-11 soft">${esc(sec.title)}</span></div>
-        ${sec.items.slice(0, 3).map((it) => `<button class="faq-link" data-action="open-guide" data-section="${sec.id}" data-q="${attr(it.q)}">${esc(it.q)} ${icon('right', 12, 'soft')}</button>`).join('')}
-        <button class="link-soft" data-action="open-guide" data-section="${sec.id}">Ver todas las dudas →</button>
-      </div>`;
-    })()}
+    <div class="stack-6 text-center t-12 soft">
+      ${s.weeks >= 6 ? `<div>¿Te ha vuelto la regla? <button class="inline-link" data-action="stage-back-cycle">Seguir mi ciclo</button></div>` : ''}
+      <div>Peso del bebé${bb?.birthWeight ? ` · ${fmtBabyKg(bb.birthWeight)} al nacer${lw ? `, último ${fmtBabyKg(lw.g)}` : ''}` : ''} · <button class="inline-link" data-action="open-care" data-v="baby">${bb?.birthWeight ? 'ver' : 'apuntar'}</button></div>
+    </div>
   </div>`;
 }
 
@@ -2146,6 +2148,7 @@ const actions = {
     const weights = (pp.baby?.weights || []).filter((w) => w.id !== el.dataset.id);
     store.updateStage({ ...store.stage, postpartum: { ...pp, baby: { ...(pp.baby || {}), weights } } });
   },
+  'hoy-faq': (el) => { ui.hoyFaq = el.dataset.v; render(); },
   'open-urgent': () => { ui.sheet = 'urgent'; ui.sheetAnim = true; render(); },
   'open-guide': (el) => {
     ui.tab = tabIndex('guide');

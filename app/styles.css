@@ -792,3 +792,16 @@ body[data-stage="postpartum"] { --st: #3F5F78; --st-mid: #4F7189; --st-soft: #E4
 .ask-pill .cav { flex: none; }
 @media (max-width: 359px) { .ask-pill span { display: none; } .ask-pill { padding: 0 5px; } }
 .app-header .row:has(.sync-pill) .ask-pill span { display: none; } .app-header .row:has(.sync-pill) .ask-pill { padding: 0 5px; }
+
+/* Ciclo: regla en rojo y ovulación en azul (vera-backlog#43) */
+:root { --period: #B5362B; --ovu: #3B6EA8; }
+.bg-period { background: var(--period); } .bg-ovu { background: var(--ovu); }
+.wday.ph-period { --pc: var(--period); } .wday.ph-ovu { --pc: var(--ovu); }
+.cal-cell.ph-period { --pc: var(--period); color: var(--period); }
+.cal-cell.ph-ovu { --pc: var(--ovu); color: var(--ovu); }
+.legend.box i.ph-period { background: color-mix(in srgb, var(--period) 22%, transparent); border-color: var(--period); }
+.legend.box i.ph-ovu { background: color-mix(in srgb, var(--ovu) 22%, transparent); border-color: var(--ovu); }
+
+/* Agenda: botón visible para recibir aviso en el calendario del móvil (vera-backlog#42) */
+.appt-remind { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 6px 12px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 500; color: var(--st); background: var(--st-soft); border: 1px solid color-mix(in srgb, var(--st) 30%, transparent); }

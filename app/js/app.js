@@ -38,7 +38,7 @@ const plural = (n, one, many) => (n === 1 ? one : many);
 const fmtNum = (x, d) => x.toFixed(d).replace('.', ',');
 const fmtKg = (x) => (Number.isInteger(x) ? String(x) : fmtNum(x, 1));
 
-const PHASE_COLOR = { menstrual: 'rose', ovulation: 'gold', fertile: 'sage' };
+const PHASE_COLOR = { menstrual: 'period', ovulation: 'ovu', fertile: 'sage' };
 
 function firstOfMonth(dn) {
   const p = partsFromDN(dn);
@@ -177,9 +177,9 @@ function cycleDial(settings, info) {
   <div class="dial" role="img" aria-label="Día ${info.day} del ciclo, ${attr(PHASES[info.phase].label)}">
     <svg viewBox="0 0 ${S} ${S}" width="100%" height="100%">
       <circle cx="${cx}" cy="${cy}" r="${r}" stroke="var(--mist)" stroke-width="10" fill="none"/>
-      ${arc(0.15, settings.periodLen - 0.15, 'rose', 10)}
+      ${arc(0.15, settings.periodLen - 0.15, 'period', 10)}
       ${arc(ovu - 5, ovu + 1.4, 'sage', 10)}
-      ${arc(ovu + 0.32, ovu + 0.72, 'gold', 13)}
+      ${arc(ovu + 0.32, ovu + 0.72, 'ovu', 13)}
       ${ticks}
       <circle cx="${dx.toFixed(2)}" cy="${dy.toFixed(2)}" r="9" fill="var(--st)" stroke="var(--ivory)" stroke-width="3"/>
     </svg>
@@ -283,9 +283,9 @@ function todayView() {
     <div class="stack-14 mt-6 center-x">
       ${cycleDial(settings, info)}
       <div class="row gap-18 justify-center">
-        <span class="legend"><i class="bg-rose"></i>Regla</span>
+        <span class="legend"><i class="bg-period"></i>Regla</span>
         <span class="legend"><i class="bg-sage"></i>Ventana fértil</span>
-        <span class="legend"><i class="bg-gold"></i>Ovulación</span>
+        <span class="legend"><i class="bg-ovu"></i>Ovulación</span>
       </div>
     </div>
     <div class="card pad stack-10 preg-hero">
@@ -718,9 +718,9 @@ function calendarSheet() {
       </div>
       ${grid}
       <div class="row gap-14 justify-center wrap">
-        ${store.mode === 'cycle' ? `<span class="legend box"><i class="ph-rose"></i>Regla</span>
+        ${store.mode === 'cycle' ? `<span class="legend box"><i class="ph-period"></i>Regla</span>
         <span class="legend box"><i class="ph-sage"></i>Fértil</span>
-        <span class="legend box"><i class="ph-gold"></i>Ovulación</span>` : ''}
+        <span class="legend box"><i class="ph-ovu"></i>Ovulación</span>` : ''}
         <span class="legend"><i class="dot"></i>Con registro</span>
       </div>
     </div>`);
@@ -1624,8 +1624,8 @@ function apptRow(a, past) {
   const p = partsFromDN(dn);
   return `<div class="appt ${past ? 'past' : ''}">
     <div class="appt-date"><b>${p.d}</b><span>${esc(fmtMonthShort(dn))}</span></div>
-    <div class="grow"><div class="t-14 w-500">${esc(a.title)}</div><div class="t-12 soft">${esc(capFirst(fmtWeekdayLong(dn)).split(',')[0])}${a.time ? ` · ${esc(a.time)}` : ''}</div></div>
-    ${past ? '' : `<button class="icon-btn c-deep" data-action="appt-ics" data-id="${attr(a.id)}" aria-label="Añadir ${attr(a.title)} al calendario" title="Añadir al calendario">${icon('calendar', 15)}</button>`}
+    <div class="grow"><div class="t-14 w-500">${esc(a.title)}</div><div class="t-12 soft">${esc(capFirst(fmtWeekdayLong(dn)).split(',')[0])}${a.time ? ` · ${esc(a.time)}` : ''}</div>
+      ${past ? '' : `<button class="appt-remind" data-action="appt-ics" data-id="${attr(a.id)}" aria-label="Añadir ${attr(a.title)} al calendario del móvil para recibir aviso">${icon('calendar', 13)} Avisarme en mi calendario</button>`}</div>
     <button class="icon-btn soft" data-action="appt-delete" data-id="${attr(a.id)}" aria-label="Eliminar ${attr(a.title)}">${icon('x', 12)}</button>
   </div>`;
 }
@@ -1649,7 +1649,7 @@ function agendaSection() {
       <button class="outline-sage" data-action="appt-add">${icon('plusCircle', 14)} Añadir a mi agenda</button>
     </div>
     ${past.length ? `<details class="faq-item"><summary>Citas anteriores</summary><div class="stack-8 pt-4">${past.map((a) => apptRow(a, true)).join('')}</div></details>` : ''}
-    <p class="t-11 soft-70 lh-3">Las citas y pruebas las indica tu equipo. Con el icono de calendario puedes añadirlas a la agenda de tu móvil para recibir avisos.</p>
+    <p class="t-11 soft-70 lh-3">Las citas y pruebas las indica tu equipo. Con «Avisarme en mi calendario» se descarga un archivo que tu móvil añade a su calendario, y es él quien te avisa (también con Vera cerrada).</p>
   </div>`;
 }
 

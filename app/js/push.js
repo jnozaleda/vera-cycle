@@ -66,3 +66,14 @@ export async function syncPush(target) {
   await post('/subscribe', payload(sub, target));
   try { localStorage.setItem(KEY, keyOf(target)); } catch { /* */ }
 }
+
+/** Pide al servicio que mande ahora un aviso de prueba a este navegador. Devuelve true si el servicio lo aceptó. */
+export async function testPush() {
+  const reg = await navigator.serviceWorker.getRegistration();
+  const sub = await reg?.pushManager.getSubscription();
+  if (!sub) return false;
+  const res = await fetch(`${PUSH_URL}/test`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: sub.endpoint }) });
+  if (res.status === 429) throw new Error('too soon');
+  if (!res.ok) return false;
+  return (await res.json()).sent === true;
+}

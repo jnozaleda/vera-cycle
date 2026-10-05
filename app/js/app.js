@@ -25,7 +25,7 @@ import { PREGNANCY_LINE, pregnancyNormal, pregnancyFaqs, postpartumLine, postpar
 import { spansPregnancy } from './predict.js';
 import { PREGNANCY_BETA_ONLY, CONSULT, TAGLINE } from './config.js';
 import { isBeta } from './beta.js';
-import { pushState, enablePush, disablePush, syncPush } from './push.js';
+import { pushState, enablePush, disablePush, syncPush, testPush } from './push.js';
 import { sync, syncAvailable, onSyncChange, initSync, connect, reauthorize, disconnect, deleteRemote, syncNow, loadGis } from './sync.js';
 
 const CONTACT_EMAIL = 'contact.gineped@gmail.com';
@@ -111,7 +111,7 @@ const ui = {
   babyForm: { birth: '', date: '', weight: '' },          // peso del recién nacido
   pushState: 'unknown',   // avisos push: 'unknown' | 'unsupported' | 'needs-install' | 'denied' | 'off' | 'on'
   pushBusy: false,
-  pushError: '',
+  pushMsg: '',
   hoyView: 'me',         // embarazo · Hoy: 'me' | 'baby' (el desarrollo del bebé vive dentro de Hoy)
 };
 
@@ -776,22 +776,58 @@ function pushTarget() {
   return null;
 }
 
+const PUSH_DISMISS = 'vera-push-dismissed';
+const pushDismissed = () => { try { return localStorage.getItem(PUSH_DISMISS) === '1'; } catch { return false; } };
+
+/** Texto de lo que se avisa, según la etapa */
+const pushWhat = (pp) => (pp
+  ? 'Te avisamos con lo normal a la edad de tu bebé: cada semana los 3 primeros meses y luego cada mes, a las 9:00.'
+  : 'Cada semana nueva de tu embarazo, a las 9:00, te avisamos con lo normal de esos días.');
+
+/** Fila de Ajustes que abre la hoja de avisos (como «Aviso diario» en Florvia) */
 function pushSection() {
   const target = pushTarget();
-  if (!target) return '';
+  if (!target || ui.pushState === 'unknown' || ui.pushState === 'unsupported') return '';
+  const on = ui.pushState === 'on';
+  return `<div class="stack-10 data-box">${eyebrow('Avisos')}
+    <button class="push-row" data-action="open-push"><span class="push-ic">${icon('bell', 16)}</span>
+      <span class="grow left"><span class="t-13 w-500 block">Aviso semanal</span><span class="t-12 soft block">${on ? 'Activado · a las 9:00' : 'Desactivado'}</span></span>
+      <span class="soft">›</span></button></div>`;
+}
+
+/** Tarjeta de Hoy que invita a activar los avisos (se oculta al activarlos o con «Ahora no») */
+function pushPromptCard() {
+  const target = pushTarget();
+  if (!target || pushDismissed() || (ui.pushState !== 'off' && ui.pushState !== 'needs-install')) return '';
   const pp = target.kind === 'postpartum';
+  return `<div class="card pad stack-8">
+    <button class="push-row" data-action="open-push"><span class="push-ic">${icon('bell', 16)}</span>
+      <span class="grow left"><span class="t-14 w-500 block">Activa el aviso semanal</span><span class="t-12 soft block">${pp ? 'Lo normal a la edad de tu bebé, en tu móvil' : 'Lo normal de cada semana nueva, en tu móvil'}</span></span>
+      <span class="soft">›</span></button>
+    <button class="link-soft self-start" data-action="push-dismiss">Ahora no</button>
+  </div>`;
+}
+
+function pushSheet() {
+  const target = pushTarget();
+  const pp = target?.kind === 'postpartum';
   const st = ui.pushState;
-  if (st === 'unknown' || st === 'unsupported') return '';
-  const note = `<p class="t-11 soft-70 lh-3">Para enviarte los avisos guardamos, en un servicio de Cloudflare, la dirección de aviso de tu navegador y ${pp ? 'la fecha de nacimiento de tu bebé' : 'tu fecha probable de parto'}. Nada más. Al desactivarlos se borra.</p>`;
   let inner;
-  if (st === 'needs-install') inner = '<p class="t-13 soft lh-4">En iPhone, para recibir avisos añade Vera a tu pantalla de inicio (botón Compartir → «Añadir a pantalla de inicio») y ábrela desde allí.</p>';
-  else if (st === 'denied') inner = '<p class="t-13 soft lh-4">Tienes bloqueadas las notificaciones de Vera. Puedes permitirlas en los ajustes de tu navegador o de tu móvil y volver aquí.</p>';
-  else if (st === 'on') inner = `<div class="sync-box"><span class="c-sage">${icon('checkCircle', 18)}</span><div class="grow"><div class="t-13 w-500">Avisos activados</div><div class="t-12 soft">${pp ? 'Cada semana nueva de tu bebé los 3 primeros meses y luego cada mes, a las 9:00.' : 'Cada semana nueva, a las 9:00.'}</div></div></div>
-      <button class="pill-outline" data-action="push-disable" ${ui.pushBusy ? 'disabled' : ''}>Desactivar avisos</button>`;
-  else inner = `<p class="t-13 soft lh-4">${pp ? 'Te avisamos con lo normal a la edad de tu bebé: cada semana los 3 primeros meses y luego cada mes. Es opcional.' : 'Cada semana nueva te avisamos con lo normal de esos días. Es opcional.'}</p>
-      <button class="pill-outline row gap-6 center" data-action="push-enable" ${ui.pushBusy ? 'disabled' : ''}>${icon('bell', 13)} Activar avisos semanales</button>`;
-  return `<div class="stack-10 data-box">${eyebrow('Avisos')}${inner}
-    ${ui.pushError ? `<p class="t-12 c-rose">${esc(ui.pushError)}</p>` : ''}${st === 'denied' || st === 'needs-install' ? '' : note}</div>`;
+  if (!target) inner = '<p class="t-13 soft lh-4">Los avisos están disponibles en embarazo y posparto.</p>';
+  else if (st === 'needs-install') inner = '<p class="soft-note">En iPhone, los avisos solo funcionan con la app instalada: botón Compartir → «Añadir a pantalla de inicio», y ábrela desde el icono.</p>';
+  else if (st === 'unsupported') inner = '<p class="soft-note">Este navegador no admite avisos.</p>';
+  else if (st === 'denied') inner = '<p class="soft-note">Tienes bloqueadas las notificaciones de Vera. Puedes permitirlas en los ajustes de tu navegador o de tu móvil, en Notificaciones, y volver aquí.</p>';
+  else if (st === 'on') inner = `<div class="sync-box"><span class="c-sage">${icon('checkCircle', 18)}</span><div class="grow"><div class="t-13 w-500">Activado</div><div class="t-12 soft">${pp ? 'Cada semana los 3 primeros meses y luego cada mes, a las 9:00.' : 'Cada semana nueva, a las 9:00.'}</div></div></div>
+      <button class="pill-outline" data-action="push-test" ${ui.pushBusy ? 'disabled' : ''}>Enviar un aviso de prueba</button>
+      <button class="link-danger" data-action="push-disable" ${ui.pushBusy ? 'disabled' : ''}>Desactivar el aviso</button>`;
+  else inner = `<button class="btn-primary" data-action="push-enable" ${ui.pushBusy ? 'disabled' : ''}>Activar aviso semanal</button>`;
+  const note = `<p class="t-11 soft-70 lh-3">Para enviarte los avisos guardamos, en un servicio de Cloudflare, la dirección de aviso de tu navegador y ${pp ? 'la fecha de nacimiento de tu bebé' : 'tu fecha probable de parto'}. Nada más. Al desactivarlos se borra.</p>`;
+  return sheetFrame('Aviso semanal', `<div class="stack-14">
+    <p class="t-14 lh-5">${pushWhat(pp)} Es opcional.</p>
+    ${ui.pushMsg ? `<p class="${/^(No |Sin )/.test(ui.pushMsg) ? 'soft-note' : 't-13 c-sage w-500'}">${esc(ui.pushMsg)}</p>` : ''}
+    ${inner}
+    ${st === 'denied' || st === 'needs-install' || st === 'unsupported' ? '' : note}
+  </div>`);
 }
 
 function syncSection() {
@@ -1260,6 +1296,7 @@ function pregnancyToday() {
       ${overdue ? '<p class="t-11 soft-70 lh-3">Dar a luz hasta la semana 41 y 6 días es normal. Desde la 40 tu equipo te hará controles más frecuentes.</p>' : ''}
       ${p.multiple === 'multiple' ? '<p class="t-11 soft-70 lh-3">Embarazo múltiple: el seguimiento suele ser más frecuente. Sigue las indicaciones de tu equipo.</p>' : ''}
     </div>
+    ${pushPromptCard()}
     ${babyCard}
     ${normalCard(pregnancyNormal(g.weeks))}
     ${nextAppointmentCard()}
@@ -1345,6 +1382,7 @@ function postpartumToday() {
       </div>
       <p class="t-13 soft lh-4">${esc(postpartumLine(s.weeks))}</p>
     </div>
+    ${pushPromptCard()}
     ${babyCard}
     ${normalCard(postpartumNormal(s.weeks))}
     ${nextAppointmentCard()}
@@ -1967,6 +2005,7 @@ function mainView() {
   </nav>
   ${ui.sheet === 'calendar' ? calendarSheet() : ''}
   ${ui.sheet === 'settings' ? settingsSheet() : ''}
+  ${ui.sheet === 'push' ? pushSheet() : ''}
   ${ui.sheet === 'urgent' ? urgentSheet() : ''}
   ${ui.sheet === 'ask' ? askSheet() : ''}
   ${ui.syncChoice ? syncChoiceDialog() : ''}`;
@@ -2320,16 +2359,27 @@ const actions = {
     render();
     resolve?.(el.dataset.v || null);
   },
+  'open-push': () => {
+    if (settingsDirty() && !confirm('Tienes cambios sin guardar. ¿Salir sin guardarlos?')) return;
+    ui.pushMsg = ''; ui.sheet = 'push'; ui.sheetAnim = true; render();
+  },
+  'push-dismiss': () => { try { localStorage.setItem(PUSH_DISMISS, '1'); } catch { /* */ } render(); },
   'push-enable': async () => {
-    ui.pushBusy = true; ui.pushError = ''; render();
-    try { await enablePush(pushTarget()); }
-    catch (e) { ui.pushError = Notification.permission === 'denied' ? '' : 'No hemos podido activar los avisos. Inténtalo de nuevo en un rato.'; }
-    ui.pushBusy = false; ui.pushState = await pushState(); render();
+    ui.pushBusy = true; ui.pushMsg = 'Activando…'; render();
+    try { await enablePush(pushTarget()); ui.pushMsg = 'Aviso semanal activado.'; }
+    catch (e) { ui.pushMsg = Notification.permission === 'denied' ? '' : 'No se ha podido activar. Inténtalo de nuevo en un rato.'; }
+    ui.pushBusy = false; ui.pushState = await pushState(); if (ui.pushState === 'denied') ui.pushMsg = ''; render();
+  },
+  'push-test': async () => {
+    ui.pushBusy = true; ui.pushMsg = 'Enviando…'; render();
+    try { ui.pushMsg = (await testPush()) ? 'Enviado: debería llegarte en unos segundos.' : 'No se ha podido enviar. Prueba a desactivar y activar el aviso.'; }
+    catch (e) { ui.pushMsg = e.message === 'too soon' ? 'Espera un minuto antes de pedir otro aviso de prueba.' : 'No se ha podido enviar.'; }
+    ui.pushBusy = false; render();
   },
   'push-disable': async () => {
     ui.pushBusy = true; render();
     await disablePush();
-    ui.pushBusy = false; ui.pushState = await pushState(); render();
+    ui.pushMsg = ''; ui.pushBusy = false; ui.pushState = await pushState(); render();
   },
   'sync-now': () => syncNow(),
   'sync-reauth': () => reauthorize(),

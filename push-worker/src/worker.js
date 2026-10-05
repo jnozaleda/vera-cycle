@@ -7,6 +7,7 @@
 //   POST /subscribe     {sub, due}        embarazo: fecha probable de parto  (o {sub, birth}: posparto, fecha de nacimiento del bebé)
 //                                         navegador, solo desde ALLOWED_ORIGINS
 //   POST /unsubscribe   {endpoint}        navegador
+//   POST /test          {endpoint}        navegador: «Enviar un aviso de prueba» (máx. 1 por minuto y suscripción)
 //   POST /send-now      {hash}            solo pruebas, Authorization: Bearer ADMIN_TOKEN
 //
 // Bindings: SUBS (KV), VAPID_PRIVATE y ADMIN_TOKEN (secretos), VAPID_PUBLIC, VAPID_SUBJECT y ALLOWED_ORIGINS (vars).
@@ -154,6 +155,20 @@ export default {
         const last = prev && kindOf(prev) === kind && dateOf(prev) === date ? prev.last : week;
         await env.SUBS.put(key, JSON.stringify({ sub: { endpoint: sub.endpoint, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } }, kind, date, last }));
         return reply(200, { ok: true, week });
+      }
+
+      if (url.pathname === '/test') {
+        if (!allowed.includes(origin)) return reply(403, { error: 'origin not allowed' });
+        if (typeof body.endpoint !== 'string') return reply(400, { error: 'bad request' });
+        const key = `s:${await hashOf(body.endpoint)}`;
+        const rec = await env.SUBS.get(key, 'json');
+        if (!rec) return reply(404, { error: 'not subscribed' });
+        if (rec.testedAt && Date.now() - rec.testedAt < 60000) return reply(429, { error: 'too soon' });
+        const w0 = weekOf(rec, madridNow().date);
+        const week = kindOf(rec) === 'postpartum' ? Math.max(1, w0 ?? 1) : Math.min(42, Math.max(4, w0 ?? 20));
+        const res = await notify(env, rec, week);
+        await env.SUBS.put(key, JSON.stringify({ ...rec, testedAt: Date.now() }));
+        return reply(200, { sent: res.ok });
       }
 
       if (url.pathname === '/send-now') {

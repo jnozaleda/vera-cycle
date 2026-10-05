@@ -30,3 +30,8 @@ export const CONSULT = {
 // Mensaje principal de Vera (bienvenida, ajustes de etapa). Cuando la pediatra esté en la
 // consulta (vera-backlog#33), cambiar a «…con tu ginecólogo y tu pediatra».
 export const TAGLINE = 'Embarazo, posparto y tu bebé, acompañada por tu ginecólogo.';
+
+// Avisos push semanales (vera-backlog#9). Servicio propio en Cloudflare: guarda solo la dirección de
+// push del navegador, sus claves de cifrado y la fecha probable de parto. La clave VAPID pública no es secreta.
+export const PUSH_URL = 'https://vera-push.tempcheck-app.workers.dev';
+export const VAPID_PUBLIC = 'BLcknXtmkyDdEyAXBKPaty9DAR8UgcKnuSpc_QVUIIbtyX-7lwGKYBGeoMEPK2ZcvyM337DL_2t0FqEtdnKBkXQ';

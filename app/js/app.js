@@ -25,6 +25,7 @@ import { PREGNANCY_LINE, pregnancyNormal, pregnancyFaqs, postpartumLine, postpar
 import { spansPregnancy } from './predict.js';
 import { PREGNANCY_BETA_ONLY, CONSULT, TAGLINE } from './config.js';
 import { isBeta } from './beta.js';
+import { pushState, enablePush, disablePush, syncPushDue } from './push.js';
 import { sync, syncAvailable, onSyncChange, initSync, connect, reauthorize, disconnect, deleteRemote, syncNow, loadGis } from './sync.js';
 
 const CONTACT_EMAIL = 'contact.gineped@gmail.com';
@@ -108,6 +109,9 @@ const ui = {
   foodCat: 'Todos',
   ask: { context: '', include: true, text: '', sent: null }, // hoja «Pregúntale a Gonzalo»
   babyForm: { birth: '', date: '', weight: '' },          // peso del recién nacido
+  pushState: 'unknown',   // avisos push: 'unknown' | 'unsupported' | 'needs-install' | 'denied' | 'off' | 'on'
+  pushBusy: false,
+  pushError: '',
   hoyView: 'me',         // embarazo · Hoy: 'me' | 'baby' (el desarrollo del bebé vive dentro de Hoy)
   hoyFaq: 'mom',          // posparto · dudas de Hoy: 'mom' | 'baby'
 };
@@ -766,6 +770,22 @@ function syncPill() {
   return '';
 }
 
+function pushSection() {
+  if (store.mode !== 'pregnancy' || !store.stage.pregnancy?.dueDate) return '';
+  const st = ui.pushState;
+  if (st === 'unknown' || st === 'unsupported') return '';
+  const note = '<p class="t-11 soft-70 lh-3">Para enviarte los avisos guardamos, en un servicio de Cloudflare, la dirección de aviso de tu navegador y tu fecha probable de parto. Nada más. Al desactivarlos se borra.</p>';
+  let inner;
+  if (st === 'needs-install') inner = '<p class="t-13 soft lh-4">En iPhone, para recibir avisos añade Vera a tu pantalla de inicio (botón Compartir → «Añadir a pantalla de inicio») y ábrela desde allí.</p>';
+  else if (st === 'denied') inner = '<p class="t-13 soft lh-4">Tienes bloqueadas las notificaciones de Vera. Puedes permitirlas en los ajustes de tu navegador o de tu móvil y volver aquí.</p>';
+  else if (st === 'on') inner = `<div class="sync-box"><span class="c-sage">${icon('checkCircle', 18)}</span><div class="grow"><div class="t-13 w-500">Avisos activados</div><div class="t-12 soft">Cada semana nueva, a las 9:00.</div></div></div>
+      <button class="pill-outline" data-action="push-disable" ${ui.pushBusy ? 'disabled' : ''}>Desactivar avisos</button>`;
+  else inner = `<p class="t-13 soft lh-4">Cada semana nueva te avisamos con lo normal de esos días. Es opcional.</p>
+      <button class="pill-outline row gap-6 center" data-action="push-enable" ${ui.pushBusy ? 'disabled' : ''}>${icon('bell', 13)} Activar avisos semanales</button>`;
+  return `<div class="stack-10 data-box">${eyebrow('Avisos')}${inner}
+    ${ui.pushError ? `<p class="t-12 c-rose">${esc(ui.pushError)}</p>` : ''}${st === 'denied' || st === 'needs-install' ? '' : note}</div>`;
+}
+
 function syncSection() {
   if (!sync.enabled) {
     return `<div class="stack-10 data-box">
@@ -773,7 +793,7 @@ function syncSection() {
       <p class="t-13 soft lh-4">Guarda tus datos en tu propio Google Drive para verlos desde cualquier dispositivo. Es opcional: sin cuenta, Vera funciona igual.</p>
       <button class="google-btn" data-action="sync-connect">${GOOGLE_G} Continuar con Google</button>
       ${sync.error ? `<p class="t-12 c-rose">${esc(sync.error)}</p>` : ''}
-      <p class="t-11 soft-70 lh-3">Tus datos se guardan en una carpeta privada de tu Google Drive a la que solo accede Vera. No aparece entre tus archivos. Vera no tiene servidores: nosotros no vemos tus datos.</p>
+      <p class="t-11 soft-70 lh-3">Tus datos se guardan en una carpeta privada de tu Google Drive a la que solo accede Vera. No aparece entre tus archivos. Nosotros no vemos tus datos.</p>
     </div>`;
   }
   const warn = sync.status === 'needs-auth' || sync.status === 'error' || sync.status === 'offline';
@@ -853,6 +873,7 @@ function settingsSheet() {
     <div class="stack-20">
       ${stageUI() ? stageSection() : ''}
       ${dm === 'pregnancy' ? pregnancyForm() : dm === 'postpartum' ? postpartumForm() : cycleForm}
+      ${pushSection()}
       ${syncAvailable() ? syncSection() : ''}
       <div class="stack-10 data-box">
         ${eyebrow('Contacto')}
@@ -2256,6 +2277,17 @@ const actions = {
     render();
     resolve?.(el.dataset.v || null);
   },
+  'push-enable': async () => {
+    ui.pushBusy = true; ui.pushError = ''; render();
+    try { await enablePush(store.stage.pregnancy.dueDate); }
+    catch (e) { ui.pushError = Notification.permission === 'denied' ? '' : 'No hemos podido activar los avisos. Inténtalo de nuevo en un rato.'; }
+    ui.pushBusy = false; ui.pushState = await pushState(); render();
+  },
+  'push-disable': async () => {
+    ui.pushBusy = true; render();
+    await disablePush();
+    ui.pushBusy = false; ui.pushState = await pushState(); render();
+  },
   'sync-now': () => syncNow(),
   'sync-reauth': () => reauthorize(),
   'sync-disconnect': () => {
@@ -2477,9 +2509,18 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) tick
 if (new URLSearchParams(location.search).has('demo') && store.needsOnboarding) store.loadDemoData();
 onSyncChange(render);
 initSync();
+pushState().then((st) => { ui.pushState = st; render(); });
+let pushDueSeen;
+store.subscribe(() => { // mantiene el servicio al día si cambia la fecha de parto o se deja el embarazo
+  if (ui.pushState !== 'on') return;
+  const due = store.mode === 'pregnancy' ? store.stage.pregnancy?.dueDate || null : null;
+  if (due === pushDueSeen) return;
+  pushDueSeen = due;
+  syncPushDue(due).then(async () => { ui.pushState = await pushState(); render(); }).catch(() => {});
+});
 render();
 
-if ('serviceWorker' in navigator && location.protocol === 'https:') {
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   navigator.serviceWorker.register('sw.js').catch(() => { /* sin modo offline */ });
 }
 

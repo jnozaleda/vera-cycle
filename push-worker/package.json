@@ -1,0 +1,9 @@
+{
+  "name": "vera-push",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node test/webpush.test.mjs && node test/worker.test.mjs",
+    "deploy": "wrangler deploy"
+  }
+}

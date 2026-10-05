@@ -2,7 +2,7 @@
 // Service worker de Vera web: permite abrir la app sin conexión.
 // Estrategia "red primero": siempre intenta la versión más reciente y usa la caché si no hay red.
 
-const CACHE = 'vera-web-v38';
+const CACHE = 'vera-web-v39';
 const SHELL = [
   './',
   'index.html',
@@ -21,6 +21,7 @@ const SHELL = [
   'js/baby.js',
   'js/care.js',
   'js/today.js',
+  'js/push.js',
   'js/fetus3d.js',
   'js/fetus-core.js',
   'js/fetus-worker.js',
@@ -58,4 +59,26 @@ self.addEventListener('fetch', (event) => {
       })
       .catch(() => caches.match(req, { ignoreSearch: true }).then((r) => r || caches.match('index.html'))),
   );
+});
+
+// Avisos push (vera-backlog#9): el servicio envía {title, body, url} cifrado.
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch { /* mensaje vacío */ }
+  event.waitUntil(self.registration.showNotification(data.title || 'Vera', {
+    body: data.body || '',
+    icon: 'icons/icon-192.png',
+    badge: 'icons/favicon-32.png',
+    tag: 'vera-weekly',
+    data: { url: data.url || './' },
+  }));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = new URL(event.notification.data?.url || './', self.registration.scope).href;
+  event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+    const open = list.find((c) => c.url.startsWith(self.registration.scope));
+    return open ? open.focus() : self.clients.openWindow(url);
+  }));
 });

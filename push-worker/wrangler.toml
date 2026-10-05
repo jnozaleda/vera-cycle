@@ -1,0 +1,17 @@
+name = "vera-push"
+main = "src/worker.js"
+compatibility_date = "2026-09-01"
+
+# Cada día a las 07:00 y 08:00 UTC; scheduled() solo actúa cuando en Madrid son las 09:00 (verano e invierno).
+[triggers]
+crons = ["0 7,8 * * *"]
+
+[vars]
+ALLOWED_ORIGINS = "https://jnozaleda.github.io,http://localhost:8766"
+VAPID_SUBJECT = "mailto:contact.gineped@gmail.com"
+# Clave pública VAPID (no es secreta; la privada es el secreto VAPID_PRIVATE)
+VAPID_PUBLIC = "BLcknXtmkyDdEyAXBKPaty9DAR8UgcKnuSpc_QVUIIbtyX-7lwGKYBGeoMEPK2ZcvyM337DL_2t0FqEtdnKBkXQ"
+
+[[kv_namespaces]]
+binding = "SUBS"
+id = "a095ae641b3d4f378fbc67d5580de8c5"

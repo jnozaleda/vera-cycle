@@ -1,6 +1,6 @@
 // push.js
-// Avisos push semanales del embarazo (vera-backlog#9). El permiso y la suscripción viven en el navegador;
-// el servicio (push-worker/) solo recibe la suscripción y la fecha probable de parto.
+// Avisos push semanales del embarazo y del bebé (vera-backlog#9). El permiso y la suscripción viven en el navegador;
+// el servicio (push-worker/) solo recibe la suscripción y la fecha de parto o de nacimiento.
 
 import { PUSH_URL, VAPID_PUBLIC } from './config.js';
 
@@ -22,6 +22,9 @@ export async function pushState() {
   } catch { return 'off'; }
 }
 
+const keyOf = (t) => `${t.kind}:${t.date}`;
+const payload = (sub, t) => (t.kind === 'postpartum' ? { sub: sub.toJSON(), birth: t.date } : { sub: sub.toJSON(), due: t.date });
+
 const urlB64ToBytes = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (s.length % 4)) % 4)), (c) => c.charCodeAt(0));
 
 async function post(path, body) {
@@ -29,16 +32,16 @@ async function post(path, body) {
   if (!res.ok) throw new Error(`push ${path} ${res.status}`);
 }
 
-/** Pide permiso, suscribe este navegador y envía la fecha de parto. Lanza si algo falla. */
-export async function enablePush(due) {
+/** Pide permiso, suscribe este navegador y envía la fecha. `target` = { kind: 'pregnancy' | 'postpartum', date }. Lanza si algo falla. */
+export async function enablePush(target) {
   const permission = await Notification.requestPermission();
   if (permission !== 'granted') throw new Error('permiso denegado');
   const reg = await navigator.serviceWorker.ready;
   let sub = await reg.pushManager.getSubscription();
   if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToBytes(VAPID_PUBLIC) });
-  await post('/subscribe', { sub: sub.toJSON(), due });
-  try { localStorage.setItem(KEY, due); } catch { /* sin almacenamiento */ }
-  await reg.showNotification('Avisos activados', { body: 'Cada semana nueva te contaremos qué es lo normal en esos días.', icon: 'icons/icon-192.png', tag: 'vera-welcome' });
+  await post('/subscribe', payload(sub, target));
+  try { localStorage.setItem(KEY, keyOf(target)); } catch { /* sin almacenamiento */ }
+  await reg.showNotification('Avisos activados', { body: target.kind === 'postpartum' ? 'Te avisaremos de lo normal a cada edad de tu bebé.' : 'Cada semana nueva te contaremos qué es lo normal en esos días.', icon: 'icons/icon-192.png', tag: 'vera-welcome' });
 }
 
 export async function disablePush() {
@@ -51,15 +54,15 @@ export async function disablePush() {
   try { localStorage.removeItem(KEY); } catch { /* */ }
 }
 
-/** Mantiene el servicio al día si cambia la fecha de parto o la usuaria deja el embarazo (due = null). */
-export async function syncPushDue(due) {
+/** Mantiene el servicio al día si cambia la fecha o la etapa, o la usuaria deja de estar en embarazo/posparto (target = null). */
+export async function syncPush(target) {
   let sent = null;
   try { sent = localStorage.getItem(KEY); } catch { /* */ }
-  if ((due || null) === (sent || null)) return;
-  if (!due) { await disablePush(); return; }
+  if ((target ? keyOf(target) : null) === (sent || null)) return;
+  if (!target) { await disablePush(); return; }
   const reg = await navigator.serviceWorker.getRegistration();
   const sub = await reg?.pushManager.getSubscription();
   if (!sub) return;
-  await post('/subscribe', { sub: sub.toJSON(), due });
-  try { localStorage.setItem(KEY, due); } catch { /* */ }
+  await post('/subscribe', payload(sub, target));
+  try { localStorage.setItem(KEY, keyOf(target)); } catch { /* */ }
 }

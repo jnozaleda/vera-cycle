@@ -25,7 +25,7 @@ import { PREGNANCY_LINE, pregnancyNormal, pregnancyFaqs, postpartumLine, postpar
 import { spansPregnancy } from './predict.js';
 import { PREGNANCY_BETA_ONLY, CONSULT, TAGLINE } from './config.js';
 import { isBeta } from './beta.js';
-import { pushState, enablePush, disablePush, syncPushDue } from './push.js';
+import { pushState, enablePush, disablePush, syncPush } from './push.js';
 import { sync, syncAvailable, onSyncChange, initSync, connect, reauthorize, disconnect, deleteRemote, syncNow, loadGis } from './sync.js';
 
 const CONTACT_EMAIL = 'contact.gineped@gmail.com';
@@ -769,17 +769,26 @@ function syncPill() {
   return '';
 }
 
+/** A qué fecha atar los avisos según la etapa guardada: embarazo (fecha de parto) o posparto (nacimiento del bebé). */
+function pushTarget() {
+  if (store.mode === 'pregnancy' && store.stage.pregnancy?.dueDate) return { kind: 'pregnancy', date: store.stage.pregnancy.dueDate };
+  if (store.mode === 'postpartum' && store.stage.postpartum?.birthDate) return { kind: 'postpartum', date: store.stage.postpartum.birthDate };
+  return null;
+}
+
 function pushSection() {
-  if (store.mode !== 'pregnancy' || !store.stage.pregnancy?.dueDate) return '';
+  const target = pushTarget();
+  if (!target) return '';
+  const pp = target.kind === 'postpartum';
   const st = ui.pushState;
   if (st === 'unknown' || st === 'unsupported') return '';
-  const note = '<p class="t-11 soft-70 lh-3">Para enviarte los avisos guardamos, en un servicio de Cloudflare, la dirección de aviso de tu navegador y tu fecha probable de parto. Nada más. Al desactivarlos se borra.</p>';
+  const note = `<p class="t-11 soft-70 lh-3">Para enviarte los avisos guardamos, en un servicio de Cloudflare, la dirección de aviso de tu navegador y ${pp ? 'la fecha de nacimiento de tu bebé' : 'tu fecha probable de parto'}. Nada más. Al desactivarlos se borra.</p>`;
   let inner;
   if (st === 'needs-install') inner = '<p class="t-13 soft lh-4">En iPhone, para recibir avisos añade Vera a tu pantalla de inicio (botón Compartir → «Añadir a pantalla de inicio») y ábrela desde allí.</p>';
   else if (st === 'denied') inner = '<p class="t-13 soft lh-4">Tienes bloqueadas las notificaciones de Vera. Puedes permitirlas en los ajustes de tu navegador o de tu móvil y volver aquí.</p>';
-  else if (st === 'on') inner = `<div class="sync-box"><span class="c-sage">${icon('checkCircle', 18)}</span><div class="grow"><div class="t-13 w-500">Avisos activados</div><div class="t-12 soft">Cada semana nueva, a las 9:00.</div></div></div>
+  else if (st === 'on') inner = `<div class="sync-box"><span class="c-sage">${icon('checkCircle', 18)}</span><div class="grow"><div class="t-13 w-500">Avisos activados</div><div class="t-12 soft">${pp ? 'Cada semana nueva de tu bebé los 3 primeros meses y luego cada mes, a las 9:00.' : 'Cada semana nueva, a las 9:00.'}</div></div></div>
       <button class="pill-outline" data-action="push-disable" ${ui.pushBusy ? 'disabled' : ''}>Desactivar avisos</button>`;
-  else inner = `<p class="t-13 soft lh-4">Cada semana nueva te avisamos con lo normal de esos días. Es opcional.</p>
+  else inner = `<p class="t-13 soft lh-4">${pp ? 'Te avisamos con lo normal a la edad de tu bebé: cada semana los 3 primeros meses y luego cada mes. Es opcional.' : 'Cada semana nueva te avisamos con lo normal de esos días. Es opcional.'}</p>
       <button class="pill-outline row gap-6 center" data-action="push-enable" ${ui.pushBusy ? 'disabled' : ''}>${icon('bell', 13)} Activar avisos semanales</button>`;
   return `<div class="stack-10 data-box">${eyebrow('Avisos')}${inner}
     ${ui.pushError ? `<p class="t-12 c-rose">${esc(ui.pushError)}</p>` : ''}${st === 'denied' || st === 'needs-install' ? '' : note}</div>`;
@@ -2313,7 +2322,7 @@ const actions = {
   },
   'push-enable': async () => {
     ui.pushBusy = true; ui.pushError = ''; render();
-    try { await enablePush(store.stage.pregnancy.dueDate); }
+    try { await enablePush(pushTarget()); }
     catch (e) { ui.pushError = Notification.permission === 'denied' ? '' : 'No hemos podido activar los avisos. Inténtalo de nuevo en un rato.'; }
     ui.pushBusy = false; ui.pushState = await pushState(); render();
   },
@@ -2544,13 +2553,14 @@ if (new URLSearchParams(location.search).has('demo') && store.needsOnboarding) s
 onSyncChange(render);
 initSync();
 pushState().then((st) => { ui.pushState = st; render(); });
-let pushDueSeen;
-store.subscribe(() => { // mantiene el servicio al día si cambia la fecha de parto o se deja el embarazo
+let pushSeen;
+store.subscribe(() => { // mantiene el servicio al día si cambia la fecha, la etapa, o se sale del embarazo/posparto
   if (ui.pushState !== 'on') return;
-  const due = store.mode === 'pregnancy' ? store.stage.pregnancy?.dueDate || null : null;
-  if (due === pushDueSeen) return;
-  pushDueSeen = due;
-  syncPushDue(due).then(async () => { ui.pushState = await pushState(); render(); }).catch(() => {});
+  const t = pushTarget();
+  const k = t ? `${t.kind}:${t.date}` : null;
+  if (k === pushSeen) return;
+  pushSeen = k;
+  syncPush(t).then(async () => { ui.pushState = await pushState(); render(); }).catch(() => {});
 });
 render();
 

@@ -1,17 +1,18 @@
 // Vera · avisos push semanales (vera-backlog#9).
 //
 // Guarda lo mínimo para poder avisar: la dirección de push del navegador (una URL opaca), sus claves de
-// cifrado, la fecha probable de parto y la última semana avisada. Nada más: ni nombre, ni correo, ni
+// cifrado, la fecha probable de parto (o de nacimiento del bebé) y la última semana avisada. Nada más: ni nombre, ni correo, ni
 // registros del diario. Cada día a las 9:00 (Madrid) avisa a quien haya empezado una semana nueva.
 //
-//   POST /subscribe     {sub, due}        navegador, solo desde ALLOWED_ORIGINS
+//   POST /subscribe     {sub, due}        embarazo: fecha probable de parto  (o {sub, birth}: posparto, fecha de nacimiento del bebé)
+//                                         navegador, solo desde ALLOWED_ORIGINS
 //   POST /unsubscribe   {endpoint}        navegador
 //   POST /send-now      {hash}            solo pruebas, Authorization: Bearer ADMIN_TOKEN
 //
 // Bindings: SUBS (KV), VAPID_PRIVATE y ADMIN_TOKEN (secretos), VAPID_PUBLIC, VAPID_SUBJECT y ALLOWED_ORIGINS (vars).
 
 import { sendPush } from './webpush.js';
-import { pregnancyNormal } from '../../app/js/today.js';
+import { pregnancyNormal, postpartumBabyNormal } from '../../app/js/today.js';
 
 const PUSH_HOSTS = ['fcm.googleapis.com', 'updates.push.services.mozilla.com', 'web.push.apple.com', '.notify.windows.com'];
 const MAX_BODY = 4096;
@@ -38,7 +39,24 @@ export function weekFor(dueISO, todayISO) {
   return Math.floor((280 - (due - today)) / 7);
 }
 
-export function messageFor(week) {
+/** Semanas completas desde el parto (posparto). */
+export function weeksSinceBirth(birthISO, todayISO) {
+  const birth = dayNumber(birthISO), today = dayNumber(todayISO);
+  if (birth == null || today == null) return null;
+  return Math.floor((today - birth) / 7);
+}
+
+/** Posparto: semanal los primeros 3 meses y luego cada 4 semanas, hasta el año. */
+export const babyNoticeWeek = (w) => w >= 1 && w <= 52 && (w <= 12 || w % 4 === 0);
+
+export function messageFor(week, kind = 'pregnancy') {
+  if (kind === 'postpartum') {
+    const items = postpartumBabyNormal(week);
+    const age = week < 12 ? `${week} ${week === 1 ? 'semana' : 'semanas'}` : `${Math.round(week / 4.345)} meses`;
+    let body = `Lo normal a su edad: ${items.slice(0, 2).join(' ')}`;
+    if (body.length > 180) body = `Lo normal a su edad: ${items[0]}`;
+    return { title: `Tu bebé tiene ${age}`, body, url: './' };
+  }
   const items = pregnancyNormal(week);
   let body = `Lo normal estos días: ${items.slice(0, 2).join(' ')}`;
   if (body.length > 180) body = `Lo normal estos días: ${items[0]}`;
@@ -54,10 +72,15 @@ const validEndpoint = (e) => {
     return u.protocol === 'https:' && PUSH_HOSTS.some((h) => (h.startsWith('.') ? u.hostname.endsWith(h) : u.hostname === h));
   } catch { return false; }
 };
+const validBirth = (d) => { const n = dayNumber(d), t = dayNumber(madridNow().date); return n != null && n <= t && n > t - 400; };
 const validDue = (due) => { const d = dayNumber(due); return d != null && d > dayNumber('2020-01-01') && d < dayNumber('2100-01-01'); };
 
+const kindOf = (rec) => (rec.kind === 'postpartum' ? 'postpartum' : 'pregnancy');
+const dateOf = (rec) => rec.date || rec.due; // los registros anteriores guardaban `due`
+const weekOf = (rec, todayISO) => (kindOf(rec) === 'postpartum' ? weeksSinceBirth(dateOf(rec), todayISO) : weekFor(dateOf(rec), todayISO));
+
 async function notify(env, rec, week) {
-  return sendPush(rec.sub, messageFor(week), {
+  return sendPush(rec.sub, messageFor(week, kindOf(rec)), {
     subject: env.VAPID_SUBJECT, publicKey: env.VAPID_PUBLIC, privateKey: env.VAPID_PRIVATE,
   }, { ttl: 86400 });
 }
@@ -71,9 +94,10 @@ async function runDaily(env, now = madridNow(), force = false) {
     for (const k of page.keys) {
       const rec = await env.SUBS.get(k.name, 'json');
       if (!rec) continue;
-      const week = weekFor(rec.due, now.date);
-      if (week == null || week > 42) { await env.SUBS.delete(k.name); dropped++; continue; }
-      if (week < 4 || week <= (rec.last ?? -1)) continue;
+      const week = weekOf(rec, now.date);
+      const pp = kindOf(rec) === 'postpartum';
+      if (week == null || week > (pp ? 56 : 42)) { await env.SUBS.delete(k.name); dropped++; continue; }
+      if (week <= (rec.last ?? -1) || (pp ? !babyNoticeWeek(week) : week < 4)) continue;
       try { // un fallo en una suscripción no debe frenar al resto
         const res = await notify(env, rec, week);
         if (res.status === 404 || res.status === 410) { await env.SUBS.delete(k.name); dropped++; continue; }
@@ -119,13 +143,16 @@ export default {
         }
         const sub = body.sub;
         if (!sub || !validEndpoint(sub.endpoint) || typeof sub.keys?.p256dh !== 'string' || typeof sub.keys?.auth !== 'string') return reply(400, { error: 'bad subscription' });
-        if (!validDue(body.due)) return reply(400, { error: 'bad due date' });
+        const pp = typeof body.birth === 'string';
+        if (pp ? !validBirth(body.birth) : !validDue(body.due)) return reply(400, { error: 'bad date' });
+        const date = pp ? body.birth : body.due;
+        const kind = pp ? 'postpartum' : 'pregnancy';
         const key = `s:${await hashOf(sub.endpoint)}`;
         const prev = await env.SUBS.get(key, 'json');
-        const week = weekFor(body.due, madridNow().date);
+        const week = pp ? weeksSinceBirth(date, madridNow().date) : weekFor(date, madridNow().date);
         // Si la fecha cambia o es nueva, no se avisa de la semana actual (ya la está viendo): se avisa de la siguiente.
-        const last = prev && prev.due === body.due ? prev.last : week;
-        await env.SUBS.put(key, JSON.stringify({ sub: { endpoint: sub.endpoint, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } }, due: body.due, last }));
+        const last = prev && kindOf(prev) === kind && dateOf(prev) === date ? prev.last : week;
+        await env.SUBS.put(key, JSON.stringify({ sub: { endpoint: sub.endpoint, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } }, kind, date, last }));
         return reply(200, { ok: true, week });
       }
 
@@ -133,7 +160,8 @@ export default {
         if (!env.ADMIN_TOKEN || request.headers.get('Authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return reply(401, { error: 'unauthorized' });
         const rec = await env.SUBS.get(`s:${body.hash}`, 'json');
         if (!rec) return reply(404, { error: 'not found' });
-        const week = Math.min(42, Math.max(4, weekFor(rec.due, madridNow().date) ?? 20));
+        const w0 = weekOf(rec, madridNow().date);
+        const week = kindOf(rec) === 'postpartum' ? Math.max(1, w0 ?? 1) : Math.min(42, Math.max(4, w0 ?? 20));
         const res = await notify(env, rec, week);
         return reply(200, { status: res.status });
       }

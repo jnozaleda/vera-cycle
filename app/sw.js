@@ -2,7 +2,7 @@
 // Service worker de Vera web: permite abrir la app sin conexión.
 // Estrategia "red primero": siempre intenta la versión más reciente y usa la caché si no hay red.
 
-const CACHE = 'vera-web-v37';
+const CACHE = 'vera-web-v38';
 const SHELL = [
   './',
   'index.html',
@@ -48,7 +48,7 @@ self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
   event.respondWith(
-    fetch(req)
+    fetch(req, { cache: 'no-cache' }) // revalida siempre: GitHub Pages cachea 10 min y mezclaba versiones
       .then((res) => {
         if (res.ok) {
           const copy = res.clone();

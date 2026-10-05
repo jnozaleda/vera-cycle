@@ -790,8 +790,8 @@ body[data-stage="postpartum"] { --st: #3F5F78; --st-mid: #4F7189; --st-soft: #E4
 .ask-pill { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px 0 5px; border-radius: 999px;
   background: #fff; border: 1px solid color-mix(in srgb, var(--st) 35%, transparent); color: var(--st); font-size: 12.5px; font-weight: 500; white-space: nowrap; }
 .ask-pill .cav { flex: none; }
-@media (max-width: 359px) { .ask-pill span { display: none; } .ask-pill { padding: 0 5px; } }
-.app-header .row:has(.sync-pill) .ask-pill span { display: none; } .app-header .row:has(.sync-pill) .ask-pill { padding: 0 5px; }
+@media (max-width: 359px) { .ask-pill .ask-label { display: none; } .ask-pill { padding: 0 5px; } }
+.app-header .row:has(.sync-pill) .ask-pill .ask-label { display: none; } .app-header .row:has(.sync-pill) .ask-pill { padding: 0 5px; }
 
 /* Ciclo: regla en rojo y ovulación en azul (vera-backlog#43) */
 :root { --period: #B5362B; --ovu: #3B6EA8; }

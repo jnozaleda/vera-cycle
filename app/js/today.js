@@ -123,6 +123,15 @@ const POSTPARTUM_MOM_FAQS = [
   ] }),
 ];
 
+/** Lo normal en el bebé según su edad (semanas desde el parto). BORRADOR: pendiente de la pediatra (vera-backlog#36). */
+const POSTPARTUM_BABY_NORMAL = [
+  w(0, 3, { items: ['Duerme la mayor parte del día y se despierta para comer cada 2 o 3 horas.', 'Pierde algo de peso los primeros días (hasta un 7 % aproximadamente) y lo recupera hacia los 10 a 14 días.', 'Sus cacas pasan de negras a amarillas, y a partir del quinto día moja al menos 6 pañales al día.'] }),
+  w(4, 11, { items: ['Llora más hacia las 6 a 8 semanas; suele mejorar hacia los 3 o 4 meses.', 'Empieza a sonreír hacia los 2 meses.', 'Duerme en tramos cortos, también de noche: es normal.'] }),
+  w(12, 23, { items: ['Sonríe, balbucea y empieza a sostener la cabeza hacia los 4 meses.', 'Le sienta bien el tiempo boca abajo, despierto y vigilado.', 'Las primeras vacunas son a los 2 meses; después, a los 4 y a los 11–12 meses.'] }),
+  w(24, 999, { items: ['Hacia los 6 meses empieza a comer otros alimentos, sin dejar la leche.', 'Se sienta con apoyo y puede salirle el primer diente.', 'Cada vez se mueve más: conviene revisar los riesgos de la casa.'] }),
+];
+export const postpartumBabyNormal = (weeks) => inRange(POSTPARTUM_BABY_NORMAL, weeks).items;
+
 const POSTPARTUM_BABY_FAQS = [
   w(0, 3, { items: [
     { q: '¿Cómo cuido el cordón?', short: 'Mantenlo limpio y seco, con el pañal doblado por debajo. Se cae solo entre los 5 y los 15 días. Consulta si hay enrojecimiento, pus o mal olor, o fiebre.', ref: { s: 'b0', q: '¿Cómo cuido el cordón umbilical?' } },

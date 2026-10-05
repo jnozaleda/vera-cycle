@@ -21,7 +21,7 @@ import { babyWeek, BABY_MEDIA, mediaFor } from './baby.js';
 import { mountFetus, FETUS_MIN_WEEK } from './fetus3d.js';
 import { FOODS, FOOD_CATEGORIES, FOOD_STATUS, foodFor, bmi, gainRange, gainBandAt, appointmentICS } from './care.js';
 import { GUIDE_INTRO, PREGNANCY_GUIDE, POSTPARTUM_GUIDE, guideSectionFor } from './guide.js';
-import { PREGNANCY_LINE, pregnancyNormal, pregnancyFaqs, postpartumLine, postpartumNormal, postpartumFaqs } from './today.js';
+import { PREGNANCY_LINE, pregnancyNormal, pregnancyFaqs, postpartumLine, postpartumNormal, postpartumBabyNormal, postpartumFaqs } from './today.js';
 import { spansPregnancy } from './predict.js';
 import { PREGNANCY_BETA_ONLY, CONSULT, TAGLINE } from './config.js';
 import { isBeta } from './beta.js';
@@ -113,7 +113,6 @@ const ui = {
   pushBusy: false,
   pushError: '',
   hoyView: 'me',         // embarazo · Hoy: 'me' | 'baby' (el desarrollo del bebé vive dentro de Hoy)
-  hoyFaq: 'mom',          // posparto · dudas de Hoy: 'mom' | 'baby'
 };
 
 // =========================================================================
@@ -1282,12 +1281,50 @@ function postpartumToday() {
       <div class="serif-22">¿Cuándo nació tu bebé?</div>
       ${primaryButton('Añadir fecha', 'open-settings')}</div></div>`;
   }
-  const kind = ui.hoyFaq === 'baby' ? 'baby' : 'mom';
-  const seg = (v, label) => `<button class="seg ${kind === v ? 'on' : ''}" aria-pressed="${kind === v}" data-action="hoy-faq" data-v="${v}">${label}</button>`;
   const bb = pp?.baby;
   const ws = [...(bb?.weights || [])].sort((a, b) => a.date.localeCompare(b.date));
   const lw = ws[ws.length - 1];
+  const vseg = (v, label) => `<button class="seg ${ui.hoyView === v ? 'on' : ''}" aria-pressed="${ui.hoyView === v}" data-action="hoy-view" data-v="${v}">${label}</button>`;
+  const switcher = `<div class="segs wide">${vseg('me', 'Tú')}${vseg('baby', 'Tu bebé')}</div>`;
+  const age = s.weeks < 12 ? `${s.weeks} ${plural(s.weeks, 'semana', 'semanas')}${s.days ? ` y ${s.days} ${plural(s.days, 'día', 'días')}` : ''}` : (() => { const m = Math.floor(s.total / 30.44); return `${m} ${plural(m, 'mes', 'meses')}`; })();
+  const weightLine = bb?.birthWeight ? `${fmtBabyKg(bb.birthWeight)} al nacer${lw ? ` · último ${fmtBabyKg(lw.g)}` : ''}` : 'Aún sin peso apuntado';
+
+  if (ui.hoyView === 'baby') {
+    const birthDN = s.birth;
+    return `<div class="stack-14">
+    ${switcher}
+    <div class="card pad stack-10 preg-hero">
+      ${eyebrow('Tu bebé')}
+      <div class="row between center">
+        <div class="row baseline gap-10">
+          <span class="serif-28">${esc(age)}</span>
+        </div>
+        <div class="text-right"><div class="t-11 soft">Nació el</div><div class="t-14 w-500">${esc(fmtDayMonthShort(s.birth))}</div></div>
+      </div>
+      <p class="t-13 soft lh-4">Cada bebé crece a su ritmo: esto es lo que suele ser habitual a su edad.</p>
+    </div>
+    ${normalCard(postpartumBabyNormal(s.weeks))}
+    <div class="card pad stack-6">
+      <div class="row between center">${eyebrow('Su peso')}<button class="link-soft" data-action="open-care" data-v="baby">${bb?.birthWeight ? 'Ver y apuntar →' : 'Apuntar →'}</button></div>
+      <p class="t-14 lh-5">${esc(weightLine)}</p>
+      ${bb?.birthWeight && lw ? babyWeightNote(bb.birthWeight, lw, birthDN) : ''}
+    </div>
+    <div class="card pad stack-6">
+      ${eyebrow('Dudas sobre tu bebé')}
+      <div class="hq-list">${hoyFaqList(postpartumFaqs(s.weeks, 'baby'))}</div>
+      ${askLink('¿Otra duda?', 'Pregúntale a Gonzalo', `Posparto · bebé de ${age}`)}
+    </div>
+  </div>`;
+  }
+
+  const babyCard = `<div class="card pad stack-6">
+      <div class="row between center">${eyebrow('Tu bebé')}<span class="t-12 soft">${esc(age)}</span></div>
+      <p class="t-14 lh-5">${esc(postpartumBabyNormal(s.weeks)[0])}</p>
+      <div class="t-12 soft">${esc(weightLine)}</div>
+      <button class="link-soft" data-action="hoy-view" data-v="baby">Ver cómo está tu bebé →</button>
+    </div>`;
   return `<div class="stack-14">
+    ${switcher}
     <div class="card pad stack-10 preg-hero">
       ${eyebrow('Desde el parto')}
       <div class="row between center">
@@ -1299,17 +1336,15 @@ function postpartumToday() {
       </div>
       <p class="t-13 soft lh-4">${esc(postpartumLine(s.weeks))}</p>
     </div>
+    ${babyCard}
     ${normalCard(postpartumNormal(s.weeks))}
     ${nextAppointmentCard()}
     <div class="card pad stack-6">
-      <div class="row between center wrap gap-8">${eyebrow('Dudas de esta semana')}<span class="segs">${seg('mom', 'Tú')}${seg('baby', 'Tu bebé')}</span></div>
-      <div class="hq-list">${hoyFaqList(postpartumFaqs(s.weeks, kind))}</div>
+      ${eyebrow('Dudas de esta semana')}
+      <div class="hq-list">${hoyFaqList(postpartumFaqs(s.weeks, 'mom'))}</div>
       ${askLink('¿Otra duda?', 'Pregúntale a Gonzalo', `Posparto · semana ${s.weeks}`)}
     </div>
-    <div class="stack-6 text-center t-12 soft">
-      ${s.weeks >= 6 ? `<div>¿Te ha vuelto la regla? <button class="inline-link" data-action="stage-back-cycle">Seguir mi ciclo</button></div>` : ''}
-      <div>Peso del bebé${bb?.birthWeight ? ` · ${fmtBabyKg(bb.birthWeight)} al nacer${lw ? `, último ${fmtBabyKg(lw.g)}` : ''}` : ''} · <button class="inline-link" data-action="open-care" data-v="baby">${bb?.birthWeight ? 'ver' : 'apuntar'}</button></div>
-    </div>
+    ${s.weeks >= 6 ? `<div class="text-center t-12 soft">¿Te ha vuelto la regla? <button class="inline-link" data-action="stage-back-cycle">Seguir mi ciclo</button></div>` : ''}
   </div>`;
 }
 
@@ -2232,7 +2267,6 @@ const actions = {
     for (const t of pastItems(g.weeks, p.rh)) done[todoKey(t)] = true;
     store.updateStage({ ...store.stage, pregnancy: { ...p, done } });
   },
-  'hoy-faq': (el) => { ui.hoyFaq = el.dataset.v; render(); },
   'open-urgent': () => { ui.sheet = 'urgent'; ui.sheetAnim = true; render(); },
   'open-guide': (el) => {
     ui.tab = tabIndex('guide');

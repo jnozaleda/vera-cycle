@@ -253,7 +253,7 @@ function irregularPredictionCard(p) {
       <hr>
       <div class="hero-dates">
         <div>${icon('leaf', 14)}<div><div class="t-11 soft">Ventana fértil</div><div class="t-14 w-500">${esc(fmtDayMonthShort(fStart))} – ${esc(fmtDayMonthShort(fEnd))}</div></div></div>
-        <div>${icon('sparkle', 14)}<div><div class="t-11 soft">Ovulación</div><div class="t-14 w-500">${esc(fmtDayMonthShort(ov))}</div></div></div>
+        <div>${icon('ovum', 14)}<div><div class="t-11 soft">Ovulación</div><div class="t-14 w-500">${esc(fmtDayMonthShort(ov))}</div></div></div>
       </div>
     </div>
     <div class="card pad stack-10">
@@ -300,7 +300,7 @@ function todayView() {
       <hr>
       <div class="hero-dates">
         <div>${icon('leaf', 14)}<div><div class="t-11 soft">Ventana fértil</div><div class="t-14 w-500">${esc(fmtDayMonthShort(ovDN - 5))} – ${esc(fmtDayMonthShort(ovDN + 1))}</div></div></div>
-        <div>${icon('sparkle', 14)}<div><div class="t-11 soft">Ovulación estimada</div><div class="t-14 w-500">${esc(fmtDayMonthShort(ovDN))}</div></div></div>
+        <div>${icon('ovum', 14)}<div><div class="t-11 soft">Ovulación estimada</div><div class="t-14 w-500">${esc(fmtDayMonthShort(ovDN))}</div></div></div>
       </div>
     </div>`;
   } else {
@@ -640,7 +640,7 @@ function bubbleCard(topSymptoms, phaseSym) {
   if (topS) {
     const dom = BUBBLE_PHASES.reduce((best, c) => (countFor(topS.name, c) > countFor(topS.name, best) ? c : best), BUBBLE_PHASES[0]);
     if (countFor(topS.name, dom) > 0) {
-      insight = `<div class="row gap-6 top mt-12 t-12 soft italic lh-3"><span class="c-gold mt-1">${icon('sparkle', 11)}</span><span>«${esc(topS.name)}» aparece más en tu fase ${dom.label.toLowerCase()}.</span></div>`;
+      insight = `<div class="row gap-6 top mt-12 t-12 soft italic lh-3"><span class="c-gold mt-1">${icon('leaf', 11)}</span><span>«${esc(topS.name)}» aparece más en tu fase ${dom.label.toLowerCase()}.</span></div>`;
     }
   }
   return `<div class="card pad">
@@ -1855,12 +1855,12 @@ function careView() {
 }
 
 const TABS = [
-  { icon: 'sparkles', label: 'HOY' },
+  { icon: 'sun', label: 'HOY' },
   { icon: 'dotted', label: 'CICLO' },
   { icon: 'chart', label: 'PATRONES' },
 ];
 const STAGE_TAB = {
-  today: { icon: 'sparkles', label: 'HOY' },
+  today: { icon: 'sun', label: 'HOY' },
   baby: { icon: 'sprout', label: 'BEBÉ' },
   diary: { icon: 'pencil', label: 'DIARIO' },
   care: { icon: 'heart', label: 'CUIDADOS' },

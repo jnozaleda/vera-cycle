@@ -1382,10 +1382,10 @@ function guideView() {
   const isOpen = (id) => ui.openDetails.has(id);
   return `<div class="stack-18">
     <div class="card pad stack-12">
-      ${eyebrow('Guía')}
+      ${eyebrow('Preguntas y respuestas')}
       <div class="serif-22">${pp ? 'Dudas del posparto y del embarazo' : 'Dudas del embarazo, semana a semana'}</div>
       <p class="t-12 soft lh-4">${esc(GUIDE_INTRO)}</p>
-      <label class="search">${icon('search', 14, 'soft')}<input type="search" data-guide-search placeholder="Busca: café, ecografía, vacunas…" value="${attr(ui.guideQuery)}" aria-label="Buscar en la guía"></label>
+      <label class="search">${icon('search', 14, 'soft')}<input type="search" data-guide-search placeholder="Busca: café, ecografía, vacunas…" value="${attr(ui.guideQuery)}" aria-label="Buscar en las dudas"></label>
     </div>
     <details class="card pad faq-item urgent-sec" data-id="urgencias" ${isOpen('urgencias') ? 'open' : ''}>
       <summary>Cuándo ir a urgencias</summary>
@@ -1864,7 +1864,7 @@ const STAGE_TAB = {
   baby: { icon: 'sprout', label: 'BEBÉ' },
   diary: { icon: 'pencil', label: 'DIARIO' },
   care: { icon: 'heart', label: 'CUIDADOS' },
-  guide: { icon: 'book', label: 'GUÍA' },
+  guide: { icon: 'helpCircle', label: 'DUDAS' },
 };
 const STAGE_TAB_IDS = { pregnancy: ['today', 'diary', 'care', 'guide'], postpartum: ['today', 'diary', 'care', 'guide'] };
 const tabIndex = (id) => Math.max(0, (STAGE_TAB_IDS[store.mode] || []).indexOf(id));

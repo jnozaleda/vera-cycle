@@ -809,3 +809,8 @@ body[data-stage="postpartum"] { --st: #3F5F78; --st-mid: #4F7189; --st-soft: #E4
 /* Avisos push: fila que abre la hoja (como «Aviso diario» en Florvia) */
 .push-row { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; }
 .push-ic { flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; color: #fff; background: var(--st); }
+
+/* Comparación de tamaño con fruta (vera-cycle#6) */
+.cmp-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--st-soft); }
+.cmp-emo { font-size: 26px; line-height: 1; }
+.cmp-emo:empty { display: none; }

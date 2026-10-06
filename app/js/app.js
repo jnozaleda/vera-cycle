@@ -17,7 +17,7 @@ import {
   PREGNANCY_SYMPTOMS, PREGNANCY_ALARMS, BABY_MOVEMENT, POSTPARTUM_SYMPTOMS, POSTPARTUM_ALARMS,
   URGENT_PREGNANCY, URGENT_POSTPARTUM, pregnancyMedWarnings,
 } from './pregnancy.js';
-import { babyWeek, BABY_MEDIA, mediaFor } from './baby.js';
+import { babyWeek, babyCompare, BABY_MEDIA, mediaFor } from './baby.js';
 import { mountFetus, FETUS_MIN_WEEK } from './fetus3d.js';
 import { FOODS, FOOD_CATEGORIES, FOOD_STATUS, foodFor, bmi, gainRange, gainBandAt, appointmentICS } from './care.js';
 import { GUIDE_INTRO, PREGNANCY_GUIDE, POSTPARTUM_GUIDE, guideSectionFor } from './guide.js';
@@ -1277,6 +1277,7 @@ function pregnancyToday() {
   const babyCard = `<div class="card pad stack-6">
       <div class="row between center">${eyebrow('Tu bebé esta semana')}<span class="t-12 soft">≈ ${fmtNum(bw.cm, 1)} cm · ${bw.g < 1 ? '&lt; 1 g' : bw.g >= 1000 ? fmtNum(bw.g / 1000, 2) + ' kg' : bw.g + ' g'}</span></div>
       <p class="t-14 lh-5">${esc(bw.text)}</p>
+      <div class="t-13 soft">${babyCompare(g.weeks).emoji} Del tamaño de ${esc(babyCompare(g.weeks).name)}</div>
       <button class="link-soft" data-action="hoy-view" data-v="baby">Ver cómo es (ilustración, ecografía y 3D) →</button>
     </div>`;
   return `<div class="stack-14">
@@ -1681,6 +1682,7 @@ function babyView() {
     <div class="card pad stack-12">
       ${eyebrow('Su desarrollo')}
       <p class="t-14 lh-5">${esc(b.text)}</p>
+      <div class="cmp-row"><span class="cmp-emo" aria-hidden="true">${babyCompare(week).emoji}</span><span class="t-14">Del tamaño de ${esc(babyCompare(week).name)}</span></div>
       <hr>
       <div class="row gap-12">
         <div class="grow"><div class="serif-28">≈ ${fmtNum(b.cm, b.cm < 10 ? 1 : 1)} cm</div><div class="t-11 soft">${esc(b.measure)}</div></div>

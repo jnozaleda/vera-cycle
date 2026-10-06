@@ -46,6 +46,23 @@ export const BABY_WEEKS = {
 
 export const BABY_TITLE = (w) => (w < 10 ? 'Embrión' : w < 28 ? 'Feto en crecimiento' : 'Preparándose para nacer');
 
+
+// Comparación de tamaño con frutas y verduras (orientativa; BORRADOR pendiente de revisión, vera-backlog#2).
+// Emoji + nombre con artículo, para «Del tamaño de …». Semanas 4 a 40.
+const COMPARE = {
+  4: ['·', 'una semilla de amapola'], 5: ['·', 'una semilla de sésamo'], 6: ['🫘', 'una lenteja'], 7: ['🫛', 'un guisante'],
+  8: ['🫐', 'un arándano'], 9: ['🫒', 'una aceituna'], 10: ['🍓', 'una fresa'], 11: ['🌰', 'una castaña'],
+  12: ['🥝', 'un kiwi'], 13: ['🍋', 'un limón'], 14: ['🍑', 'un melocotón'], 15: ['🍎', 'una manzana'],
+  16: ['🥑', 'un aguacate'], 17: ['🍐', 'una pera'], 18: ['🫑', 'un pimiento'], 19: ['🌽', 'una mazorca de maíz'],
+  20: ['🍌', 'un plátano'], 21: ['🥕', 'una zanahoria'], 22: ['🍍', 'una piña'], 23: ['🥒', 'un calabacín'],
+  24: ['🍈', 'un melón'], 25: ['🥦', 'una coliflor'], 26: ['🥬', 'una lechuga'], 27: ['🧅', 'un puerro'],
+  28: ['🍆', 'una berenjena'], 29: ['🎃', 'una calabaza pequeña'], 30: ['🥬', 'un repollo'], 31: ['🥬', 'un repollo'],
+  32: ['🍍', 'una piña'], 33: ['🍍', 'una piña'], 34: ['🎃', 'una calabaza'], 35: ['🎃', 'una calabaza'],
+  36: ['🥬', 'un manojo de acelgas'], 37: ['🥬', 'un manojo de acelgas'], 38: ['🍉', 'una sandía pequeña'],
+  39: ['🍉', 'una sandía pequeña'], 40: ['🍉', 'una sandía'],
+};
+export const babyCompare = (week) => { const c = COMPARE[Math.min(40, Math.max(4, week))]; return { emoji: c[0] === '·' ? '' : c[0], name: c[1] }; };
+
 export function babyWeek(week) {
   const w = Math.min(40, Math.max(4, week));
   return { week: w, ...BABY_WEEKS[w], measure: w < 20 ? 'Longitud cabeza–nalgas' : 'Longitud cabeza–talones' };

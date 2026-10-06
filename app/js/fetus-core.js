@@ -103,8 +103,8 @@ function makeFetus(w) {
   var feet = [];
   [-1, 1].forEach(function (s) {
     var Hp = [s * rx * 0.55, -ry * 0.7, 0];
-    var K = towards(Hp, [s * rx * 1.0, -ry * 0.0, rz * 1.6], lf);
-    var A = towards(Hp, [s * (rx * 0.28 + 0.03), -ry * 0.85, rz * 1.45], lf);
+    var K = towards(Hp, [s * rx * 0.62, ry * 0.05, rz * 1.75], lf); // rodillas recogidas hacia el pecho (sin abrir: parecía una rana)
+    var A = towards(Hp, [s * (rx * 0.22 + 0.02), -ry * 0.78, rz * 1.15], lf);
     var fl = rl * 2.4;
     var toe = add(A, [-s * rl * 0.2, -fl * 0.2, fl]);
     coneB(Hp, K, rl * 1.2, rl * 0.85, 0.07);

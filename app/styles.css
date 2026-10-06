@@ -819,3 +819,9 @@ body[data-stage="postpartum"] { --st: #3F5F78; --st-mid: #4F7189; --st-soft: #E4
 .ct-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
 .ct-row:first-child { border-top: 0; }
 .ct-active { background: var(--rose); }
+
+/* Contracciones destacadas desde la semana 37 */
+.ct-prominent { background: var(--st-soft); border: 1.5px solid var(--st-mid); }
+.ct-prominent .btn-primary { min-height: 64px; font-size: 17px; }
+.ct-shortcut { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; background: var(--st-soft); border-color: var(--st-mid); }
+.ct-ic { background: var(--st); }

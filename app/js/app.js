@@ -1248,6 +1248,16 @@ function hoyFaqList(items) {
 const normalCard = (items) => `<div class="card pad stack-10 soft-card">${eyebrow('Lo normal ahora')}
     <ul class="tips">${items.map((t) => `<li>${esc(t)}</li>`).join('')}</ul></div>`;
 
+/** Hoy (embarazo, desde la semana 37): acceso directo al registro de contracciones */
+function contractionsShortcut() {
+  const list = ctList();
+  const active = list.find((c) => c.e == null);
+  const recent = list.filter((c) => c.e != null && c.s >= Date.now() - 3600e3);
+  const sub = active ? 'Contracción en curso · ábrela para terminarla' : recent.length ? `${recent.length} ${plural(recent.length, 'contracción', 'contracciones')} en la última hora` : 'Anota cada cuánto vienen y cuánto duran';
+  return `<button class="card pad ct-shortcut" data-action="open-contractions"><span class="push-ic ct-ic">${icon('clock', 16)}</span>
+    <span class="grow left"><span class="t-15 w-500 block">Registro de contracciones</span><span class="t-12 soft block">${esc(sub)}</span></span><span class="soft">›</span></button>`;
+}
+
 function pregnancyToday() {
   const p = store.stage.pregnancy;
   const g = gestation(p);
@@ -1298,6 +1308,7 @@ function pregnancyToday() {
       ${overdue ? '<p class="t-11 soft-70 lh-3">Dar a luz hasta la semana 41 y 6 días es normal. Desde la 40 tu equipo te hará controles más frecuentes.</p>' : ''}
       ${p.multiple === 'multiple' ? '<p class="t-11 soft-70 lh-3">Embarazo múltiple: el seguimiento suele ser más frecuente. Sigue las indicaciones de tu equipo.</p>' : ''}
     </div>
+    ${g.weeks >= 37 ? contractionsShortcut() : ''}
     ${pushPromptCard()}
     ${babyCard}
     ${normalCard(pregnancyNormal(g.weeks))}
@@ -1422,7 +1433,7 @@ const ctClock = (ms) => new Date(ms).toLocaleTimeString('es-ES', { hour: '2-digi
 const ctDur = (sec) => (sec < 60 ? `${Math.round(sec)} s` : `${Math.floor(sec / 60)} min${Math.round(sec % 60) ? ` ${String(Math.round(sec % 60)).padStart(2, '0')} s` : ''}`);
 const ctGap = (sec) => (sec < 90 ? `${Math.round(sec)} s` : `${fmtNum(sec / 60, 1)} min`);
 
-function contractionsCard() {
+function contractionsCard(prominent = false) {
   const list = ctList();
   const active = list.find((c) => c.e == null);
   const done = list.filter((c) => c.e != null);
@@ -1442,7 +1453,7 @@ function contractionsCard() {
       <span class="t-12 soft grow">${prev ? `${ctGap((c.s - prev.s) / 1000)} desde la anterior` : 'primera'}</span>
       <button class="icon-btn soft" data-action="ct-del" data-s="${c.s}" aria-label="Quitar esta contracción">${icon('x', 12)}</button></div>`;
   }).join('');
-  return `<div class="card pad stack-12">
+  return `<div class="card pad stack-12 ${prominent ? 'ct-prominent' : ''}">
     ${eyebrow('Contracciones')}
     <p class="t-13 soft lh-4">Pulsa al empezar cada contracción y otra vez cuando termine. Vera calcula cada cuánto vienen y cuánto duran.</p>
     <button class="${active ? 'btn-primary ct-active' : 'btn-primary'}" data-action="ct-toggle">${active ? `Terminar contracción · <span data-ct-live data-s="${active.s}">${ctDur((Date.now() - active.s) / 1000)}</span>` : 'Empezar contracción'}</button>
@@ -1466,6 +1477,7 @@ function stageDiary() {
   const alarms = pp ? POSTPARTUM_ALARMS : PREGNANCY_ALARMS;
   const activeAlarms = alarms.filter((a) => log.symptoms.includes(a));
   const g = pp ? null : gestation(store.stage.pregnancy, dnFromISO(ds));
+  const ctWeeks = pp ? 0 : (gestation(store.stage.pregnancy)?.weeks ?? 0);
   const reducedMoves = log.babyMovement === 'Menos de lo habitual';
   const dw = store.defaultWeight;
   const warnings = pp ? [] : pregnancyMedWarnings(store.data.meds);
@@ -1475,6 +1487,7 @@ function stageDiary() {
     ${weekStrip(false)}
     ${!isToday ? `<div class="row gap-8 center px-4"><span class="c-gold">${icon('pencil', 14)}</span><span class="t-13 soft">Editando el ${esc(fmtWeekdayLong(dnFromISO(ds)))}</span></div>` : ''}
     ${alarmBanner(reducedMoves ? [...activeAlarms, 'mov'] : activeAlarms, pp)}
+    ${!pp && isToday && ctWeeks >= 37 ? contractionsCard(true) : ''}
     <div class="card pad-0">
       <div class="px-20 pt-20">${eyebrow('Cómo te sientes')}</div>
       <div class="hscroll-wrap"><div class="hscroll">${moods.map((m) => chip(m, log.mood === m, 'set-mood', { v: m })).join('')}</div></div>
@@ -1494,7 +1507,7 @@ function stageDiary() {
       <div class="row gap-8 wrap">${BABY_MOVEMENT.map((v) => chip(v, log.babyMovement === v, 'set-movement', { v }, v === 'Como siempre' ? 'sage' : 'rose')).join('')}</div>
       ${reducedMoves ? '<p class="t-12 lh-3 c-rose">Túmbate de lado un rato y concéntrate en sus movimientos. Si sigues notándolo menos, ve a urgencias hoy mismo: no esperes al día siguiente.</p>' : ''}
     </div>` : ''}
-    ${!pp && isToday && (gestation(store.stage.pregnancy)?.weeks ?? 0) >= 24 ? contractionsCard() : ''}
+    ${!pp && isToday && ctWeeks >= 24 && ctWeeks < 37 ? contractionsCard() : ''}
     <div class="card pad stack-16">
       ${eyebrow('Seguimiento')}
       ${trackingSlider('Peso', 'scale', 'deep', 'weight', log.weight,
@@ -2415,6 +2428,7 @@ const actions = {
     if (settingsDirty() && !confirm('Tienes cambios sin guardar. ¿Salir sin guardarlos?')) return;
     ui.pushMsg = ''; ui.sheet = 'push'; ui.sheetAnim = true; render();
   },
+  'open-contractions': () => { ui.tab = tabIndex('diary'); ui.selectedDate = todayISO(); render(); window.scrollTo(0, 0); },
   'ct-toggle': () => {
     const list = ctList();
     const active = list.find((c) => c.e == null);

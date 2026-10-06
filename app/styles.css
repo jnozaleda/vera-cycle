@@ -814,3 +814,8 @@ body[data-stage="postpartum"] { --st: #3F5F78; --st-mid: #4F7189; --st-soft: #E4
 .cmp-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--st-soft); }
 .cmp-emo { font-size: 26px; line-height: 1; }
 .cmp-emo:empty { display: none; }
+
+/* Registro de contracciones (vera-backlog#45) */
+.ct-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line); }
+.ct-row:first-child { border-top: 0; }
+.ct-active { background: var(--rose); }

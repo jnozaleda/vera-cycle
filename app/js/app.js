@@ -1410,6 +1410,53 @@ function alarmBanner(active, pp) {
     <button class="inline-link" data-action="open-urgent">Cuándo ir a urgencias</button></div>`;
 }
 
+// MARK: - Registro de contracciones (embarazo · vera-backlog#45, paso 1: solo registro, sin criterio de aviso)
+
+const CT_KEEP = 24 * 3600e3; // se conserva el registro de las últimas 24 h
+const ctList = () => (store.stage.pregnancy?.contractions || []).filter((c) => c && Number.isFinite(c.s)).sort((a, b) => a.s - b.s);
+function ctSave(list) {
+  const p = store.stage.pregnancy || {};
+  store.updateStage({ ...store.stage, pregnancy: { ...p, contractions: list.filter((c) => Date.now() - c.s < CT_KEEP) } });
+}
+const ctClock = (ms) => new Date(ms).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+const ctDur = (sec) => (sec < 60 ? `${Math.round(sec)} s` : `${Math.floor(sec / 60)} min${Math.round(sec % 60) ? ` ${String(Math.round(sec % 60)).padStart(2, '0')} s` : ''}`);
+const ctGap = (sec) => (sec < 90 ? `${Math.round(sec)} s` : `${fmtNum(sec / 60, 1)} min`);
+
+function contractionsCard() {
+  const list = ctList();
+  const active = list.find((c) => c.e == null);
+  const done = list.filter((c) => c.e != null);
+  const hourAgo = Date.now() - 3600e3;
+  const recent = done.filter((c) => c.s >= hourAgo);
+  const avgDur = recent.length ? recent.reduce((a, c) => a + (c.e - c.s) / 1000, 0) / recent.length : 0;
+  const starts = list.filter((c) => c.s >= hourAgo).map((c) => c.s);
+  const gaps = starts.slice(1).map((t, i) => (t - starts[i]) / 1000);
+  const avgGap = gaps.length ? gaps.reduce((a, b) => a + b, 0) / gaps.length : 0;
+  const summary = recent.length
+    ? `<div class="cmp-row"><span class="t-14">En la última hora: <b>${recent.length}</b> ${plural(recent.length, 'contracción', 'contracciones')}${gaps.length ? ` · una cada <b>${ctGap(avgGap)}</b>` : ''} · duran <b>${ctDur(avgDur)}</b></span></div>`
+    : '';
+  const rows = [...done].reverse().slice(0, 8).map((c) => {
+    const i = list.indexOf(c);
+    const prev = i > 0 ? list[i - 1] : null;
+    return `<div class="ct-row"><span class="t-14 w-500">${ctClock(c.s)}</span><span class="t-13">${ctDur((c.e - c.s) / 1000)}</span>
+      <span class="t-12 soft grow">${prev ? `${ctGap((c.s - prev.s) / 1000)} desde la anterior` : 'primera'}</span>
+      <button class="icon-btn soft" data-action="ct-del" data-s="${c.s}" aria-label="Quitar esta contracción">${icon('x', 12)}</button></div>`;
+  }).join('');
+  return `<div class="card pad stack-12">
+    ${eyebrow('Contracciones')}
+    <p class="t-13 soft lh-4">Pulsa al empezar cada contracción y otra vez cuando termine. Vera calcula cada cuánto vienen y cuánto duran.</p>
+    <button class="${active ? 'btn-primary ct-active' : 'btn-primary'}" data-action="ct-toggle">${active ? `Terminar contracción · <span data-ct-live data-s="${active.s}">${ctDur((Date.now() - active.s) / 1000)}</span>` : 'Empezar contracción'}</button>
+    ${summary}
+    ${rows ? `<div class="stack-4">${rows}</div>` : ''}
+    ${done.length || active ? '<button class="link-danger" data-action="ct-clear">Borrar el registro</button>' : ''}
+    <p class="t-11 soft-70 lh-3">Vera no te dice cuándo ir al hospital: si tienes dudas, mira <button class="inline-link" data-action="open-urgent">cuándo ir a urgencias</button> o contacta con tu equipo. Ante sangrado, pérdida de líquido o menos movimientos del bebé, no esperes.</p>
+    ${askLink('', 'Pregúntale a Gonzalo', 'Contracciones')}
+  </div>`;
+}
+setInterval(() => { // cronómetro de la contracción en curso, sin volver a pintar toda la pantalla
+  document.querySelectorAll('[data-ct-live]').forEach((el) => { el.textContent = ctDur((Date.now() - +el.dataset.s) / 1000); });
+}, 1000);
+
 function stageDiary() {
   const pp = store.mode === 'postpartum';
   const ds = ui.selectedDate;
@@ -1447,6 +1494,7 @@ function stageDiary() {
       <div class="row gap-8 wrap">${BABY_MOVEMENT.map((v) => chip(v, log.babyMovement === v, 'set-movement', { v }, v === 'Como siempre' ? 'sage' : 'rose')).join('')}</div>
       ${reducedMoves ? '<p class="t-12 lh-3 c-rose">Túmbate de lado un rato y concéntrate en sus movimientos. Si sigues notándolo menos, ve a urgencias hoy mismo: no esperes al día siguiente.</p>' : ''}
     </div>` : ''}
+    ${!pp && isToday && (gestation(store.stage.pregnancy)?.weeks ?? 0) >= 24 ? contractionsCard() : ''}
     <div class="card pad stack-16">
       ${eyebrow('Seguimiento')}
       ${trackingSlider('Peso', 'scale', 'deep', 'weight', log.weight,
@@ -2367,6 +2415,15 @@ const actions = {
     if (settingsDirty() && !confirm('Tienes cambios sin guardar. ¿Salir sin guardarlos?')) return;
     ui.pushMsg = ''; ui.sheet = 'push'; ui.sheetAnim = true; render();
   },
+  'ct-toggle': () => {
+    const list = ctList();
+    const active = list.find((c) => c.e == null);
+    if (active) active.e = Math.max(Date.now(), active.s + 1000);
+    else list.push({ s: Date.now(), e: null });
+    ctSave(list);
+  },
+  'ct-del': (el) => ctSave(ctList().filter((c) => String(c.s) !== el.dataset.s)),
+  'ct-clear': () => { if (confirm('¿Borrar todo el registro de contracciones?')) ctSave([]); },
   'push-dismiss': () => { try { localStorage.setItem(PUSH_DISMISS, '1'); } catch { /* */ } render(); },
   'push-enable': async () => {
     ui.pushBusy = true; ui.pushMsg = 'Activando…'; render();

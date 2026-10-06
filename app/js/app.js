@@ -112,6 +112,7 @@ const ui = {
   pushState: 'unknown',   // avisos push: 'unknown' | 'unsupported' | 'needs-install' | 'denied' | 'off' | 'on'
   pushBusy: false,
   pushMsg: '',
+  ppBabyWeek: null,       // posparto · semana de vida del bebé que se está viendo (null = la actual)
   hoyView: 'me',         // embarazo · Hoy: 'me' | 'baby' (el desarrollo del bebé vive dentro de Hoy)
 };
 
@@ -1278,7 +1279,7 @@ function pregnancyToday() {
       <div class="row between center">${eyebrow('Tu bebé esta semana')}<span class="t-12 soft">≈ ${fmtNum(bw.cm, 1)} cm · ${bw.g < 1 ? '&lt; 1 g' : bw.g >= 1000 ? fmtNum(bw.g / 1000, 2) + ' kg' : bw.g + ' g'}</span></div>
       <p class="t-14 lh-5">${esc(bw.text)}</p>
       <div class="t-13 soft">${babyCompare(g.weeks).emoji} Del tamaño de ${esc(babyCompare(g.weeks).name)}</div>
-      <button class="link-soft" data-action="hoy-view" data-v="baby">Ver cómo es (ilustración, ecografía y 3D) →</button>
+      <button class="link-soft" data-action="hoy-view" data-v="baby">Ver cómo está tu bebé →</button>
     </div>`;
   return `<div class="stack-14">
     ${switcher}
@@ -1333,41 +1334,34 @@ function postpartumToday() {
   const lw = ws[ws.length - 1];
   const vseg = (v, label) => `<button class="seg ${ui.hoyView === v ? 'on' : ''}" aria-pressed="${ui.hoyView === v}" data-action="hoy-view" data-v="${v}">${label}</button>`;
   const switcher = `<div class="segs wide">${vseg('me', 'Tú')}${vseg('baby', 'Tu bebé')}</div>`;
-  const age = s.weeks < 12 ? `${s.weeks} ${plural(s.weeks, 'semana', 'semanas')}${s.days ? ` y ${s.days} ${plural(s.days, 'día', 'días')}` : ''}` : (() => { const m = Math.floor(s.total / 30.44); return `${m} ${plural(m, 'mes', 'meses')}`; })();
+  const age = s.weeks === 0 ? `${s.days} ${plural(s.days, 'día', 'días')}` : s.weeks < 12 ? `${s.weeks} ${plural(s.weeks, 'semana', 'semanas')}${s.days ? ` y ${s.days} ${plural(s.days, 'día', 'días')}` : ''}` : (() => { const m = Math.floor(s.total / 30.44); return `${m} ${plural(m, 'mes', 'meses')}`; })();
   const weightLine = bb?.birthWeight ? `${fmtBabyKg(bb.birthWeight)} al nacer${lw ? ` · último ${fmtBabyKg(lw.g)}` : ''}` : 'Aún sin peso apuntado';
 
   if (ui.hoyView === 'baby') {
-    const birthDN = s.birth;
+    const bw = Math.min(52, Math.max(0, ui.ppBabyWeek ?? s.weeks));
+    const phase = bw < 4 ? 'Primer mes' : bw < 12 ? 'Primeros 3 meses' : bw < 24 ? 'De 3 a 6 meses' : 'De 6 a 12 meses';
+    const nav = weekNavigator({ week: bw, min: 0, max: 52, current: Math.min(52, s.weeks), action: 'pp-baby-week', title: bw === 0 ? 'Primera semana' : `${bw} ${plural(bw, 'semana', 'semanas')}`, subtitle: phase, backLabel: 'Volver a su semana' });
     return `<div class="stack-14">
     ${switcher}
-    <div class="card pad stack-10 preg-hero">
-      ${eyebrow('Tu bebé')}
-      <div class="row between center">
-        <div class="row baseline gap-10">
-          <span class="serif-28">${esc(age)}</span>
-        </div>
-        <div class="text-right"><div class="t-11 soft">Nació el</div><div class="t-14 w-500">${esc(fmtDayMonthShort(s.birth))}</div></div>
-      </div>
-      <p class="t-13 soft lh-4">Cada bebé crece a su ritmo: esto es lo que suele ser habitual a su edad.</p>
-    </div>
-    ${normalCard(postpartumBabyNormal(s.weeks))}
+    ${nav}
+    ${normalCard(postpartumBabyNormal(bw))}
     <div class="card pad stack-6">
       <div class="row between center">${eyebrow('Su peso')}<button class="link-soft" data-action="open-care" data-v="baby">${bb?.birthWeight ? 'Ver y apuntar →' : 'Apuntar →'}</button></div>
       <p class="t-14 lh-5">${esc(weightLine)}</p>
-      ${bb?.birthWeight && lw ? babyWeightNote(bb.birthWeight, lw, birthDN) : ''}
+      ${bb?.birthWeight && lw ? babyWeightNote(bb.birthWeight, lw, s.birth) : ''}
     </div>
     <div class="card pad stack-6">
       ${eyebrow('Dudas sobre tu bebé')}
-      <div class="hq-list">${hoyFaqList(postpartumFaqs(s.weeks, 'baby'))}</div>
-      ${askLink('¿Otra duda?', 'Pregúntale a Gonzalo', `Posparto · bebé de ${age}`)}
+      <div class="hq-list">${hoyFaqList(postpartumFaqs(bw, 'baby'))}</div>
+      ${askLink('¿Otra duda?', 'Pregúntale a Gonzalo', `Posparto · bebé de ${bw === 0 ? 'la primera semana' : `${bw} ${plural(bw, 'semana', 'semanas')}`}`)}
     </div>
   </div>`;
   }
 
   const babyCard = `<div class="card pad stack-6">
-      <div class="row between center">${eyebrow('Tu bebé')}<span class="t-12 soft">${esc(age)}</span></div>
+      <div class="row between center">${eyebrow('Tu bebé esta semana')}<span class="t-12 soft">${esc(lw ? fmtBabyKg(lw.g) : age)}</span></div>
       <p class="t-14 lh-5">${esc(postpartumBabyNormal(s.weeks)[0])}</p>
-      <div class="t-12 soft">${esc(weightLine)}</div>
+      <div class="t-13 soft">${esc(lw ? `Tiene ${age}` : weightLine)}</div>
       <button class="link-soft" data-action="hoy-view" data-v="baby">Ver cómo está tu bebé →</button>
     </div>`;
   return `<div class="stack-14">
@@ -1376,8 +1370,9 @@ function postpartumToday() {
       ${eyebrow('Desde el parto')}
       <div class="row between center">
         <div class="row baseline gap-10">
-          <span class="preg-weeks sm">${s.weeks}</span>
-          <span class="stack-0"><span class="serif-22">${plural(s.weeks, 'semana', 'semanas')}</span><span class="t-12 soft">+ ${s.days} ${plural(s.days, 'día', 'días')}</span></span>
+          ${s.weeks === 0
+            ? `<span class="preg-weeks sm">${s.days}</span><span class="stack-0"><span class="serif-22">${plural(s.days, 'día', 'días')}</span><span class="t-12 soft">primera semana</span></span>`
+            : `<span class="preg-weeks sm">${s.weeks}</span><span class="stack-0"><span class="serif-22">${plural(s.weeks, 'semana', 'semanas')}</span><span class="t-12 soft">+ ${s.days} ${plural(s.days, 'día', 'días')}</span></span>`}
         </div>
         <div class="text-right"><div class="t-11 soft">Tu bebé nació el</div><div class="t-14 w-500">${esc(fmtDayMonthShort(s.birth))}</div></div>
       </div>
@@ -1648,6 +1643,22 @@ function fetusBlock(week) {
     <p class="t-11 soft-70 lh-3">Modelo generado por ordenador: refleja proporciones y cambios generales del desarrollo, no la anatomía exacta de tu bebé.</p>`;
 }
 
+/** Tarjeta de navegación por semanas (embarazo y bebé de posparto): ‹ título ›, tira de semanas y vuelta a la actual */
+function weekNavigator({ week, min, max, current, action, title, subtitle, backLabel }) {
+  const chips = Array.from({ length: max - min + 1 }, (_, i) => i + min).map((w) =>
+    `<button class="bw-chip ${w === week ? 'on' : ''} ${w === current ? 'cur' : ''}" data-action="${action}" data-w="${w}" aria-label="Semana ${w}">${w}</button>`).join('');
+  return `<div class="card pad stack-12">
+      <div class="row between center">
+        <button class="sq-btn" data-action="${action}" data-w="${Math.max(min, week - 1)}" aria-label="Semana anterior" ${week <= min ? 'disabled' : ''}>${icon('left', 12)}</button>
+        <div class="text-center"><div class="serif-24">${esc(title)}</div><div class="t-11 soft upper track-1">${esc(subtitle)}</div></div>
+        <button class="sq-btn" data-action="${action}" data-w="${Math.min(max, week + 1)}" aria-label="Semana siguiente" ${week >= max ? 'disabled' : ''}>${icon('right', 12)}</button>
+      </div>
+      <div class="bw-strip">${chips}</div>
+      ${current != null && week !== current ? `<button class="link-soft" data-action="${action}" data-w="${current}">${esc(backLabel)} (${current})</button>` : ''}
+      ${current != null && week === current ? '<span class="now-tag self-start">Tu semana</span>' : ''}
+    </div>`;
+}
+
 function babyView() {
   const g = gestation(store.stage.pregnancy);
   const current = g && g.totalDays >= 0 ? Math.min(40, Math.max(4, g.weeks)) : null;
@@ -1657,19 +1668,9 @@ function babyView() {
   const is3d = ui.babyMedia === '3d';
   const media = is3d ? null : mediaFor(ui.babyMedia, week);
   const seg = (v, label) => `<button class="seg ${ui.babyMedia === v ? 'on' : ''}" aria-pressed="${ui.babyMedia === v}" data-action="baby-media" data-v="${v}">${label}</button>`;
-  const chips = Array.from({ length: 37 }, (_, i) => i + 4).map((w) =>
-    `<button class="bw-chip ${w === week ? 'on' : ''} ${w === current ? 'cur' : ''}" data-action="baby-week" data-w="${w}" aria-label="Semana ${w}">${w}</button>`).join('');
+  const nav = weekNavigator({ week, min: 4, max: 40, current, action: 'baby-week', title: `Semana ${week}`, subtitle: TRIMESTER_LABEL[trimester], backLabel: 'Volver a mi semana' });
   return `<div class="stack-18">
-    <div class="card pad stack-12">
-      <div class="row between center">
-        <button class="sq-btn" data-action="baby-week" data-w="${Math.max(4, week - 1)}" aria-label="Semana anterior" ${week <= 4 ? 'disabled' : ''}>${icon('left', 12)}</button>
-        <div class="text-center"><div class="serif-24">Semana ${week}</div><div class="t-11 soft upper track-1">${esc(TRIMESTER_LABEL[trimester])}</div></div>
-        <button class="sq-btn" data-action="baby-week" data-w="${Math.min(40, week + 1)}" aria-label="Semana siguiente" ${week >= 40 ? 'disabled' : ''}>${icon('right', 12)}</button>
-      </div>
-      <div class="bw-strip">${chips}</div>
-      ${current != null && week !== current ? `<button class="link-soft" data-action="baby-week" data-w="${current}">Volver a mi semana (${current})</button>` : ''}
-      ${current != null && week === current ? '<span class="now-tag self-start">Tu semana</span>' : ''}
-    </div>
+    ${nav}
     <div class="card pad stack-12">
       <div class="row between center wrap gap-8">${eyebrow('Cómo es')}<span class="segs">${seg('illustration', 'Ilustración')}${seg('ultrasound', 'Ecografía')}${seg('3d', '3D')}</span></div>
       ${is3d ? fetusBlock(week) : media ? `<figure class="baby-fig ${ui.babyMedia}">
@@ -2204,6 +2205,7 @@ const actions = {
     render();
   },
   'baby-week': (el) => { ui.babyWeek = +el.dataset.w; render(); },
+  'pp-baby-week': (el) => { ui.ppBabyWeek = +el.dataset.w; render(); },
   'hoy-view': (el) => { ui.hoyView = el.dataset.v; render(); window.scrollTo(0, 0); },
   'baby-media': (el) => { ui.babyMedia = el.dataset.v; render(); },
   'care-section': (el) => { ui.careSection = el.dataset.v; render(); },

@@ -3,7 +3,7 @@
 // No es un secreto: identifica a Hera ante Google. Mientras esté vacío, la opción de
 // sincronizar no se muestra en la app.
 
-export const GOOGLE_CLIENT_ID = '947810760672-ko1k3rkl8h94hpmjc0tmaqe2i1h6m18c.apps.googleusercontent.com';
+export const GOOGLE_CLIENT_ID = '922678499713-qi6icefe2piid172c0ns62brq40rhiuo.apps.googleusercontent.com';
 
 // Mientras la app de Google esté en modo "Testing" (solo usuarias de prueba), la opción solo
 // aparece al abrir Hera con ?beta (se recuerda en este navegador; ?beta=off lo desactiva).

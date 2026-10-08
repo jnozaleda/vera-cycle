@@ -1175,22 +1175,23 @@ function consultMessage() {
   return parts.join('\n');
 }
 
-/** Tarjeta de elección de profesional (ginecología / matrona) */
+/** Elección de profesional: tres fichas compactas en una fila (avatar, nombre y cargo) */
 function askPickCard(c, ask, sugg) {
   const on = ask.to === c.key;
   const suggested = sugg.to === c.key && !ask.manual;
-  return `<button class="ask-pick ${on ? 'on' : ''}" data-action="ask-pick" data-v="${c.key}" role="radio" aria-checked="${on}">
+  return `<button class="ask-pick ${on ? 'on' : ''}" data-action="ask-pick" data-v="${c.key}" role="radio" aria-checked="${on}" aria-label="${attr(`${c.name}, ${c.role}`)}">
     ${consultAvatar('md', c.key)}
-    <span class="grow left"><span class="t-14 w-500 block">${esc(c.name)}</span>
-      <span class="t-12 soft block">${esc(c.role)}${c.colegiado ? ` · Col. ${esc(c.colegiado)}` : ''}</span>
-      <span class="t-11 soft-70 block lh-3">${esc(c.scope)}</span></span>
+    <span class="t-13 w-500 block">${esc(c.short)}</span>
+    <span class="t-11 soft block">${esc(c.role)}</span>
     ${suggested ? '<span class="ask-badge">Sugerido</span>' : ''}</button>`;
 }
 
+/** Una sola línea bajo las fichas: qué atiende quien está elegido, o la sugerencia, o cómo elegir */
 function askHint(ask, sugg) {
-  if (ask.manual && ask.to) return '';
-  if (sugg.to) return `Te sugerimos a ${CONSULTS[sugg.to].short}${sugg.reason ? `: parece una duda sobre ${sugg.reason}` : ''}. Cámbialo si prefieres a otra persona.`;
-  return 'Elige a quién quieres preguntar. Si dudas: la matrona atiende lactancia, parto y posparto; el ginecólogo, pruebas, medicación y anticoncepción; la pediatra, la salud y los cuidados de tu bebé.';
+  const to = CONSULTS[ask.to];
+  if (!ask.manual && sugg.to) return `Te sugerimos a ${CONSULTS[sugg.to].short}${sugg.reason ? `: parece una duda sobre ${sugg.reason}` : ''}. Puedes cambiarlo.`;
+  if (to) return `${to.name} atiende: ${to.scope.charAt(0).toLowerCase()}${to.scope.slice(1)}. Responde en menos de ${to.responseHours} h.`;
+  return 'Elige a quién preguntar: ginecología (pruebas, medicación, anticoncepción), matrona (lactancia, parto, posparto) o pediatra (tu bebé).';
 }
 
 function askSheet() {
@@ -1216,7 +1217,7 @@ function askSheet() {
     <p class="t-12 soft lh-4" data-ask-hint>${esc(askHint(a, sugg))}</p>
     <p class="t-12 c-rose lh-4" data-ask-urgent ${sugg.urgent ? '' : 'hidden'}>Si es algo urgente (sangrado abundante, pérdida de líquido, el bebé no se mueve, dolor muy fuerte), no esperes: llama al 112 o ve a urgencias.</p>
     ${a.context ? `<div><button class="ctx-tag" data-action="ask-clear-ctx" aria-label="Quitar el tema">Sobre: ${esc(a.context)} ${icon('x', 10)}</button></div>` : ''}
-    <textarea class="field ask-text" data-model="ask.text" rows="5" maxlength="2000" placeholder="Cuéntanos tu duda con tus palabras. Por ejemplo: «Desde hace 3 días tengo acidez por la noche, ¿qué puedo hacer?»">${esc(a.text)}</textarea>
+    <textarea class="field ask-text" data-model="ask.text" rows="4" maxlength="2000" placeholder="Cuéntanos tu duda con tus palabras. Por ejemplo: «Desde hace 3 días tengo acidez por la noche, ¿qué puedo hacer?»">${esc(a.text)}</textarea>
     ${details.length ? `<label class="ask-check"><input type="checkbox" data-ask-include ${a.include ? 'checked' : ''}>
       <span><span class="t-13">Incluir mi situación</span><span class="t-11 soft block lh-3">${details.map(esc).join(' · ')}</span></span></label>` : ''}
     <button class="btn-primary" data-action="ask-send" data-v="email" data-ask-send ${to ? '' : 'disabled'}>${to ? `Enviar a ${esc(to.short)}` : 'Elige a quién preguntar'}</button>

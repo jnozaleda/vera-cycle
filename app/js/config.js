@@ -34,9 +34,9 @@ export const CONSULTS = {
   },
   matrona: {
     key: 'matrona',
-    name: 'Marina',
+    name: 'Marina Fernández',
     short: 'Marina',
-    initials: 'M',
+    initials: 'MF',
     role: 'Matrona',
     scope: 'Lactancia, parto y posparto, suelo pélvico, cuidados del recién nacido',
     colegiado: '',

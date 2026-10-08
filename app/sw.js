@@ -2,7 +2,7 @@
 // Service worker de Hera web: permite abrir la app sin conexión.
 // Estrategia "red primero": siempre intenta la versión más reciente y usa la caché si no hay red.
 
-const CACHE = 'vera-web-v59';
+const CACHE = 'vera-web-v60';
 const SHELL = [
   './',
   'index.html',
@@ -26,8 +26,8 @@ const SHELL = [
   'js/fetus-core.js',
   'js/fetus-worker.js',
   'vendor/three.min.js',
-  'fonts/jost.woff2',
-  'fonts/cormorant.woff2',
+  'fonts/inter.woff2',
+  'fonts/fraunces.woff2',
   'icons/icon-192.png',
   'icons/apple-touch-icon.png',
   'icons/favicon-32.png',

@@ -1,41 +1,44 @@
 /* styles.css — Hera web
-   Paleta y tipografía idénticas a Theme.swift de la app de iOS. */
+   Identidad de marca Hera (vera-backlog#60): ciruela, marfil, Fraunces + Inter. */
 
 @font-face {
-  font-family: 'Jost';
-  src: url('fonts/jost.woff2') format('woff2');
+  font-family: 'Inter';
+  src: url('fonts/inter.woff2') format('woff2');
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
-  font-family: 'Cormorant Garamond';
-  src: url('fonts/cormorant.woff2') format('woff2');
-  font-weight: 300 700;
+  font-family: 'Fraunces';
+  src: url('fonts/fraunces.woff2') format('woff2');
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 
 :root {
-  --ivory: #FBF9F4;
+  /* Marca Hera: fondos y textos del sistema de marca; acentos de la guía en imagen */
+  --ivory: #FAF8F5;
   --card: #FFFFFF;
-  --deep: #3F584B;
-  --sage: #8AA694;
-  --mist: #E7EDE6;
-  --gold: #C2A06B;
-  --gold-soft: #EADFC9;
-  --ink: #2D2B26;
-  --ink-soft: #5A5850;
-  --rose: #C38B7F;
-  --rose-soft: #F3E2DC;
-  --line: #E4DED0;
-  --gold-dark: #7A5C2B;
-  --st: #3F584B;
-  --st-mid: #4F7160;
-  --st-soft: #E7EDE6;
+  --deep: #693D55;
+  --sage: #56695A;
+  --mist: #DCEBE4;
+  --gold: #8A5A6E;
+  --gold-soft: #F4E6E8;
+  --ink: #2E2630;
+  --ink-soft: #655B61;
+  --text: #4C444C;
+  --rose: #9A4A5E;
+  --rose-soft: #F4E6E8;
+  --line: #E6DFE2;
+  --gold-dark: #6E4659;
+  --focus: #B76587;
+  --st: #693D55;
+  --st-mid: #8E6178;
+  --st-soft: #DCEBE4;
 
-  --serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
-  --sans: 'Jost', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --serif: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --tabbar-h: 64px;
   --maxw: 480px;
   color-scheme: light;
@@ -60,7 +63,7 @@ button, input, label { font: inherit; color: inherit; }
 .brand, .ob-logo, .ob-weight, .dial-num, .wd-n, .stat-v, [class^="serif-"], [class*=" serif-"] { font-variant-numeric: lining-nums; }
 button { background: none; border: 0; cursor: pointer; }
 button:disabled { cursor: default; }
-:focus-visible { outline: 2px solid var(--st-mid); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 hr { border: 0; border-top: 1px solid var(--line); }
 ul { list-style: none; }
 a { color: inherit; }
@@ -82,7 +85,7 @@ a { color: inherit; }
   display: flex; align-items: center; justify-content: space-between;
   padding: calc(20px + env(safe-area-inset-top)) 18px 16px;
 }
-.brand { font-family: var(--serif); font-weight: 300; font-size: 34px; color: var(--st); line-height: 1.05; }
+.brand { font-family: var(--serif); font-weight: 400; font-size: 30px; color: var(--st); line-height: 1.05; }
 .brand-tag { font-size: 11px; letter-spacing: 5px; color: var(--gold); margin-top: 2px; }
 .gear {
   width: 40px; height: 40px; border-radius: 50%; background: #fff; border: 1px solid var(--line);
@@ -125,11 +128,11 @@ a { color: inherit; }
 .pad-0 { padding: 0; }
 .eyebrow { font-size: 11px; font-weight: 500; letter-spacing: 4px; color: var(--gold); text-transform: uppercase; }
 
-.serif-19 { font-family: var(--serif); font-weight: 500; font-size: 21px; color: var(--st); line-height: 1.25; }
-.serif-22 { font-family: var(--serif); font-weight: 500; font-size: 24px; color: var(--st); }
-.serif-24 { font-family: var(--serif); font-weight: 500; font-size: 26px; color: var(--st); }
-.serif-28 { font-family: var(--serif); font-weight: 300; font-size: 30px; color: var(--st); line-height: 1.1; }
-.serif-34 { font-family: var(--serif); font-weight: 300; font-size: 36px; color: var(--st); line-height: 1.05; }
+.serif-19 { font-family: var(--serif); font-weight: 500; font-size: 19px; color: var(--st); line-height: 1.25; }
+.serif-22 { font-family: var(--serif); font-weight: 500; font-size: 21px; color: var(--st); }
+.serif-24 { font-family: var(--serif); font-weight: 500; font-size: 23px; color: var(--st); }
+.serif-28 { font-family: var(--serif); font-weight: 400; font-size: 26px; color: var(--st); line-height: 1.1; }
+.serif-34 { font-family: var(--serif); font-weight: 400; font-size: 31px; color: var(--st); line-height: 1.05; }
 
 .t-10 { font-size: 10px; } .t-11 { font-size: 11px; } .t-12 { font-size: 12px; } .t-125 { font-size: 12.5px; }
 .t-13 { font-size: 13px; } .t-135 { font-size: 13.5px; } .t-14 { font-size: 14px; } .t-15 { font-size: 15px; } .t-17 { font-size: 17px; }
@@ -261,7 +264,7 @@ label.field { padding: 8px 14px; }
 .dial svg { display: block; overflow: visible; }
 .dial-center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .dial-dia { font-size: 11px; font-weight: 500; letter-spacing: 6px; color: var(--ink-soft); padding-left: 6px; margin-bottom: 2px; }
-.dial-num { font-family: var(--serif); font-weight: 300; font-size: clamp(56px, 20vw, 76px); color: var(--st); line-height: 1; }
+.dial-num { font-family: var(--serif); font-weight: 400; font-size: clamp(48px, 17vw, 64px); color: var(--st); line-height: 1; }
 .dial-phase { font-size: 13px; letter-spacing: 2px; color: var(--gold); margin-top: 4px; }
 .legend { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-soft); }
 .legend i { width: 18px; height: 5px; border-radius: 2px; display: inline-block; }
@@ -275,7 +278,7 @@ label.field { padding: 8px 14px; }
 
 .stat-row .stat { box-shadow: 0 8px 14px rgba(63, 88, 75, 0.06); }
 .stat { padding: 16px 10px; text-align: center; flex: 1; }
-.stat-v { font-family: var(--serif); font-weight: 300; font-size: 32px; line-height: 1.1; color: var(--st); }
+.stat-v { font-family: var(--serif); font-weight: 400; font-size: 28px; line-height: 1.1; color: var(--st); }
 .stat-v.c-rose { color: var(--rose); }
 .stat-l { font-size: 11px; letter-spacing: 1.5px; color: var(--ink-soft); margin-top: 4px; }
 .card > .stat-row { padding: 0; }
@@ -326,7 +329,7 @@ label.field { padding: 8px 14px; }
 }
 .wday.ph-rose { --pc: var(--rose); } .wday.ph-sage { --pc: var(--sage); } .wday.ph-gold { --pc: var(--gold); }
 .wd-l { font-size: 9px; font-weight: 500; letter-spacing: 1px; color: var(--ink-soft); text-transform: uppercase; }
-.wd-n { font-family: var(--serif); font-weight: 300; font-size: 22px; color: var(--st); line-height: 1; }
+.wd-n { font-family: var(--serif); font-weight: 400; font-size: 19px; color: var(--st); line-height: 1; }
 .wd-dot { width: 4px; height: 4px; border-radius: 50%; background: color-mix(in srgb, var(--pc) 60%, transparent); }
 .wday.logged .wd-dot { background: color-mix(in srgb, var(--ink-soft) 40%, transparent); }
 .wday.today { border-color: var(--st-mid); }
@@ -461,7 +464,7 @@ label.field { padding: 8px 14px; }
 .ob-content .link-soft.mt-16 { align-self: center; text-decoration: underline; text-underline-offset: 3px; }
 .ob-h { font-family: var(--serif); font-weight: 500; font-size: 30px; color: var(--st); line-height: 1.15; margin-bottom: 10px; }
 .ob-h.mb-22 { margin-bottom: 22px; }
-.ob-weight { font-family: var(--serif); font-weight: 300; font-size: 64px; color: var(--st); text-align: center; margin-bottom: 24px; }
+.ob-weight { font-family: var(--serif); font-weight: 400; font-size: 56px; color: var(--st); text-align: center; margin-bottom: 24px; }
 .option {
   width: 100%; display: flex; align-items: center; gap: 14px; padding: 16px; border-radius: 16px;
   background: #fff; border: 1.5px solid var(--line); text-align: left; transition: all .15s;
@@ -502,7 +505,7 @@ label.field { padding: 8px 14px; }
   display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: 18px;
   background: var(--rose-soft); border: 1.5px solid var(--rose);
 }
-.preg-weeks { font-family: var(--serif); font-weight: 300; font-size: 76px; line-height: .9; color: var(--st); font-variant-numeric: lining-nums; }
+.preg-weeks { font-family: var(--serif); font-weight: 400; font-size: 64px; line-height: .9; color: var(--st); font-variant-numeric: lining-nums; }
 .preg-bar { height: 6px; margin-top: 6px; }
 .preg-bar i { background: var(--rose); }
 .tl-item { display: flex; gap: 12px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line); }
@@ -585,9 +588,9 @@ label.field { padding: 8px 14px; }
 .food { display: flex; align-items: center; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--line); }
 .food[hidden] { display: none; }
 .food-tag { flex: none; font-size: 11px; font-weight: 500; padding: 4px 9px; border-radius: 999px; white-space: nowrap; }
-.food-tag.tone-sage { color: #3F584B; background: #E7EDE6; }
-.food-tag.tone-gold { color: #7a5f30; background: var(--gold-soft); }
-.food-tag.tone-rose { color: #8a4f44; background: var(--rose-soft); }
+.food-tag.tone-sage { color: var(--sage); background: var(--mist); }
+.food-tag.tone-gold { color: var(--gold-dark); background: var(--gold-soft); }
+.food-tag.tone-rose { color: var(--rose); background: var(--rose-soft); }
 .credits summary { cursor: pointer; list-style: none; }
 .credits ul { margin-top: 8px; padding-left: 16px; list-style: disc; }
 .credits a, .baby-fig + p a { color: inherit; }
@@ -611,14 +614,14 @@ label.field { padding: 8px 14px; }
 .inline-link { font-size: inherit; padding: 0; }
 .soft-note {
   font-size: 13px; line-height: 1.5; color: var(--ink); padding: 12px 14px; border-radius: 14px;
-  background: #F7EFEC; border: 1px solid color-mix(in srgb, var(--rose) 25%, transparent);
+  background: #F8EEF0; border: 1px solid color-mix(in srgb, var(--rose) 25%, transparent);
 }
-.soft-note .inline-link { border-color: var(--rose); color: #8a4f44; margin-left: 2px; }
+.soft-note .inline-link { border-color: var(--rose); color: var(--rose); margin-left: 2px; }
 .soft-note a { color: inherit; }
 .urgent-sec { padding-top: 6px; padding-bottom: 6px; border-top: 1px solid var(--line); }
 .urgent-sec summary { color: var(--ink-soft); font-weight: 500; }
 .urgent-sec .faq-a a { color: var(--st); }
-.ctx-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 5px 10px; border-radius: 999px; background: var(--gold-soft); color: #7a5f30; }
+.ctx-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 5px 10px; border-radius: 999px; background: var(--gold-soft); color: var(--gold-dark); }
 .ask-text { resize: vertical; min-height: 110px; line-height: 1.5; font-family: inherit; }
 .ask-check { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
 .ask-check input { margin-top: 3px; accent-color: var(--st); width: 16px; height: 16px; flex: none; }
@@ -703,18 +706,19 @@ label.field { padding: 8px 14px; }
   border-right: 1.5px solid var(--ink-soft); border-bottom: 1.5px solid var(--ink-soft); transform: rotate(45deg); transition: transform .2s;
 }
 .pend[open] > summary::after { transform: rotate(-135deg); margin-top: -2px; }
-.pend-n { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 999px; background: var(--gold-soft); color: #7a5f30; }
+.pend-n { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 999px; background: var(--gold-soft); color: var(--gold-dark); }
 
 
 /* ═══════════════════════════════════════════════════════════════════════
    Rediseño: legibilidad (propuesta A) + color por etapa + bloque principal
    ═══════════════════════════════════════════════════════════════════════ */
-body[data-stage="cycle"] { --st: #8E4B42; --st-mid: #A4635A; --st-soft: #F6E7E2; }
-body[data-stage="postpartum"] { --st: #3F5F78; --st-mid: #4F7189; --st-soft: #E4ECF2; }
-/* Cada botón de etapa lleva su propio color */
-.stage-btn[data-v="cycle"], .option[data-action="ob-stage"][data-v="cycle"] { --st: #8E4B42; --st-mid: #A4635A; --st-soft: #F6E7E2; }
-.stage-btn[data-v="pregnancy"], .option[data-action="ob-stage"][data-v="pregnancy"] { --st: #3F584B; --st-mid: #4F7160; --st-soft: #E7EDE6; }
-.stage-btn[data-v="postpartum"], .option[data-action="ob-stage"][data-v="postpartum"] { --st: #3F5F78; --st-mid: #4F7189; --st-soft: #E4ECF2; }
+/* Marca Hera: ciruela en todas las etapas; cada etapa solo cambia el tinte suave (ciclo rosa, embarazo salvia, posparto lavanda) */
+body[data-stage="cycle"] { --st-soft: #F4E6E8; }
+body[data-stage="postpartum"] { --st-soft: #ECE6F0; }
+/* Cada botón de etapa lleva su propio tinte */
+.stage-btn[data-v="cycle"], .option[data-action="ob-stage"][data-v="cycle"] { --st-soft: #F4E6E8; }
+.stage-btn[data-v="pregnancy"], .option[data-action="ob-stage"][data-v="pregnancy"] { --st-soft: #DCEBE4; }
+.stage-btn[data-v="postpartum"], .option[data-action="ob-stage"][data-v="postpartum"] { --st-soft: #ECE6F0; }
 .option[data-action="ob-stage"] .opt-ic { color: var(--st); background: var(--st-soft); border-radius: 12px; width: 44px; height: 44px; align-items: center; }
 .stage-btn:not(.on) .ic { color: var(--st); }
 
@@ -722,13 +726,13 @@ body[data-stage="postpartum"] { --st: #3F5F78; --st-mid: #4F7189; --st-soft: #E4
 .t-11 { font-size: 12px; } .t-12 { font-size: 13px; } .t-125 { font-size: 13px; }
 .t-13 { font-size: 14px; } .t-135 { font-size: 14.5px; } .t-14 { font-size: 15px; } .t-15 { font-size: 16px; } .t-17 { font-size: 18px; }
 .light { font-weight: 400; }
-.soft-70 { color: #6F6D64; }
-.c-gold { color: var(--gold-dark); } .c-rose { color: #A4635A; } .c-sage { color: #4F7160; }
+.soft-70 { color: var(--ink-soft); }
+.c-gold { color: var(--gold-dark); } .c-rose { color: var(--rose); } .c-sage { color: var(--sage); }
 .ob-tag, .tag { color: var(--gold-dark); }
 .tag { color: var(--st); }
 
 /* Tarjetas: borde y sin sombra */
-.card { border: 1px solid #DDD6C6; box-shadow: none; border-radius: 18px; }
+.card { border: 1px solid var(--line); box-shadow: none; border-radius: 20px; }
 .card .card { box-shadow: none; }
 .contact-card, .stat-row .stat { box-shadow: none; }
 .eyebrow { font-size: 15px; font-weight: 600; letter-spacing: 0; color: var(--st); text-transform: none; }
@@ -739,12 +743,12 @@ body[data-stage="postpartum"] { --st: #3F5F78; --st-mid: #4F7189; --st-soft: #E4
 .tips li::before { background: var(--st); }
 
 /* Controles */
-.chip { font-size: 14.5px; padding: 9px 16px; border: 1.5px solid #D5CEBC; }
+.chip { font-size: 14.5px; padding: 9px 16px; border: 1.5px solid #DCD2D7; }
 .chip.on { border-color: transparent; }
 .todo-check { width: 26px; height: 26px; border: 2px solid var(--st); }
 .todo-check.on { border-color: var(--st); }
 .hq.todo.later .todo-check { border-color: color-mix(in srgb, var(--st) 45%, transparent); }
-.todo-t { font-size: 16px; } .todo-s { font-size: 13px; color: #5A5850; }
+.todo-t { font-size: 16px; } .todo-s { font-size: 13px; color: var(--text); }
 .hq summary, .faq-item summary { font-size: 16px; }
 .hq-a, .faq-a { font-size: 14.5px; }
 .step-btn { border-color: var(--st); color: var(--st); }
@@ -757,21 +761,22 @@ body[data-stage="postpartum"] { --st: #3F5F78; --st-mid: #4F7189; --st-soft: #E4
 .tab.on span { color: var(--st); font-weight: 600; }
 .tab .ic { transition: background .15s; }
 
-/* Bloque principal de color */
-.preg-hero { background: var(--st); border-color: var(--st); color: #fff; }
-.preg-hero .eyebrow, .preg-hero .soft, .preg-hero .soft-70 { color: rgba(255,255,255,.9); }
-.preg-hero .preg-weeks, .preg-hero [class^="serif-"], .preg-hero [class*=" serif-"] { color: #fff; }
+/* Bloque principal: tarjeta con el tinte de la etapa y texto en ciruela (marca Hera) */
+.preg-hero { background: var(--st-soft); border-color: transparent; color: var(--ink); }
+.preg-hero .eyebrow { color: var(--st); }
+.preg-hero .soft, .preg-hero .soft-70 { color: var(--text); }
+.preg-hero .preg-weeks, .preg-hero [class^="serif-"], .preg-hero [class*=" serif-"] { color: var(--st); }
 .preg-hero .preg-weeks { font-weight: 500; }
-.preg-hero hr { border-color: rgba(255,255,255,.28); }
-.preg-hero .vbar { background: rgba(255,255,255,.3); }
-.preg-hero .preg-bar i { background: #fff; }
-.preg-hero .inline-link, .preg-hero .link-soft { color: #fff; border-color: rgba(255,255,255,.6); }
-.preg-hero .c-sage, .preg-hero .c-gold { color: #fff; }
+.preg-hero hr { border-color: color-mix(in srgb, var(--st) 16%, transparent); }
+.preg-hero .vbar { background: color-mix(in srgb, var(--st) 18%, transparent); }
+.preg-hero .preg-bar i { background: var(--st); }
+.preg-hero .inline-link, .preg-hero .link-soft { color: var(--st); border-color: color-mix(in srgb, var(--st) 45%, transparent); }
+.preg-hero .c-sage, .preg-hero .c-gold { color: var(--st); }
 .hero-dates { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .hero-dates > div { display: flex; gap: 8px; align-items: flex-start; }
-.hero-dates .ic { margin-top: 3px; color: #fff; }
-/* «Lo normal ahora» sobre el color suave de la etapa */
-.card.soft-card { background: var(--st-soft); border-color: transparent; }
+.hero-dates .ic { margin-top: 3px; color: var(--st); }
+/* «Lo normal ahora» sobre una versión más clara del tinte de la etapa */
+.card.soft-card { background: color-mix(in srgb, var(--st-soft) 55%, #fff); border-color: transparent; }
 .card.soft-card .tips li { font-size: 15px; color: var(--ink); }
 .outline-gold { color: var(--st); border-color: color-mix(in srgb, var(--st) 40%, transparent); font-weight: 500; font-size: 13px; }
 .outline-sage { color: var(--st); border-color: var(--st-mid); }

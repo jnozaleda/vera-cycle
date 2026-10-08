@@ -2178,11 +2178,11 @@ let lastScreen = null;
 
 function render() {
   const screen = store.needsOnboarding ? 'ob' : 'main';
-  // Color de la etapa (ciclo rosa · embarazo verde · crianza azul)
+  // Etapa: ciruela en todas; cambia solo el tinte suave (ciclo rosa · embarazo salvia · posparto lavanda)
   const stageNow = store.needsOnboarding ? (ui.ob.stageChosen ? ui.ob.flow : 'pregnancy') : store.mode;
   document.body.dataset.stage = stageNow;
   const tc = document.querySelector('meta[name=theme-color]');
-  if (tc) tc.content = { cycle: '#8E4B42', pregnancy: '#3F584B', postpartum: '#3F5F78' }[stageNow] || '#3F584B';
+  if (tc) tc.content = '#FAF8F5';
   // Conserva el scroll interno del sheet al re-renderizar
   const sheetBody = root.querySelector('.sheet-body');
   const sheetScroll = sheetBody ? sheetBody.scrollTop : 0;

@@ -23,7 +23,7 @@ import { FOODS, FOOD_CATEGORIES, FOOD_STATUS, foodFor, bmi, gainRange, gainBandA
 import { GUIDE_INTRO, PREGNANCY_GUIDE, POSTPARTUM_GUIDE, guideSectionFor } from './guide.js';
 import { PREGNANCY_LINE, pregnancyNormal, pregnancyFaqs, postpartumLine, postpartumNormal, postpartumBabyNormal, postpartumFaqs } from './today.js';
 import { spansPregnancy } from './predict.js';
-import { PREGNANCY_BETA_ONLY, CONSULT, CONSULTS, TAGLINE } from './config.js';
+import { PREGNANCY_BETA_ONLY, CONSULT, CONSULTS, TAGLINE, CONSULT_API, CONSULT_FORM } from './config.js';
 import { suggestContact } from './contacts.js';
 import { isBeta } from './beta.js';
 import { pushState, enablePush, disablePush, syncPush, testPush } from './push.js';
@@ -108,7 +108,7 @@ const ui = {
   careForm: { height: '', preWeight: '', weight: '' },
   foodQuery: '',
   foodCat: 'Todos',
-  ask: { context: '', include: true, text: '', sent: null, to: null, manual: false }, // hoja de consulta
+  ask: { context: '', include: true, text: '', sent: null, to: null, manual: false, email: (() => { try { return localStorage.getItem('hera-ask-email') || ''; } catch { return ''; } })(), status: null, result: null, notify: null }, // hoja de consulta
   babyForm: { birth: '', date: '', weight: '' },          // peso del recién nacido
   pushState: 'unknown',   // avisos push: 'unknown' | 'unsupported' | 'needs-install' | 'denied' | 'off' | 'on'
   pushBusy: false,
@@ -1194,9 +1194,55 @@ function askHint(ask, sugg) {
   return 'Elige a quién preguntar: ginecología (pruebas, medicación, anticoncepción), matrona (lactancia, parto, posparto) o pediatra (tu bebé).';
 }
 
+const consultFormOn = () => CONSULT_FORM || isBeta();
+const isEmail = (e) => /^[^\s@<>()",;]+@[^\s@<>()",;]+\.[a-z]{2,24}$/i.test(String(e || '').trim());
+
+/** Puntos de gratuitas usadas / disponibles */
+const freeDots = (used, total) => `<span class="free-dots" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i < used ? 'on' : ''}"></i>`).join('')}</span>`;
+
+/** Pantalla B: gratuitas agotadas (sin pasarela de pago todavía) */
+function askLimitView(a) {
+  const n = a.notify || {};
+  const notify = n.done
+    ? `<p class="t-13 c-sage w-500 text-center">Hecho: te avisaremos en ${esc(a.email)} cuando estén disponibles.</p>`
+    : n.open
+      ? `<div class="stack-10">
+          <label class="ask-check"><input type="checkbox" data-ask-consent ${n.consent ? 'checked' : ''}>
+            <span class="t-12 lh-4">Acepto que Hera guarde mi correo (${esc(a.email)}) solo para avisarme cuando haya consultas de pago. Puedo pedir que lo borren escribiendo a ${esc(CONTACT_EMAIL)}.</span></label>
+          ${n.error ? `<p class="t-12 c-rose">${esc(n.error)}</p>` : ''}
+          <button class="btn-primary" data-action="ask-notify-send" ${n.busy ? 'disabled' : ''}>Avisarme</button>
+        </div>`
+      : `<button class="btn-primary" data-action="ask-notify-open">Avisarme cuando esté disponible</button>`;
+  return sheetFrame('Consulta', `<div class="stack-14">
+    <div class="limit-card stack-8">
+      ${consultPair('sm')}
+      <div class="t-15 w-500 c-deep">Has usado tus ${a.result.freeLimit || 2} consultas gratuitas</div>
+      <p class="t-13 lh-4 c-deep">Muy pronto podrás seguir preguntando a Gonzalo, Marina y Lucía con consultas sueltas o bonos.</p>
+    </div>
+    ${notify}
+    <a class="outline-sage" href="${CONTACT_HREF}">${icon('mail', 14)} Escribir a ${esc(CONTACT_EMAIL)}</a>
+    <p class="t-11 soft-70 lh-3">Si es urgente, no esperes: llama al 112 o acude a tu centro de salud. Mientras tanto, mira las respuestas en <button class="inline-link" data-action="open-guide">Dudas</button>.</p>
+  </div>`);
+}
+
 function askSheet() {
   const a = ui.ask;
   const to = CONSULTS[a.to];
+  if (a.result?.limit) return askLimitView(a);
+  if (a.result?.ok) {
+    const who = CONSULTS[a.sentTo] || CONSULT;
+    const total = a.result.freeLimit || 2;
+    const rem = a.result.remaining;
+    return sheetFrame('Consulta', `<div class="stack-14 text-center ask-done">
+      ${consultAvatar('lg', who.key)}
+      <div class="serif-22">Consulta enviada</div>
+      <p class="t-13 soft lh-4">${esc(who.short)} te responderá en menos de ${who.responseHours} h a <b class="w-500">${esc(a.email)}</b>. Te hemos mandado una copia.</p>
+      ${freeDots(total - rem, total)}
+      <p class="t-12 soft">${rem === 0 ? 'Era tu última consulta gratuita' : `Te ${rem === 1 ? 'queda 1 consulta gratuita' : `quedan ${rem} consultas gratuitas`}`}</p>
+      ${a.result.dryRun ? '<p class="t-11 c-rose">Modo ensayo: no se ha enviado ningún correo.</p>' : ''}
+      <button class="link-soft self-center" data-action="ask-reset">Escribir otra pregunta</button>
+    </div>`);
+  }
   if (a.sent) {
     const who = CONSULTS[a.sentTo] || CONSULT;
     return sheetFrame('Consulta', `<div class="stack-14 text-center ask-done">
@@ -1220,7 +1266,11 @@ function askSheet() {
     <textarea class="field ask-text" data-model="ask.text" rows="4" maxlength="2000" placeholder="Cuéntanos tu duda con tus palabras. Por ejemplo: «Desde hace 3 días tengo acidez por la noche, ¿qué puedo hacer?»">${esc(a.text)}</textarea>
     ${details.length ? `<label class="ask-check"><input type="checkbox" data-ask-include ${a.include ? 'checked' : ''}>
       <span><span class="t-13">Incluir mi situación</span><span class="t-11 soft block lh-3">${details.map(esc).join(' · ')}</span></span></label>` : ''}
-    <button class="btn-primary" data-action="ask-send" data-v="email" data-ask-send ${to ? '' : 'disabled'}>${to ? `Enviar a ${esc(to.short)}` : 'Elige a quién preguntar'}</button>
+    ${consultFormOn() ? `<label class="stack-4"><span class="t-12 soft">Tu correo, para que te respondan</span>
+      <input class="field" type="email" inputmode="email" autocomplete="email" data-model="ask.email" value="${attr(a.email)}" placeholder="nombre@correo.com"></label>
+      <input class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" data-model="ask.website" value="">` : ''}
+    ${a.status === 'error' ? `<p class="t-12 c-rose">${esc(a.error || 'No se ha podido enviar. Inténtalo de nuevo.')}</p>` : ''}
+    <button class="btn-primary" data-action="${consultFormOn() ? 'ask-submit' : 'ask-send'}" data-v="email" data-ask-send ${to && a.status !== 'sending' ? '' : 'disabled'}>${a.status === 'sending' ? 'Enviando…' : to ? `Enviar a ${esc(to.short)}` : 'Elige a quién preguntar'}</button>
     ${to?.whatsapp ? `<button class="outline-sage" data-action="ask-send" data-v="whatsapp">Prefiero escribir por WhatsApp</button>` : ''}
     <p class="t-11 soft-70 lh-3">No es para urgencias: si algo no va bien, contacta con tu centro de salud o tu unidad de referencia. Tu pregunta solo la ve ${to ? esc(to.short) : 'la persona a la que se la envíes'}.</p>
   </div>`);
@@ -2362,14 +2412,48 @@ const actions = {
   },
   'open-ask': (el) => {
     const ctx = el.dataset.ctx || '';
-    if (ui.ask.sent || ui.ask.context !== ctx) ui.ask = { context: ctx, include: true, text: ui.ask.sent ? '' : ui.ask.text, sent: null, to: null, manual: false };
+    if (ui.ask.sent || ui.ask.result?.ok || ui.ask.context !== ctx) ui.ask = { ...ui.ask, context: ctx, include: true, text: ui.ask.sent || ui.ask.result?.ok ? '' : ui.ask.text, sent: null, to: null, manual: false, status: null, result: ui.ask.result?.limit ? ui.ask.result : null };
     if (!ui.ask.manual) ui.ask.to = suggestContact({ text: ui.ask.text, context: ui.ask.context, mode: store.mode }).to;
     ui.sheet = 'ask'; ui.sheetAnim = true; render();
     setTimeout(() => root.querySelector('.ask-text')?.focus(), 300);
   },
   'ask-clear-ctx': () => { ui.ask.context = ''; render(); },
-  'ask-reset': () => { ui.ask = { context: '', include: true, text: '', sent: null, to: null, manual: false }; render(); },
+  'ask-reset': () => { ui.ask = { ...ui.ask, context: '', include: true, text: '', sent: null, to: null, manual: false, status: null, result: ui.ask.result?.limit ? ui.ask.result : null, notify: null }; render(); },
   'ask-pick': (el) => { ui.ask.to = el.dataset.v; ui.ask.manual = true; render(); },
+  'ask-submit': async () => {
+    const a = ui.ask;
+    const to = CONSULTS[a.to];
+    if (!to || a.status === 'sending') return;
+    if (!a.text.trim() || a.text.trim().length < 5) { root.querySelector('.ask-text')?.focus(); return; }
+    if (!isEmail(a.email)) { a.status = 'error'; a.error = 'Escribe tu correo para que te puedan responder.'; render(); root.querySelector('[data-model="ask.email"]')?.focus(); return; }
+    a.status = 'sending'; a.error = ''; render();
+    try { localStorage.setItem('hera-ask-email', a.email.trim()); } catch { /* sin almacenamiento */ }
+    try {
+      const meta = [];
+      if (a.include) meta.push(...consultDetails());
+      const res = await fetch(`${CONSULT_API}/ask`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: a.email.trim(), to: to.key, text: a.text.trim(), context: a.context, situation: meta.join('\n'), website: a.website || '' }) });
+      const j = await res.json().catch(() => ({}));
+      if (res.status === 429) throw new Error('Has enviado varias consultas seguidas. Espera unos minutos y vuelve a intentarlo.');
+      if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');
+      if (!res.ok && !j.limit) throw new Error('No se ha podido enviar. Inténtalo de nuevo en un rato.');
+      a.status = null; a.result = j; a.sentTo = to.key;
+      if (j.ok) a.text = '';
+    } catch (e) { a.status = 'error'; a.error = e.message; }
+    render();
+  },
+  'ask-notify-open': () => { ui.ask.notify = { open: true, consent: false }; render(); },
+  'ask-notify-send': async () => {
+    const n = ui.ask.notify || (ui.ask.notify = {});
+    if (!n.consent) { n.error = 'Marca la casilla para que podamos guardar tu correo.'; render(); return; }
+    n.busy = true; n.error = ''; render();
+    try {
+      const res = await fetch(`${CONSULT_API}/notify`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: ui.ask.email.trim(), consent: true }) });
+      if (!res.ok) throw new Error();
+      n.done = true;
+    } catch { n.error = 'No se ha podido guardar. Inténtalo de nuevo.'; }
+    n.busy = false; render();
+  },
   'ask-send': (el) => {
     const to = CONSULTS[ui.ask.to];
     if (!to) return;
@@ -2435,6 +2519,7 @@ const actions = {
   },
   'open-urgent': () => { ui.sheet = 'urgent'; ui.sheetAnim = true; render(); },
   'open-guide': (el) => {
+    ui.sheet = null;
     ui.tab = tabIndex('guide');
     ui.guideQuery = '';
     const sec = el.dataset.section;
@@ -2649,6 +2734,7 @@ root.addEventListener('change', (e) => {
     return;
   }
   if (el.matches('[data-ask-include]')) { ui.ask.include = el.checked; return; }
+  if (el.matches('[data-ask-consent]')) { (ui.ask.notify ||= {}).consent = el.checked; return; }
   if (el.dataset.num) {
     const key = el.dataset.num;
     const raw = el.value.trim().replace(',', '.');

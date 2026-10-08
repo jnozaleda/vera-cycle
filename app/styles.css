@@ -1488,3 +1488,10 @@ body[data-stage="postpartum"] { --st: #3F5F78; --st-mid: #4F7189; --st-soft: #E4
 .cav-pair .cav + .cav { margin-left: -2px; }
 .ask-pill .cav.sm { font-size: 9.5px; }
 .cav-pair .cav:nth-child(3) { background: color-mix(in srgb, var(--st) 70%, #fff); }
+
+/* Consultas con control de gratuitas (vera-backlog#57) */
+.free-dots { display: inline-flex; gap: 6px; justify-content: center; }
+.free-dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+.free-dots i.on { background: var(--st); }
+.limit-card { background: var(--st-soft); border-radius: 16px; padding: 16px; }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }

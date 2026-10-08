@@ -1,0 +1,14 @@
+name = "hera-consultas"
+main = "src/worker.js"
+compatibility_date = "2026-09-01"
+
+[vars]
+ALLOWED_ORIGINS = "https://hera-gine.com,http://localhost:8766"
+FROM = "Hera <consultas@hera-gine.com>"
+FREE_LIMIT = "2"
+# "1" = modo ensayo: cuenta y responde, pero no envía correos. Poner "0" cuando Resend esté listo.
+DRY_RUN = "1"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "4d3613aad462458fb17c8481b2bf7481"

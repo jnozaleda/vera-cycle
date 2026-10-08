@@ -71,3 +71,9 @@ export const TAGLINE = 'Embarazo, posparto y tu bebé, acompañada por tu ginec�
 // push del navegador, sus claves de cifrado y la fecha probable de parto. La clave VAPID pública no es secreta.
 export const PUSH_URL = 'https://vera-push.tempcheck-app.workers.dev';
 export const VAPID_PUBLIC = 'BLcknXtmkyDdEyAXBKPaty9DAR8UgcKnuSpc_QVUIIbtyX-7lwGKYBGeoMEPK2ZcvyM337DL_2t0FqEtdnKBkXQ';
+
+// Consultas con control de gratuitas (vera-backlog#57). Servicio propio en Cloudflare (consult-worker/).
+// Mientras CONSULT_FORM sea false, la consulta abre el correo de la usuaria como antes; el formulario
+// nuevo se puede probar abriendo la app con ?beta.
+export const CONSULT_API = 'https://hera-consultas.tempcheck-app.workers.dev';
+export const CONSULT_FORM = false;

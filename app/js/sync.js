@@ -3,7 +3,7 @@
 //
 // - Sin servidor propio: el navegador habla directamente con Google.
 // - Los datos se guardan en la carpeta oculta de datos de la app (appDataFolder) de SU Drive:
-//   no aparece entre sus archivos y solo Vera puede leerla.
+//   no aparece entre sus archivos y solo Hera puede leerla.
 // - El script de Google solo se carga si la usuaria activa la sincronización.
 // - Cada cambio lleva una marca de tiempo (_u); al sincronizar se combinan ambos lados
 //   quedándose con la versión más reciente de cada día, de los ajustes, del perfil y de cada medicación.
@@ -288,7 +288,7 @@ export function disconnect() {
   setStatus('off');
 }
 
-/** Borra el archivo de Vera del Drive de la usuaria y desconecta */
+/** Borra el archivo de Hera del Drive de la usuaria y desconecta */
 export async function deleteRemote() {
   if (!tokenValid()) await requestToken();
   const id = await findFile();

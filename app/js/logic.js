@@ -1,5 +1,5 @@
 // logic.js
-// Fechas, fases del ciclo y constantes de Vera (port de CycleLogic.swift + AppStore.swift)
+// Fechas, fases del ciclo y constantes de Hera (port de CycleLogic.swift + AppStore.swift)
 //
 // Las fechas se manejan como "número de día" (días desde 1970-01-01 en calendario local),
 // lo que evita problemas de horario de verano. `nowDN()` añade la fracción del día actual

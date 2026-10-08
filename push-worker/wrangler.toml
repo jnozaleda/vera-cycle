@@ -7,8 +7,8 @@ compatibility_date = "2026-09-01"
 crons = ["0 7,8 * * *"]
 
 [vars]
-ALLOWED_ORIGINS = "https://jnozaleda.github.io,http://localhost:8766"
-VAPID_SUBJECT = "mailto:contact.gineped@gmail.com"
+ALLOWED_ORIGINS = "https://hera-gine.com,https://jnozaleda.github.io,http://localhost:8766"
+VAPID_SUBJECT = "mailto:contacto@hera-gine.com"
 # Clave pública VAPID (no es secreta; la privada es el secreto VAPID_PRIVATE)
 VAPID_PUBLIC = "BLcknXtmkyDdEyAXBKPaty9DAR8UgcKnuSpc_QVUIIbtyX-7lwGKYBGeoMEPK2ZcvyM337DL_2t0FqEtdnKBkXQ"
 

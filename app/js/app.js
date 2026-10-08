@@ -1,5 +1,5 @@
 // app.js
-// Interfaz de Vera web: navegación, pestañas Hoy / Ciclo / Patrones, ajustes, calendario y onboarding.
+// Interfaz de Hera web: navegación, pestañas Hoy / Ciclo / Patrones, ajustes, calendario y onboarding.
 // Port de ContentView, TodayView, CycleView, TrendsView, SettingsView y OnboardingView (SwiftUI).
 
 import {
@@ -29,8 +29,8 @@ import { isBeta } from './beta.js';
 import { pushState, enablePush, disablePush, syncPush, testPush } from './push.js';
 import { sync, syncAvailable, onSyncChange, initSync, connect, reauthorize, disconnect, deleteRemote, syncNow, loadGis } from './sync.js';
 
-const CONTACT_EMAIL = 'contact.gineped@gmail.com';
-const CONTACT_HREF = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Consulta desde Vera web')}`;
+const CONTACT_EMAIL = 'contacto@hera-gine.com';
+const CONTACT_HREF = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Consulta desde Hera web')}`;
 
 // MARK: - Utilidades
 
@@ -219,7 +219,7 @@ function irregularNudge() {
     <span class="nudge-ic">${icon('wave', 18)}</span>
     <span class="grow left">
       <span class="t-13 w-500 block">Mejora tus predicciones</span>
-      <span class="t-12 soft block">Añade tus últimas reglas para que Vera calcule tu ciclo medio.</span>
+      <span class="t-12 soft block">Añade tus últimas reglas para que Hera calcule tu ciclo medio.</span>
     </span>
     ${icon('right', 12, 'soft')}
   </button></div>`;
@@ -522,7 +522,7 @@ function medicationSection(log) {
       </div>`;
     }).join('')}
     ${meds.length && perm === 'default' ? `<button class="outline-sage" data-action="enable-notifs">${icon('bell', 14)} Activar avisos de toma</button>` : ''}
-    ${meds.length && perm === 'granted' ? `<div class="t-125 c-sage text-center row gap-6 justify-center center">${icon('check', 12)} Avisos activados mientras Vera esté abierta</div>` : ''}
+    ${meds.length && perm === 'granted' ? `<div class="t-125 c-sage text-center row gap-6 justify-center center">${icon('check', 12)} Avisos activados mientras Hera esté abierta</div>` : ''}
   </div>`;
 }
 
@@ -818,7 +818,7 @@ function pushSheet() {
   if (!target) inner = '<p class="t-13 soft lh-4">Los avisos están disponibles en embarazo y posparto.</p>';
   else if (st === 'needs-install') inner = '<p class="soft-note">En iPhone, los avisos solo funcionan con la app instalada: botón Compartir → «Añadir a pantalla de inicio», y ábrela desde el icono.</p>';
   else if (st === 'unsupported') inner = '<p class="soft-note">Este navegador no admite avisos.</p>';
-  else if (st === 'denied') inner = '<p class="soft-note">Tienes bloqueadas las notificaciones de Vera. Puedes permitirlas en los ajustes de tu navegador o de tu móvil, en Notificaciones, y volver aquí.</p>';
+  else if (st === 'denied') inner = '<p class="soft-note">Tienes bloqueadas las notificaciones de Hera. Puedes permitirlas en los ajustes de tu navegador o de tu móvil, en Notificaciones, y volver aquí.</p>';
   else if (st === 'on') inner = `<div class="sync-box"><span class="c-sage">${icon('checkCircle', 18)}</span><div class="grow"><div class="t-13 w-500">Activado</div><div class="t-12 soft">${pp ? 'Cada semana los 3 primeros meses y luego cada mes, a las 9:00.' : 'Cada semana nueva, a las 9:00.'}</div></div></div>
       <button class="pill-outline" data-action="push-test" ${ui.pushBusy ? 'disabled' : ''}>Enviar un aviso de prueba</button>
       <button class="link-danger" data-action="push-disable" ${ui.pushBusy ? 'disabled' : ''}>Desactivar el aviso</button>`;
@@ -836,10 +836,10 @@ function syncSection() {
   if (!sync.enabled) {
     return `<div class="stack-10 data-box">
       ${eyebrow('Sincronización')}
-      <p class="t-13 soft lh-4">Guarda tus datos en tu propio Google Drive para verlos desde cualquier dispositivo. Es opcional: sin cuenta, Vera funciona igual.</p>
+      <p class="t-13 soft lh-4">Guarda tus datos en tu propio Google Drive para verlos desde cualquier dispositivo. Es opcional: sin cuenta, Hera funciona igual.</p>
       <button class="google-btn" data-action="sync-connect">${GOOGLE_G} Continuar con Google</button>
       ${sync.error ? `<p class="t-12 c-rose">${esc(sync.error)}</p>` : ''}
-      <p class="t-11 soft-70 lh-3">Tus datos se guardan en una carpeta privada de tu Google Drive a la que solo accede Vera. No aparece entre tus archivos. Nosotros no vemos tus datos.</p>
+      <p class="t-11 soft-70 lh-3">Tus datos se guardan en una carpeta privada de tu Google Drive a la que solo accede Hera. No aparece entre tus archivos. Nosotros no vemos tus datos.</p>
     </div>`;
   }
   const warn = sync.status === 'needs-auth' || sync.status === 'error' || sync.status === 'offline';
@@ -868,7 +868,7 @@ function syncChoiceDialog() {
   <div class="sheet dialog anim" role="dialog" aria-modal="true" aria-label="Datos encontrados en Google Drive">
     <div class="sheet-body stack-14 pt-20">
       <div class="serif-22">Ya tienes datos en Google Drive</div>
-      <p class="t-13 soft lh-4">Este dispositivo también tiene registros de Vera. ¿Qué quieres hacer?</p>
+      <p class="t-13 soft lh-4">Este dispositivo también tiene registros de Hera. ¿Qué quieres hacer?</p>
       <button class="btn-primary" data-action="sync-choice" data-v="merge">Combinar ambos</button>
       <p class="t-11 soft-70 lh-3 mt--8">Se juntan los registros de los dos. Si un mismo día tiene cambios en ambos, se queda el más reciente.</p>
       <button class="outline-sage" data-action="sync-choice" data-v="drive">Usar solo los de Google Drive</button>
@@ -923,13 +923,13 @@ function settingsSheet() {
       ${syncAvailable() ? syncSection() : ''}
       <div class="stack-10 data-box">
         ${eyebrow('Contacto')}
-        <p class="t-13 soft lh-4">¿Tienes dudas sobre tu salud, sobre cómo usar Vera o quieres darnos tu opinión? Escríbenos cuando quieras.</p>
+        <p class="t-13 soft lh-4">¿Tienes dudas sobre tu salud, sobre cómo usar Hera o quieres darnos tu opinión? Escríbenos cuando quieras.</p>
         <a class="outline-sage" href="${CONTACT_HREF}">${icon('mail', 14)} ${CONTACT_EMAIL}</a>
         <p class="t-11 soft-70 lh-3">No atendemos urgencias: si tienes un sangrado muy abundante, dolor intenso o fiebre, acude a tu médico o a urgencias. Nuestras respuestas son orientativas y no sustituyen una consulta.</p>
       </div>
       <div class="stack-10 data-box">
         ${eyebrow('Tus datos')}
-        <p class="t-12 soft lh-3">Vera web guarda todo solo en este navegador. Nada sale de tu dispositivo. Haz una copia para no perder tus registros si borras los datos del navegador o cambias de equipo.</p>
+        <p class="t-12 soft lh-3">Hera web guarda todo solo en este navegador. Nada sale de tu dispositivo. Haz una copia para no perder tus registros si borras los datos del navegador o cambias de equipo.</p>
         <div class="row gap-8 wrap">
           <button class="pill-outline row gap-6 center" data-action="export">${icon('download', 13)} Exportar copia</button>
           <label class="pill-outline row gap-6 center" tabindex="0">${icon('upload', 13)} Importar copia<input type="file" accept="application/json,.json" data-action="import" hidden></label>
@@ -963,11 +963,11 @@ function onboardingView() {
   switch (ob.step) {
     case 0:
       content = `<div class="text-center stack-0">
-        <div class="ob-logo">Vera</div>
+        <div class="ob-logo">Hera</div>
         <div class="ob-tag">EMBARAZO · POSPARTO · BEBÉ</div>
         <p class="t-17 light soft lh-6 mb-44">${esc(TAGLINE)} Con respuestas para cada semana y la posibilidad de preguntarle tus dudas cuando lo necesites.</p>
         ${primaryButton('Comenzar', 'ob-next')}
-        ${syncAvailable() ? `<button class="google-btn mt-16" data-action="sync-connect">${GOOGLE_G} ¿Ya usas Vera? Recuperar mis datos</button>` : ''}
+        ${syncAvailable() ? `<button class="google-btn mt-16" data-action="sync-connect">${GOOGLE_G} ¿Ya usas Hera? Recuperar mis datos</button>` : ''}
         <button class="link-soft mt-16" data-action="ob-demo">Explorar con datos de ejemplo</button>
         ${sync.error ? `<p class="t-12 c-rose mt-12">${esc(sync.error)}</p>` : ''}
       </div>`;
@@ -980,7 +980,7 @@ function onboardingView() {
       </button>`;
       content = `<div>
         <h2 class="ob-h">¿En qué momento estás?</h2>
-        <p class="t-14 soft lh-4 mb-30">Vera se adapta a cada etapa. Podrás cambiarla cuando quieras desde los ajustes.</p>
+        <p class="t-14 soft lh-4 mb-30">Hera se adapta a cada etapa. Podrás cambiarla cuando quieras desde los ajustes.</p>
         <div class="stack-12">
           ${opt('Estoy embarazada', 'Tus semanas, el desarrollo de tu bebé, las pruebas de cada etapa y las dudas frecuentes.', 'sprout', 'pregnancy')}
           ${opt('He tenido a mi bebé', 'Tu recuperación, la lactancia y el peso, la salud y la alimentación de tu bebé.', 'flower', 'postpartum')}
@@ -1171,7 +1171,7 @@ function consultMessage() {
   if (a.context) meta.push(`Sobre: ${a.context}`);
   if (a.include) meta.push(...consultDetails());
   if (meta.length) parts.push('', '—', ...meta);
-  parts.push('', 'Enviado desde Vera web');
+  parts.push('', 'Enviado desde Hera web');
   return parts.join('\n');
 }
 
@@ -1503,12 +1503,12 @@ function contractionsCard(prominent = false) {
   }).join('');
   return `<div class="card pad stack-12 ${prominent ? 'ct-prominent' : ''}">
     ${eyebrow('Contracciones')}
-    <p class="t-13 soft lh-4">Pulsa al empezar cada contracción y otra vez cuando termine. Vera calcula cada cuánto vienen y cuánto duran.</p>
+    <p class="t-13 soft lh-4">Pulsa al empezar cada contracción y otra vez cuando termine. Hera calcula cada cuánto vienen y cuánto duran.</p>
     <button class="${active ? 'btn-primary ct-active' : 'btn-primary'}" data-action="ct-toggle">${active ? `Terminar contracción · <span data-ct-live data-s="${active.s}">${ctDur((Date.now() - active.s) / 1000)}</span>` : 'Empezar contracción'}</button>
     ${summary}
     ${rows ? `<div class="stack-4">${rows}</div>` : ''}
     ${done.length || active ? '<button class="link-danger" data-action="ct-clear">Borrar el registro</button>' : ''}
-    <p class="t-11 soft-70 lh-3">Vera no te dice cuándo ir al hospital: si tienes dudas, mira <button class="inline-link" data-action="open-urgent">cuándo ir a urgencias</button> o contacta con tu equipo. Ante sangrado, pérdida de líquido o menos movimientos del bebé, no esperes.</p>
+    <p class="t-11 soft-70 lh-3">Hera no te dice cuándo ir al hospital: si tienes dudas, mira <button class="inline-link" data-action="open-urgent">cuándo ir a urgencias</button> o contacta con tu equipo. Ante sangrado, pérdida de líquido o menos movimientos del bebé, no esperes.</p>
     ${askLink('', 'Pregúntanos', 'Contracciones')}
   </div>`;
 }
@@ -1864,7 +1864,7 @@ function agendaSection() {
       <button class="outline-sage" data-action="appt-add">${icon('plusCircle', 14)} Añadir a mi agenda</button>
     </div>
     ${past.length ? `<details class="faq-item"><summary>Citas anteriores</summary><div class="stack-8 pt-4">${past.map((a) => apptRow(a, true)).join('')}</div></details>` : ''}
-    <p class="t-11 soft-70 lh-3">Las citas y pruebas las indica tu equipo. Con «Avisarme en mi calendario» se descarga un archivo que tu móvil añade a su calendario, y es él quien te avisa (también con Vera cerrada).</p>
+    <p class="t-11 soft-70 lh-3">Las citas y pruebas las indica tu equipo. Con «Avisarme en mi calendario» se descarga un archivo que tu móvil añade a su calendario, y es él quien te avisa (también con Hera cerrada).</p>
   </div>`;
 }
 
@@ -2100,7 +2100,7 @@ function mainView() {
   }
   return `<div class="shell">
     <header class="app-header">
-      <div><h1 class="brand">Vera</h1><div class="brand-tag">${MODE_TAG[mode]}</div></div>
+      <div><h1 class="brand">Hera</h1><div class="brand-tag">${MODE_TAG[mode]}</div></div>
       <div class="row gap-8 center">
         ${syncPill()}
         <button class="ask-pill" data-action="open-ask" data-ctx="" aria-label="Pregunta a tu ginecólogo, a tu matrona o a tu pediatra" title="Pregunta a tu equipo">${consultPair('sm')}<span class="ask-label">Pregúntanos</span></button>
@@ -2375,7 +2375,7 @@ const actions = {
     if (!to) return;
     if (!ui.ask.text.trim()) { root.querySelector('.ask-text')?.focus(); return; }
     const body = consultMessage();
-    const subject = `Pregunta para ${to.name} · Vera${ui.ask.context ? ` · ${ui.ask.context}` : ''}`;
+    const subject = `Pregunta para ${to.name} · Hera${ui.ask.context ? ` · ${ui.ask.context}` : ''}`;
     if (el.dataset.v === 'whatsapp' && to.whatsapp) {
       window.open(`https://wa.me/${to.whatsapp}?text=${encodeURIComponent(body)}`, '_blank', 'noopener');
       ui.ask.sent = 'whatsapp';
@@ -2459,7 +2459,7 @@ const actions = {
   },
   reset: () => {
     const extra = sync.enabled ? '\n\nTu copia en Google Drive no se borra: para eso usa «Borrar mis datos de Google Drive». Este dispositivo dejará de sincronizar.' : '';
-    if (!confirm(`¿Borrar todos tus datos de Vera en este navegador? Esta acción no se puede deshacer.${extra}`)) return;
+    if (!confirm(`¿Borrar todos tus datos de Hera en este navegador? Esta acción no se puede deshacer.${extra}`)) return;
     ui.sheet = null; ui.ob = initialOnboarding(); ui.tab = 0;
     if (sync.enabled) disconnect();
     store.resetAll();
@@ -2516,7 +2516,7 @@ const actions = {
     disconnect();
   },
   'sync-delete': async () => {
-    if (!confirm('¿Borrar tu copia de Vera de Google Drive? Los datos de este navegador se mantienen. Esta acción no se puede deshacer.')) return;
+    if (!confirm('¿Borrar tu copia de Hera de Google Drive? Los datos de este navegador se mantienen. Esta acción no se puede deshacer.')) return;
     try { await deleteRemote(); alert('Tu copia en Google Drive se ha borrado.'); } catch (err) { alert(`No se pudo borrar: ${err.message}`); }
   },
 
@@ -2708,7 +2708,7 @@ function tick() {
     for (const m of store.pendingMeds(today)) {
       if (sent.has(m.id)) continue;
       try {
-        new Notification('Vera · Recordatorio de medicación', {
+        new Notification('Hera · Recordatorio de medicación', {
           body: `Es la hora de tu toma: ${m.name}${m.dose ? ` (${m.dose})` : ''}`,
           icon: 'icons/icon-192.png',
           tag: `med-${m.id}`,

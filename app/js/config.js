@@ -1,12 +1,12 @@
 // config.js
 // Identificador OAuth de Google (tipo "Aplicación web") para la sincronización con Google Drive.
-// No es un secreto: identifica a Vera ante Google. Mientras esté vacío, la opción de
+// No es un secreto: identifica a Hera ante Google. Mientras esté vacío, la opción de
 // sincronizar no se muestra en la app.
 
 export const GOOGLE_CLIENT_ID = '947810760672-ko1k3rkl8h94hpmjc0tmaqe2i1h6m18c.apps.googleusercontent.com';
 
 // Mientras la app de Google esté en modo "Testing" (solo usuarias de prueba), la opción solo
-// aparece al abrir Vera con ?beta (se recuerda en este navegador; ?beta=off lo desactiva).
+// aparece al abrir Hera con ?beta (se recuerda en este navegador; ?beta=off lo desactiva).
 // Pasar a false al publicar la app en Google Auth Platform.
 export const SYNC_BETA_ONLY = false;
 
@@ -28,8 +28,8 @@ export const CONSULTS = {
     colegiado: '',
     photo: '',
     whatsapp: '',
-    // PRUEBAS (vera-backlog#55): correo de Noza; cambiar por el real al lanzar.
-    email: 'j.nozaleda.pastor@gmail.com',
+    // PRUEBAS: la dirección @hera-gine.com reenvía al correo de Noza; cambiar el destino del reenvío por el real al lanzar.
+    email: 'gonzalo@hera-gine.com',
     responseHours: 48,
   },
   matrona: {
@@ -42,8 +42,8 @@ export const CONSULTS = {
     colegiado: '',
     photo: '',
     whatsapp: '',
-    // PRUEBAS (vera-backlog#55): correo de Noza; cambiar por el real al lanzar.
-    email: 'j.nozaleda.pastor@gmail.com',
+    // PRUEBAS: la dirección @hera-gine.com reenvía al correo de Noza; cambiar el destino del reenvío por el real al lanzar.
+    email: 'marina@hera-gine.com',
     responseHours: 48,
   },
   pediatra: {
@@ -56,15 +56,15 @@ export const CONSULTS = {
     colegiado: '',
     photo: '',
     whatsapp: '',
-    // PRUEBAS (vera-backlog#33): correo de Noza; cambiar por el real al lanzar.
-    email: 'j.nozaleda.pastor@gmail.com',
+    // PRUEBAS: la dirección @hera-gine.com reenvía al correo de Noza; cambiar el destino del reenvío por el real al lanzar.
+    email: 'lucia@hera-gine.com',
     responseHours: 48,
   },
 };
 // Compatibilidad: contacto principal (ginecología)
 export const CONSULT = CONSULTS.gineco;
 
-// Mensaje principal de Vera (bienvenida, ajustes de etapa).
+// Mensaje principal de Hera (bienvenida, ajustes de etapa).
 export const TAGLINE = 'Embarazo, posparto y tu bebé, acompañada por tu ginecólogo, tu matrona y tu pediatra.';
 
 // Avisos push semanales (vera-backlog#9). Servicio propio en Cloudflare: guarda solo la dirección de

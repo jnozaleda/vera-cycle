@@ -1,4 +1,4 @@
-// Vera · avisos push semanales (vera-backlog#9).
+// Hera · avisos push semanales (vera-backlog#9).
 //
 // Guarda lo mínimo para poder avisar: la dirección de push del navegador (una URL opaca), sus claves de
 // cifrado, la fecha probable de parto (o de nacimiento del bebé) y la última semana avisada. Nada más: ni nombre, ni correo, ni

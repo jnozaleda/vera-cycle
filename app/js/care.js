@@ -100,8 +100,8 @@ export function appointmentICS(appt) {
     when = `DTSTART;VALUE=DATE:${d}`;
   }
   return [
-    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Vera//Agenda//ES', 'CALSCALE:GREGORIAN',
+    'BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Hera//Agenda//ES', 'CALSCALE:GREGORIAN',
     'BEGIN:VEVENT', `UID:${appt.id}@vera`, `DTSTAMP:${stamp}`, when,
-    `SUMMARY:${icsEscape(appt.title)}`, 'DESCRIPTION:Cita guardada en Vera', 'END:VEVENT', 'END:VCALENDAR',
+    `SUMMARY:${icsEscape(appt.title)}`, 'DESCRIPTION:Cita guardada en Hera', 'END:VEVENT', 'END:VCALENDAR',
   ].join('\r\n');
 }

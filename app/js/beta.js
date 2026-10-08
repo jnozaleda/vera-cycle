@@ -1,5 +1,5 @@
 // beta.js
-// Funciones en pruebas: solo visibles al abrir Vera con ?beta (se recuerda en este navegador;
+// Funciones en pruebas: solo visibles al abrir Hera con ?beta (se recuerda en este navegador;
 // ?beta=off lo desactiva).
 
 const BETA_KEY = 'vera-beta';

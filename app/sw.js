@@ -1,8 +1,8 @@
 // sw.js
-// Service worker de Vera web: permite abrir la app sin conexión.
+// Service worker de Hera web: permite abrir la app sin conexión.
 // Estrategia "red primero": siempre intenta la versión más reciente y usa la caché si no hay red.
 
-const CACHE = 'vera-web-v55';
+const CACHE = 'vera-web-v56';
 const SHELL = [
   './',
   'index.html',
@@ -65,7 +65,7 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('push', (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch { /* mensaje vacío */ }
-  event.waitUntil(self.registration.showNotification(data.title || 'Vera', {
+  event.waitUntil(self.registration.showNotification(data.title || 'Hera', {
     body: data.body || '',
     icon: 'icons/icon-192.png',
     badge: 'icons/favicon-32.png',

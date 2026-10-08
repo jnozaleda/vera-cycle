@@ -23,7 +23,7 @@ assert.deepEqual([r.s, r.j.remaining], [200, 1]);
 assert.equal(sent.length, 2, 'correo al profesional y confirmación');
 assert.equal(sent[0].to[0], 'marina@hera-gine.com'); assert.equal(sent[0].reply_to, 'Maria.Lopez@gmail.com');
 assert.equal(sent[1].to[0], 'Maria.Lopez@gmail.com');
-assert.deepEqual(sent[0].bcc, ['copia@example.com'], 'copia oculta de la consulta'); assert.equal(sent[1].bcc, undefined, 'la confirmación no lleva copia');
+assert.deepEqual(sent[0].bcc, ['copia@example.com'], 'copia oculta de la consulta'); assert.deepEqual(sent[1].bcc, ['copia@example.com'], 'la confirmación también lleva copia');
 r = await call('/ask', { ...q, email: 'marialopez+otra@gmail.com', to: 'pediatra' });
 assert.equal(r.j.remaining, 0, 'cuenta en total y normaliza el correo');
 r = await call('/ask', q);

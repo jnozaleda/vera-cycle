@@ -160,7 +160,7 @@ export default {
       await env.KV.put(key, JSON.stringify({ n, first: rec.first || now, last: now }));
       const remaining = Math.max(0, limit - n);
       const cm = confirmEmail(pro, q, remaining);
-      await sendMail(env, { to: q.email, replyTo: pro.email, ...cm });
+      await sendMail(env, { to: q.email, replyTo: pro.email, ...cm, bcc: env.COPY_TO || undefined });
       return reply(200, { ok: true, remaining, freeLimit: limit, dryRun: env.DRY_RUN === '1' });
     }
     return reply(404, { error: 'not_found' });

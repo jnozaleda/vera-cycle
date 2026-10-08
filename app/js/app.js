@@ -963,7 +963,7 @@ function onboardingView() {
   switch (ob.step) {
     case 0:
       content = `<div class="text-center stack-0">
-        <div class="ob-logo">Hera</div>
+        <h1 class="ob-logo"><img src="brand/hera-logo.svg" alt="Hera" width="264" height="80"></h1>
         <div class="ob-tag">EMBARAZO · POSPARTO · BEBÉ</div>
         <p class="t-17 light soft lh-6 mb-44">${esc(TAGLINE)} Con respuestas para cada semana y la posibilidad de preguntarle tus dudas cuando lo necesites.</p>
         ${primaryButton('Comenzar', 'ob-next')}
@@ -2150,7 +2150,7 @@ function mainView() {
   }
   return `<div class="shell">
     <header class="app-header">
-      <div><h1 class="brand">Hera</h1><div class="brand-tag">${MODE_TAG[mode]}</div></div>
+      <div><h1 class="brand"><img src="brand/hera-logo-compact.svg" alt="Hera" width="113" height="34"></h1><div class="brand-tag">${MODE_TAG[mode]}</div></div>
       <div class="row gap-8 center">
         ${syncPill()}
         <button class="ask-pill" data-action="open-ask" data-ctx="" aria-label="Pregunta a tu ginecólogo, a tu matrona o a tu pediatra" title="Pregunta a tu equipo">${consultPair('sm')}<span class="ask-label">Pregúntanos</span></button>

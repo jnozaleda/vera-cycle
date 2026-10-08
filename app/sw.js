@@ -2,7 +2,7 @@
 // Service worker de Hera web: permite abrir la app sin conexión.
 // Estrategia "red primero": siempre intenta la versión más reciente y usa la caché si no hay red.
 
-const CACHE = 'vera-web-v58';
+const CACHE = 'vera-web-v59';
 const SHELL = [
   './',
   'index.html',
@@ -31,6 +31,10 @@ const SHELL = [
   'icons/icon-192.png',
   'icons/apple-touch-icon.png',
   'icons/favicon-32.png',
+  'brand/favicon.svg',
+  'brand/hera-logo.svg',
+  'brand/hera-logo-compact.svg',
+  'brand/hera-symbol.svg',
 ];
 
 self.addEventListener('install', (event) => {

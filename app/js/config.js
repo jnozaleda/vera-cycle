@@ -76,4 +76,4 @@ export const VAPID_PUBLIC = 'BLcknXtmkyDdEyAXBKPaty9DAR8UgcKnuSpc_QVUIIbtyX-7lwG
 // Mientras CONSULT_FORM sea false, la consulta abre el correo de la usuaria como antes; el formulario
 // nuevo se puede probar abriendo la app con ?beta.
 export const CONSULT_API = 'https://hera-consultas.tempcheck-app.workers.dev';
-export const CONSULT_FORM = false;
+export const CONSULT_FORM = true;

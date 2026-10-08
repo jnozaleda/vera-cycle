@@ -7,7 +7,7 @@ ALLOWED_ORIGINS = "https://hera-gine.com,http://localhost:8766"
 FROM = "Hera <consultas@hera-gine.com>"
 FREE_LIMIT = "2"
 # "1" = modo ensayo: cuenta y responde, pero no envía correos. Poner "0" cuando Resend esté listo.
-DRY_RUN = "1"
+DRY_RUN = "0"
 
 [[kv_namespaces]]
 binding = "KV"

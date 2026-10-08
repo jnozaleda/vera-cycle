@@ -23,7 +23,8 @@ import { FOODS, FOOD_CATEGORIES, FOOD_STATUS, foodFor, bmi, gainRange, gainBandA
 import { GUIDE_INTRO, PREGNANCY_GUIDE, POSTPARTUM_GUIDE, guideSectionFor } from './guide.js';
 import { PREGNANCY_LINE, pregnancyNormal, pregnancyFaqs, postpartumLine, postpartumNormal, postpartumBabyNormal, postpartumFaqs } from './today.js';
 import { spansPregnancy } from './predict.js';
-import { PREGNANCY_BETA_ONLY, CONSULT, TAGLINE } from './config.js';
+import { PREGNANCY_BETA_ONLY, CONSULT, CONSULTS, TAGLINE } from './config.js';
+import { suggestContact } from './contacts.js';
 import { isBeta } from './beta.js';
 import { pushState, enablePush, disablePush, syncPush, testPush } from './push.js';
 import { sync, syncAvailable, onSyncChange, initSync, connect, reauthorize, disconnect, deleteRemote, syncNow, loadGis } from './sync.js';
@@ -107,7 +108,7 @@ const ui = {
   careForm: { height: '', preWeight: '', weight: '' },
   foodQuery: '',
   foodCat: 'Todos',
-  ask: { context: '', include: true, text: '', sent: null }, // hoja «Pregúntale a Gonzalo»
+  ask: { context: '', include: true, text: '', sent: null, to: null, manual: false }, // hoja de consulta
   babyForm: { birth: '', date: '', weight: '' },          // peso del recién nacido
   pushState: 'unknown',   // avisos push: 'unknown' | 'unsupported' | 'needs-install' | 'denied' | 'off' | 'on'
   pushBusy: false,
@@ -337,7 +338,7 @@ function todayView() {
       <p class="t-13 light soft lh-5">${esc(phase.insightText)}</p>
       <hr>
       <ul class="tips">${PHASE_TIPS[info.phase].map((tip) => `<li>${esc(tip)}</li>`).join('')}</ul>
-      ${askLink('¿Dudas sobre esta fase?', 'Pregúntale a Gonzalo', `${phase.label} · día ${info.day} del ciclo`)}
+      ${askLink('¿Dudas sobre esta fase?', 'Pregúntanos', `${phase.label} · día ${info.day} del ciclo`)}
     </div>
     <div class="card pad stack-14">
       ${eyebrow('Esta semana')}
@@ -449,7 +450,7 @@ function cycleView() {
   const symptoms = `<div class="card pad stack-14">
     <div class="row baseline between">${eyebrow('Síntomas')}<span class="t-11 soft">${esc(PHASES[phaseInfo.phase].label)}</span></div>
     <div class="chips">${phaseSymptoms.map((s) => symptomChip(s, log)).join('')}</div>
-    ${log.symptoms.length ? askLink('¿Te preocupa?', 'Pregúntale a Gonzalo', `${log.symptoms.join(', ')} · ${PHASES[phaseInfo.phase].label.toLowerCase()}`) : ''}
+    ${log.symptoms.length ? askLink('¿Te preocupa?', 'Pregúntanos', `${log.symptoms.join(', ')} · ${PHASES[phaseInfo.phase].label.toLowerCase()}`) : ''}
     ${bleeding ? `<div class="flow-picker">
       <div class="row gap-6 center wrap"><span class="c-rose">${icon('drop', 11)}</span><span class="t-12 w-500 soft">¿Cuánto estás usando?</span><span class="t-11 soft-70">(recambios de compresa/tampón)</span></div>
       <div class="hscroll">${FLOW_OPTIONS.map((o) => `<button class="flow-opt ${log.flow === o.id ? 'on' : ''}" aria-pressed="${log.flow === o.id}" data-action="set-flow" data-v="${o.id}"><span class="t-13">${o.label}</span><span class="t-10">${o.sublabel}</span></button>`).join('')}</div>
@@ -1127,15 +1128,19 @@ function onboardingView() {
 
 // MARK: - Consulta con el ginecólogo (ayuda contextual)
 
-function consultAvatar(size = 'sm') {
-  return CONSULT.photo
-    ? `<img class="cav ${size}" src="${attr(CONSULT.photo)}" alt="">`
-    : `<span class="cav ${size}" aria-hidden="true">${esc(CONSULT.initials)}</span>`;
+function consultAvatar(size = 'sm', who = 'gineco') {
+  const c = CONSULTS[who] || CONSULT;
+  return c.photo
+    ? `<img class="cav ${size}" src="${attr(c.photo)}" alt="">`
+    : `<span class="cav ${size}" aria-hidden="true">${esc(c.initials)}</span>`;
 }
 
-/** Enlace discreto de una línea: «¿Otra duda? Pregúntale a Gonzalo» */
+/** Los dos avatares solapados (ginecología y matrona) para cabecera y enlaces */
+const consultPair = (size = 'sm') => `<span class="cav-pair">${consultAvatar(size, 'gineco')}${consultAvatar(size, 'matrona')}</span>`;
+
+/** Enlace discreto de una línea: «¿Otra duda? Pregúntanos» */
 function askLink(lead, link, ctx = '') {
-  return `<button class="ask-link" data-action="open-ask" data-ctx="${attr(ctx)}">${consultAvatar('xs')}<span>${lead ? `${esc(lead)} ` : ''}<u>${esc(link)}</u></span></button>`;
+  return `<button class="ask-link" data-action="open-ask" data-ctx="${attr(ctx)}">${consultPair('xs')}<span>${lead ? `${esc(lead)} ` : ''}<u>${esc(link)}</u></span></button>`;
 }
 
 /** Resumen de la situación de la usuaria para adjuntar a la pregunta */
@@ -1147,7 +1152,7 @@ function consultDetails() {
     if (g && g.totalDays >= 0) lines.push(`Embarazo: semana ${g.weeks} + ${g.days} días (FPP ${fmtDayMonthYear(g.due)})`);
   } else if (st.mode === 'postpartum') {
     const sb = sinceBirth(st.postpartum);
-    if (sb) lines.push(`Posparto: ${sb.weeks} semanas y ${sb.days} días desde el parto`);
+    if (sb) lines.push(`Posparto: ${sb.weeks} ${plural(sb.weeks, 'semana', 'semanas')} y ${sb.days} ${plural(sb.days, 'día', 'días')} desde el parto`);
   } else {
     const info = cycleInfo(store.data.settings);
     lines.push(`Ciclo: día ${info.day} (${PHASES[info.phase].label.toLowerCase()}), ciclo de ~${store.data.settings.cycleLen} días`);
@@ -1170,33 +1175,75 @@ function consultMessage() {
   return parts.join('\n');
 }
 
+/** Tarjeta de elección de profesional (ginecología / matrona) */
+function askPickCard(c, ask, sugg) {
+  const on = ask.to === c.key;
+  const suggested = sugg.to === c.key && !ask.manual;
+  return `<button class="ask-pick ${on ? 'on' : ''}" data-action="ask-pick" data-v="${c.key}" role="radio" aria-checked="${on}">
+    ${consultAvatar('md', c.key)}
+    <span class="grow left"><span class="t-14 w-500 block">${esc(c.name)}</span>
+      <span class="t-12 soft block">${esc(c.role)}${c.colegiado ? ` · Col. ${esc(c.colegiado)}` : ''}</span>
+      <span class="t-11 soft-70 block lh-3">${esc(c.scope)}</span></span>
+    ${suggested ? '<span class="ask-badge">Sugerido</span>' : ''}</button>`;
+}
+
+function askHint(ask, sugg) {
+  if (ask.manual && ask.to) return '';
+  if (sugg.to) return `Te sugerimos a ${CONSULTS[sugg.to].short}${sugg.reason ? `: parece una duda sobre ${sugg.reason}` : ''}. Cámbialo si prefieres a la otra persona.`;
+  return 'Elige a quién quieres preguntar. Si dudas: la matrona atiende lactancia, parto y posparto; el ginecólogo, pruebas, medicación y anticoncepción.';
+}
+
 function askSheet() {
   const a = ui.ask;
+  const to = CONSULTS[a.to];
   if (a.sent) {
-    return sheetFrame('Pregúntale a Gonzalo', `<div class="stack-14 text-center ask-done">
-      ${consultAvatar('lg')}
+    const who = CONSULTS[a.sentTo] || CONSULT;
+    return sheetFrame('Consulta', `<div class="stack-14 text-center ask-done">
+      ${consultAvatar('lg', who.key)}
       <div class="serif-22">¡Casi está!</div>
       <p class="t-13 soft lh-4">${a.sent === 'whatsapp'
         ? 'Se ha abierto WhatsApp con tu pregunta. Pulsa enviar allí.'
-        : 'Se ha abierto tu correo con la pregunta ya escrita. Pulsa enviar allí.'} ${esc(CONSULT.name)} te responderá en menos de ${CONSULT.responseHours} h.</p>
+        : 'Se ha abierto tu correo con la pregunta ya escrita. Pulsa enviar allí.'} ${esc(who.name)} te responderá en menos de ${who.responseHours} h.</p>
       <button class="link-soft self-center" data-action="ask-reset">Escribir otra pregunta</button>
     </div>`);
   }
+  const sugg = suggestContact({ text: a.text, context: a.context, mode: store.mode });
   const details = consultDetails();
-  return sheetFrame('Pregúntale a Gonzalo', `<div class="stack-14">
-    <div class="row gap-12 center">${consultAvatar('lg')}
-      <div><div class="t-15 w-500">${esc(CONSULT.name)}</div>
-        <div class="t-12 soft">${esc(CONSULT.role)}${CONSULT.colegiado ? ` · Colegiado nº ${esc(CONSULT.colegiado)}` : ''}</div>
-        <div class="t-12 c-sage">Te responde en menos de ${CONSULT.responseHours} h</div></div>
+  return sheetFrame('Consulta', `<div class="stack-14">
+    <div class="stack-8 ask-picks" role="radiogroup" aria-label="¿A quién quieres preguntar?">
+      ${askPickCard(CONSULTS.gineco, a, sugg)}${askPickCard(CONSULTS.matrona, a, sugg)}
     </div>
+    <p class="t-12 soft lh-4" data-ask-hint>${esc(askHint(a, sugg))}</p>
+    <p class="t-12 c-rose lh-4" data-ask-urgent ${sugg.urgent ? '' : 'hidden'}>Si es algo urgente (sangrado abundante, pérdida de líquido, el bebé no se mueve, dolor muy fuerte), no esperes: llama al 112 o ve a urgencias.</p>
     ${a.context ? `<div><button class="ctx-tag" data-action="ask-clear-ctx" aria-label="Quitar el tema">Sobre: ${esc(a.context)} ${icon('x', 10)}</button></div>` : ''}
-    <textarea class="field ask-text" data-model="ask.text" rows="5" maxlength="2000" placeholder="Cuéntale tu duda con tus palabras. Por ejemplo: «Desde hace 3 días tengo acidez por la noche, ¿qué puedo hacer?»">${esc(a.text)}</textarea>
+    <textarea class="field ask-text" data-model="ask.text" rows="5" maxlength="2000" placeholder="Cuéntanos tu duda con tus palabras. Por ejemplo: «Desde hace 3 días tengo acidez por la noche, ¿qué puedo hacer?»">${esc(a.text)}</textarea>
     ${details.length ? `<label class="ask-check"><input type="checkbox" data-ask-include ${a.include ? 'checked' : ''}>
       <span><span class="t-13">Incluir mi situación</span><span class="t-11 soft block lh-3">${details.map(esc).join(' · ')}</span></span></label>` : ''}
-    <button class="btn-primary" data-action="ask-send" data-v="email">Enviar pregunta</button>
-    ${CONSULT.whatsapp ? `<button class="outline-sage" data-action="ask-send" data-v="whatsapp">Prefiero escribir por WhatsApp</button>` : ''}
-    <p class="t-11 soft-70 lh-3">No es para urgencias: si algo no va bien, contacta con tu centro de salud o tu unidad de referencia. Tu pregunta solo la ve ${esc(CONSULT.name)}.</p>
+    <button class="btn-primary" data-action="ask-send" data-v="email" data-ask-send ${to ? '' : 'disabled'}>${to ? `Enviar a ${esc(to.short)}` : 'Elige a quién preguntar'}</button>
+    ${to?.whatsapp ? `<button class="outline-sage" data-action="ask-send" data-v="whatsapp">Prefiero escribir por WhatsApp</button>` : ''}
+    <p class="t-11 soft-70 lh-3">No es para urgencias: si algo no va bien, contacta con tu centro de salud o tu unidad de referencia. Tu pregunta solo la ve ${to ? esc(to.short) : 'la persona a la que se la envíes'}.</p>
   </div>`);
+}
+
+/** Mientras escribe, actualiza la sugerencia sin volver a pintar la hoja (para no perder el foco) */
+let askTimer;
+function refreshAskSuggestion() {
+  clearTimeout(askTimer);
+  askTimer = setTimeout(() => {
+    if (ui.sheet !== 'ask' || ui.ask.sent) return;
+    const sugg = suggestContact({ text: ui.ask.text, context: ui.ask.context, mode: store.mode });
+    if (!ui.ask.manual) ui.ask.to = sugg.to;
+    root.querySelectorAll('[data-action=ask-pick]').forEach((b) => {
+      const on = ui.ask.to === b.dataset.v;
+      b.classList.toggle('on', on); b.setAttribute('aria-checked', String(on));
+      b.querySelector('.ask-badge')?.remove();
+      if (!ui.ask.manual && sugg.to === b.dataset.v) b.insertAdjacentHTML('beforeend', '<span class="ask-badge">Sugerido</span>');
+    });
+    const hint = root.querySelector('[data-ask-hint]'); if (hint) hint.textContent = askHint(ui.ask, sugg);
+    const urg = root.querySelector('[data-ask-urgent]'); if (urg) urg.hidden = !sugg.urgent;
+    const send = root.querySelector('[data-ask-send]');
+    if (send) { const t = CONSULTS[ui.ask.to]; send.disabled = !t; send.textContent = t ? `Enviar a ${t.short}` : 'Elige a quién preguntar'; }
+  }, 250);
 }
 
 const stageUI = () => !PREGNANCY_BETA_ONLY || isBeta() || store.mode !== 'cycle';
@@ -1327,7 +1374,7 @@ function pregnancyToday() {
     <div class="card pad stack-6">
       ${eyebrow('Dudas de esta semana')}
       <div class="hq-list">${hoyFaqList(faqs)}</div>
-      ${askLink('¿Otra duda?', 'Pregúntale a Gonzalo', `Semana ${g.weeks} de embarazo`)}
+      ${askLink('¿Otra duda?', 'Pregúntanos', `Semana ${g.weeks} de embarazo`)}
     </div>
   </div>`;
 }
@@ -1364,7 +1411,7 @@ function postpartumToday() {
     <div class="card pad stack-6">
       ${eyebrow('Dudas sobre tu bebé')}
       <div class="hq-list">${hoyFaqList(postpartumFaqs(bw, 'baby'))}</div>
-      ${askLink('¿Otra duda?', 'Pregúntale a Gonzalo', `Posparto · bebé de ${bw === 0 ? 'la primera semana' : `${bw} ${plural(bw, 'semana', 'semanas')}`}`)}
+      ${askLink('¿Otra duda?', 'Pregúntanos', `Posparto · bebé de ${bw === 0 ? 'la primera semana' : `${bw} ${plural(bw, 'semana', 'semanas')}`}`)}
     </div>
   </div>`;
   }
@@ -1396,7 +1443,7 @@ function postpartumToday() {
     <div class="card pad stack-6">
       ${eyebrow('Dudas de esta semana')}
       <div class="hq-list">${hoyFaqList(postpartumFaqs(s.weeks, 'mom'))}</div>
-      ${askLink('¿Otra duda?', 'Pregúntale a Gonzalo', `Posparto · semana ${s.weeks}`)}
+      ${askLink('¿Otra duda?', 'Pregúntanos', `Posparto · semana ${s.weeks}`)}
     </div>
     ${s.weeks >= 6 ? `<div class="text-center t-12 soft">¿Te ha vuelto la regla? <button class="inline-link" data-action="stage-back-cycle">Seguir mi ciclo</button></div>` : ''}
   </div>`;
@@ -1461,7 +1508,7 @@ function contractionsCard(prominent = false) {
     ${rows ? `<div class="stack-4">${rows}</div>` : ''}
     ${done.length || active ? '<button class="link-danger" data-action="ct-clear">Borrar el registro</button>' : ''}
     <p class="t-11 soft-70 lh-3">Vera no te dice cuándo ir al hospital: si tienes dudas, mira <button class="inline-link" data-action="open-urgent">cuándo ir a urgencias</button> o contacta con tu equipo. Ante sangrado, pérdida de líquido o menos movimientos del bebé, no esperes.</p>
-    ${askLink('', 'Pregúntale a Gonzalo', 'Contracciones')}
+    ${askLink('', 'Pregúntanos', 'Contracciones')}
   </div>`;
 }
 setInterval(() => { // cronómetro de la contracción en curso, sin volver a pintar toda la pantalla
@@ -1496,7 +1543,7 @@ function stageDiary() {
       <div class="row baseline between">${eyebrow('Síntomas')}${g && g.totalDays >= 0 ? `<span class="t-11 soft">Semana ${g.weeks}</span>` : ''}</div>
       <div class="chips">${symptoms.map((s) => chip(s, log.symptoms.includes(s), 'toggle-symptom', { s })).join('')}</div>
       ${(() => { const sel = symptoms.filter((x) => log.symptoms.includes(x)); return sel.length
-        ? askLink('¿Te preocupa?', 'Pregúntale a Gonzalo', sel.join(', ') + (g && g.totalDays >= 0 ? ` · semana ${g.weeks}` : '')) : ''; })()}
+        ? askLink('¿Te preocupa?', 'Pregúntanos', sel.join(', ') + (g && g.totalDays >= 0 ? ` · semana ${g.weeks}` : '')) : ''; })()}
       <hr>
       <div class="row gap-6 center"><span class="c-rose">${icon('alertFill', 13)}</span><span class="t-13 w-500 soft">Señales de alarma</span></div>
       <div class="chips">${alarms.map((s) => chip(s, log.symptoms.includes(s), 'toggle-symptom', { s }, 'rose')).join('')}</div>
@@ -2055,7 +2102,7 @@ function mainView() {
       <div><h1 class="brand">Vera</h1><div class="brand-tag">${MODE_TAG[mode]}</div></div>
       <div class="row gap-8 center">
         ${syncPill()}
-        <button class="ask-pill" data-action="open-ask" data-ctx="" aria-label="Pregúntale a ${attr(CONSULT.name)}" title="Pregúntale a Gonzalo">${consultAvatar('sm')}<span class="ask-label">Pregunta a Gonzalo</span></button>
+        <button class="ask-pill" data-action="open-ask" data-ctx="" aria-label="Pregunta a tu ginecólogo o a tu matrona" title="Pregunta a tu equipo">${consultPair('sm')}<span class="ask-label">Pregunta al equipo</span></button>
         <button class="gear" data-action="open-settings" aria-label="Ajustes">${icon('gear', 16)}</button>
       </div>
     </header>
@@ -2314,23 +2361,28 @@ const actions = {
   },
   'open-ask': (el) => {
     const ctx = el.dataset.ctx || '';
-    if (ui.ask.sent || ui.ask.context !== ctx) ui.ask = { context: ctx, include: true, text: ui.ask.sent ? '' : ui.ask.text, sent: null };
+    if (ui.ask.sent || ui.ask.context !== ctx) ui.ask = { context: ctx, include: true, text: ui.ask.sent ? '' : ui.ask.text, sent: null, to: null, manual: false };
+    if (!ui.ask.manual) ui.ask.to = suggestContact({ text: ui.ask.text, context: ui.ask.context, mode: store.mode }).to;
     ui.sheet = 'ask'; ui.sheetAnim = true; render();
     setTimeout(() => root.querySelector('.ask-text')?.focus(), 300);
   },
   'ask-clear-ctx': () => { ui.ask.context = ''; render(); },
-  'ask-reset': () => { ui.ask = { context: '', include: true, text: '', sent: null }; render(); },
+  'ask-reset': () => { ui.ask = { context: '', include: true, text: '', sent: null, to: null, manual: false }; render(); },
+  'ask-pick': (el) => { ui.ask.to = el.dataset.v; ui.ask.manual = true; render(); },
   'ask-send': (el) => {
+    const to = CONSULTS[ui.ask.to];
+    if (!to) return;
     if (!ui.ask.text.trim()) { root.querySelector('.ask-text')?.focus(); return; }
     const body = consultMessage();
-    const subject = `Pregunta para ${CONSULT.name} · Vera${ui.ask.context ? ` · ${ui.ask.context}` : ''}`;
-    if (el.dataset.v === 'whatsapp' && CONSULT.whatsapp) {
-      window.open(`https://wa.me/${CONSULT.whatsapp}?text=${encodeURIComponent(body)}`, '_blank', 'noopener');
+    const subject = `Pregunta para ${to.name} · Vera${ui.ask.context ? ` · ${ui.ask.context}` : ''}`;
+    if (el.dataset.v === 'whatsapp' && to.whatsapp) {
+      window.open(`https://wa.me/${to.whatsapp}?text=${encodeURIComponent(body)}`, '_blank', 'noopener');
       ui.ask.sent = 'whatsapp';
     } else {
-      window.location.href = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.location.href = `mailto:${to.email || CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
       ui.ask.sent = 'email';
     }
+    ui.ask.sentTo = to.key;
     render();
   },
   'bw-birth': () => {
@@ -2568,7 +2620,7 @@ function setModel(path, value) {
 }
 root.addEventListener('input', (e) => {
   const el = e.target;
-  if (el.dataset.model) { setModel(el.dataset.model, el.value); return; }
+  if (el.dataset.model) { setModel(el.dataset.model, el.value); if (el.dataset.model === 'ask.text') refreshAskSuggestion(); return; }
   if (el.matches('[data-guide-search]')) { ui.guideQuery = el.value; applyGuideFilter(); return; }
   if (el.matches('[data-food-search]')) { ui.foodQuery = el.value; applyFoodFilter(); return; }
   if (el.dataset.range) {

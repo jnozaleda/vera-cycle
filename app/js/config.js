@@ -17,15 +17,38 @@ export const PREGNANCY_BETA_ONLY = false;
 // - photo: ruta de la foto (p. ej. 'img/gonzalo.jpg'); vacío = círculo con iniciales.
 // - colegiado: número de colegiado; vacío = no se muestra.
 // - whatsapp: número en formato internacional sin '+' (p. ej. '34600111222'); vacío = sin botón de WhatsApp.
-export const CONSULT = {
-  name: 'Dr. Gonzalo Nozaleda',
-  initials: 'GN',
-  role: 'Ginecólogo',
-  colegiado: '',
-  photo: '',
-  whatsapp: '',
-  responseHours: 48,
+export const CONSULTS = {
+  gineco: {
+    key: 'gineco',
+    name: 'Dr. Gonzalo Nozaleda',
+    short: 'Gonzalo',
+    initials: 'GN',
+    role: 'Ginecólogo',
+    scope: 'Embarazo y pruebas, medicación, anticoncepción, regla y ciclo, complicaciones',
+    colegiado: '',
+    photo: '',
+    whatsapp: '',
+    // PRUEBAS (vera-backlog#55): correo de Noza; cambiar por el real al lanzar.
+    email: 'j.nozaleda.pastor@gmail.com',
+    responseHours: 48,
+  },
+  matrona: {
+    key: 'matrona',
+    name: 'Marina',
+    short: 'Marina',
+    initials: 'M',
+    role: 'Matrona',
+    scope: 'Lactancia, parto y posparto, suelo pélvico, cuidados del recién nacido',
+    colegiado: '',
+    photo: '',
+    whatsapp: '',
+    // PRUEBAS (vera-backlog#55): correo de Noza; cambiar por el real al lanzar.
+    email: 'j.nozaleda.pastor@gmail.com',
+    responseHours: 48,
+  },
 };
+// Compatibilidad: contacto principal (ginecología)
+export const CONSULT = CONSULTS.gineco;
 
 // Mensaje principal de Vera (bienvenida, ajustes de etapa). Cuando la pediatra esté en la
 // consulta (vera-backlog#33), cambiar a «…con tu ginecólogo y tu pediatra».

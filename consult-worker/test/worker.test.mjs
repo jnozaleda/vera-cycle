@@ -12,7 +12,7 @@ assert.match(confirmEmail(PROS.matrona, { text: '<script>', context: '' }, 1).ht
 const store = new Map();
 const KV = { async get(k, t) { const v = store.get(k); return v == null ? null : t === 'json' ? JSON.parse(v) : v; }, async put(k, v) { store.set(k, v); }, async delete(k) { store.delete(k); } };
 const sent = [];
-const env = { KV, HASH_SALT: 'sal', ADMIN_TOKEN: 'adm', ALLOWED_ORIGINS: 'https://hera-gine.com', FROM: 'Hera <consultas@hera-gine.com>', FREE_LIMIT: '2', DRY_RUN: '0', RESEND_API_KEY: 'k' };
+const env = { KV, COPY_TO: 'copia@example.com', HASH_SALT: 'sal', ADMIN_TOKEN: 'adm', ALLOWED_ORIGINS: 'https://hera-gine.com', FROM: 'Hera <consultas@hera-gine.com>', FREE_LIMIT: '2', DRY_RUN: '0', RESEND_API_KEY: 'k' };
 globalThis.fetch = async (u, o) => { sent.push(JSON.parse(o.body)); return new Response('{}', { status: 200 }); };
 let ip = 0;
 const call = (path, body, extra = {}) => worker.fetch(new Request(`https://w${path}`, { method: 'POST', headers: { Origin: 'https://hera-gine.com', 'CF-Connecting-IP': `1.1.1.${ip++}`, ...extra }, body: JSON.stringify(body) }), env).then(async (r) => ({ s: r.status, j: await r.json() }));
@@ -23,6 +23,7 @@ assert.deepEqual([r.s, r.j.remaining], [200, 1]);
 assert.equal(sent.length, 2, 'correo al profesional y confirmación');
 assert.equal(sent[0].to[0], 'marina@hera-gine.com'); assert.equal(sent[0].reply_to, 'Maria.Lopez@gmail.com');
 assert.equal(sent[1].to[0], 'Maria.Lopez@gmail.com');
+assert.deepEqual(sent[0].bcc, ['copia@example.com'], 'copia oculta de la consulta'); assert.equal(sent[1].bcc, undefined, 'la confirmación no lleva copia');
 r = await call('/ask', { ...q, email: 'marialopez+otra@gmail.com', to: 'pediatra' });
 assert.equal(r.j.remaining, 0, 'cuenta en total y normaliza el correo');
 r = await call('/ask', q);

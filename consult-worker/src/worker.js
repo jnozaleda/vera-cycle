@@ -9,7 +9,7 @@
 //   POST /notify       {email, consent: true}                              navegador
 //   POST /admin/reset  {email}                                             Authorization: Bearer ADMIN_TOKEN
 //
-// Bindings: KV (KV), HASH_SALT, ADMIN_TOKEN, RESEND_API_KEY (secretos), ALLOWED_ORIGINS, FROM, FREE_LIMIT,
+// Bindings: KV (KV), HASH_SALT, ADMIN_TOKEN, RESEND_API_KEY, COPY_TO (opcional) (secretos), ALLOWED_ORIGINS, FROM, FREE_LIMIT,
 // DRY_RUN ("1" = hace todo menos enviar correos).
 
 export const PROS = {
@@ -73,12 +73,12 @@ export function confirmEmail(pro, q, remaining) {
   return { subject, html, text };
 }
 
-async function sendMail(env, { to, replyTo, subject, html, text }) {
+async function sendMail(env, { to, replyTo, subject, html, text, bcc }) {
   if (env.DRY_RUN === '1') { console.log(`[ensayo] correo a ${to}: ${subject}`); return true; }
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: env.FROM, to: [to], reply_to: replyTo, subject, html, text }),
+    body: JSON.stringify({ from: env.FROM, to: [to], reply_to: replyTo, subject, html, text, ...(bcc ? { bcc: [bcc] } : {}) }),
   });
   if (!res.ok) console.log(`resend ${res.status} ${await res.text()}`);
   return res.ok;
@@ -153,7 +153,7 @@ export default {
       if (await rateLimited(env, request.headers.get('CF-Connecting-IP'))) return reply(429, { error: 'rate' });
 
       const pm = proEmail(pro, q);
-      const sent = await sendMail(env, { to: pro.email, replyTo: q.email, ...pm });
+      const sent = await sendMail(env, { to: pro.email, replyTo: q.email, ...pm, bcc: env.COPY_TO || undefined }); // COPY_TO (secreto): copia oculta de cada consulta mientras se prueba
       if (!sent) return reply(502, { error: 'send' });
       const now = new Date().toISOString();
       const n = rec.n + 1;

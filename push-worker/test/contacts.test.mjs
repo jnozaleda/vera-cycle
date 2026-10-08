@@ -13,4 +13,9 @@ assert.equal(s('hola', '', 'pregnancy').to, null, 'sin pistas en embarazo: que e
 assert.equal(s('hola', '', 'cycle').to, 'gineco');
 assert.equal(s('Tengo sangrado abundante y dolor intenso', '', 'pregnancy').urgent, true);
 assert.equal(s('Una duda cualquiera').urgent, false);
+assert.equal(s('Mi bebé tiene fiebre y está muy irritable').to, 'pediatra');
+assert.equal(s('¿Cuándo empiezo la alimentación complementaria?').to, 'pediatra');
+assert.equal(s('Mi bebé no se agarra bien al pecho').to, 'matrona', 'lactancia/agarre pesa más que bebé');
+assert.equal(s('', 'Posparto · bebé de 3 semanas').to, 'pediatra');
+assert.equal(s('Tiene muchos cólicos y vomita').to, 'pediatra');
 console.log('contacts: OK');

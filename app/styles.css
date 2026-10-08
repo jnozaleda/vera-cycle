@@ -837,3 +837,8 @@ body[data-stage="postpartum"] { --st: #3F5F78; --st-mid: #4F7189; --st-soft: #E4
 .ask-pick.on { border-color: var(--st); background: var(--st-soft); }
 .ask-badge { position: absolute; top: 8px; right: 10px; font-size: 10.5px; font-weight: 600; letter-spacing: .3px; color: #fff; background: var(--st); border-radius: 999px; padding: 2px 8px; }
 .btn-primary:disabled { opacity: .5; }
+
+/* Con tres profesionales los avatares de la cabecera se achican para que quepa la píldora */
+.ask-pill .cav.sm { width: 26px; height: 26px; font-size: 10px; }
+.cav-pair .cav + .cav { margin-left: -5px; }
+.cav-pair .cav:nth-child(3) { background: color-mix(in srgb, var(--st) 70%, #fff); }

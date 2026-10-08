@@ -1135,8 +1135,8 @@ function consultAvatar(size = 'sm', who = 'gineco') {
     : `<span class="cav ${size}" aria-hidden="true">${esc(c.initials)}</span>`;
 }
 
-/** Los dos avatares solapados (ginecología y matrona) para cabecera y enlaces */
-const consultPair = (size = 'sm') => `<span class="cav-pair">${consultAvatar(size, 'gineco')}${consultAvatar(size, 'matrona')}</span>`;
+/** Los tres avatares solapados (ginecología, matrona y pediatra) para cabecera y enlaces */
+const consultPair = (size = 'sm') => `<span class="cav-pair">${consultAvatar(size, 'gineco')}${consultAvatar(size, 'matrona')}${consultAvatar(size, 'pediatra')}</span>`;
 
 /** Enlace discreto de una línea: «¿Otra duda? Pregúntanos» */
 function askLink(lead, link, ctx = '') {
@@ -1189,8 +1189,8 @@ function askPickCard(c, ask, sugg) {
 
 function askHint(ask, sugg) {
   if (ask.manual && ask.to) return '';
-  if (sugg.to) return `Te sugerimos a ${CONSULTS[sugg.to].short}${sugg.reason ? `: parece una duda sobre ${sugg.reason}` : ''}. Cámbialo si prefieres a la otra persona.`;
-  return 'Elige a quién quieres preguntar. Si dudas: la matrona atiende lactancia, parto y posparto; el ginecólogo, pruebas, medicación y anticoncepción.';
+  if (sugg.to) return `Te sugerimos a ${CONSULTS[sugg.to].short}${sugg.reason ? `: parece una duda sobre ${sugg.reason}` : ''}. Cámbialo si prefieres a otra persona.`;
+  return 'Elige a quién quieres preguntar. Si dudas: la matrona atiende lactancia, parto y posparto; el ginecólogo, pruebas, medicación y anticoncepción; la pediatra, la salud y los cuidados de tu bebé.';
 }
 
 function askSheet() {
@@ -1211,7 +1211,7 @@ function askSheet() {
   const details = consultDetails();
   return sheetFrame('Consulta', `<div class="stack-14">
     <div class="stack-8 ask-picks" role="radiogroup" aria-label="¿A quién quieres preguntar?">
-      ${askPickCard(CONSULTS.gineco, a, sugg)}${askPickCard(CONSULTS.matrona, a, sugg)}
+      ${askPickCard(CONSULTS.gineco, a, sugg)}${askPickCard(CONSULTS.matrona, a, sugg)}${askPickCard(CONSULTS.pediatra, a, sugg)}
     </div>
     <p class="t-12 soft lh-4" data-ask-hint>${esc(askHint(a, sugg))}</p>
     <p class="t-12 c-rose lh-4" data-ask-urgent ${sugg.urgent ? '' : 'hidden'}>Si es algo urgente (sangrado abundante, pérdida de líquido, el bebé no se mueve, dolor muy fuerte), no esperes: llama al 112 o ve a urgencias.</p>
@@ -2102,7 +2102,7 @@ function mainView() {
       <div><h1 class="brand">Vera</h1><div class="brand-tag">${MODE_TAG[mode]}</div></div>
       <div class="row gap-8 center">
         ${syncPill()}
-        <button class="ask-pill" data-action="open-ask" data-ctx="" aria-label="Pregunta a tu ginecólogo o a tu matrona" title="Pregunta a tu equipo">${consultPair('sm')}<span class="ask-label">Pregunta al equipo</span></button>
+        <button class="ask-pill" data-action="open-ask" data-ctx="" aria-label="Pregunta a tu ginecólogo, a tu matrona o a tu pediatra" title="Pregunta a tu equipo">${consultPair('sm')}<span class="ask-label">Pregúntanos</span></button>
         <button class="gear" data-action="open-settings" aria-label="Ajustes">${icon('gear', 16)}</button>
       </div>
     </header>

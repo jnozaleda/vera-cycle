@@ -46,13 +46,26 @@ export const CONSULTS = {
     email: 'j.nozaleda.pastor@gmail.com',
     responseHours: 48,
   },
+  pediatra: {
+    key: 'pediatra',
+    name: 'Lucía Carrascón',
+    short: 'Lucía',
+    initials: 'LC',
+    role: 'Pediatra',
+    scope: 'Salud y cuidados del bebé: fiebre, alimentación, sueño, desarrollo, vacunas',
+    colegiado: '',
+    photo: '',
+    whatsapp: '',
+    // PRUEBAS (vera-backlog#33): correo de Noza; cambiar por el real al lanzar.
+    email: 'j.nozaleda.pastor@gmail.com',
+    responseHours: 48,
+  },
 };
 // Compatibilidad: contacto principal (ginecología)
 export const CONSULT = CONSULTS.gineco;
 
-// Mensaje principal de Vera (bienvenida, ajustes de etapa). Cuando la pediatra esté en la
-// consulta (vera-backlog#33), cambiar a «…con tu ginecólogo y tu pediatra».
-export const TAGLINE = 'Embarazo, posparto y tu bebé, acompañada por tu ginecólogo.';
+// Mensaje principal de Vera (bienvenida, ajustes de etapa).
+export const TAGLINE = 'Embarazo, posparto y tu bebé, acompañada por tu ginecólogo, tu matrona y tu pediatra.';
 
 // Avisos push semanales (vera-backlog#9). Servicio propio en Cloudflare: guarda solo la dirección de
 // push del navegador, sus claves de cifrado y la fecha probable de parto. La clave VAPID pública no es secreta.

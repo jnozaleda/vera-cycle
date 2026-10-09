@@ -934,10 +934,25 @@ body[data-stage="postpartum"] { --st-soft: #ECE6F0; }
 .pair-fields .field { width: 100%; }
 
 /* Marca Hera, fase 4: ventana fértil en verde salvia propio (el salvia de texto, mezclado al 12 %, se veía gris) */
-:root { --fertile: #4D7A5D; }
+:root { --fertile: #446E52; }
 .bg-fertile { background: var(--fertile); }
 .wday.ph-sage, .cal-cell.ph-sage { --pc: var(--fertile); }
 .cal-cell.ph-sage { color: var(--fertile); }
 .legend.box i.ph-sage { background: color-mix(in srgb, var(--fertile) 22%, transparent); border-color: var(--fertile); }
 /* El día seleccionado del calendario siempre en blanco sobre ciruela, también en regla, fértil u ovulación */
 .cal-cell.sel[class*="ph-"] { color: #fff; }
+
+/* Marca Hera, fase 6: accesibilidad (contraste AA en textos pequeños) */
+:root { --berenjena: #5A3D4A; }
+.bg-rose55 { background: color-mix(in srgb, var(--rose) 32%, #fff); } /* barra lútea de Patrones: texto ciruela legible */
+.cav-pair .cav:nth-child(3) { background: var(--sage); } /* pediatra en la cabecera: blanco sobre salvia, 5,9:1 */
+/* Patrones: con Inter (más ancha) las etiquetas de fase no cabían en móviles normales */
+@media (max-width: 420px) {
+  .bubble-grid { grid-template-columns: 84px repeat(4, 1fr); }
+  .bubble-h { font-size: 10px; padding: 3px 4px; letter-spacing: -.1px; }
+  .bubble-name { font-size: 12.5px; }
+}
+@media (max-width: 360px) {
+  .bubble-grid { grid-template-columns: 82px repeat(4, 1fr); }
+  .bubble-h { padding: 3px 3px; }
+}

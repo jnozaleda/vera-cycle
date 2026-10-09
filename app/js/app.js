@@ -531,10 +531,10 @@ function medicationSection(log) {
 // =========================================================================
 
 const BUBBLE_PHASES = [
-  { label: 'Menstrual', keys: ['Fase menstrual'], color: 'var(--rose)' },
-  { label: 'Folicular', keys: ['Fase folicular'], color: 'rgb(222,189,128)' },
-  { label: 'Fértil', keys: ['Ventana fértil', 'Ovulación'], color: 'var(--sage)' },
-  { label: 'Lútea', keys: ['Fase lútea'], color: 'rgb(173,135,102)' },
+  { label: 'Menstrual', keys: ['Fase menstrual'], color: 'var(--period)' },
+  { label: 'Folicular', keys: ['Fase folicular'], color: 'var(--gold)' },
+  { label: 'Fértil', keys: ['Ventana fértil', 'Ovulación'], color: 'var(--fertile)' },
+  { label: 'Lútea', keys: ['Fase lútea'], color: 'var(--berenjena)' },
 ];
 
 function computeStats() {

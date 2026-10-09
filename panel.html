@@ -109,6 +109,7 @@ function render(data) {
     <div class="card"><h2>Etapa de quien abre la app</h2>${bars([['Embarazo', g('etapa:pregnancy')], ['Posparto', g('etapa:postpartum')], ['Ciclo', g('etapa:cycle')]])}</div>
     <div class="card"><h2>Pestañas visitadas</h2>${bars([['Diario', g('pestana:diary')], ['Cuidados', g('pestana:care')], ['Dudas', g('pestana:guide')], ['Hoy', g('pestana:today')], ['Ciclo', g('pestana:cycle')], ['Patrones', g('pestana:trends')]])}
       <p class="note">Hoy es la pantalla de entrada: solo cuenta cuando se vuelve a ella.</p></div>
+    <div class="card"><h2>Desde la portada</h2>${bars([['Visitas', g('portada')], ['Pulsan «Pregunta tu duda»', g('pregunta_portada')], ['Pulsan «Abre Hera»', g('abrir_portada')]])}</div>
     <div class="card"><h2>Otras acciones</h2>${bars([['Vista «Tu bebé»', g('vista:bebe')], ['Avisos activados', g('push_on')], ['Google conectado', g('sync_on')]])}</div>
   </div>
   <p class="note">«Personas» es una aproximación: se cuenta una vez al día por conexión y navegador, con una huella que cambia cada día y se borra a las 48 h. Sumar días cuenta a la misma persona varias veces.</p>`);

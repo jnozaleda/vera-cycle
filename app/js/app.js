@@ -1148,6 +1148,7 @@ function askLink(lead, link, ctx = '') {
 /** Resumen de la situación de la usuaria para adjuntar a la pregunta */
 function consultDetails() {
   const lines = [];
+  if (store.needsOnboarding) return lines;
   const st = store.stage;
   if (st.mode === 'pregnancy') {
     const g = gestation(st.pregnancy);
@@ -2194,11 +2195,12 @@ function render() {
   // Conserva el scroll interno del sheet al re-renderizar
   const sheetBody = root.querySelector('.sheet-body');
   const sheetScroll = sheetBody ? sheetBody.scrollTop : 0;
-  root.innerHTML = screen === 'ob' ? onboardingView() : mainView();
+  // La consulta se puede abrir también desde la bienvenida (llega desde la portada con la duda escrita)
+  root.innerHTML = screen === 'ob' ? onboardingView() + (ui.sheet === 'ask' ? askSheet() : '') : mainView();
   ui.sheetAnim = false;
   const nb = root.querySelector('.sheet-body');
   if (nb) nb.scrollTop = sheetScroll;
-  document.body.classList.toggle('sheet-open', !!ui.sheet && screen === 'main');
+  document.body.classList.toggle('sheet-open', !!ui.sheet && (screen === 'main' || ui.sheet === 'ask'));
   if (root.querySelector('[data-action=sync-connect], [data-action=sync-reauth]')) loadGis().catch(() => {});
   if (screen !== lastScreen) { window.scrollTo(0, 0); lastScreen = screen; }
   if (ui.guideQuery) applyGuideFilter();
@@ -2845,6 +2847,17 @@ store.subscribe(() => { // mantiene el servicio al día si cambia la fecha, la e
   syncPush(t).then(async () => { ui.pushState = await pushState(); render(); }).catch(() => {});
 });
 render();
+// Llega desde la portada con la duda ya escrita (hera-gine.com/app/#preguntar). El texto viaja por localStorage,
+// nunca en la URL, para que no quede en registros de servidor.
+if (location.hash === '#preguntar') {
+  let draft = '';
+  try { draft = localStorage.getItem('hera-ask-draft') || ''; localStorage.removeItem('hera-ask-draft'); } catch { /* sin almacenamiento */ }
+  history.replaceState(null, '', location.pathname + location.search);
+  ui.ask = { ...ui.ask, context: '', text: draft, sent: null, result: null, status: null, manual: false };
+  ui.ask.to = suggestContact({ text: draft, context: '', mode: store.mode }).to;
+  ui.sheet = 'ask'; ui.sheetAnim = true; render();
+  track('consulta_abierta');
+}
 track('apertura', true);
 if (!store.needsOnboarding) track(`etapa:${store.mode}`, true);
 

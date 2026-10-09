@@ -88,7 +88,7 @@ export function madridDay(d = new Date()) {
 }
 
 /** Eventos que acepta /hit (nombre o nombre:valor) */
-export const EVENT_RE = /^(apertura|portada|consulta_abierta|push_on|sync_on|etapa:(pregnancy|postpartum|cycle)|pestana:(today|diary|care|guide|cycle|trends|baby)|vista:(tu|bebe))$/;
+export const EVENT_RE = /^(apertura|portada|pregunta_portada|abrir_portada|consulta_abierta|push_on|sync_on|etapa:(pregnancy|postpartum|cycle)|pestana:(today|diary|care|guide|cycle|trends|baby)|vista:(tu|bebe))$/;
 
 async function bump(env, k, day = madridDay()) {
   if (!env.DB) return;

@@ -193,17 +193,58 @@
     /* Cabecera ciruela (marca Hera): textos claros legibles */
     header .eyebrow { color: rgba(255,255,255,.75); }
     header .subtitle { color: rgba(255,255,255,.85); }
+
+    /* ── Cabecera y pie comunes con la portada ── */
+    header.top { position: sticky; top: 0; z-index: 10; background: rgba(250,248,245,.92); backdrop-filter: blur(8px); padding: 0; text-align: left; color: var(--ink); }
+    .top-in { max-width: 1120px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .top-in img { display: block; height: 34px; width: auto; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: 12px; background: var(--deep); color: #fff;
+      font: 600 14px/1 'Inter', sans-serif; text-decoration: none; white-space: nowrap; transition: background .15s; }
+    .btn:hover { background: #563146; }
+    .btn-s { background: #fff; color: var(--deep); border: 1.5px solid #B39AA8; }
+    .btn-s:hover { background: #fff; border-color: var(--deep); }
+    .page-hero { max-width: 680px; margin: 0 auto; padding: 40px 24px 0; }
+    .page-hero .eyebrow { color: var(--gold); letter-spacing: .18em; font-weight: 600; font-size: 12px; margin-bottom: 10px; }
+    .page-hero h1 { font-family: 'Fraunces', Georgia, serif; font-weight: 500; font-size: 40px; line-height: 1.08; color: var(--deep); letter-spacing: -.015em; }
+    .page-hero .subtitle { margin-top: 10px; font-size: 17px; color: var(--ink-soft); }
+    main { padding-top: 28px; }
+    main h2 { line-height: 1.2; text-wrap: balance; }
+    footer.site { text-align: left; border-top: 1px solid var(--line); padding: 32px 0 40px; letter-spacing: 0; }
+    .foot-in { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+    .foot { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: center; justify-content: space-between; }
+    .foot img { display: block; height: 28px; width: auto; }
+    .foot nav { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 14px; }
+    .foot nav a { color: var(--ink-soft); }
+    .disclaimer { font-size: 13px; color: var(--ink-soft); margin-top: 18px; max-width: 60em; line-height: 1.6; }
+    .foot-meta { font-size: 12px; color: var(--ink-soft); margin-top: 8px; }
+    .summary { display: grid; gap: 12px; margin-bottom: 36px; }
+    .summary div { background: var(--deep); color: #fff; border-radius: 18px; padding: 18px 20px; }
+    .summary b { display: block; font-size: 16px; margin-bottom: 4px; }
+    .summary p { font-size: 14.5px; line-height: 1.55; color: rgba(255,255,255,.86); }
   </style>
 </head>
 <body>
 
-<header>
-  <p class="eyebrow">Hera · Embarazo, posparto y bebé</p>
-  <h1>Política de Privacidad</h1>
-  <p class="subtitle">Tu información es tuya. Siempre.</p>
+<header class="top">
+  <div class="top-in">
+    <a href="./" aria-label="Hera, inicio"><img src="app/brand/hera-logo-compact.svg" alt="Hera" width="113" height="34"></a>
+    <a class="btn" href="app/#preguntar">Pregunta tu duda</a>
+  </div>
 </header>
 
+<div class="page-hero">
+  <p class="eyebrow">Privacidad</p>
+  <h1>Tus datos son tuyos</h1>
+  <p class="subtitle">Lo que guarda Hera, dónde y para qué. Primero en corto; debajo, con detalle.</p>
+</div>
+
 <main>
+
+  <div class="summary" aria-label="En resumen">
+    <div><b>Se queda en tu móvil</b><p>Tu diario, tus síntomas y tus semanas se guardan en tu dispositivo. Sin cuentas ni contraseñas.</p></div>
+    <div><b>Sale solo si tú quieres</b><p>Tu consulta va a la profesional que eliges; tu copia en Google Drive y los avisos, solo si los activas.</p></div>
+    <div><b>Sin letra pequeña</b><p>No vendemos datos, no mostramos anuncios y no usamos cookies.</p></div>
+  </div>
 
   <div class="section">
     <p class="section-eyebrow">01 · Datos</p>
@@ -273,9 +314,21 @@
 
 </main>
 
-<footer>
-  Última actualización: octubre 2026 &nbsp;·&nbsp;
-  <a href="support.html">Soporte</a>
+<footer class="site">
+  <div class="foot-in">
+    <div class="foot">
+      <img src="app/brand/hera-logo-compact.svg" alt="Hera" width="113" height="34">
+      <nav aria-label="Enlaces">
+        <a href="./">Inicio</a>
+        <a href="app/">Abrir Hera</a>
+        <a href="support.html">Soporte</a>
+        <a href="privacy.html">Privacidad</a>
+        <a href="mailto:contacto@hera-gine.com">contacto@hera-gine.com</a>
+      </nav>
+    </div>
+    <p class="disclaimer">Hera informa y acompaña, pero no sustituye a tu médico ni atiende urgencias. Si tienes un sangrado muy abundante, dolor intenso o fiebre, acude a tu médico o a urgencias.</p>
+    <p class="foot-meta">Última actualización: octubre 2026</p>
+  </div>
 </footer>
 
 </body>

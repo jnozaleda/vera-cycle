@@ -205,17 +205,79 @@
     /* Cabecera ciruela (marca Hera): textos claros legibles */
     header .eyebrow { color: rgba(255,255,255,.75); }
     header .subtitle { color: rgba(255,255,255,.85); }
+
+    /* ── Cabecera y pie comunes con la portada ── */
+    header.top { position: sticky; top: 0; z-index: 10; background: rgba(250,248,245,.92); backdrop-filter: blur(8px); padding: 0; text-align: left; color: var(--ink); }
+    .top-in { max-width: 1120px; margin: 0 auto; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+    .top-in img { display: block; height: 34px; width: auto; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 18px; border-radius: 12px; background: var(--deep); color: #fff;
+      font: 600 14px/1 'Inter', sans-serif; text-decoration: none; white-space: nowrap; transition: background .15s; }
+    .btn:hover { background: #563146; }
+    .btn-s { background: #fff; color: var(--deep); border: 1.5px solid #B39AA8; }
+    .btn-s:hover { background: #fff; border-color: var(--deep); }
+    .page-hero { max-width: 680px; margin: 0 auto; padding: 40px 24px 0; }
+    .page-hero .eyebrow { color: var(--gold); letter-spacing: .18em; font-weight: 600; font-size: 12px; margin-bottom: 10px; }
+    .page-hero h1 { font-family: 'Fraunces', Georgia, serif; font-weight: 500; font-size: 40px; line-height: 1.08; color: var(--deep); letter-spacing: -.015em; }
+    .page-hero .subtitle { margin-top: 10px; font-size: 17px; color: var(--ink-soft); }
+    main { padding-top: 28px; }
+    main h2 { line-height: 1.2; text-wrap: balance; }
+    footer.site { text-align: left; border-top: 1px solid var(--line); padding: 32px 0 40px; letter-spacing: 0; }
+    .foot-in { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+    .foot { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: center; justify-content: space-between; }
+    .foot img { display: block; height: 28px; width: auto; }
+    .foot nav { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 14px; }
+    .foot nav a { color: var(--ink-soft); }
+    .disclaimer { font-size: 13px; color: var(--ink-soft); margin-top: 18px; max-width: 60em; line-height: 1.6; }
+    .foot-meta { font-size: 12px; color: var(--ink-soft); margin-top: 8px; }
+    .ask-card { display: flex; flex-wrap: wrap; gap: 16px 24px; align-items: center; justify-content: space-between; background: var(--deep); color: #fff; border-radius: 22px; padding: 26px 28px; margin-bottom: 16px; }
+    .ask-card > div { flex: 1 1 280px; min-width: 0; }
+    .ask-card h2 { font-family: 'Fraunces', Georgia, serif; font-weight: 500; font-size: 24px; line-height: 1.2; margin-bottom: 6px; }
+    .ask-card p { font-size: 14.5px; line-height: 1.55; color: rgba(255,255,255,.86); }
+    .ask-card .btn { background: #fff; color: var(--deep); }
+    .ask-card .btn:hover { background: var(--gold-soft); }
+    .install { display: grid; gap: 14px; }
+    @media (min-width: 560px) { .install { grid-template-columns: 1fr 1fr; } }
+    .install > div { background: var(--ivory); border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px; }
+    .install b { display: block; color: var(--deep); margin-bottom: 6px; }
+    .install ol { padding-left: 18px; font-size: 14.5px; color: var(--ink-soft); line-height: 1.6; }
+    .install a { color: var(--deep); }
+    .install-note { margin-top: 14px; font-size: 14px; color: var(--ink-soft); }
   </style>
 </head>
 <body>
 
-<header>
-  <p class="eyebrow">Hera · Embarazo, posparto y bebé</p>
-  <h1>Soporte</h1>
-  <p class="subtitle">Estamos aquí para ayudarte</p>
+<header class="top">
+  <div class="top-in">
+    <a href="./" aria-label="Hera, inicio"><img src="app/brand/hera-logo-compact.svg" alt="Hera" width="113" height="34"></a>
+    <a class="btn" href="app/#preguntar">Pregunta tu duda</a>
+  </div>
 </header>
 
+<div class="page-hero">
+  <p class="eyebrow">Soporte</p>
+  <h1>Estamos aquí para ayudarte</h1>
+  <p class="subtitle">Dudas sobre la app, cómo instalarla y cómo escribirnos.</p>
+</div>
+
 <main>
+
+  <div class="ask-card">
+    <div>
+      <h2>¿Tienes una duda médica?</h2>
+      <p>Pregúntasela a tu ginecólogo, tu matrona o tu pediatra. Te responden por correo en menos de 48 h; las dos primeras consultas son gratis.</p>
+    </div>
+    <a class="btn" href="app/#preguntar">Pregunta tu duda</a>
+  </div>
+
+  <div class="card" id="instalar">
+    <p class="section-eyebrow">Instalar</p>
+    <h2>Ten Hera a mano, como una app</h2>
+    <div class="install">
+      <div><b>iPhone</b><ol><li>Abre <a href="app/">hera-gine.com/app</a> en Safari.</li><li>Pulsa Compartir (el cuadrado con la flecha).</li><li>Elige «Añadir a pantalla de inicio».</li></ol></div>
+      <div><b>Android</b><ol><li>Abre <a href="app/">hera-gine.com/app</a> en Chrome.</li><li>Pulsa el menú ⋮.</li><li>Elige «Añadir a pantalla de inicio» o «Instalar aplicación».</li></ol></div>
+    </div>
+    <p class="install-note">Así se abre a pantalla completa, funciona sin conexión y puede enviarte el aviso semanal.</p>
+  </div>
 
   <!-- FAQ -->
   <div class="card">
@@ -248,14 +310,9 @@
       <p class="faq-a">En embarazo y posparto, desde la tarjeta «Activa el aviso semanal» de Hoy o en Ajustes → Aviso semanal. Ahí mismo puedes desactivarlo o enviarte un aviso de prueba. En iPhone solo funcionan con Hera añadida a la pantalla de inicio. Si no te llegan, comprueba que las notificaciones de Hera están permitidas en los ajustes de tu móvil o navegador.</p>
     </div>
     <div class="faq-item">
-      <span class="chip">Instalación</span>
-      <p class="faq-q">¿Cómo la instalo en el móvil?</p>
-      <p class="faq-a">Abre Hera en el navegador, pulsa Compartir (iPhone, en Safari) o el menú ⋮ (Android) y elige «Añadir a pantalla de inicio». Se abre como una app y funciona también sin conexión.</p>
-    </div>
-    <div class="faq-item">
       <span class="chip">Consulta</span>
-      <p class="faq-q">¿Puedo preguntarle algo al ginecólogo?</p>
-      <p class="faq-a">Sí: el botón «Pregunta a Gonzalo» de la cabecera o el enlace «¿Otra duda?» de cada pantalla te abre un mensaje con el tema ya indicado. Se responde en unas 48 horas, así que no es para urgencias. Si crees que es urgente, llama al 112 o acude a tu centro de salud.</p>
+      <p class="faq-q">¿Cómo le pregunto algo a una profesional?</p>
+      <p class="faq-a">Pulsa «Pregúntanos» arriba en la app o «¿Otra duda?» en cualquier pantalla. Hera te sugiere a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra) según tu duda, y puedes cambiarlo. Te responden por correo en menos de 48 horas, así que no es para urgencias: si crees que es urgente, llama al 112 o acude a urgencias.</p>
     </div>
     <div class="faq-item">
       <span class="chip">Problemas técnicos</span>
@@ -281,9 +338,20 @@
 
 </main>
 
-<footer>
-  Hera · Embarazo, posparto y bebé &nbsp;·&nbsp;
-  <a href="privacy.html">Política de Privacidad</a>
+<footer class="site">
+  <div class="foot-in">
+    <div class="foot">
+      <img src="app/brand/hera-logo-compact.svg" alt="Hera" width="113" height="34">
+      <nav aria-label="Enlaces">
+        <a href="./">Inicio</a>
+        <a href="app/">Abrir Hera</a>
+        <a href="support.html">Soporte</a>
+        <a href="privacy.html">Privacidad</a>
+        <a href="mailto:contacto@hera-gine.com">contacto@hera-gine.com</a>
+      </nav>
+    </div>
+    <p class="disclaimer">Hera informa y acompaña, pero no sustituye a tu médico ni atiende urgencias. Si tienes un sangrado muy abundante, dolor intenso o fiebre, acude a tu médico o a urgencias.</p>
+  </div>
 </footer>
 
 </body>

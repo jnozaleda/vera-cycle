@@ -227,11 +227,20 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
 .credit { font-size: 12px; color: var(--muted); margin: 8px 0 0; }
 
 @media (max-width: 699px) {
-  .hero { padding-top: 8px; }
   .hero-art, .how .art { display: none; }
-  /* En móvil la caja de la duda va sobre la Vía Láctea, de borde a borde (en ordenador el fluido va detrás del móvil) */
-  .askwrap { margin: 26px -20px 0; padding: 22px 20px; background: linear-gradient(90deg, rgba(42,24,35,.25), transparent), url('portada/fluido/via-lactea-atardecer.webp') 30% 50% / cover, var(--plum-d); }
-  .askwrap .ask { margin-top: 0; border-color: transparent; box-shadow: 0 20px 40px -20px rgba(42,24,35,.6); }
+  /* En móvil todo el principio va sobre la Vía Láctea, como un cielo (en ordenador el fluido va detrás del móvil) */
+  .hero { margin: 0 -20px; padding: 28px 20px 36px; color: #fff;
+    background: linear-gradient(180deg, rgba(28,16,24,.35), rgba(28,16,24,.1) 30%, rgba(28,16,24,.2) 55%, rgba(42,24,35,.85) 100%),
+      url('portada/fluido/via-lactea-atardecer.webp') 58% 22% / auto 125% no-repeat, var(--plum-d); }
+  .hero .eyebrow { color: var(--peach); }
+  .hero h1 { color: #fff; text-shadow: 0 2px 18px rgba(28,16,24,.45); }
+  .hero .lead { color: rgba(255,255,255,.92); text-shadow: 0 1px 12px rgba(28,16,24,.5); }
+  .hero .ask { border-color: transparent; box-shadow: 0 20px 40px -20px rgba(0,0,0,.6); }
+  .hero .examples button { background: rgba(255,255,255,.14); color: #fff; border-color: rgba(255,255,255,.3); }
+  .hero .alt { color: rgba(255,255,255,.85); }
+  .hero .alt .link { color: #fff; }
+  .hero .faces p, .hero .faces b { color: #fff; }
+  .hero .faces img { border-color: var(--plum-d); }
   .stage .shot { width: 170px; }
 }
 </style>

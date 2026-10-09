@@ -862,3 +862,69 @@ body[data-stage="postpartum"] { --st-soft: #ECE6F0; }
 .ob-logo { margin-bottom: 10px; }
 .ob-logo img { display: block; margin: 0 auto; width: min(264px, 72vw); height: auto; }
 .splash img { display: block; width: 88px; height: auto; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Marca Hera, fase 3: componentes (vera-backlog#60)
+   Botones de 48 px, campos y tarjetas con el radio de la marca, estados de
+   hover/pulsado/foco, zonas táctiles de 44 px y movimiento reducido.
+   ═══════════════════════════════════════════════════════════════════════ */
+:root { --hover: #563146; --active: #452637; --subtle: #F5F0F1; --border-strong: #D9CFD4; }
+
+/* Botón principal: ciruela, 48 px, Inter 600 */
+.btn-primary { min-height: 48px; padding: 13px 18px; border-radius: 12px; font-size: 15px; font-weight: 600; letter-spacing: 0; transition: background .18s; }
+.btn-primary:hover { filter: none; background: var(--hover); }
+.btn-primary:active { background: var(--active); }
+.btn-primary:disabled { opacity: .45; background: var(--st); }
+
+/* Botones secundarios: blanco con borde y texto ciruela */
+.outline-sage { min-height: 44px; border-radius: 12px; font-size: 14px; font-weight: 600; background: #fff;
+  border: 1.5px solid color-mix(in srgb, var(--st) 50%, transparent); transition: background .18s, border-color .18s; }
+.outline-sage:hover { background: var(--subtle); border-color: var(--st); }
+.pill-outline { border-color: color-mix(in srgb, var(--st) 35%, transparent); font-weight: 500; transition: background .18s; }
+.pill-outline:hover { background: var(--subtle); }
+.pill-dark:hover { background: var(--hover); }
+.google-btn { min-height: 48px; }
+.link-deep, .inline-link, .faq-ext { text-underline-offset: 3px; }
+.link-deep:hover, .inline-link:hover { text-decoration: underline; }
+.link-soft { font-size: 13px; }
+
+/* Campos: radio 12, borde algo más marcado y anillo de foco; 16 px para que iOS no haga zoom */
+.field { font-size: 16px; border-radius: 12px; border-color: var(--border-strong); transition: border-color .15s, box-shadow .15s; }
+.field:focus { outline: none; border-color: var(--st); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 28%, transparent); }
+.field::placeholder { color: color-mix(in srgb, var(--ink-soft) 85%, transparent); }
+.num-box { border-color: var(--border-strong); }
+.num-box:focus-within { box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 28%, transparent); }
+.range:focus-visible::-webkit-slider-thumb { outline: 2px solid var(--focus); }
+
+/* Chips, opciones y selectores: seleccionado con borde ciruela */
+.chip { min-height: 40px; }
+.chip:not(.on):hover { border-color: var(--st-mid); }
+.option, .stage-btn, .type-btn { border-color: var(--border-strong); }
+.option.on, .stage-btn.on, .type-btn.on { border-color: var(--st); }
+.option:not(.on):hover, .stage-btn:not(.on):hover, .type-btn:not(.on):hover { background: var(--subtle); }
+.seg.on { box-shadow: 0 1px 3px rgba(105, 61, 85, .16); }
+.segs.wide .seg { min-height: 36px; }
+
+/* Avisos y barra de guardar: acento suave en vez de borde fuerte */
+.reminder { border-color: color-mix(in srgb, var(--gold) 35%, transparent); }
+.save-bar { border-top-color: color-mix(in srgb, var(--gold) 35%, transparent); }
+
+/* Hojas: esquinas de 28 px, título claro y fondo que oscurece en ciruela */
+.sheet { border-radius: 28px 28px 0 0; }
+@media (min-width: 700px) { .sheet { border-radius: 28px; } }
+@media (max-width: 699px) { .sheet.dialog { border-radius: 28px 28px 0 0; } }
+.sheet-backdrop { background: rgba(46, 38, 48, .32); }
+.sheet-title { font-size: 17px; font-weight: 600; }
+
+/* Zonas táctiles de al menos 44 px sin cambiar el tamaño visible */
+.gear { width: 44px; height: 44px; }
+.ask-pill { height: 44px; }
+.icon-btn, .sq-btn, .step-btn, .nav-btn { position: relative; }
+.icon-btn::after, .sq-btn::after { content: ''; position: absolute; inset: -8px; }
+.step-btn::after, .nav-btn::after { content: ''; position: absolute; inset: -5px; }
+.gap-8 > .sq-btn::after { inset: -8px -4px; } /* botones contiguos: sin solaparse */
+
+/* Movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}

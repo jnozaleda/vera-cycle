@@ -229,6 +229,9 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
 @media (max-width: 699px) {
   .hero { padding-top: 8px; }
   .hero-art, .how .art { display: none; }
+  /* En móvil la caja de la duda va sobre la Vía Láctea, de borde a borde (en ordenador el fluido va detrás del móvil) */
+  .askwrap { margin: 26px -20px 0; padding: 22px 20px; background: linear-gradient(90deg, rgba(42,24,35,.25), transparent), url('portada/fluido/via-lactea-atardecer.webp') 30% 50% / cover, var(--plum-d); }
+  .askwrap .ask { margin-top: 0; border-color: transparent; box-shadow: 0 20px 40px -20px rgba(42,24,35,.6); }
   .stage .shot { width: 170px; }
 }
 </style>
@@ -256,6 +259,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <h1>Tus dudas del embarazo, resueltas por profesionales</h1>
       <p class="lead">Cada semana, lo que te toca saber. Y cuando algo te preocupe, pregúntaselo a tu ginecólogo, tu matrona o tu pediatra.</p>
 
+      <div class="askwrap">
       <div class="ask" id="ask">
       <form id="ask-form" novalidate>
         <label for="duda">¿Qué te preocupa hoy?</label>
@@ -288,6 +292,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         <p class="fine" id="ask-fine" hidden>Gratis, sin registro. Tu pregunta solo la ve la profesional que elijas. No es para urgencias. <a href="privacy.html#consultas">Cómo tratamos tus datos</a>.</p>
       </form>
       <div class="done" id="ask-done" hidden aria-live="polite"></div>
+      </div>
       </div>
       <div class="examples" id="ask-examples" aria-label="Ejemplos de dudas">
         <button type="button" data-ex="Me duele al dar el pecho, ¿es normal?">Lactancia</button>

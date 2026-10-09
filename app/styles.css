@@ -626,6 +626,20 @@ label.field { padding: 8px 14px; }
 .ask-check { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
 .ask-check input { margin-top: 3px; accent-color: var(--st); width: 16px; height: 16px; flex: none; }
 .ask-done { align-items: center; padding: 10px 0 20px; }
+/* Imágenes fluidas de la marca (diseno/fluido/): confirmación de consulta y pastillas de Dudas */
+.sent-sky { align-self: stretch; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 26px 16px 22px; border-radius: 16px; color: #fff;
+  background: linear-gradient(180deg, rgba(28,16,24,.15), rgba(28,16,24,.45)), url('img/fluido/via-lactea-atardecer.webp') 35% 45% / cover, #2A1823; }
+.sent-sky .serif-22 { color: #fff; }
+.sent-sky p { color: rgba(255,255,255,.88); margin: 0; }
+.sent-sky .cav { box-shadow: 0 0 0 3px rgba(255,255,255,.85); }
+.sec-head { display: flex; align-items: center; gap: 12px; }
+.sec-head .grow { min-width: 0; }
+.fl-tile { flex: none; width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center; background: #693D55 center / cover;
+  box-shadow: inset 0 0 0 44px rgba(42,24,35,.18); }
+.fl-tile svg { filter: drop-shadow(0 1px 2px rgba(42,24,35,.6)); }
+.fl-tile.seda-rosa { background-image: url('img/fluido/seda-rosa.webp'); }
+.fl-tile.seda-melocoton { background-image: url('img/fluido/seda-melocoton.webp'); }
+.fl-tile.via-lactea-atardecer { background-image: url('img/fluido/via-lactea-atardecer.webp'); background-size: 500%; background-position: 35% 50%; }
 .self-center { align-self: center; }
 
 /* Campos numéricos del diario (peso, sueño, temperatura) */

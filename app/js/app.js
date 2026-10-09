@@ -1237,8 +1237,11 @@ function askSheet() {
     const total = a.result.freeLimit || 2;
     const rem = a.result.remaining;
     return sheetFrame('Consulta', `<div class="stack-14 text-center ask-done">
-      ${consultAvatar('lg', who.key)}
-      <div class="serif-22">Consulta enviada</div>
+      <div class="sent-sky">
+        ${consultAvatar('lg', who.key)}
+        <div class="serif-22">Consulta enviada</div>
+        <p class="t-13">Tu duda va camino de ${esc(who.short)}</p>
+      </div>
       <p class="t-13 soft lh-4">${esc(who.short)} te responderá en menos de ${who.responseHours} h a <b class="w-500">${esc(a.email)}</b>. Te hemos mandado una copia.</p>
       ${freeDots(total - rem, total)}
       <p class="t-12 soft">${rem === 0 ? 'Era tu última consulta gratuita' : `Te ${rem === 1 ? 'queda 1 consulta gratuita' : `quedan ${rem} consultas gratuitas`}`}</p>
@@ -1635,6 +1638,17 @@ function answerHTML(a) {
   }).join('');
 }
 
+/** Pastilla de cada sección de Dudas, con las imágenes fluidas de la portada: seda rosa para el embarazo,
+ * seda melocotón para el posparto y la Vía Láctea para el bebé (diseno/fluido/) */
+const BABY_SECS = new Set(['rn', 'b0', 'bsl', 'bb', 'bsal', 'bdes', 'bfam']);
+const MOTHER_SECS = new Set(['pp', 'bal', 'ppc', 'emo']);
+function guideTile(id) {
+  const [img, ico] = BABY_SECS.has(id) ? ['via-lactea-atardecer', '<circle cx="12" cy="9" r="4"/><path d="M5 20c1.2-3.4 3.8-5 7-5s5.8 1.6 7 5"/>']
+    : MOTHER_SECS.has(id) ? [id === 'emo' ? 'seda-rosa' : 'seda-melocoton', '<path d="M12 20s-7-4.4-7-9.5A4 4 0 0 1 12 8a4 4 0 0 1 7 2.5C19 15.6 12 20 12 20Z"/>']
+    : ['seda-rosa', '<circle cx="12" cy="13" r="6.5"/><path d="M9 6.8c.9-1.7 2.4-2.8 4.5-3"/>'];
+  return `<span class="fl-tile ${img}" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ico}</svg></span>`;
+}
+
 function guideView() {
   const pp = store.mode === 'postpartum';
   const g = pp ? null : gestation(store.stage.pregnancy);
@@ -1655,8 +1669,9 @@ function guideView() {
         <p>Ante la duda, es mejor consultar. Si es una emergencia, llama al <a href="tel:112">112</a>.</p></div>
     </details>
     ${sections.map((sec) => `<section class="card pad stack-10 guide-sec" data-sec="${sec.id}">
-      <div class="row baseline between">${eyebrow(sec.title)}${sec.id === current ? '<span class="now-tag">Ahora</span>' : ''}</div>
-      <div class="t-13 soft">${esc(sec.subtitle)}</div>
+      <div class="sec-head">${guideTile(sec.id)}<div class="grow">
+        <div class="row baseline between">${eyebrow(sec.title)}${sec.id === current ? '<span class="now-tag">Ahora</span>' : ''}</div>
+        <div class="t-13 soft">${esc(sec.subtitle)}</div></div></div>
       <div class="faq">${sec.items.map((it, i) => {
         const id = `${sec.id}-${i}`;
         return `<details class="faq-item" data-id="${id}" data-text="${attr((it.q + ' ' + it.a.flat().map((b) => (b && typeof b === 'object' ? b.text : b)).join(' ')).toLowerCase())}" ${isOpen(id) ? 'open' : ''}>

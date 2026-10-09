@@ -23,6 +23,7 @@
   --lav: #ECE6F0; --ink: #2E2630; --text: #4C444C; --muted: #655B61; --line: #E6DFE2; --sage-d: #56695A; --peach: #F2B9A0;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 body { margin: 0; background: var(--ivory); color: var(--ink); font: 400 16px/1.6 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; }
@@ -65,11 +66,44 @@ section { padding: 64px 0; }
 /* Portada */
 .hero { display: grid; gap: 36px; align-items: center; padding: 20px 0 48px; }
 @media (min-width: 960px) { .hero { grid-template-columns: 1.1fr .9fr; padding: 40px 0 72px; gap: 56px; } }
-.ask { margin-top: 26px; background: #fff; border: 1.5px solid #CDB9C4; border-radius: 20px; padding: 14px; display: grid; gap: 12px; max-width: 560px; }
-.ask label { font-size: 14px; font-weight: 600; color: var(--plum); }
-.ask textarea { width: 100%; min-height: 92px; resize: vertical; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font: 400 16px/1.5 'Inter', sans-serif; color: var(--ink); background: var(--ivory); }
-.ask textarea:focus { outline: none; border-color: var(--plum); box-shadow: 0 0 0 3px rgba(105,61,85,.18); }
+.ask { margin-top: 26px; background: #fff; border: 1.5px solid #CDB9C4; border-radius: 20px; padding: 14px; max-width: 560px; scroll-margin-top: 84px; }
+.ask form, .ask .more { display: grid; gap: 12px; }
+.ask form > label { font-size: 14px; font-weight: 600; color: var(--plum); }
+.ask textarea, .ask input[type=email], .ask select { width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font: 400 16px/1.5 'Inter', sans-serif; color: var(--ink); background: var(--ivory); }
+.ask textarea { min-height: 92px; resize: vertical; }
+.ask select { appearance: none; padding-right: 36px; background: var(--ivory) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%23693D55' stroke-width='1.8'%3E%3Cpath d='m1 1.5 5 5 5-5'/%3E%3C/svg%3E") no-repeat right 14px center; }
+.ask textarea:focus, .ask input:focus, .ask select:focus { outline: none; border-color: var(--plum); box-shadow: 0 0 0 3px rgba(105,61,85,.18); }
 .ask .btn { width: 100%; }
+.ask .btn[disabled] { opacity: .6; cursor: default; }
+.picks { border: 0; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; min-width: 0; }
+.picks legend { font-size: 14px; font-weight: 600; color: var(--plum); padding: 0; margin-bottom: 8px; }
+.pick { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 14px 6px 10px; border: 1.5px solid var(--line); border-radius: 14px; cursor: pointer; background: #fff; min-width: 0; }
+.pick input { position: absolute; opacity: 0; pointer-events: none; }
+.pick img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
+.pick b { display: block; font-size: 14px; color: var(--ink); }
+.pick small { display: block; font-size: 12px; color: var(--muted); }
+.pick em { display: none; position: absolute; top: -9px; left: 50%; transform: translateX(-50%); font: 600 10.5px/1 'Inter', sans-serif; font-style: normal; color: #fff; background: var(--plum); border-radius: 999px; padding: 4px 8px; white-space: nowrap; }
+.pick.sugg em { display: block; }
+.pick:has(input:checked) { border-color: var(--plum); background: var(--sage); }
+.pick:has(input:focus-visible) { outline: 2px solid var(--plum); outline-offset: 2px; }
+.hint { margin: 0; font-size: 13.5px; color: var(--text); }
+.hint:empty { display: none; }
+.urgent, .err { margin: 0; font-size: 13.5px; color: #9A4A5E; }
+.fld { display: grid; gap: 6px; font-size: 13.5px; color: var(--text); }
+.fld i { font-style: normal; color: var(--muted); }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; }
+.fine { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+.fine a { color: var(--plum); }
+.done { display: grid; gap: 10px; justify-items: center; text-align: center; padding: 14px 6px 8px; }
+.done img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; }
+.done h3 { margin: 0; }
+.done p { margin: 0; font-size: 15px; color: var(--text); max-width: 30em; }
+.done .dots { display: flex; gap: 6px; } .done .dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); } .done .dots i.on { background: var(--plum); }
+.done .small { font-size: 13.5px; color: var(--muted); }
+.done .btn { width: auto; margin-top: 6px; }
+.done .linkbtn { background: none; border: 0; color: var(--plum); font: 600 14px 'Inter', sans-serif; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 6px; }
+.done label { display: flex; gap: 10px; text-align: left; font-size: 13px; color: var(--text); align-items: flex-start; }
+.done label input { margin-top: 3px; accent-color: var(--plum); }
 .examples { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; max-width: 560px; }
 .examples button { font: 500 13px/1 'Inter', sans-serif; color: var(--text); background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 9px 12px; cursor: pointer; }
 .examples button:hover { border-color: #B39AA8; color: var(--plum); }
@@ -199,7 +233,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <a href="#precio">Precio</a>
       <a href="#preguntas">Preguntas</a>
     </nav>
-    <a class="btn btn-p btn-sm" href="app/#preguntar" data-cta="pregunta_portada">Pregunta tu duda</a>
+    <a class="btn btn-p btn-sm" href="#ask" data-goask>Pregunta tu duda</a>
   </div>
 </header>
 
@@ -211,12 +245,40 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <h1>Tus dudas del embarazo, resueltas por profesionales</h1>
       <p class="lead">Cada semana, lo que te toca saber. Y cuando algo te preocupe, pregúntaselo a tu ginecólogo, tu matrona o tu pediatra.</p>
 
-      <form class="ask" id="ask" action="app/#preguntar">
+      <div class="ask" id="ask">
+      <form id="ask-form" novalidate>
         <label for="duda">¿Qué te preocupa hoy?</label>
         <textarea id="duda" name="duda" maxlength="2000" placeholder="Por ejemplo: «Estoy de 30 semanas y noto la tripa dura a ratos, ¿es normal?»"></textarea>
-        <button class="btn btn-p" type="submit">Pregunta tu duda gratis</button>
+        <div class="more" id="ask-more" hidden>
+          <fieldset class="picks">
+            <legend>¿A quién se lo preguntas?</legend>
+            <label class="pick"><input type="radio" name="to" value="gineco"><img src="portada/equipo/gonzalo.jpg" alt="" width="40" height="40"><span><b>Gonzalo</b><small>Ginecólogo</small></span><em>Sugerido</em></label>
+            <label class="pick"><input type="radio" name="to" value="matrona"><img src="portada/equipo/marina.jpg" alt="" width="40" height="40"><span><b>Marina</b><small>Matrona</small></span><em>Sugerido</em></label>
+            <label class="pick"><input type="radio" name="to" value="pediatra"><img src="portada/equipo/lucia.jpg" alt="" width="40" height="40"><span><b>Lucía</b><small>Pediatra</small></span><em>Sugerido</em></label>
+          </fieldset>
+          <p class="hint" id="ask-hint" aria-live="polite"></p>
+          <p class="urgent" id="ask-urgent" hidden>Si es algo urgente (sangrado abundante, pérdida de líquido, el bebé no se mueve, dolor muy fuerte), no esperes: llama al 112 o ve a urgencias.</p>
+          <label class="fld"><span>Tu momento <i>(opcional, les da contexto)</i></span>
+            <select id="ask-moment">
+              <option value="">Prefiero no decirlo</option>
+              <option>Embarazada, primer trimestre (hasta la semana 13)</option>
+              <option>Embarazada, segundo trimestre (semanas 14 a 27)</option>
+              <option>Embarazada, tercer trimestre (desde la semana 28)</option>
+              <option>Posparto, bebé de menos de 3 meses</option>
+              <option>Bebé de 3 a 12 meses</option>
+              <option>Busco embarazo u otra duda de salud</option>
+            </select></label>
+          <label class="fld"><span>Tu correo, para que te respondan</span>
+            <input id="ask-email" type="email" inputmode="email" autocomplete="email" placeholder="nombre@correo.com"></label>
+          <input class="hp" id="ask-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <p class="err" id="ask-err" role="alert" hidden></p>
+        </div>
+        <button class="btn btn-p" type="submit" id="ask-send">Pregunta tu duda gratis</button>
+        <p class="fine" id="ask-fine" hidden>Gratis, sin registro. Tu pregunta solo la ve la profesional que elijas. No es para urgencias. <a href="privacy.html#consultas">Cómo tratamos tus datos</a>.</p>
       </form>
-      <div class="examples" aria-label="Ejemplos de dudas">
+      <div class="done" id="ask-done" hidden aria-live="polite"></div>
+      </div>
+      <div class="examples" id="ask-examples" aria-label="Ejemplos de dudas">
         <button type="button" data-ex="Me duele al dar el pecho, ¿es normal?">Lactancia</button>
         <button type="button" data-ex="¿Puedo tomar paracetamol estando embarazada?">Medicación</button>
         <button type="button" data-ex="Mi bebé tiene fiebre, ¿cuándo debo preocuparme?">Fiebre del bebé</button>
@@ -260,7 +322,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         <li><span class="n">2</span><div><h3>Elige a quién preguntar</h3><p>Hera te sugiere ginecología, matrona o pediatría según lo que escribas. Siempre puedes cambiarlo.</p></div></li>
         <li><span class="n">3</span><div><h3>Recibe la respuesta en tu correo</h3><p>En menos de 48 h, de la profesional que la ha leído. Si te queda algo, contestas al mismo correo.</p></div></li>
       </ol>
-      <a class="btn btn-p" href="app/#preguntar" data-cta="pregunta_portada">Pregunta tu duda gratis</a>
+      <a class="btn btn-p" href="#ask" data-goask>Pregunta tu duda gratis</a>
     </div>
     <div class="art">
       <div class="phone"><img src="portada/consulta.jpg" width="560" height="1213" loading="lazy" alt="Hoja de consulta con Gonzalo, Marina y Lucía"></div>
@@ -304,19 +366,19 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         <div class="head"><img src="portada/equipo/gonzalo.jpg" alt="Gonzalo Nozaleda" width="72" height="72" loading="lazy">
           <div><h3>Dr. Gonzalo Nozaleda</h3><p class="role">Ginecólogo</p></div></div>
         <p>Embarazo y pruebas, medicación, anticoncepción, la regla y el ciclo, y cualquier complicación.</p>
-        <a class="btn btn-s" href="app/#preguntar" data-cta="pregunta_portada">Pregunta a Gonzalo</a>
+        <a class="btn btn-s" href="#ask" data-to="gineco">Pregunta a Gonzalo</a>
       </article>
       <article class="pro">
         <div class="head"><img src="portada/equipo/marina.jpg" alt="Marina Fernández" width="72" height="72" loading="lazy">
           <div><h3>Marina Fernández</h3><p class="role">Matrona</p></div></div>
         <p>Lactancia, preparación al parto, posparto, suelo pélvico y los cuidados del recién nacido.</p>
-        <a class="btn btn-s" href="app/#preguntar" data-cta="pregunta_portada">Pregunta a Marina</a>
+        <a class="btn btn-s" href="#ask" data-to="matrona">Pregunta a Marina</a>
       </article>
       <article class="pro">
         <div class="head"><img src="portada/equipo/lucia.jpg" alt="Lucía Carrascón" width="72" height="72" loading="lazy">
           <div><h3>Lucía Carrascón</h3><p class="role">Pediatra</p></div></div>
         <p>La salud y los cuidados de tu bebé: fiebre, alimentación, sueño, desarrollo y vacunas.</p>
-        <a class="btn btn-s" href="app/#preguntar" data-cta="pregunta_portada">Pregunta a Lucía</a>
+        <a class="btn btn-s" href="#ask" data-to="pediatra">Pregunta a Lucía</a>
       </article>
     </div>
   </div>
@@ -396,7 +458,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   <div class="wrap">
     <h2>¿Qué te preocupa hoy?</h2>
     <p class="sub">Pregúntalo y te responde una profesional en menos de 48 h.</p>
-    <a class="btn btn-p" href="app/#preguntar" data-cta="pregunta_portada">Pregunta tu duda gratis</a>
+    <a class="btn btn-p" href="#ask" data-goask>Pregunta tu duda gratis</a>
     <p class="warn">Hera informa y acompaña, pero no sustituye a tu médico ni atiende urgencias.</p>
   </div>
 </section>
@@ -418,27 +480,110 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   </div>
 </footer>
 
-<script>
-  // La duda escrita aquí se pasa a la app por localStorage (mismo dominio), nunca en la URL.
-  (function () {
-    var API = 'https://hera-consultas.tempcheck-app.workers.dev/hit';
-    var local = ['localhost', '127.0.0.1'].indexOf(location.hostname) >= 0;
-    function hit(e) { if (local) return; try { fetch(API, { method: 'POST', body: JSON.stringify({ e: e }), keepalive: true }).catch(function () {}); } catch (x) {} }
-    hit('portada');
-    var form = document.getElementById('ask'), ta = document.getElementById('duda');
-    form.addEventListener('submit', function (ev) {
-      ev.preventDefault();
-      try { localStorage.setItem('hera-ask-draft', ta.value.trim()); } catch (x) {}
-      hit('pregunta_portada');
-      location.href = 'app/#preguntar';
+<script type="module">
+  // Consulta desde la portada, sin salir de ella: el mismo servicio y las mismas reglas que la hoja de la app
+  // (2 gratuitas por correo, campo trampa, límite de envíos). Nada viaja en la URL.
+  import { suggestContact } from './app/js/contacts.js';
+  const API = 'https://hera-consultas.tempcheck-app.workers.dev';
+  const PROS = { gineco: { name: 'Gonzalo', img: 'gonzalo' }, matrona: { name: 'Marina', img: 'marina' }, pediatra: { name: 'Lucía', img: 'lucia' } };
+  const local = ['localhost', '127.0.0.1'].includes(location.hostname);
+  const hit = (e) => { if (local) return; fetch(`${API}/hit`, { method: 'POST', body: JSON.stringify({ e }), keepalive: true }).catch(() => {}); };
+  const store = { get: (k) => { try { return localStorage.getItem(k) || ''; } catch { return ''; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch { /* sin almacenamiento */ } } };
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const isEmail = (e) => /^[^\s@<>()",;]+@[^\s@<>()",;]+\.[a-z]{2,24}$/i.test(e.trim());
+  hit('portada');
+
+  const box = $('ask'), form = $('ask-form'), ta = $('duda'), more = $('ask-more'), send = $('ask-send'), err = $('ask-err'), done = $('ask-done'), email = $('ask-email');
+  const radios = [...form.querySelectorAll('input[name=to]')];
+  let manual = false, opened = false, busy = false, lastEmail = '';
+  email.value = store.get('hera-ask-email');
+
+  const chosen = () => radios.find((r) => r.checked)?.value || '';
+  function refresh() {
+    const s = suggestContact({ text: ta.value, mode: 'pregnancy' });
+    radios.forEach((r) => r.closest('.pick').classList.toggle('sugg', !manual && r.value === s.to));
+    if (!manual) radios.forEach((r) => { r.checked = r.value === s.to; });
+    const to = chosen();
+    $('ask-hint').textContent = !manual && s.to && s.reason ? `Te sugerimos a ${PROS[s.to].name}: parece una duda sobre ${s.reason}. Puedes cambiarlo.` : (to ? '' : 'Elige a quién se lo preguntas.');
+    $('ask-urgent').hidden = !s.urgent;
+    if (opened && !busy) send.textContent = to ? `Enviar a ${PROS[to].name}` : 'Elige a quién preguntar';
+  }
+  function open() {
+    if (opened) return;
+    opened = true; more.hidden = false; $('ask-fine').hidden = false; $('ask-examples').hidden = true;
+    hit('pregunta_portada'); refresh();
+  }
+  function goAsk(to) {
+    box.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    if (to) { open(); manual = true; radios.forEach((r) => { r.checked = r.value === to; }); refresh(); }
+    setTimeout(() => ta.focus({ preventScroll: true }), 350);
+  }
+  const showErr = (m) => { err.textContent = m; err.hidden = !m; };
+
+  ta.addEventListener('input', () => { if (ta.value.trim()) open(); refresh(); });
+  radios.forEach((r) => r.addEventListener('change', () => { manual = true; refresh(); }));
+  document.querySelectorAll('[data-ex]').forEach((b) => b.addEventListener('click', () => { ta.value = b.dataset.ex; open(); refresh(); ta.focus(); }));
+  document.querySelectorAll('[data-goask], [data-to]').forEach((a) => a.addEventListener('click', (ev) => { ev.preventDefault(); goAsk(a.dataset.to); }));
+  document.querySelectorAll('[data-cta]').forEach((a) => a.addEventListener('click', () => hit(a.dataset.cta)));
+
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    if (busy) return;
+    const text = ta.value.trim();
+    open();
+    if (text.length < 5) { showErr('Cuéntanos tu duda con un poco más de detalle.'); ta.focus(); return; }
+    const to = chosen();
+    if (!to) { showErr('Elige a quién se lo preguntas.'); radios[0].focus(); return; }
+    if (!isEmail(email.value)) { showErr('Escribe tu correo para que te puedan responder.'); email.focus(); return; }
+    showErr(''); busy = true; send.disabled = true; send.textContent = 'Enviando…';
+    lastEmail = email.value.trim(); store.set('hera-ask-email', lastEmail);
+    try {
+      const res = await fetch(`${API}/ask`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: lastEmail, to, text, context: '', situation: $('ask-moment').value, website: $('ask-hp').value }) });
+      const j = await res.json().catch(() => ({}));
+      if (res.status === 429) throw new Error('Has enviado varias consultas seguidas. Espera unos minutos y vuelve a intentarlo.');
+      if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');
+      if (!res.ok && !j.limit) throw new Error('No se ha podido enviar. Inténtalo de nuevo en un rato.');
+      if (j.limit) showLimit(j); else { hit('enviada_portada'); showDone(to, j); }
+    } catch (e) { showErr(e.message); }
+    busy = false; send.disabled = false; refresh();
+  });
+
+  function swap(html) { form.hidden = true; done.innerHTML = html; done.hidden = false; box.scrollIntoView({ block: 'nearest' }); }
+  function showDone(to, j) {
+    const total = j.freeLimit || 2, rem = j.remaining ?? 0, p = PROS[to];
+    swap(`<img src="portada/equipo/${p.img}.jpg" alt="" width="64" height="64">
+      <h3>Consulta enviada</h3>
+      <p>${p.name} te responderá en menos de 48 h a <b>${esc(lastEmail)}</b>. Te hemos mandado una copia.</p>
+      <span class="dots" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i < total - rem ? 'on' : ''}"></i>`).join('')}</span>
+      <p class="small">${rem === 0 ? 'Era tu última consulta gratuita.' : `Te ${rem === 1 ? 'queda 1 consulta gratuita' : `quedan ${rem} consultas gratuitas`}.`}</p>
+      ${j.dryRun ? '<p class="small">Modo ensayo: no se ha enviado ningún correo.</p>' : ''}
+      <p>Mientras esperas, Hera te cuenta qué es lo normal en tu semana o a la edad de tu bebé.</p>
+      <a class="btn btn-p" href="app/" data-open>Abre Hera, es gratis</a>
+      <button type="button" class="linkbtn" data-again>Escribir otra pregunta</button>`);
+    done.querySelector('[data-open]').addEventListener('click', () => hit('abrir_portada'));
+    done.querySelector('[data-again]').addEventListener('click', () => { ta.value = ''; manual = false; done.hidden = true; form.hidden = false; refresh(); ta.focus(); });
+  }
+  function showLimit(j) {
+    swap(`<h3>Has usado tus ${j.freeLimit || 2} consultas gratuitas</h3>
+      <p>Muy pronto podrás seguir preguntando a Gonzalo, Marina y Lucía con consultas sueltas o bonos.</p>
+      <div id="notify" style="display:grid;gap:10px;max-width:30em">
+        <label><input type="checkbox" id="notify-ok"><span>Acepto que Hera guarde mi correo (${esc(lastEmail)}) solo para avisarme cuando haya consultas de pago. Puedo pedir que lo borren escribiendo a contacto@hera-gine.com.</span></label>
+        <p class="err" id="notify-err" hidden></p>
+        <button type="button" class="btn btn-p" id="notify-send">Avisarme cuando esté disponible</button>
+      </div>
+      <p class="small">Si es urgente, no esperes: llama al 112 o acude a tu centro de salud.</p>`);
+    $('notify-send').addEventListener('click', async () => {
+      const e = $('notify-err');
+      if (!$('notify-ok').checked) { e.textContent = 'Marca la casilla para que podamos guardar tu correo.'; e.hidden = false; return; }
+      try {
+        const r = await fetch(`${API}/notify`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: lastEmail, consent: true }) });
+        if (!r.ok) throw new Error();
+        $('notify').innerHTML = `<p><b>Hecho:</b> te avisaremos en ${esc(lastEmail)} cuando estén disponibles.</p>`;
+      } catch { e.textContent = 'No se ha podido guardar. Inténtalo de nuevo.'; e.hidden = false; }
     });
-    document.querySelectorAll('[data-ex]').forEach(function (b) {
-      b.addEventListener('click', function () { ta.value = b.getAttribute('data-ex'); ta.focus(); });
-    });
-    document.querySelectorAll('[data-cta]').forEach(function (a) {
-      a.addEventListener('click', function () { hit(a.getAttribute('data-cta')); });
-    });
-  })();
+  }
 </script>
 </body>
 </html>

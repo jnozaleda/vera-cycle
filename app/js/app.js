@@ -1741,9 +1741,9 @@ function pregnancyForm() {
   const p = ui.draftStage.pregnancy;
   return `${dueField({ ctx: 'draftStage', mode: ui.dueMode, dueValue: p.dueDate, lmpValue: ui.draftLmp })}
     <hr>
-    <div class="row gap-8">
-      <label class="grow stack-4"><span class="t-13 soft">Altura (cm)</span><input type="number" inputmode="decimal" class="field" data-model="draftStage.height" value="${attr(p.height ?? '')}" min="120" max="220"></label>
-      <label class="grow stack-4"><span class="t-13 soft">Peso antes del embarazo (kg)</span><input type="number" inputmode="decimal" class="field" data-model="draftStage.preWeight" value="${attr(p.preWeight ?? '')}" min="35" max="200"></label>
+    <div class="pair-fields">
+      <label class="stack-4"><span class="t-13 soft">Altura (cm)</span><input type="number" inputmode="decimal" class="field" data-model="draftStage.height" value="${attr(p.height ?? '')}" min="120" max="220"></label>
+      <label class="stack-4"><span class="t-13 soft">Peso previo (kg)</span><input type="number" inputmode="decimal" class="field" data-model="draftStage.preWeight" value="${attr(p.preWeight ?? '')}" min="35" max="200"></label>
     </div>
     ${optRow('Tipo de embarazo', 'multiple', [['single', 'Un bebé'], ['multiple', 'Más de uno'], ['unknown', 'Aún no lo sé']], p.multiple)}
     ${optRow('Tu grupo Rh (está en tu primera analítica)', 'rh', [['pos', 'Positivo'], ['neg', 'Negativo'], ['unknown', 'No lo sé']], p.rh)}

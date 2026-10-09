@@ -928,3 +928,7 @@ body[data-stage="postpartum"] { --st-soft: #ECE6F0; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+/* Dos campos en fila (altura y peso previo): mismas columnas e inputs alineados abajo */
+.pair-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: end; }
+.pair-fields .field { width: 100%; }

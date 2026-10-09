@@ -115,7 +115,7 @@ section { padding: 64px 0; }
 .faces p { margin: 0; font-size: 14px; color: var(--text); line-height: 1.35; }
 .faces b { color: var(--ink); font-weight: 600; }
 .hero-art { position: relative; display: flex; justify-content: center; padding: 28px 0; }
-.hero-art::before { content: ''; position: absolute; inset: 0 4%; border-radius: 12px; background: radial-gradient(120% 90% at 85% 15%, rgba(242,185,160,.55), transparent 55%), var(--sage); }
+.hero-art::before { content: ''; position: absolute; inset: 0 4%; border-radius: 12px; background: var(--peach) url('portada/fluido/seda-melocoton.webp') center / cover; }
 .phone { position: relative; width: 260px; border-radius: 40px; padding: 9px; background: var(--ink); box-shadow: 0 30px 60px -30px rgba(46,38,48,.5); }
 .phone img { display: block; width: 100%; height: auto; border-radius: 32px; }
 
@@ -142,6 +142,8 @@ section { padding: 64px 0; }
 @media (min-width: 800px) { .stages { grid-template-columns: repeat(3, 1fr); } }
 .stage { border-radius: 12px; padding: 24px 22px 0; overflow: hidden; display: flex; flex-direction: column; }
 .stage.sage { background: var(--sage); } .stage.lav { background: var(--lav); } .stage.rose { background: var(--rose); }
+.tile { width: 104px; height: 72px; border-radius: 6px; background: var(--plum) center / cover; display: grid; place-items: center; margin-bottom: 18px; box-shadow: inset 0 0 0 72px rgba(42,24,35,.18); }
+.tile svg { filter: drop-shadow(0 1px 3px rgba(42,24,35,.6)); }
 .stage p { margin: 0 0 18px; color: var(--text); font-size: 15px; }
 .stage .shot { margin-top: auto; align-self: center; width: 200px; border-radius: 28px 28px 0 0; padding: 7px 7px 0; background: var(--ink); }
 .stage .shot img { display: block; width: 100%; height: auto; border-radius: 22px 22px 0 0; aspect-ratio: 9 / 11; object-fit: cover; object-position: top; }
@@ -205,9 +207,18 @@ section { padding: 64px 0; }
 .faq p { margin: 0 0 18px; color: var(--text); max-width: 46em; }
 
 /* Cierre y pie */
-.final { text-align: center; padding: 76px 0; }
-.final .sub { margin: 0 auto 26px; }
-.final .warn { font-size: 13.5px; color: var(--muted); margin: 18px auto 0; max-width: 36em; }
+.final { padding: 64px 0; }
+.band { border-radius: 12px; overflow: hidden; padding: 40px 24px; display: grid; gap: 28px; align-items: center; color: #fff;
+  background: linear-gradient(90deg, rgba(42,24,35,.62), rgba(42,24,35,.25) 55%, transparent 80%), url('portada/fluido/via-lactea-atardecer.webp') center / cover, var(--plum-d); }
+@media (min-width: 860px) { .band { grid-template-columns: 1.2fr .8fr; padding: 56px 48px; } }
+.band .kk { margin: 0 0 8px; font-size: 14px; color: rgba(255,255,255,.82); }
+.band h2 { color: #fff; margin: 0 0 12px; }
+.band .sub { color: rgba(255,255,255,.9); margin: 0 0 24px; max-width: 30em; }
+.btn-w { background: #fff; color: var(--ink); }
+.btn-w:hover { background: var(--rose); }
+.band .pic { aspect-ratio: 1; border-radius: 12px; background: url('portada/fluido/via-lactea-atardecer.webp') 30% 55% / 300%; }
+@media (max-width: 859px) { .band .pic { display: none; } }
+.final .warn { font-size: 13.5px; color: var(--muted); margin: 16px 0 0; text-align: center; }
 footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
 .foot { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: center; justify-content: space-between; }
 .foot nav { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 14px; }
@@ -337,16 +348,19 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     <p class="sub">Hera se adapta a tu momento: te muestra lo de tu semana y te guarda el resto para cuando llegue.</p>
     <div class="stages">
       <div class="stage sage">
+        <div class="tile" style="background-image:url('portada/fluido/seda-rosa.webp')" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="6.5"/><path d="M9 6.8c.9-1.7 2.4-2.8 4.5-3"/></svg></div>
         <h3>Embarazo</h3>
         <p>Cómo crece tu bebé semana a semana, con ilustración, ecografía y modelo 3D; las pruebas de cada trimestre; lo normal en cada momento y un registro de contracciones al final.</p>
         <div class="shot"><img src="portada/embarazo-bebe.jpg" width="560" height="1213" loading="lazy" alt="Cómo es tu bebé en la semana 20"></div>
       </div>
       <div class="stage lav">
+        <div class="tile" style="background-image:url('portada/fluido/seda-melocoton.webp')" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-9.5A4 4 0 0 1 12 8a4 4 0 0 1 7 2.5C19 15.6 12 20 12 20Z"/></svg></div>
         <h3>Posparto</h3>
         <p>Tu recuperación, la lactancia, el suelo pélvico y cuándo vuelve la regla. Con lo que conviene consultar y sin juicios.</p>
         <div class="shot"><img src="portada/consulta.jpg" width="560" height="1213" loading="lazy" alt="Hoja de consulta de Hera"></div>
       </div>
       <div class="stage rose">
+        <div class="tile" style="background-image:url('portada/fluido/via-lactea-atardecer.webp');background-size:400%;background-position:35% 50%" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="4"/><path d="M5 20c1.2-3.4 3.8-5 7-5s5.8 1.6 7 5"/></svg></div>
         <h3>Tu bebé, su primer año</h3>
         <p>Lo normal a su edad, su peso, el sueño, la alimentación y las vacunas. Y cuándo ir a urgencias.</p>
         <div class="shot"><img src="portada/posparto-bebe.jpg" width="560" height="1213" loading="lazy" alt="Lo normal a la edad de tu bebé"></div>
@@ -456,9 +470,15 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
 
 <section class="final">
   <div class="wrap">
-    <h2>¿Qué te preocupa hoy?</h2>
-    <p class="sub">Pregúntalo y te responde una profesional en menos de 48 h.</p>
-    <a class="btn btn-p" href="#ask" data-goask>Pregunta tu duda gratis</a>
+    <div class="band">
+      <div>
+        <p class="kk">Ginecólogo, matrona y pediatra</p>
+        <h2>¿Qué te preocupa hoy?</h2>
+        <p class="sub">Pregúntalo y te responde una profesional en menos de 48 h. Tus dos primeras consultas, gratis.</p>
+        <a class="btn btn-w" href="#ask" data-goask>Pregunta tu duda gratis</a>
+      </div>
+      <div class="pic" role="img" aria-label="La Vía Láctea: según el mito, nació de la leche de Hera"></div>
+    </div>
     <p class="warn">Hera informa y acompaña, pero no sustituye a tu médico ni atiende urgencias.</p>
   </div>
 </section>

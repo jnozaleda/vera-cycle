@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hera · Imágenes fluidas</title>
+<style>
+@font-face { font-family: 'Inter'; src: url('../../app/fonts/inter.woff2') format('woff2'); font-weight: 100 900; }
+@font-face { font-family: 'Fraunces'; src: url('../../app/fonts/fraunces.woff2') format('woff2'); font-weight: 100 900; }
+:root { --plum: #693D55; --plum-d: #2A1823; --mauve: #8E6178; --ivory: #FAF8F5; --ink: #2E2630; --text: #4C444C; --muted: #655B61; --line: #E6DFE2; --peach: #F2B9A0; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--ivory); color: var(--ink); font: 400 16px/1.6 'Inter', system-ui, sans-serif; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 32px 20px 80px; }
+h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; font-weight: 500; color: var(--plum); letter-spacing: -.015em; margin: 0; }
+h1 { font-size: 36px; } h2 { font-size: 26px; margin: 56px 0 6px; }
+.k { font-size: 12px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--mauve); margin: 0; }
+.note { color: var(--text); margin: 6px 0 20px; max-width: 46em; }
+.tag { display: inline-block; font: 600 12px/1 'Inter'; color: #fff; background: var(--plum); border-radius: 4px; padding: 5px 8px; margin-bottom: 8px; }
+
+/* Imágenes sueltas */
+.raw { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+.raw figure { margin: 0; }
+.raw img { display: block; width: 100%; border-radius: 12px; }
+.raw figcaption { font-size: 13.5px; color: var(--muted); margin-top: 6px; }
+
+/* Banda final */
+.band { position: relative; border-radius: 12px; overflow: hidden; padding: 56px 40px; display: grid; gap: 28px; align-items: center; color: #fff; background-size: cover; background-position: center; margin-bottom: 16px; }
+@media (min-width: 860px) { .band { grid-template-columns: 1.2fr .8fr; } }
+.band .kk { font-size: 14px; color: rgba(255,255,255,.8); margin: 0 0 10px; }
+.band h3 { color: #fff; font-size: 40px; line-height: 1.08; margin: 0 0 12px; }
+.band p { margin: 0 0 24px; color: rgba(255,255,255,.9); max-width: 30em; }
+.band .btn { display: inline-block; background: #fff; color: var(--ink); border-radius: 6px; padding: 14px 22px; font-weight: 600; font-size: 15px; text-decoration: none; }
+.band .pic { aspect-ratio: 1; border-radius: 12px; background-size: cover; background-position: 40% 50%; }
+.band.light { color: var(--ink); } .band.light h3 { color: var(--plum); } .band.light p, .band.light .kk { color: var(--text); }
+.band.light .btn { background: var(--plum); color: #fff; }
+
+/* Fondo de portada */
+.heroes { display: grid; gap: 16px; }
+@media (min-width: 860px) { .heroes { grid-template-columns: repeat(3, 1fr); } }
+.hero-bg { border-radius: 12px; background-size: cover; background-position: center; padding: 28px 0; display: flex; justify-content: center; }
+.phone { width: 190px; border-radius: 30px; padding: 7px; background: var(--ink); box-shadow: 0 30px 60px -30px rgba(46,38,48,.6); }
+.phone img { display: block; width: 100%; border-radius: 24px; }
+.cap { font-size: 13.5px; color: var(--muted); margin-top: 6px; }
+
+/* Tarjetas con pastilla */
+.cards { display: grid; gap: 14px; }
+@media (min-width: 860px) { .cards { grid-template-columns: repeat(3, 1fr); } }
+.card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 22px; }
+.tile { width: 120px; height: 84px; border-radius: 6px; background-size: cover; background-position: center; display: grid; place-items: center; margin-bottom: 26px; }
+.card h4 { font: 500 22px/1.2 'Fraunces', Georgia, serif; color: var(--ink); margin: 0 0 6px; }
+.card p { margin: 0; color: var(--muted); font-size: 15px; }
+.row-label { font-size: 14px; font-weight: 600; color: var(--plum); margin: 22px 0 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="k">Hera · propuesta visual</p>
+  <h1>Imágenes fluidas</h1>
+  <p class="note">Generadas por código con la paleta de Hera, sin fotos ni licencias. Pesan entre 7 y 50 KB. Son una primera tanda: cualquier variante se puede ajustar (color, forma, densidad).</p>
+
+  <h2>1 · Banda final «¿Qué te preocupa hoy?»</h2>
+  <p class="note">Como la banda «Partner with Capably». La Vía Láctea del mito de Hera: la leche derramada que forma la estela de estrellas.</p>
+  <span class="tag">A · Vía Láctea, atardecer</span>
+  <div class="band" style="background-image:url('via-lactea-atardecer.webp')">
+    <div><p class="kk">Ginecólogo, matrona y pediatra</p><h3>¿Qué te preocupa hoy?</h3><p>Pregúntalo y te responde una profesional en menos de 48 h. Tus dos primeras consultas, gratis.</p><a class="btn" href="#">Pregunta tu duda gratis</a></div>
+    <div class="pic" style="background-image:url('via-lactea-atardecer.webp');background-size:300%;background-position:30% 55%"></div>
+  </div>
+  <span class="tag">B · Seda melocotón</span>
+  <div class="band" style="background-image:url('seda-melocoton.webp')">
+    <div><p class="kk">Ginecólogo, matrona y pediatra</p><h3>¿Qué te preocupa hoy?</h3><p>Pregúntalo y te responde una profesional en menos de 48 h. Tus dos primeras consultas, gratis.</p><a class="btn" href="#">Pregunta tu duda gratis</a></div>
+    <div class="pic" style="background-image:url('via-lactea-atardecer.webp');background-size:300%;background-position:30% 55%"></div>
+  </div>
+  <span class="tag">C · Vía Láctea, alba (versión clara)</span>
+  <div class="band light" style="background-image:url('via-lactea-alba.webp')">
+    <div><p class="kk">Ginecólogo, matrona y pediatra</p><h3>¿Qué te preocupa hoy?</h3><p>Pregúntalo y te responde una profesional en menos de 48 h. Tus dos primeras consultas, gratis.</p><a class="btn" href="#">Pregunta tu duda gratis</a></div>
+    <div></div>
+  </div>
+
+  <h2>2 · Fondo de la portada, detrás del móvil</h2>
+  <p class="note">Sustituye al verde liso actual.</p>
+  <div class="heroes">
+    <div><div class="hero-bg" style="background-image:url('via-lactea-atardecer.webp');background-position:20% 40%"><div class="phone"><img src="../../portada/embarazo-hoy.jpg" alt=""></div></div><p class="cap">Vía Láctea, atardecer</p></div>
+    <div><div class="hero-bg" style="background-image:url('seda-melocoton.webp')"><div class="phone"><img src="../../portada/embarazo-hoy.jpg" alt=""></div></div><p class="cap">Seda melocotón</p></div>
+    <div><div class="hero-bg" style="background-image:url('tinta-calida.webp')"><div class="phone"><img src="../../portada/embarazo-hoy.jpg" alt=""></div></div><p class="cap">Tinta en agua, cálida</p></div>
+  </div>
+
+  <h2>3 · Pastillas de icono en las tarjetas</h2>
+  <p class="note">Como las cuatro tarjetas de Capably: el mismo material, recortado en pequeño, con un icono blanco de línea.</p>
+  <p class="row-label">Tinta en agua (cálida · ciruela · salvia)</p>
+  <div class="cards">
+    <div class="card"><div class="tile" style="background-image:url('tinta-calida.webp')"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="6.5"/><path d="M9 6.8c.9-1.7 2.4-2.8 4.5-3"/></svg></div><h4>Embarazo</h4><p>Cómo crece tu bebé semana a semana y lo normal en cada momento.</p></div>
+    <div class="card"><div class="tile" style="background-image:url('tinta-ciruela.webp')"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-9.5A4 4 0 0 1 12 8a4 4 0 0 1 7 2.5C19 15.6 12 20 12 20Z"/></svg></div><h4>Posparto</h4><p>Tu recuperación, la lactancia y el suelo pélvico, sin juicios.</p></div>
+    <div class="card"><div class="tile" style="background-image:url('tinta-salvia.webp')"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="4"/><path d="M5 20c1.2-3.4 3.8-5 7-5s5.8 1.6 7 5"/></svg></div><h4>Tu bebé</h4><p>Lo normal a su edad, su peso, el sueño y las vacunas.</p></div>
+  </div>
+  <p class="row-label">Seda (rosa · melocotón) y Vía Láctea</p>
+  <div class="cards">
+    <div class="card"><div class="tile" style="background-image:url('seda-rosa.webp')"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="6.5"/><path d="M9 6.8c.9-1.7 2.4-2.8 4.5-3"/></svg></div><h4>Embarazo</h4><p>Cómo crece tu bebé semana a semana y lo normal en cada momento.</p></div>
+    <div class="card"><div class="tile" style="background-image:url('seda-melocoton.webp')"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-9.5A4 4 0 0 1 12 8a4 4 0 0 1 7 2.5C19 15.6 12 20 12 20Z"/></svg></div><h4>Posparto</h4><p>Tu recuperación, la lactancia y el suelo pélvico, sin juicios.</p></div>
+    <div class="card"><div class="tile" style="background-image:url('via-lactea-atardecer.webp');background-size:400%;background-position:35% 50%"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="4"/><path d="M5 20c1.2-3.4 3.8-5 7-5s5.8 1.6 7 5"/></svg></div><h4>Tu bebé</h4><p>Lo normal a su edad, su peso, el sueño y las vacunas.</p></div>
+  </div>
+
+  <h2>Las imágenes, sueltas</h2>
+  <div class="raw">
+    <figure><img src="via-lactea-atardecer.webp" alt=""><figcaption>Vía Láctea · atardecer</figcaption></figure>
+    <figure><img src="via-lactea-alba.webp" alt=""><figcaption>Vía Láctea · alba</figcaption></figure>
+    <figure><img src="seda-melocoton.webp" alt=""><figcaption>Seda · melocotón</figcaption></figure>
+    <figure><img src="seda-rosa.webp" alt=""><figcaption>Seda · rosa</figcaption></figure>
+    <figure><img src="tinta-calida.webp" alt=""><figcaption>Tinta en agua · cálida</figcaption></figure>
+    <figure><img src="tinta-ciruela.webp" alt=""><figcaption>Tinta en agua · ciruela</figcaption></figure>
+    <figure><img src="tinta-salvia.webp" alt=""><figcaption>Tinta en agua · salvia</figcaption></figure>
+  </div>
+</div>
+</body>
+</html>

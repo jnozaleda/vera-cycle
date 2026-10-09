@@ -929,7 +929,8 @@ function settingsSheet() {
       </div>
       <div class="stack-10 data-box">
         ${eyebrow('Tus datos')}
-        <p class="t-12 soft lh-3">Hera web guarda todo solo en este navegador. Nada sale de tu dispositivo. Haz una copia para no perder tus registros si borras los datos del navegador o cambias de equipo.</p>
+        <p class="t-12 soft lh-3">Tus registros se guardan en este dispositivo. Haz una copia para no perderlos si borras los datos del navegador o cambias de equipo.</p>
+        <a class="link-deep row gap-6 center self-start t-13" href="../privacy.html" target="_blank" rel="noopener">${icon('info', 13)} Cómo tratamos tus datos</a>
         <div class="row gap-8 wrap">
           <button class="pill-outline row gap-6 center" data-action="export">${icon('download', 13)} Exportar copia</button>
           <label class="pill-outline row gap-6 center" tabindex="0">${icon('upload', 13)} Importar copia<input type="file" accept="application/json,.json" data-action="import" hidden></label>

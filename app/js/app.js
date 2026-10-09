@@ -2758,8 +2758,17 @@ root.addEventListener('change', (e) => {
     store.updateLog(ui.selectedDate, (l) => { l[key] = rounders[key](v); });
     return;
   }
-  if (el.dataset.model === 'draftStage.dueDate' || el.dataset.model === 'ob.dueDate' || el.dataset.model === 'ob.lmp') { render(); return; }
-  if (el.dataset.model && /^draft/.test(el.dataset.model) && ui.sheet === 'settings') { render(); return; }
+  const needsRender = el.dataset.model === 'draftStage.dueDate' || el.dataset.model === 'ob.dueDate' || el.dataset.model === 'ob.lmp'
+    || (el.dataset.model && /^draft/.test(el.dataset.model) && ui.sheet === 'settings');
+  if (needsRender) {
+    // En el móvil, al abrir el calendario de una fecha vacía el sistema pone hoy y avisa del cambio:
+    // si redibujamos en ese momento se cierra el calendario. Esperamos a que lo cierre (blur).
+    if (el.type === 'date' && document.activeElement === el && window.matchMedia?.('(pointer: coarse)').matches) {
+      if (!el.dataset.pendingRender) { el.dataset.pendingRender = '1'; el.addEventListener('blur', () => render(), { once: true }); }
+      return;
+    }
+    render(); return;
+  }
   if (el.dataset.model && el.type === 'date') {
     // Fechas de ajustes: validar que no sea futura
     if (el.value && el.value > todayISO()) { el.value = todayISO(); setModel(el.dataset.model, el.value); }

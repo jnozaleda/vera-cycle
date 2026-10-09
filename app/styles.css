@@ -810,7 +810,6 @@ body[data-stage="postpartum"] { --st-soft: #ECE6F0; }
   background: #fff; border: 1px solid color-mix(in srgb, var(--st) 35%, transparent); color: var(--st); font-size: 12.5px; font-weight: 500; white-space: nowrap; }
 .ask-pill .cav { flex: none; }
 @media (max-width: 359px) { .ask-pill .ask-label { display: none; } .ask-pill { padding: 0 5px; } }
-.app-header .row:has(.sync-pill) .ask-pill .ask-label { display: none; } .app-header .row:has(.sync-pill) .ask-pill { padding: 0 5px; }
 
 /* Ciclo: regla en rojo y ovulación en azul (vera-backlog#43) */
 :root { --period: #B5362B; --ovu: #3B6EA8; }
@@ -1003,3 +1002,22 @@ body.ob-sky .ob-steps i.on { background: #F2B9A0; }
 .app-header.night { background: linear-gradient(180deg, rgba(28,16,24,.2), rgba(28,16,24,.45)), url('img/fluido/via-lactea-atardecer.webp') 45% 40% / cover, #2A1823;
   border-radius: 0 0 20px 20px; margin-bottom: 14px; }
 .app-header.night .brand-tag { color: #F2B9A0; }
+
+/* Aviso de sincronización en pausa: un punto en el engranaje (se reconecta en Ajustes) */
+.gear { position: relative; }
+.gear.has-dot::after { content: ''; position: absolute; top: 4px; right: 4px; width: 9px; height: 9px; border-radius: 50%; background: var(--rose); box-shadow: 0 0 0 2px #fff; }
+/* Barra fija con «Pregúntanos» al bajar */
+.mini-bar { position: fixed; z-index: 15; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: calc(8px + env(safe-area-inset-top)) 14px 8px 18px; color: #fff; background: #693D55 center / cover;
+  box-shadow: 0 6px 18px -8px rgba(42,24,35,.5); transform: translateY(-110%); transition: transform .22s ease; pointer-events: none; }
+.mini-bar.on { transform: none; pointer-events: auto; }
+body.sheet-open .mini-bar { transform: translateY(-110%); }
+@media (prefers-reduced-motion: reduce) { .mini-bar { transition: none; } }
+.mini-bar.seda-rosa { background-image: linear-gradient(90deg, rgba(42,24,35,.55), rgba(42,24,35,.3)), url('img/fluido/seda-rosa.webp'); }
+.mini-bar.seda-melocoton { background-image: linear-gradient(90deg, rgba(42,24,35,.55), rgba(42,24,35,.3)), url('img/fluido/seda-melocoton.webp'); }
+.mini-bar.via-lactea-atardecer { background-image: linear-gradient(90deg, rgba(28,16,24,.45), rgba(28,16,24,.2)), url('img/fluido/via-lactea-atardecer.webp'); background-position: 40% 45%; }
+.mini-label { display: grid; min-width: 0; line-height: 1.2; text-shadow: 0 1px 2px rgba(42,24,35,.5); }
+.mini-label b { font-family: var(--serif); font-weight: 500; font-size: 17px; white-space: nowrap; }
+.mini-label small { font-size: 11.5px; opacity: .9; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-ask { flex: none; display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px 0 4px; border-radius: 999px; background: #fff; color: #693D55; font-size: 12.5px; font-weight: 600; }
+.mini-ask .cav.sm { width: 24px; height: 24px; font-size: 9.5px; }

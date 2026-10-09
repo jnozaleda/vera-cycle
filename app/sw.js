@@ -2,7 +2,7 @@
 // Service worker de Hera web: permite abrir la app sin conexión.
 // Estrategia "red primero": siempre intenta la versión más reciente y usa la caché si no hay red.
 
-const CACHE = 'vera-web-v67';
+const CACHE = 'vera-web-v68';
 const SHELL = [
   './',
   'index.html',

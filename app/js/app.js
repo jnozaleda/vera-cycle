@@ -763,15 +763,6 @@ function syncStatusText() {
   }
 }
 
-function syncPill() {
-  if (!sync.enabled) return '';
-  if (sync.status === 'needs-auth' || sync.status === 'error') {
-    return `<button class="sync-pill warn" data-action="sync-reauth">${icon('cloud', 14)} Sincronizar</button>`;
-  }
-  if (sync.status === 'syncing') return `<span class="sync-pill" aria-label="Sincronizando">${icon('cloud', 14)}</span>`;
-  return '';
-}
-
 /** A qué fecha atar los avisos según la etapa guardada: embarazo (fecha de parto) o posparto (nacimiento del bebé). */
 function pushTarget() {
   if (store.mode === 'pregnancy' && store.stage.pregnancy?.dueDate) return { kind: 'pregnancy', date: store.stage.pregnancy.dueDate };
@@ -1645,6 +1636,37 @@ function answerHTML(a) {
 /** Imagen fluida de cada trimestre: seda rosa, seda melocotón y Vía Láctea (diseno/fluido/) */
 const flTrimester = (t) => (t <= 1 ? 'seda-rosa' : t === 2 ? 'seda-melocoton' : 'via-lactea-atardecer');
 const flStrip = (img) => `<div class="fl-strip ${img}" aria-hidden="true"></div>`;
+/** Barra fina fija con «Pregúntanos» al bajar por Hoy o Dudas: la etapa a la izquierda y la imagen de la tarjeta principal */
+function miniBar(mode, tab) {
+  if (mode === 'cycle' || !['today', 'guide', 'baby'].includes(tab)) return '';
+  let label, img;
+  if (mode === 'pregnancy') {
+    const g = gestation(store.stage.pregnancy);
+    if (!g) return '';
+    label = [`Semana ${g.weeks}`, TRIMESTER_LABEL[g.trimester]]; img = flTrimester(g.trimester);
+  } else {
+    const s = sinceBirth(store.stage.postpartum);
+    if (!s) return '';
+    label = [s.weeks === 0 ? `${s.days} ${plural(s.days, 'día', 'días')}` : `${s.weeks} ${plural(s.weeks, 'semana', 'semanas')}`, 'Desde el parto']; img = 'seda-melocoton';
+  }
+  return `<div class="mini-bar ${img}" aria-hidden="true">
+    <span class="mini-label"><b>${esc(label[0])}</b><small>${esc(label[1])}</small></span>
+    <button class="mini-ask" data-action="open-ask" data-ctx="" tabindex="-1">${consultPair('sm')}<span>Pregúntanos</span></button>
+  </div>`;
+}
+/** Muestra la barra cuando la cabecera ya no se ve */
+let miniTick = false;
+function updateMiniBar() {
+  const bar = root.querySelector('.mini-bar');
+  if (!bar) return;
+  const head = root.querySelector('.app-header');
+  const on = head && head.getBoundingClientRect().bottom < 0 && !document.body.classList.contains('sheet-open');
+  bar.classList.toggle('on', on);
+  bar.setAttribute('aria-hidden', String(!on));
+  bar.querySelector('.mini-ask').tabIndex = on ? 0 : -1;
+}
+window.addEventListener('scroll', () => { if (miniTick) return; miniTick = true; requestAnimationFrame(() => { miniTick = false; updateMiniBar(); }); }, { passive: true });
+
 /** De madrugada (0 a 6 h) la cabecera pasa a cielo nocturno: tomas, contracciones, insomnio */
 const isNight = () => new Date().getHours() < 6;
 
@@ -2213,11 +2235,12 @@ function mainView() {
     <header class="app-header ${isNight() ? 'night' : ''}">
       <div><h1 class="brand"><img src="brand/hera-logo-compact${isNight() ? '-white' : ''}.svg" alt="Hera" width="113" height="34"></h1><div class="brand-tag">${MODE_TAG[mode]}</div></div>
       <div class="row gap-8 center">
-        ${syncPill()}
         <button class="ask-pill" data-action="open-ask" data-ctx="" aria-label="Pregunta a tu ginecólogo, a tu matrona o a tu pediatra" title="Pregunta a tu equipo">${consultPair('sm')}<span class="ask-label">Pregúntanos</span></button>
-        <button class="gear" data-action="open-settings" aria-label="Ajustes">${icon('gear', 16)}</button>
+        ${(() => { const warn = sync.enabled && (sync.status === 'needs-auth' || sync.status === 'error');
+          return `<button class="gear ${warn ? 'has-dot' : ''}" data-action="open-settings" aria-label="${warn ? 'Ajustes: la sincronización está en pausa' : 'Ajustes'}">${icon('gear', 16)}</button>`; })()}
       </div>
     </header>
+    ${miniBar(mode, mode === 'cycle' ? null : STAGE_TAB_IDS[mode][ui.tab])}
     ${reminderBanner()}
     ${mode === 'cycle' ? irregularNudge() : ''}
     <main class="content">${view}</main>
@@ -2257,6 +2280,7 @@ function render() {
   document.body.classList.toggle('sheet-open', !!ui.sheet && (screen === 'main' || ui.sheet === 'ask'));
   if (root.querySelector('[data-action=sync-connect], [data-action=sync-reauth]')) loadGis().catch(() => {});
   if (screen !== lastScreen) { window.scrollTo(0, 0); lastScreen = screen; }
+  updateMiniBar();
   if (ui.guideQuery) applyGuideFilter();
   if (ui.foodQuery) applyFoodFilter();
   const fs = root.querySelector('[data-fetus-week]');

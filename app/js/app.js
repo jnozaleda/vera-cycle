@@ -25,6 +25,7 @@ import { PREGNANCY_LINE, pregnancyNormal, pregnancyFaqs, postpartumLine, postpar
 import { spansPregnancy } from './predict.js';
 import { PREGNANCY_BETA_ONLY, CONSULT, CONSULTS, TAGLINE, CONSULT_API, CONSULT_FORM } from './config.js';
 import { suggestContact } from './contacts.js';
+import { track } from './track.js';
 import { isBeta } from './beta.js';
 import { pushState, enablePush, disablePush, syncPush, testPush } from './push.js';
 import { sync, syncAvailable, onSyncChange, initSync, connect, reauthorize, disconnect, deleteRemote, syncNow, loadGis } from './sync.js';
@@ -2120,6 +2121,12 @@ function careView() {
   </div>`;
 }
 
+/** Id de la pestaña visible (para la medición) */
+function currentTabId() {
+  if (store.mode === 'cycle') return ['today', 'cycle', 'trends'][ui.tab] || 'today';
+  return (STAGE_TAB_IDS[store.mode] || [])[ui.tab] || 'today';
+}
+
 const TABS = [
   { icon: 'sun', label: 'HOY' },
   { icon: 'dotted', label: 'CICLO' },
@@ -2241,7 +2248,7 @@ function openSettings() {
 }
 
 const actions = {
-  tab: (el) => { ui.tab = +el.dataset.i; ui.sheet = null; render(); window.scrollTo(0, 0); },
+  tab: (el) => { ui.tab = +el.dataset.i; ui.sheet = null; render(); window.scrollTo(0, 0); track(`pestana:${currentTabId()}`); },
   'open-settings': openSettings,
   'close-sheet': () => {
     if (settingsDirty() && !confirm('Tienes cambios sin guardar. ¿Salir sin guardarlos?')) return;
@@ -2366,7 +2373,7 @@ const actions = {
   },
   'baby-week': (el) => { ui.babyWeek = +el.dataset.w; render(); },
   'pp-baby-week': (el) => { ui.ppBabyWeek = +el.dataset.w; render(); },
-  'hoy-view': (el) => { ui.hoyView = el.dataset.v; render(); window.scrollTo(0, 0); },
+  'hoy-view': (el) => { ui.hoyView = el.dataset.v; render(); window.scrollTo(0, 0); track(`vista:${el.dataset.v === 'baby' ? 'bebe' : 'tu'}`); },
   'baby-media': (el) => { ui.babyMedia = el.dataset.v; render(); },
   'care-section': (el) => { ui.careSection = el.dataset.v; render(); },
   'open-care': (el) => { ui.tab = tabIndex('care'); ui.careSection = el.dataset.v || 'agenda'; render(); window.scrollTo(0, 0); },
@@ -2412,6 +2419,7 @@ const actions = {
     store.updateLog(todayISO(), (l) => { l.weight = Math.round(w * 10) / 10; });
   },
   'open-ask': (el) => {
+    track('consulta_abierta');
     const ctx = el.dataset.ctx || '';
     if (ui.ask.sent || ui.ask.result?.ok || ui.ask.context !== ctx) ui.ask = { ...ui.ask, context: ctx, include: true, text: ui.ask.sent || ui.ask.result?.ok ? '' : ui.ask.text, sent: null, to: null, manual: false, status: null, result: ui.ask.result?.limit ? ui.ask.result : null };
     if (!ui.ask.manual) ui.ask.to = suggestContact({ text: ui.ask.text, context: ui.ask.context, mode: store.mode }).to;
@@ -2554,7 +2562,7 @@ const actions = {
   // Sincronización con Google Drive
   'sync-connect': async () => {
     const ok = await connect(() => new Promise((resolve) => { ui.syncChoice = resolve; render(); }));
-    if (ok) ui.tab = 0;
+    if (ok) { ui.tab = 0; track('sync_on'); }
     render();
   },
   'sync-choice': (el) => {
@@ -2580,7 +2588,7 @@ const actions = {
   'push-dismiss': () => { try { localStorage.setItem(PUSH_DISMISS, '1'); } catch { /* */ } render(); },
   'push-enable': async () => {
     ui.pushBusy = true; ui.pushMsg = 'Activando…'; render();
-    try { await enablePush(pushTarget()); ui.pushMsg = 'Aviso semanal activado.'; }
+    try { await enablePush(pushTarget()); ui.pushMsg = 'Aviso semanal activado.'; track('push_on'); }
     catch (e) { ui.pushMsg = Notification.permission === 'denied' ? '' : 'No se ha podido activar. Inténtalo de nuevo en un rato.'; }
     ui.pushBusy = false; ui.pushState = await pushState(); if (ui.pushState === 'denied') ui.pushMsg = ''; render();
   },
@@ -2837,6 +2845,8 @@ store.subscribe(() => { // mantiene el servicio al día si cambia la fecha, la e
   syncPush(t).then(async () => { ui.pushState = await pushState(); render(); }).catch(() => {});
 });
 render();
+track('apertura', true);
+if (!store.needsOnboarding) track(`etapa:${store.mode}`, true);
 
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   navigator.serviceWorker.register('sw.js').catch(() => { /* sin modo offline */ });

@@ -8,9 +8,14 @@
 //   POST /ask          {email, to, text, context?, situation?, website?}   navegador (ALLOWED_ORIGINS)
 //   POST /notify       {email, consent: true}                              navegador
 //   POST /admin/reset  {email}                                             Authorization: Bearer ADMIN_TOKEN
+//   POST /hit          {e}                                                 navegador: evento anónimo de uso (texto plano)
+//   GET  /stats?days=N                                                     panel: Authorization: Bearer PANEL_CODE
+//
+// Medición (vera-backlog#6): D1 «hera-metrics» con recuentos por día (tabla counts) y huellas diarias para contar
+// personas distintas (tabla visitors: hash de IP + navegador + día + sal, se borran a las 48 h). Sin IP ni identificadores.
 //
 // Bindings: KV (KV), HASH_SALT, ADMIN_TOKEN, RESEND_API_KEY, COPY_TO (opcional) (secretos), ALLOWED_ORIGINS, FROM, FREE_LIMIT,
-// DRY_RUN ("1" = hace todo menos enviar correos).
+// DRY_RUN ("1" = hace todo menos enviar correos), DB (D1), PANEL_CODE (secreto).
 
 export const PROS = {
   gineco: { name: 'Dr. Gonzalo Nozaleda', short: 'Gonzalo', role: 'ginecólogo', email: 'gonzalo@hera-gine.com' },
@@ -73,6 +78,42 @@ export function confirmEmail(pro, q, remaining) {
   return { subject, html, text };
 }
 
+
+// MARK: - Medición de uso
+
+/** Fecha de hoy en Madrid, AAAA-MM-DD */
+export function madridDay(d = new Date()) {
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(d).map((x) => [x.type, x.value]));
+  return `${p.year}-${p.month}-${p.day}`;
+}
+
+/** Eventos que acepta /hit (nombre o nombre:valor) */
+export const EVENT_RE = /^(apertura|portada|consulta_abierta|push_on|sync_on|etapa:(pregnancy|postpartum|cycle)|pestana:(today|diary|care|guide|cycle|trends|baby)|vista:(tu|bebe))$/;
+
+async function bump(env, k, day = madridDay()) {
+  if (!env.DB) return;
+  try {
+    await env.DB.prepare('INSERT INTO counts (day, k, n) VALUES (?1, ?2, 1) ON CONFLICT(day, k) DO UPDATE SET n = n + 1').bind(day, k).run();
+  } catch (e) { console.log(`metrics ${e.message}`); }
+}
+
+/** Cuenta una persona distinta al día (huella que cambia cada día y se borra a las 48 h) */
+async function countPerson(env, request, key) {
+  if (!env.DB) return;
+  const day = madridDay();
+  const ip = request.headers.get('CF-Connecting-IP') || '';
+  const ua = request.headers.get('User-Agent') || '';
+  const h = (await hmac(`${env.HASH_SALT}:${day}`, `${ip}|${ua}`)).slice(0, 32);
+  try {
+    const r = await env.DB.prepare('INSERT OR IGNORE INTO visitors (day, h) VALUES (?1, ?2)').bind(`${key}:${day}`, h).run();
+    if (r.meta?.changes) {
+      await bump(env, `personas_${key}`, day);
+      const old = madridDay(new Date(Date.now() - 2 * 86400000));
+      await env.DB.prepare('DELETE FROM visitors WHERE substr(day, -10) < ?1').bind(old).run();
+    }
+  } catch (e) { console.log(`metrics ${e.message}`); }
+}
+
 async function sendMail(env, { to, replyTo, subject, html, text, bcc }) {
   if (env.DRY_RUN === '1') { console.log(`[ensayo] correo a ${to}: ${subject}`); return true; }
   const res = await fetch('https://api.resend.com/emails', {
@@ -101,13 +142,21 @@ export default {
     const allowed = (env.ALLOWED_ORIGINS ?? '').split(',').map((s) => s.trim()).filter(Boolean);
     const cors = {
       'Access-Control-Allow-Origin': allowed.includes(origin) ? origin : allowed[0] ?? '',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       'Access-Control-Max-Age': '86400',
       Vary: 'Origin',
     };
     const reply = (status, body) => new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
+
+    if (request.method === 'GET' && url.pathname === '/stats') {
+      if (!env.PANEL_CODE || request.headers.get('Authorization') !== `Bearer ${env.PANEL_CODE}`) return reply(401, { error: 'unauthorized' });
+      const days = Math.min(365, Math.max(1, Number(url.searchParams.get('days')) || 30));
+      const from = madridDay(new Date(Date.now() - (days - 1) * 86400000));
+      const { results } = await env.DB.prepare('SELECT day, k, n FROM counts WHERE day >= ?1 ORDER BY day').bind(from).all();
+      return reply(200, { from, to: madridDay(), rows: results });
+    }
     if (request.method !== 'POST') return reply(405, { error: 'method' });
 
     let body;
@@ -128,12 +177,22 @@ export default {
 
     if (!allowed.includes(origin)) return reply(403, { error: 'origin' });
 
+    if (url.pathname === '/hit') {
+      const e = String(body.e || '');
+      if (!EVENT_RE.test(e)) return reply(400, { error: 'bad_event' });
+      await bump(env, e);
+      if (e === 'apertura') await countPerson(env, request, 'app');
+      if (e === 'portada') await countPerson(env, request, 'portada');
+      return reply(200, { ok: true });
+    }
+
     if (url.pathname === '/notify') {
       const norm = normalizeEmail(body.email);
       if (!norm) return reply(400, { error: 'bad_email' });
       if (body.consent !== true) return reply(400, { error: 'consent' });
       const h = await hmac(env.HASH_SALT, norm);
       await env.KV.put(`w:${h}`, JSON.stringify({ email: String(body.email).trim(), at: new Date().toISOString() }));
+      await bump(env, 'aviso_pago');
       return reply(200, { ok: true });
     }
 
@@ -149,7 +208,7 @@ export default {
 
       const key = `c:${await hmac(env.HASH_SALT, norm)}`;
       const rec = (await env.KV.get(key, 'json')) || { n: 0, first: null, last: null };
-      if (rec.n >= limit) return reply(200, { limit: true, used: rec.n, freeLimit: limit });
+      if (rec.n >= limit) { await bump(env, 'gratuitas_agotadas'); return reply(200, { limit: true, used: rec.n, freeLimit: limit }); }
       if (await rateLimited(env, request.headers.get('CF-Connecting-IP'))) return reply(429, { error: 'rate' });
 
       const pm = proEmail(pro, q);
@@ -158,6 +217,7 @@ export default {
       const now = new Date().toISOString();
       const n = rec.n + 1;
       await env.KV.put(key, JSON.stringify({ n, first: rec.first || now, last: now }));
+      await bump(env, `consulta:${body.to}`);
       const remaining = Math.max(0, limit - n);
       const cm = confirmEmail(pro, q, remaining);
       await sendMail(env, { to: q.email, replyTo: pro.email, ...cm, bcc: env.COPY_TO || undefined });

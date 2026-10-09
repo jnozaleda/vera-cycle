@@ -95,5 +95,11 @@
     <a href="support.html" class="link-secondary">Soporte</a>
     <a href="privacy.html" class="link-secondary">Política de Privacidad</a>
   </div>
+<script>
+  // Medición anónima de visitas a la portada (vera-backlog#6): solo un recuento por día, sin cookies.
+  if (!['localhost', '127.0.0.1'].includes(location.hostname)) {
+    try { fetch('https://hera-consultas.tempcheck-app.workers.dev/hit', { method: 'POST', body: '{"e":"portada"}', keepalive: true }).catch(function () {}); } catch (e) {}
+  }
+</script>
 </body>
 </html>

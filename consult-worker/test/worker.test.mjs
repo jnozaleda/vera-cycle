@@ -12,7 +12,13 @@ assert.match(confirmEmail(PROS.matrona, { text: '<script>', context: '' }, 1).ht
 const store = new Map();
 const KV = { async get(k, t) { const v = store.get(k); return v == null ? null : t === 'json' ? JSON.parse(v) : v; }, async put(k, v) { store.set(k, v); }, async delete(k) { store.delete(k); } };
 const sent = [];
-const env = { KV, COPY_TO: 'copia@example.com', HASH_SALT: 'sal', ADMIN_TOKEN: 'adm', ALLOWED_ORIGINS: 'https://hera-gine.com', FROM: 'Hera <consultas@hera-gine.com>', FREE_LIMIT: '2', DRY_RUN: '0', RESEND_API_KEY: 'k' };
+const counts = new Map(); const visitors = new Set();
+const DB = { prepare(sql) { return { bind(...a) { return { async run() {
+  if (sql.startsWith('INSERT INTO counts')) { const k = a[0] + '|' + a[1]; counts.set(k, (counts.get(k) || 0) + 1); return { meta: { changes: 1 } }; }
+  if (sql.startsWith('INSERT OR IGNORE')) { const k = a.join('|'); if (visitors.has(k)) return { meta: { changes: 0 } }; visitors.add(k); return { meta: { changes: 1 } }; }
+  return { meta: { changes: 0 } }; },
+  async all() { return { results: [...counts].map(([k, n]) => ({ day: k.split('|')[0], k: k.split('|')[1], n })) }; } }; } }; } };
+const env = { KV, DB, PANEL_CODE: 'panel', COPY_TO: 'copia@example.com', HASH_SALT: 'sal', ADMIN_TOKEN: 'adm', ALLOWED_ORIGINS: 'https://hera-gine.com', FROM: 'Hera <consultas@hera-gine.com>', FREE_LIMIT: '2', DRY_RUN: '0', RESEND_API_KEY: 'k' };
 globalThis.fetch = async (u, o) => { sent.push(JSON.parse(o.body)); return new Response('{}', { status: 200 }); };
 let ip = 0;
 const call = (path, body, extra = {}) => worker.fetch(new Request(`https://w${path}`, { method: 'POST', headers: { Origin: 'https://hera-gine.com', 'CF-Connecting-IP': `1.1.1.${ip++}`, ...extra }, body: JSON.stringify(body) }), env).then(async (r) => ({ s: r.status, j: await r.json() }));
@@ -43,4 +49,15 @@ r = await call('/ask', q); assert.equal(r.j.remaining, 1, 'reset vuelve a dar gr
 const fixed = (b) => worker.fetch(new Request('https://w/ask', { method: 'POST', headers: { Origin: 'https://hera-gine.com', 'CF-Connecting-IP': '9.9.9.9' }, body: JSON.stringify(b) }), env);
 let last; for (let i = 0; i < 6; i++) last = await fixed({ ...q, email: `p${i}@x.com` });
 assert.equal(last.status, 429);
+const cnt = (k) => [...counts].filter(([kk]) => kk.endsWith('|' + k)).reduce((a, [, n]) => a + n, 0);
+assert.ok(cnt('consulta:matrona') >= 1 && cnt('consulta:pediatra') >= 1, 'cuenta consultas por profesional');
+assert.ok(cnt('gratuitas_agotadas') >= 1); assert.equal(cnt('aviso_pago'), 1);
+r = await call('/hit', { e: 'apertura' }, { 'CF-Connecting-IP': '5.5.5.5', 'User-Agent': 'x' });
+await call('/hit', { e: 'apertura' }, { 'CF-Connecting-IP': '5.5.5.5', 'User-Agent': 'x' });
+await call('/hit', { e: 'pestana:care' });
+r = await call('/hit', { e: 'otra_cosa' }); assert.equal(r.s, 400, 'eventos fuera de la lista');
+assert.equal(cnt('apertura'), 2); assert.equal(cnt('personas_app'), 1, 'misma persona el mismo día cuenta una vez');
+let st = await worker.fetch(new Request('https://w/stats?days=7', { headers: { Origin: 'https://hera-gine.com', Authorization: 'Bearer panel' } }), env);
+assert.equal(st.status, 200); assert.ok((await st.json()).rows.length > 0);
+st = await worker.fetch(new Request('https://w/stats', { headers: { Origin: 'https://hera-gine.com', Authorization: 'Bearer mal' } }), env); assert.equal(st.status, 401);
 console.log('consultas: OK');

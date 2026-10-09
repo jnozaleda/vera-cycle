@@ -12,3 +12,8 @@ DRY_RUN = "0"
 [[kv_namespaces]]
 binding = "KV"
 id = "4d3613aad462458fb17c8481b2bf7481"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "hera-metrics"
+database_id = "7d34d415-4d8b-46f6-9def-d9b2986ed3f8"

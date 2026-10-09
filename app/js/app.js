@@ -181,9 +181,9 @@ function cycleDial(settings, info) {
   return `
   <div class="dial" role="img" aria-label="Día ${info.day} del ciclo, ${attr(PHASES[info.phase].label)}">
     <svg viewBox="0 0 ${S} ${S}" width="100%" height="100%">
-      <circle cx="${cx}" cy="${cy}" r="${r}" stroke="var(--mist)" stroke-width="10" fill="none"/>
+      <circle cx="${cx}" cy="${cy}" r="${r}" stroke="var(--line)" stroke-width="10" fill="none"/>
       ${arc(0.15, settings.periodLen - 0.15, 'period', 10)}
-      ${arc(ovu - 5, ovu + 1.4, 'sage', 10)}
+      ${arc(ovu - 5, ovu + 1.4, 'fertile', 10)}
       ${arc(ovu + 0.32, ovu + 0.72, 'ovu', 13)}
       ${ticks}
       <circle cx="${dx.toFixed(2)}" cy="${dy.toFixed(2)}" r="9" fill="var(--st)" stroke="var(--ivory)" stroke-width="3"/>
@@ -289,7 +289,7 @@ function todayView() {
       ${cycleDial(settings, info)}
       <div class="row gap-18 justify-center">
         <span class="legend"><i class="bg-period"></i>Regla</span>
-        <span class="legend"><i class="bg-sage"></i>Ventana fértil</span>
+        <span class="legend"><i class="bg-fertile"></i>Ventana fértil</span>
         <span class="legend"><i class="bg-ovu"></i>Ovulación</span>
       </div>
     </div>

@@ -932,3 +932,12 @@ body[data-stage="postpartum"] { --st-soft: #ECE6F0; }
 /* Dos campos en fila (altura y peso previo): mismas columnas e inputs alineados abajo */
 .pair-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; align-items: end; }
 .pair-fields .field { width: 100%; }
+
+/* Marca Hera, fase 4: ventana fértil en verde salvia propio (el salvia de texto, mezclado al 12 %, se veía gris) */
+:root { --fertile: #4D7A5D; }
+.bg-fertile { background: var(--fertile); }
+.wday.ph-sage, .cal-cell.ph-sage { --pc: var(--fertile); }
+.cal-cell.ph-sage { color: var(--fertile); }
+.legend.box i.ph-sage { background: color-mix(in srgb, var(--fertile) 22%, transparent); border-color: var(--fertile); }
+/* El día seleccionado del calendario siempre en blanco sobre ciruela, también en regla, fértil u ovulación */
+.cal-cell.sel[class*="ph-"] { color: #fff; }

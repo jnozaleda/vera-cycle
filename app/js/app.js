@@ -965,7 +965,7 @@ function onboardingView() {
   switch (ob.step) {
     case 0:
       content = `<div class="text-center stack-0">
-        <h1 class="ob-logo"><img src="brand/hera-logo.svg" alt="Hera" width="264" height="80"></h1>
+        <h1 class="ob-logo"><img src="brand/hera-logo-white.svg" alt="Hera" width="264" height="80"></h1>
         <div class="ob-tag">EMBARAZO · POSPARTO · BEBÉ</div>
         <p class="t-17 light soft lh-6 mb-44">${esc(TAGLINE)} Con respuestas para cada semana y la posibilidad de preguntarle tus dudas cuando lo necesites.</p>
         ${primaryButton('Comenzar', 'ob-next')}
@@ -1397,7 +1397,9 @@ function pregnancyToday() {
     </div>`;
   return `<div class="stack-14">
     ${switcher}
+    ${hitoCard('preg', g.weeks)}
     <div class="card pad stack-10 preg-hero">
+      ${flStrip(flTrimester(g.trimester))}
       ${eyebrow(TRIMESTER_LABEL[g.trimester])}
       <div class="row between center">
         <div class="row baseline gap-10">
@@ -1481,7 +1483,9 @@ function postpartumToday() {
     </div>`;
   return `<div class="stack-14">
     ${switcher}
+    ${hitoCard('pp', s.weeks)}
     <div class="card pad stack-10 preg-hero">
+      ${flStrip('seda-melocoton')}
       ${eyebrow('Desde el parto')}
       <div class="row between center">
         <div class="row baseline gap-10">
@@ -1636,6 +1640,39 @@ function answerHTML(a) {
     if (b && typeof b === 'object') return `<p><a class="faq-ext" href="${attr(b.link)}" target="_blank" rel="noopener">${esc(b.text)} ↗</a></p>`;
     return `<p>${esc(b)}</p>`;
   }).join('');
+}
+
+/** Imagen fluida de cada trimestre: seda rosa, seda melocotón y Vía Láctea (diseno/fluido/) */
+const flTrimester = (t) => (t <= 1 ? 'seda-rosa' : t === 2 ? 'seda-melocoton' : 'via-lactea-atardecer');
+const flStrip = (img) => `<div class="fl-strip ${img}" aria-hidden="true"></div>`;
+/** De madrugada (0 a 6 h) la cabecera pasa a cielo nocturno: tomas, contracciones, insomnio */
+const isNight = () => new Date().getHours() < 6;
+
+/** Hitos: una tarjeta especial durante la semana en que se cumplen; se puede cerrar */
+const HITOS_KEY = 'hera-hitos-vistos';
+const hitosVistos = () => { try { return JSON.parse(localStorage.getItem(HITOS_KEY) || '[]'); } catch { return []; } };
+const PREG_HITOS = {
+  14: ['seda-melocoton', 'Empiezas el segundo trimestre', 'Para muchas mujeres es la etapa más llevadera: suelen ceder las náuseas y el cansancio, y pronto empezarás a notar a tu bebé.'],
+  28: ['via-lactea-atardecer', 'Empiezas el tercer trimestre', 'La recta final. Tu bebé gana peso cada semana y es buen momento para pensar en la preparación al parto.'],
+  37: ['via-lactea-atardecer', 'Tu embarazo ya está a término', 'Desde esta semana tu bebé puede nacer cualquier día. Ten a mano la bolsa del hospital y el registro de contracciones.'],
+};
+const PP_HITOS = {
+  0: ['via-lactea-atardecer', 'Tu bebé ya está aquí', 'Enhorabuena. Estos primeros días son de conoceros, descansar cuando puedas y pedir ayuda sin reparo.'],
+  13: ['seda-rosa', 'Tres meses juntos', 'Muchos bebés empiezan ahora a sonreír más, a seguir con la mirada y a dormir algo más seguido.'],
+  26: ['seda-melocoton', 'Medio año', 'Llega la alimentación complementaria y muchos bebés empiezan a sentarse con apoyo.'],
+  52: ['via-lactea-atardecer', 'Su primer año', 'Un año entero. Gracias por dejarnos acompañaros.'],
+};
+function hitoCard(kind, week) {
+  const h = (kind === 'preg' ? PREG_HITOS : PP_HITOS)[week];
+  const key = `${kind}-${week}`;
+  if (!h || hitosVistos().includes(key)) return '';
+  const [img, title, text] = h;
+  return `<div class="hito ${img}">
+    <button class="hito-x" data-action="hito-close" data-v="${key}" aria-label="Cerrar">${icon('x', 12)}</button>
+    <div class="t-11 upper track-1">${kind === 'preg' ? `Semana ${week}` : week === 0 ? 'Primera semana' : `Semana ${week}`}</div>
+    <div class="serif-22">${esc(title)}</div>
+    <p class="t-13 lh-4">${esc(text)}</p>
+  </div>`;
 }
 
 /** Pastilla de cada sección de Dudas, con las imágenes fluidas de la portada: seda rosa para el embarazo,
@@ -2173,8 +2210,8 @@ function mainView() {
     view = fns[ids[ui.tab]]();
   }
   return `<div class="shell">
-    <header class="app-header">
-      <div><h1 class="brand"><img src="brand/hera-logo-compact.svg" alt="Hera" width="113" height="34"></h1><div class="brand-tag">${MODE_TAG[mode]}</div></div>
+    <header class="app-header ${isNight() ? 'night' : ''}">
+      <div><h1 class="brand"><img src="brand/hera-logo-compact${isNight() ? '-white' : ''}.svg" alt="Hera" width="113" height="34"></h1><div class="brand-tag">${MODE_TAG[mode]}</div></div>
       <div class="row gap-8 center">
         ${syncPill()}
         <button class="ask-pill" data-action="open-ask" data-ctx="" aria-label="Pregunta a tu ginecólogo, a tu matrona o a tu pediatra" title="Pregunta a tu equipo">${consultPair('sm')}<span class="ask-label">Pregúntanos</span></button>
@@ -2206,7 +2243,9 @@ function render() {
   const stageNow = store.needsOnboarding ? (ui.ob.stageChosen ? ui.ob.flow : 'pregnancy') : store.mode;
   document.body.dataset.stage = stageNow;
   const tc = document.querySelector('meta[name=theme-color]');
-  if (tc) tc.content = '#FAF8F5';
+  const sky = (screen === 'ob' && ui.ob.step === 0) || (screen === 'main' && isNight());
+  document.body.classList.toggle('ob-sky', screen === 'ob' && ui.ob.step === 0);
+  if (tc) tc.content = sky ? '#2A1823' : '#FAF8F5';
   // Conserva el scroll interno del sheet al re-renderizar
   const sheetBody = root.querySelector('.sheet-body');
   const sheetScroll = sheetBody ? sheetBody.scrollTop : 0;
@@ -2444,6 +2483,7 @@ const actions = {
     setTimeout(() => root.querySelector('.ask-text')?.focus(), 300);
   },
   'ask-clear-ctx': () => { ui.ask.context = ''; render(); },
+  'hito-close': (el) => { try { localStorage.setItem(HITOS_KEY, JSON.stringify([...hitosVistos(), el.dataset.v])); } catch { /* sin almacenamiento */ } render(); },
   'ask-reset': () => { ui.ask = { ...ui.ask, context: '', include: true, text: '', sent: null, to: null, manual: false, status: null, result: ui.ask.result?.limit ? ui.ask.result : null, notify: null }; render(); },
   'ask-pick': (el) => { ui.ask.to = el.dataset.v; ui.ask.manual = true; render(); },
   'ask-submit': async () => {

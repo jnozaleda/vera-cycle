@@ -970,3 +970,36 @@ body[data-stage="postpartum"] { --st-soft: #ECE6F0; }
   .bubble-grid { grid-template-columns: 82px repeat(4, 1fr); }
   .bubble-h { padding: 3px 3px; }
 }
+
+/* ── Imágenes fluidas de la marca en la app (diseno/fluido/) ── */
+/* Bienvenida sobre la Vía Láctea */
+body.ob-sky { background: linear-gradient(180deg, rgba(28,16,24,.35), rgba(28,16,24,.15) 40%, rgba(28,16,24,.55)), url('img/fluido/via-lactea-atardecer.webp') 55% 40% / cover fixed, #2A1823; }
+body.ob-sky .ob-content, body.ob-sky .ob-content .soft { color: rgba(255,255,255,.92); }
+body.ob-sky .ob-tag { color: #F2B9A0; }
+body.ob-sky .btn-primary { background: #fff; color: #2E2630; }
+body.ob-sky .btn-primary:hover { background: #F4E6E8; }
+body.ob-sky .ob-content .link-soft { color: #fff; }
+body.ob-sky .ob-steps i { background: rgba(255,255,255,.3); }
+body.ob-sky .ob-steps i.on { background: #F2B9A0; }
+/* Franja de imagen en la tarjeta principal de Hoy, según el trimestre */
+.fl-strip { height: 64px; margin: -20px -20px 4px; border-radius: 19px 19px 0 0; background: #693D55 center / cover; }
+.fl-strip.seda-rosa { background-image: url('img/fluido/seda-rosa.webp'); }
+.fl-strip.seda-melocoton { background-image: url('img/fluido/seda-melocoton.webp'); }
+.fl-strip.via-lactea-atardecer { background-image: url('img/fluido/via-lactea-atardecer.webp'); background-position: 40% 45%; }
+/* Hitos */
+.hito { position: relative; display: grid; gap: 6px; padding: 22px 20px 20px; border-radius: 20px; color: #fff; background: #2A1823 center / cover; }
+.hito.seda-rosa { background-image: linear-gradient(180deg, rgba(42,24,35,.2), rgba(42,24,35,.6)), url('img/fluido/seda-rosa.webp'); }
+.hito.seda-melocoton { background-image: linear-gradient(180deg, rgba(42,24,35,.2), rgba(42,24,35,.6)), url('img/fluido/seda-melocoton.webp'); }
+.hito.via-lactea-atardecer { background-image: linear-gradient(180deg, rgba(28,16,24,.15), rgba(28,16,24,.5)), url('img/fluido/via-lactea-atardecer.webp'); background-position: 35% 45%; }
+.hito .serif-22 { color: #fff; font-size: 24px; }
+.hito p { color: rgba(255,255,255,.92); margin: 0; max-width: 32em; }
+.hito .upper { color: #F2B9A0; }
+.hito-x { position: absolute; top: 12px; right: 12px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: rgba(255,255,255,.18); }
+/* «Pregúntanos» con seda: la puerta a las profesionales destaca en la cabecera */
+.ask-pill { color: #fff; border-color: transparent; font-weight: 600;
+  background: linear-gradient(90deg, rgba(42,24,35,.45), rgba(42,24,35,.55)), url('img/fluido/seda-melocoton.webp') 20% 60% / 300%, #8E6178; text-shadow: 0 1px 2px rgba(42,24,35,.5); }
+.ask-pill .cav { box-shadow: 0 0 0 1.5px rgba(255,255,255,.9); }
+/* Cabecera nocturna (0 a 6 h) */
+.app-header.night { background: linear-gradient(180deg, rgba(28,16,24,.2), rgba(28,16,24,.45)), url('img/fluido/via-lactea-atardecer.webp') 45% 40% / cover, #2A1823;
+  border-radius: 0 0 20px 20px; margin-bottom: 14px; }
+.app-header.night .brand-tag { color: #F2B9A0; }

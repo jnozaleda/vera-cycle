@@ -2,7 +2,7 @@
 // Service worker de Hera web: permite abrir la app sin conexión.
 // Estrategia "red primero": siempre intenta la versión más reciente y usa la caché si no hay red.
 
-const CACHE = 'vera-web-v66';
+const CACHE = 'vera-web-v67';
 const SHELL = [
   './',
   'index.html',
@@ -38,6 +38,8 @@ const SHELL = [
   'brand/favicon.svg',
   'brand/hera-logo.svg',
   'brand/hera-logo-compact.svg',
+  'brand/hera-logo-white.svg',
+  'brand/hera-logo-compact-white.svg',
   'brand/hera-symbol.svg',
 ];
 
@@ -73,8 +75,12 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('push', (event) => {
   let data = {};
   try { data = event.data ? event.data.json() : {}; } catch { /* mensaje vacío */ }
+  // Imagen grande (Android): Vía Láctea para el bebé y el tercer trimestre, seda para el resto
+  const wk = Number((/^Semana (\d+)/.exec(data.title || '') || [])[1]);
+  const image = `img/fluido/${!wk || wk >= 28 ? 'via-lactea-atardecer' : wk >= 14 ? 'seda-melocoton' : 'seda-rosa'}.webp`;
   event.waitUntil(self.registration.showNotification(data.title || 'Hera', {
     body: data.body || '',
+    image,
     icon: 'icons/icon-192.png',
     badge: 'icons/favicon-32.png',
     tag: 'vera-weekly',

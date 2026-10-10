@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /panel.html
+Disallow: /diseno/
+Disallow: /consult-worker/
+Disallow: /push-worker/
+
+Sitemap: https://hera-gine.com/sitemap.xml

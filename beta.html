@@ -73,6 +73,8 @@
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const fmt = (iso) => (iso ? new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
   let code = '';
+  // La lista de Cloudflare tarda hasta un minuto en reflejar altas y bajas: se recuerdan aquí para mostrarlas ya
+  const added = new Map(); const removed = new Set();
   try { code = sessionStorage.getItem('hera-beta') || ''; } catch (e) {}
 
   async function api(method, body) {
@@ -85,7 +87,8 @@
 
   async function load() {
     try {
-      const { list } = await api('GET');
+      const got = await api('GET');
+      const list = [...added.values(), ...got.list.filter((v) => !added.has(v.id))].filter((v) => !removed.has(v.id));
       $('login').hidden = true; $('app').hidden = false;
       const now = Date.now();
       $('list').innerHTML = list.length ? `<table><tr><th>Nota</th><th>Hasta</th><th>Alta</th><th></th></tr>${list.map((v) => {
@@ -94,7 +97,7 @@
       }).join('')}</table>` : '<p class="muted">Todavía no hay nadie.</p>';
       document.querySelectorAll('[data-id]').forEach((b) => b.addEventListener('click', async () => {
         b.disabled = true;
-        try { await api('POST', { id: b.dataset.id, remove: true }); load(); } catch (e) { b.disabled = false; }
+        try { await api('POST', { id: b.dataset.id, remove: true }); removed.add(b.dataset.id); added.delete(b.dataset.id); load(); } catch (e) { b.disabled = false; }
       }));
     } catch (e) {
       $('app').hidden = true; $('login').hidden = false;
@@ -111,7 +114,8 @@
     ev.preventDefault();
     const m = $('amsg');
     try {
-      await api('POST', { email: $('email').value.trim(), note: $('note').value.trim(), until: $('until').value || undefined });
+      const r = await api('POST', { email: $('email').value.trim(), note: $('note').value.trim(), until: $('until').value || undefined });
+      if (r.entry) { added.set(r.entry.id, r.entry); removed.delete(r.entry.id); }
       m.className = 'msg ok'; m.textContent = 'Añadida. Ya puede consultar sin límite con ese correo.'; m.hidden = false;
       $('af').reset(); load();
     } catch (e) {

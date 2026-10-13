@@ -249,7 +249,8 @@ export default {
       const until = body.until && !Number.isNaN(Date.parse(body.until)) ? new Date(`${String(body.until).slice(0, 10)}T23:59:59Z`).toISOString() : null;
       const rec = { plan: 'ilimitado', until, note: String(body.note || '').slice(0, 60), at: new Date().toISOString() };
       await env.KV.put(vk, JSON.stringify(rec), { metadata: { note: rec.note, until, at: rec.at } });
-      return reply(200, { ok: true, until });
+      // Devuelve la entrada: la lista de KV tarda hasta un minuto en reflejar lo nuevo, así la página la muestra ya
+      return reply(200, { ok: true, until, entry: { id: vk.slice(2), note: rec.note, until, at: rec.at } });
     }
 
     if (!allowed.includes(origin)) return reply(403, { error: 'origin' });

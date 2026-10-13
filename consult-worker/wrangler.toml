@@ -8,6 +8,8 @@ FROM = "Hera <consultas@hera-gine.com>"
 FREE_LIMIT = "2"
 # "1" = modo ensayo: cuenta y responde, pero no envía correos. Poner "0" cuando Resend esté listo.
 DRY_RUN = "0"
+# "1" = respuestas a través de Hera (direcciones hera-p-/hera-u-; requiere Email Routing catch-all → este Worker)
+RELAY = "0"
 
 [[kv_namespaces]]
 binding = "KV"
@@ -17,3 +19,7 @@ id = "4d3613aad462458fb17c8481b2bf7481"
 binding = "DB"
 database_name = "hera-metrics"
 database_id = "7d34d415-4d8b-46f6-9def-d9b2986ed3f8"
+
+# Cada hora: recordatorio al profesional si una consulta lleva 40 h sin respuesta
+[triggers]
+crons = ["17 * * * *"]

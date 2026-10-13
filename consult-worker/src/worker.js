@@ -15,12 +15,18 @@
 // personas distintas (tabla visitors: hash de IP + navegador + día + sal, se borran a las 48 h). Sin IP ni identificadores.
 //
 // Bindings: KV (KV), HASH_SALT, ADMIN_TOKEN, RESEND_API_KEY, COPY_TO (opcional) (secretos), ALLOWED_ORIGINS, FROM, FREE_LIMIT,
-// DRY_RUN ("1" = hace todo menos enviar correos), DB (D1), PANEL_CODE (secreto).
+// DRY_RUN ("1" = hace todo menos enviar correos), DB (D1), PANEL_CODE (secreto), FALLBACK_TO (opcional: adónde reenviar
+// lo que llegue a otras direcciones por la regla catch-all; si falta, se usa COPY_TO).
+//
+// Respuestas a través de Hera (relay.js): email() recibe lo que llega a hera-p-…/hera-u-… y lo reenvía al otro lado;
+// scheduled() avisa al profesional cuando una consulta lleva 40 h sin respuesta.
+
+import { newThreadId, relayAddress, parseRelayAddress, sealEmail, openEmail, saveThread, loadThread, parseIncoming, isAutomatic } from './relay.js';
 
 export const PROS = {
-  gineco: { name: 'Dr. Gonzalo Nozaleda', short: 'Gonzalo', role: 'ginecólogo', email: 'gonzalo@hera-gine.com' },
-  matrona: { name: 'Marina Fernández', short: 'Marina', role: 'matrona', email: 'marina@hera-gine.com' },
-  pediatra: { name: 'Lucía Carrascón', short: 'Lucía', role: 'pediatra', email: 'lucia@hera-gine.com' },
+  gineco: { key: 'gineco', name: 'Dr. Gonzalo Nozaleda', short: 'Gonzalo', role: 'ginecólogo', email: 'gonzalo@hera-gine.com' },
+  matrona: { key: 'matrona', name: 'Marina Fernández', short: 'Marina', role: 'matrona', email: 'marina@hera-gine.com' },
+  pediatra: { key: 'pediatra', name: 'Lucía Carrascón', short: 'Lucía', role: 'pediatra', email: 'lucia@hera-gine.com' },
 };
 
 const EMAIL_RE = /^[^\s@<>()",;]{1,64}@[^\s@<>()",;]{1,190}\.[a-z]{2,24}$/i;
@@ -53,31 +59,53 @@ function shell(inner) {
 <p style="font-size:12px;color:#888780;margin-top:24px;border-top:1px solid #E4DED0;padding-top:12px">Hera · Embarazo, posparto y bebé · <a href="https://hera-gine.com" style="color:#3F584B">hera-gine.com</a></p></div>`;
 }
 
-export function proEmail(pro, q) {
-  const subject = `Consulta de Hera${q.context ? ` · ${q.context}` : ''}`;
+export function proEmail(pro, q, id = '', relay = true) {
+  const subject = `Consulta Hera${id ? ` #${id.toUpperCase()}` : ''}${q.context ? ` · ${q.context}` : ''}`;
   const html = shell(`<p>Nueva consulta para <b>${esc(pro.name)}</b>.</p>
 <div style="background:#F1EFE8;border-radius:10px;padding:14px;margin:12px 0">${nl2br(q.text)}</div>
 ${q.context ? `<p style="font-size:13px;color:#5F5E5A">Sobre: ${esc(q.context)}</p>` : ''}
 ${q.situation ? `<p style="font-size:13px;color:#5F5E5A">Situación: ${nl2br(q.situation)}</p>` : ''}
-<p style="font-size:13px;color:#5F5E5A">Responde a este correo para contestar directamente a la usuaria (${esc(q.email)}). Plazo comprometido: 48 h.</p>`);
-  const text = `Nueva consulta para ${pro.name}\n\n${q.text}\n\n${q.context ? `Sobre: ${q.context}\n` : ''}${q.situation ? `Situación: ${q.situation}\n` : ''}\nResponde a este correo para contestar a la usuaria (${q.email}).`;
+${relay ? `<p style="font-size:13px;color:#5F5E5A"><b>Para contestar, responde a este correo</b> desde el móvil o el ordenador. Tu respuesta le llegará a la usuaria desde ${esc(pro.email)}: tu correo personal no se muestra. Si ella vuelve a escribir, te llegará en esta misma conversación. Plazo comprometido: 48 h.</p>`
+    : `<p style="font-size:13px;color:#5F5E5A">Responde a este correo para contestar directamente a la usuaria (${esc(q.email)}). Plazo comprometido: 48 h.</p>`}`);
+  const text = `Nueva consulta para ${pro.name}\n\n${q.text}\n\n${q.context ? `Sobre: ${q.context}\n` : ''}${q.situation ? `Situación: ${q.situation}\n` : ''}\n${relay ? `Para contestar, responde a este correo: tu respuesta le llegará a la usuaria desde ${pro.email}, sin mostrar tu correo personal. Plazo: 48 h.` : `Responde a este correo para contestar a la usuaria (${q.email}).`}`;
   return { subject, html, text };
 }
 
-export function confirmEmail(pro, q, remaining) {
+export function confirmEmail(pro, q, remaining, id = '') {
   const excerpt = q.text.length > 160 ? `${q.text.slice(0, 160).trim()}…` : q.text;
   const left = remaining === 0 ? 'Era tu última consulta gratuita' : `Te ${remaining === 1 ? 'queda 1 consulta gratuita' : `quedan ${remaining} consultas gratuitas`}`;
-  const subject = `Tu consulta a ${pro.short} está enviada`;
+  const subject = `Tu consulta a ${pro.short} · Hera${id ? ` #${id.toUpperCase()}` : ''}`;
   const html = shell(`<p>Hola,</p>
-<p>Tu consulta ha llegado a <b>${esc(pro.name)}, ${esc(pro.role)}</b>. Te responderá a este correo en menos de 48 h.</p>
+<p>Tu consulta ha llegado a <b>${esc(pro.name)}, ${esc(pro.role)}</b>. Te responderá en esta misma conversación en menos de 48 h.</p>
 <div style="background:#F1EFE8;border-radius:10px;padding:12px;margin:12px 0;font-size:14px;color:#444441">«${esc(excerpt)}»${q.context ? `<br><span style="color:#5F5E5A">Sobre: ${esc(q.context)}</span>` : ''}</div>
 <p><span style="display:inline-block;background:#E7EDE6;color:#3F584B;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600">${left}</span></p>
+<p style="font-size:13px;color:#5F5E5A">¿Quieres añadir algo o enviar una foto? Responde a este correo y le llegará a ${esc(pro.short)}.</p>
 <p style="font-size:13px;color:#5F5E5A">No es un servicio de urgencias. Si algo no va bien, llama al 112 o acude a tu centro de salud.</p>
-<p style="font-size:12px;color:#888780">¿No has escrito tú esta consulta? Responde a este correo y la borramos.</p>`);
-  const text = `Tu consulta ha llegado a ${pro.name}, ${pro.role}. Te responderá a este correo en menos de 48 h.\n\n«${excerpt}»\n\n${left}.\n\nNo es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.\n¿No has escrito tú esta consulta? Responde a este correo y la borramos.`;
+<p style="font-size:12px;color:#888780">¿No has escrito tú esta consulta? Escríbenos a contacto@hera-gine.com y la borramos.</p>`);
+  const text = `Tu consulta ha llegado a ${pro.name}, ${pro.role}. Te responderá en esta misma conversación en menos de 48 h.\n\n«${excerpt}»\n\n${left}.\n\n¿Quieres añadir algo o enviar una foto? Responde a este correo y le llegará a ${pro.short}.\n\nNo es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.\n¿No has escrito tú esta consulta? Escríbenos a contacto@hera-gine.com y la borramos.`;
   return { subject, html, text };
 }
 
+
+/** Mensaje reenviado por el hilo: del profesional a la usuaria o de la usuaria al profesional */
+export function relayEmail(pro, role, id, body, nAttach) {
+  const head = role === 'p' ? `<p style="font-size:13px;color:#5F5E5A;margin-bottom:6px">${esc(pro.name)}, ${esc(pro.role)}, te responde:</p>`
+    : `<p style="font-size:13px;color:#5F5E5A;margin-bottom:6px">La usuaria de la consulta #${id.toUpperCase()} ha escrito:</p>`;
+  const att = nAttach ? `<p style="font-size:13px;color:#5F5E5A">📎 ${nAttach} ${nAttach === 1 ? 'archivo adjunto' : 'archivos adjuntos'}</p>` : '';
+  const foot = role === 'p'
+    ? 'Si necesitas aclarar algo, responde a este correo. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.'
+    : `Responde a este correo para contestarle; le llegará desde ${pro.email}.`;
+  const html = shell(`${head}<div style="white-space:normal">${nl2br(body)}</div>${att}<p style="font-size:12px;color:#888780;margin-top:18px">${esc(foot)}</p>`);
+  const text = `${role === 'p' ? `${pro.name}, ${pro.role}, te responde:` : `La usuaria de la consulta #${id.toUpperCase()} ha escrito:`}\n\n${body}\n\n${nAttach ? `[${nAttach} adjunto(s)]\n\n` : ''}${foot}`;
+  return { html, text };
+}
+
+/** Aviso al profesional cuando una consulta lleva 40 h sin respuesta */
+export function reminderEmail(pro, id) {
+  const html = shell(`<p>Hola, ${esc(pro.short)}:</p><p>La consulta <b>#${id.toUpperCase()}</b> lleva 40 horas sin respuesta y el plazo que damos a las usuarias es de 48 h.</p>
+<p>Puedes responder a este mismo correo y le llegará a ella.</p>`);
+  return { html, text: `Hola, ${pro.short}: la consulta #${id.toUpperCase()} lleva 40 horas sin respuesta (plazo: 48 h). Puedes responder a este mismo correo y le llegará a la usuaria.` };
+}
 
 // MARK: - Medición de uso
 
@@ -90,10 +118,10 @@ export function madridDay(d = new Date()) {
 /** Eventos que acepta /hit (nombre o nombre:valor) */
 export const EVENT_RE = /^(apertura|portada|pregunta_portada|enviada_portada|abrir_portada|consulta_abierta|push_on|sync_on|etapa:(pregnancy|postpartum|cycle)|pestana:(today|diary|care|guide|cycle|trends|baby)|vista:(tu|bebe))$/;
 
-async function bump(env, k, day = madridDay()) {
+async function bump(env, k, day = madridDay(), by = 1) {
   if (!env.DB) return;
   try {
-    await env.DB.prepare('INSERT INTO counts (day, k, n) VALUES (?1, ?2, 1) ON CONFLICT(day, k) DO UPDATE SET n = n + 1').bind(day, k).run();
+    await env.DB.prepare('INSERT INTO counts (day, k, n) VALUES (?1, ?2, ?3) ON CONFLICT(day, k) DO UPDATE SET n = n + ?3').bind(day, k, by).run();
   } catch (e) { console.log(`metrics ${e.message}`); }
 }
 
@@ -114,15 +142,31 @@ async function countPerson(env, request, key) {
   } catch (e) { console.log(`metrics ${e.message}`); }
 }
 
-async function sendMail(env, { to, replyTo, subject, html, text, bcc }) {
-  if (env.DRY_RUN === '1') { console.log(`[ensayo] correo a ${to}: ${subject}`); return true; }
+/** Envía con Resend. Devuelve {id} si sale bien o null. refs: identificadores anteriores del hilo (para In-Reply-To/References) */
+async function sendMail(env, { to, replyTo, subject, html, text, bcc, from, refs, attachments }) {
+  if (env.DRY_RUN === '1') { console.log(`[ensayo] correo a ${to}: ${subject}`); return { id: null }; }
+  const headers = refs?.length ? { 'In-Reply-To': refs[refs.length - 1], References: refs.slice(-20).join(' ') } : undefined;
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: env.FROM, to: [to], reply_to: replyTo, subject, html, text, ...(bcc ? { bcc: [bcc] } : {}) }),
+    body: JSON.stringify({ from: from || env.FROM, to: [to], reply_to: replyTo, subject, html, text, ...(bcc ? { bcc: [bcc] } : {}),
+      ...(headers ? { headers } : {}), ...(attachments?.length ? { attachments } : {}) }),
   });
-  if (!res.ok) console.log(`resend ${res.status} ${await res.text()}`);
-  return res.ok;
+  if (!res.ok) { console.log(`resend ${res.status} ${await res.text()}`); return null; }
+  const j = await res.json().catch(() => ({}));
+  return { id: j.id || null };
+}
+
+/** Message-ID que puso Resend a un correo enviado (para encadenar el hilo) */
+async function sentMessageId(env, resendId) {
+  if (!resendId || env.DRY_RUN === '1') return null;
+  try {
+    const r = await fetch(`https://api.resend.com/emails/${resendId}`, { headers: { Authorization: `Bearer ${env.RESEND_API_KEY}` } });
+    if (!r.ok) return null;
+    const j = await r.json();
+    const mid = j.message_id || j.messageId || null;
+    return mid ? (mid.startsWith('<') ? mid : `<${mid}>`) : null;
+  } catch { return null; }
 }
 
 /** Límite simple por IP: 5 envíos cada 10 minutos */
@@ -155,7 +199,7 @@ export default {
       const days = Math.min(365, Math.max(1, Number(url.searchParams.get('days')) || 30));
       const from = madridDay(new Date(Date.now() - (days - 1) * 86400000));
       const { results } = await env.DB.prepare('SELECT day, k, n FROM counts WHERE day >= ?1 ORDER BY day').bind(from).all();
-      return reply(200, { from, to: madridDay(), rows: results });
+      return reply(200, { from, to: madridDay(), rows: results, open: await openThreads(env) });
     }
     if (request.method !== 'POST') return reply(405, { error: 'method' });
 
@@ -198,31 +242,149 @@ export default {
 
     if (url.pathname === '/ask') {
       if (body.website) return reply(200, { ok: true, remaining: limit - 1 }); // campo trampa: un robot cree que ha funcionado
+      // En la prueba de principio a fin, email «yo» = COPY_TO (Noza hace de usuaria y de profesional sin escribir su correo aquí)
+      if (body.to === 'prueba' && body.email === 'yo' && env.COPY_TO && request.headers.get('Authorization') === `Bearer ${env.ADMIN_TOKEN}`) body.email = env.COPY_TO;
       const norm = normalizeEmail(body.email);
       if (!norm) return reply(400, { error: 'bad_email' });
-      const pro = PROS[body.to];
+      const pro = PROS[body.to] || (body.to === 'prueba' && env.ADMIN_TOKEN && request.headers.get('Authorization') === `Bearer ${env.ADMIN_TOKEN}` && env.COPY_TO
+        ? { name: 'Prueba de Hera', short: 'Prueba', role: 'prueba', email: env.COPY_TO, key: 'prueba' } : null);
       if (!pro) return reply(400, { error: 'bad_to' });
       const text = String(body.text || '').trim();
       if (text.length < 5 || text.length > 2000) return reply(400, { error: 'bad_text' });
       const q = { email: String(body.email).trim(), text, context: String(body.context || '').slice(0, 120), situation: String(body.situation || '').slice(0, 500) };
+      // Prueba de principio a fin (solo con ADMIN_TOKEN): el «profesional» es COPY_TO y no cuenta como consulta gratuita
+      const test = body.to === 'prueba' && env.ADMIN_TOKEN && request.headers.get('Authorization') === `Bearer ${env.ADMIN_TOKEN}` && env.COPY_TO;
 
       const key = `c:${await hmac(env.HASH_SALT, norm)}`;
       const rec = (await env.KV.get(key, 'json')) || { n: 0, first: null, last: null };
-      if (rec.n >= limit) { await bump(env, 'gratuitas_agotadas'); return reply(200, { limit: true, used: rec.n, freeLimit: limit }); }
-      if (await rateLimited(env, request.headers.get('CF-Connecting-IP'))) return reply(429, { error: 'rate' });
+      if (!test && rec.n >= limit) { await bump(env, 'gratuitas_agotadas'); return reply(200, { limit: true, used: rec.n, freeLimit: limit }); }
+      if (!test && await rateLimited(env, request.headers.get('CF-Connecting-IP'))) return reply(429, { error: 'rate' });
 
-      const pm = proEmail(pro, q);
-      const sent = await sendMail(env, { to: pro.email, replyTo: q.email, ...pm, bcc: env.COPY_TO || undefined }); // COPY_TO (secreto): copia oculta de cada consulta mientras se prueba
+      // Hilo: el profesional y la usuaria se responden a través de direcciones de Hera de un solo uso
+      const id = newThreadId();
+      const bcc = test ? undefined : env.COPY_TO || undefined; // COPY_TO (secreto): copia oculta de cada consulta mientras se prueba
+      // RELAY="1": respuestas a través de Hera (necesita la regla catch-all → Worker en Email Routing). Las pruebas siempre lo usan.
+      const relay = env.RELAY === '1' || !!test;
+      const pm = proEmail(pro, q, id, relay);
+      const sent = await sendMail(env, { to: pro.email, replyTo: relay ? await relayAddress(env, 'p', id) : q.email, ...pm, bcc });
       if (!sent) return reply(502, { error: 'send' });
       const now = new Date().toISOString();
-      const n = rec.n + 1;
-      await env.KV.put(key, JSON.stringify({ n, first: rec.first || now, last: now }));
-      await bump(env, `consulta:${body.to}`);
+      const n = test ? rec.n : rec.n + 1;
+      if (!test) {
+        await env.KV.put(key, JSON.stringify({ n, first: rec.first || now, last: now }));
+        await bump(env, `consulta:${body.to}`);
+      }
       const remaining = Math.max(0, limit - n);
-      const cm = confirmEmail(pro, q, remaining);
-      await sendMail(env, { to: q.email, replyTo: pro.email, ...cm, bcc: env.COPY_TO || undefined });
+      const cm = confirmEmail(pro, q, remaining, id);
+      const sentU = await sendMail(env, { to: q.email, replyTo: relay ? await relayAddress(env, 'u', id) : pro.email, ...cm, bcc });
+      // Sin relay no hay hilo que seguir (ni recordatorios): no se guarda nada más
+      if (relay) {
+        const [mp, mu] = await Promise.all([sentMessageId(env, sent.id), sentMessageId(env, sentU?.id)]);
+        await saveThread(env, { id, p: pro.key || body.to, u: await sealEmail(env, q.email), uh: (await hmac(env.HASH_SALT, norm)).slice(0, 24),
+          sp: pm.subject, su: cm.subject, rp: mp ? [mp] : [], ru: mu ? [mu] : [], c: Date.now(), a: 0, rem: false, n: 0 });
+      }
       return reply(200, { ok: true, remaining, freeLimit: limit, dryRun: env.DRY_RUN === '1' });
     }
     return reply(404, { error: 'not_found' });
   },
+
+  /** Correo entrante (Email Routing, regla catch-all → este Worker) */
+  async email(message, env) {
+    const dest = await parseRelayAddress(env, message.to);
+    if (!dest) {
+      // Cualquier otra dirección sin regla propia (p. ej. consultas@): se reenvía a Noza para que no se pierda
+      const fwd = env.FALLBACK_TO || env.COPY_TO;
+      if (fwd) { try { await message.forward(fwd); return; } catch (e) { console.log(`forward ${e.message}`); } }
+      message.setReject('Esta dirección no existe. Escríbenos a contacto@hera-gine.com');
+      return;
+    }
+    if (message.rawSize > 20 * 1024 * 1024) { message.setReject('El mensaje es demasiado grande (máximo 20 MB).'); return; }
+    const t = await loadThread(env, dest.id);
+    if (!t) { message.setReject('Esta consulta ya ha caducado. Puedes hacer una nueva en https://hera-gine.com'); return; }
+    if (isAutomatic(message.headers)) return; // respuestas automáticas: se descartan
+    await relayIncoming(env, t, dest.role, message.raw, message.from);
+  },
+
+  /** Cada hora: recordatorio al profesional si una consulta lleva 40 h sin respuesta */
+  async scheduled(event, env) {
+    await remindOverdue(env);
+  },
 };
+
+/** Reenvía un mensaje del hilo al otro lado y actualiza el hilo. role: quién escribe («p» profesional, «u» usuaria) */
+export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
+  const pro = PROS[t.p] || (t.p === 'prueba' && env.COPY_TO ? { name: 'Prueba de Hera', short: 'Prueba', role: 'prueba', email: env.COPY_TO } : null);
+  if (!pro) return { ok: false, why: 'pro' };
+  const msg = await parseIncoming(raw);
+  if (role === 'u') {
+    // Solo la usuaria de la consulta puede escribir por su dirección
+    const from = normalizeEmail(msg.from || envelopeFrom);
+    if (!from || (await hmac(env.HASH_SALT, from)).slice(0, 24) !== t.uh) return { ok: false, why: 'sender' };
+  }
+  if (!msg.body && !msg.attachments.length) return { ok: false, why: 'empty' };
+  const toUser = role === 'p';
+  const { html, text } = relayEmail(pro, role, t.id, msg.body || '(Sin texto: mira el archivo adjunto.)', msg.attachments.length);
+  const refsMine = toUser ? t.ru : t.rp;
+  const sent = await sendMail(env, {
+    to: toUser ? await openEmail(env, t.u) : pro.email,
+    from: toUser ? `${pro.short} · Hera <${PROS[t.p] ? pro.email : 'consultas@hera-gine.com'}>` : `Consulta #${t.id.toUpperCase()} · Hera <consultas@hera-gine.com>`,
+    replyTo: await relayAddress(env, toUser ? 'u' : 'p', t.id),
+    subject: `Re: ${toUser ? t.su : t.sp}`,
+    refs: refsMine, html, text, attachments: msg.attachments,
+    bcc: t.p === 'prueba' ? undefined : env.COPY_TO || undefined,
+  });
+  if (!sent) return { ok: false, why: 'send' };
+  // Encadenar: el mensaje entrante pasa a formar parte del hilo de quien lo escribió; el enviado, del otro lado
+  const outId = await sentMessageId(env, sent.id);
+  if (msg.messageId) (toUser ? t.rp : t.ru).push(msg.messageId.startsWith('<') ? msg.messageId : `<${msg.messageId}>`);
+  if (outId) (toUser ? t.ru : t.rp).push(outId);
+  t.rp = t.rp.slice(-20); t.ru = t.ru.slice(-20);
+  t.n = (t.n || 0) + 1;
+  if (toUser && !t.a) {
+    t.a = Date.now();
+    if (t.p !== 'prueba') {
+      await bump(env, `respondida:${t.p}`);
+      await bump(env, `resp_horas:${t.p}`, madridDay(), Math.max(1, Math.round((t.a - t.c) / 3600000)));
+    }
+  }
+  if (t.p !== 'prueba') await bump(env, toUser ? 'mensaje:profesional' : 'mensaje:usuaria');
+  await saveThread(env, t);
+  return { ok: true };
+}
+
+/** Consultas abiertas sin respuesta, por profesional (para el panel) */
+async function openThreads(env) {
+  const out = { pendientes: {}, fuera_plazo: {} };
+  let cursor;
+  do {
+    const page = await env.KV.list({ prefix: 't:', cursor });
+    for (const k of page.keys) {
+      const m = k.metadata || {};
+      if (!m.p || m.a || m.p === 'prueba') continue;
+      out.pendientes[m.p] = (out.pendientes[m.p] || 0) + 1;
+      if (Date.now() - m.c > 48 * 3600000) out.fuera_plazo[m.p] = (out.fuera_plazo[m.p] || 0) + 1;
+    }
+    cursor = page.list_complete ? null : page.cursor;
+  } while (cursor);
+  return out;
+}
+
+export async function remindOverdue(env) {
+  let cursor; let n = 0;
+  do {
+    const page = await env.KV.list({ prefix: 't:', cursor });
+    for (const k of page.keys) {
+      const m = k.metadata || {};
+      if (!m.p || m.a || m.r || Date.now() - m.c < 40 * 3600000) continue;
+      const t = await loadThread(env, k.name.slice(2));
+      if (!t || t.a || t.rem) continue;
+      const pro = PROS[t.p] || (t.p === 'prueba' && env.COPY_TO ? { short: 'Prueba', email: env.COPY_TO } : null);
+      if (!pro) continue;
+      const { html, text } = reminderEmail(pro, t.id);
+      const sent = await sendMail(env, { to: pro.email, replyTo: await relayAddress(env, 'p', t.id), subject: `Re: ${t.sp}`, refs: t.rp, html, text });
+      if (sent) { t.rem = true; await saveThread(env, t); if (t.p !== 'prueba') await bump(env, `recordatorio:${t.p}`); n++; }
+    }
+    cursor = page.list_complete ? null : page.cursor;
+  } while (cursor);
+  return n;
+}

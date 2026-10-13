@@ -286,8 +286,8 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         <div class="more" id="ask-more" hidden>
           <fieldset class="picks">
             <legend>¿A quién se lo preguntas?</legend>
-            <label class="pick"><input type="radio" name="to" value="gineco"><img src="portada/equipo/gonzalo.jpg" alt="" width="40" height="40"><span><b>Gonzalo</b><small>Ginecólogo</small></span><em>Sugerido</em></label>
-            <label class="pick"><input type="radio" name="to" value="matrona"><img src="portada/equipo/marina.jpg" alt="" width="40" height="40"><span><b>Marina</b><small>Matrona</small></span><em>Sugerido</em></label>
+            <label class="pick"><input type="radio" name="to" value="gineco"><img src="portada/equipo/gonzalo.jpg?v=2" alt="" width="40" height="40"><span><b>Gonzalo</b><small>Ginecólogo</small></span><em>Sugerido</em></label>
+            <label class="pick"><input type="radio" name="to" value="matrona"><img src="portada/equipo/marina.jpg?v=2" alt="" width="40" height="40"><span><b>Marina</b><small>Matrona</small></span><em>Sugerido</em></label>
             <label class="pick"><input type="radio" name="to" value="pediatra"><img src="portada/equipo/lucia.jpg" alt="" width="40" height="40"><span><b>Lucía</b><small>Pediatra</small></span><em>Sugerido</em></label>
           </fieldset>
           <p class="hint" id="ask-hint" aria-live="polite"></p>
@@ -323,8 +323,8 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
 
       <div class="faces">
         <div class="stack">
-          <img src="portada/equipo/gonzalo.jpg" alt="" width="44" height="44">
-          <img src="portada/equipo/marina.jpg" alt="" width="44" height="44">
+          <img src="portada/equipo/gonzalo.jpg?v=2" alt="" width="44" height="44">
+          <img src="portada/equipo/marina.jpg?v=2" alt="" width="44" height="44">
           <img src="portada/equipo/lucia.jpg" alt="" width="44" height="44">
         </div>
         <p><b>Gonzalo, Marina y Lucía</b><br>Ginecólogo, matrona y pediatra. Te responden en menos de 48 h.</p>
@@ -401,13 +401,13 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     <p class="sub">Cada consulta la lee y la responde una de ellas. Nada de respuestas automáticas.</p>
     <div class="team">
       <article class="pro">
-        <div class="head"><img src="portada/equipo/gonzalo.jpg" alt="Gonzalo Nozaleda" width="72" height="72" loading="lazy">
+        <div class="head"><img src="portada/equipo/gonzalo.jpg?v=2" alt="Gonzalo Nozaleda" width="72" height="72" loading="lazy">
           <div><h3>Dr. Gonzalo Nozaleda</h3><p class="role">Ginecólogo</p></div></div>
         <p>Embarazo y pruebas, medicación, anticoncepción, la regla y el ciclo, y cualquier complicación.</p>
         <a class="btn btn-s" href="#ask" data-to="gineco">Pregunta a Gonzalo</a>
       </article>
       <article class="pro">
-        <div class="head"><img src="portada/equipo/marina.jpg" alt="Marina Fernández" width="72" height="72" loading="lazy">
+        <div class="head"><img src="portada/equipo/marina.jpg?v=2" alt="Marina Fernández" width="72" height="72" loading="lazy">
           <div><h3>Marina Fernández</h3><p class="role">Matrona</p></div></div>
         <p>Lactancia, preparación al parto, posparto, suelo pélvico y los cuidados del recién nacido.</p>
         <a class="btn btn-s" href="#ask" data-to="matrona">Pregunta a Marina</a>
@@ -597,7 +597,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   function swap(html) { form.hidden = true; done.innerHTML = html; done.hidden = false; box.scrollIntoView({ block: 'nearest' }); }
   function showDone(to, j) {
     const total = j.freeLimit || 2, rem = j.remaining ?? 0, p = PROS[to];
-    swap(`<img src="portada/equipo/${p.img}.jpg" alt="" width="64" height="64">
+    swap(`<img src="portada/equipo/${p.img}.jpg?v=2" alt="" width="64" height="64">
       <h3>Consulta enviada</h3>
       <p>${p.name} te responderá en menos de 48 h a <b>${esc(lastEmail)}</b>. Te hemos mandado una copia.</p>
       <span class="dots" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i < total - rem ? 'on' : ''}"></i>`).join('')}</span>

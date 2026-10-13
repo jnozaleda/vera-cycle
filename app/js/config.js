@@ -26,7 +26,7 @@ export const CONSULTS = {
     role: 'Ginecólogo',
     scope: 'Embarazo y pruebas, medicación, anticoncepción, regla y ciclo, complicaciones',
     colegiado: '',
-    photo: '',
+    photo: 'img/equipo/gonzalo.jpg',
     whatsapp: '',
     // PRUEBAS: la dirección @hera-gine.com reenvía al correo de Noza; cambiar el destino del reenvío por el real al lanzar.
     email: 'gonzalo@hera-gine.com',
@@ -40,7 +40,7 @@ export const CONSULTS = {
     role: 'Matrona',
     scope: 'Lactancia, parto y posparto, suelo pélvico, cuidados del recién nacido',
     colegiado: '',
-    photo: '',
+    photo: 'img/equipo/marina.jpg',
     whatsapp: '',
     // PRUEBAS: la dirección @hera-gine.com reenvía al correo de Noza; cambiar el destino del reenvío por el real al lanzar.
     email: 'marina@hera-gine.com',
@@ -54,7 +54,7 @@ export const CONSULTS = {
     role: 'Pediatra',
     scope: 'Salud y cuidados del bebé: fiebre, alimentación, sueño, desarrollo, vacunas',
     colegiado: '',
-    photo: '',
+    photo: 'img/equipo/lucia.jpg',
     whatsapp: '',
     // PRUEBAS: la dirección @hera-gine.com reenvía al correo de Noza; cambiar el destino del reenvío por el real al lanzar.
     email: 'lucia@hera-gine.com',

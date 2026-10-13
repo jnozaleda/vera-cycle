@@ -25,6 +25,7 @@ import { PREGNANCY_LINE, pregnancyNormal, pregnancyFaqs, postpartumLine, postpar
 import { spansPregnancy } from './predict.js';
 import { PREGNANCY_BETA_ONLY, CONSULT, CONSULTS, TAGLINE, CONSULT_API, CONSULT_FORM } from './config.js';
 import { suggestContact } from './contacts.js';
+import { listConsults, addConsult, markSeen, clearConsults, consultState, unseenAnswer, refreshConsults } from './consults.js';
 import { track } from './track.js';
 import { isBeta } from './beta.js';
 import { pushState, enablePush, disablePush, syncPush, testPush } from './push.js';
@@ -913,6 +914,12 @@ function settingsSheet() {
       ${stageUI() ? stageSection() : ''}
       ${dm === 'pregnancy' ? pregnancyForm() : dm === 'postpartum' ? postpartumForm() : cycleForm}
       ${pushSection()}
+      ${listConsults().length ? `<div class="stack-10 data-box">
+        ${eyebrow('Tus consultas')}
+        <p class="t-12 soft lh-3">Las que has hecho desde este dispositivo. La respuesta te llega por correo; aquí ves si ya está respondida.</p>
+        ${consultList()}
+        <button class="link-danger row gap-6 center self-start" data-action="consults-clear">${icon('trash', 12)} Borrar este historial</button>
+      </div>` : ''}
       ${syncAvailable() ? syncSection() : ''}
       <div class="stack-10 data-box">
         ${eyebrow('Contacto')}
@@ -1254,7 +1261,9 @@ function askSheet() {
   }
   const sugg = suggestContact({ text: a.text, context: a.context, mode: store.mode });
   const details = consultDetails();
+  const mine = listConsults();
   return sheetFrame('Consulta', `<div class="stack-14">
+    ${mine.length ? `<details class="my-consults" data-id="my-consults" ${ui.openDetails.has('my-consults') ? 'open' : ''}><summary>Tus consultas (${mine.length})</summary>${consultList(10)}</details>` : ''}
     <div class="stack-8 ask-picks" role="radiogroup" aria-label="¿A quién quieres preguntar?">
       ${askPickCard(CONSULTS.gineco, a, sugg)}${askPickCard(CONSULTS.matrona, a, sugg)}${askPickCard(CONSULTS.pediatra, a, sugg)}
     </div>
@@ -1389,6 +1398,7 @@ function pregnancyToday() {
     </div>`;
   return `<div class="stack-14">
     ${switcher}
+    ${answerStrip()}
     ${hitoCard('preg', g.weeks)}
     <div class="card pad stack-10 preg-hero">
       ${flStrip(flTrimester(g.trimester))}
@@ -1475,6 +1485,7 @@ function postpartumToday() {
     </div>`;
   return `<div class="stack-14">
     ${switcher}
+    ${answerStrip()}
     ${hitoCard('pp', s.weeks)}
     <div class="card pad stack-10 preg-hero">
       ${flStrip('seda-melocoton')}
@@ -1632,6 +1643,37 @@ function answerHTML(a) {
     if (b && typeof b === 'object') return `<p><a class="faq-ext" href="${attr(b.link)}" target="_blank" rel="noopener">${esc(b.text)} ↗</a></p>`;
     return `<p>${esc(b)}</p>`;
   }).join('');
+}
+
+// MARK: - Mis consultas (historial en este dispositivo; el estado se pide al servicio)
+
+const CONSULT_STATE = { respondida: ['Respondida', 'ok'], pendiente: ['Pendiente', 'wait'], fuera: ['Sin respuesta aún', 'late'] };
+/** Lista de consultas hechas desde este dispositivo */
+function consultList(max = 50) {
+  const list = listConsults().slice(0, max);
+  if (!list.length) return '';
+  return `<div class="my-list">${list.map((c) => {
+    const pro = CONSULTS[c.to] || CONSULT;
+    const [label, cls] = CONSULT_STATE[consultState(c)];
+    const d = new Date(c.at);
+    return `<div class="my-row">${consultAvatar('sm', pro.key)}
+      <div class="grow"><div class="row between center gap-8"><span class="t-13 w-500">${esc(pro.short)} · ${d.getDate()} ${d.toLocaleDateString('es-ES', { month: 'short' }).replace('.', '')}</span><span class="my-pill ${cls}">${label}</span></div>
+      <div class="t-12 soft my-text">${esc(c.text)}</div></div></div>`;
+  }).join('')}</div>`;
+}
+/** Franja en Hoy cuando ha llegado una respuesta que aún no se ha visto */
+function answerStrip() {
+  const c = unseenAnswer();
+  if (!c) return '';
+  const pro = CONSULTS[c.to] || CONSULT;
+  return `<div class="push-strip answer-strip">
+    <button class="push-strip-main" data-action="consult-seen" data-v="${attr(c.id)}">${consultAvatar('sm', pro.key)}
+      <span class="grow left t-13"><b class="w-500">${esc(pro.short)} te ha respondido</b> por correo</span></button>
+    <button class="push-strip-x" data-action="consult-seen" data-v="${attr(c.id)}" aria-label="Entendido">${icon('x', 12)}</button>
+  </div>`;
+}
+async function checkConsults(force = false) {
+  if (await refreshConsults(CONSULT_API, { force })) render();
 }
 
 /** Imagen fluida de cada trimestre: seda rosa, seda melocotón y Vía Láctea (diseno/fluido/) */
@@ -2508,6 +2550,8 @@ const actions = {
     setTimeout(() => root.querySelector('.ask-text')?.focus(), 300);
   },
   'ask-clear-ctx': () => { ui.ask.context = ''; render(); },
+  'consult-seen': (el) => { markSeen(el.dataset.v); render(); },
+  'consults-clear': () => { if (!confirm('¿Borrar el historial de consultas de este dispositivo? Las respuestas siguen en tu correo.')) return; clearConsults(); render(); },
   'hito-close': (el) => { try { localStorage.setItem(HITOS_KEY, JSON.stringify([...hitosVistos(), el.dataset.v])); } catch { /* sin almacenamiento */ } render(); },
   'ask-reset': () => { ui.ask = { ...ui.ask, context: '', include: true, text: '', sent: null, to: null, manual: false, status: null, result: ui.ask.result?.limit ? ui.ask.result : null, notify: null }; render(); },
   'ask-pick': (el) => { ui.ask.to = el.dataset.v; ui.ask.manual = true; render(); },
@@ -2529,6 +2573,7 @@ const actions = {
       if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');
       if (!res.ok && !j.limit) throw new Error('No se ha podido enviar. Inténtalo de nuevo en un rato.');
       a.status = null; a.result = j; a.sentTo = to.key;
+      if (j.ok && j.id) addConsult({ id: j.id, to: to.key, text: a.text.trim() });
       if (j.ok) a.text = '';
     } catch (e) { a.status = 'error'; a.error = e.message; }
     render();
@@ -2909,7 +2954,8 @@ function tick() {
   if (!(a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA'))) render();
 }
 setInterval(tick, 60000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) { tick(); checkConsults(); } });
+checkConsults(true);
 
 // MARK: - Arranque
 

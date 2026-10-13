@@ -105,6 +105,10 @@ assert.equal((await st.json()).open.pendientes.gineco, 1);
 // otras direcciones: se reenvían
 let fw = null; await worker.email({ to: 'consultas@hera-gine.com', from: 'a@b.c', forward: async (x) => { fw = x; }, setReject() {} }, env);
 assert.equal(fw, 'copia@example.com');
+// estado de las consultas para la app
+const sj = await worker.fetch(new Request(`https://w/status?ids=${tid},zzzzzzzz,../x`, { headers: { Origin: 'https://hera-gine.com' } }), env).then((r) => r.json());
+assert.ok(sj.status[tid].a > 0, 'respondida'); assert.equal(sj.status.zzzzzzzz, null); assert.equal(Object.keys(sj.status).length, 2, 'ignora ids raros');
+r = await call('/ask', { ...q, email: 'otra2@x.com', to: 'gineco' }); assert.match(r.j.id, /^[a-z0-9]{8}$/, 'devuelve el número de consulta');
 // consultas ilimitadas (beta)
 r = await call('/admin/vip', { email: 'beta@x.com' }, { Authorization: 'Bearer mal' }); assert.equal(r.s, 401);
 r = await call('/admin/vip', { email: 'Be.ta@x.com', note: 'beta' }, { Authorization: 'Bearer adm' }); assert.equal(r.s, 200);

@@ -1032,3 +1032,20 @@ body.ob-sky .ob-steps i.on { background: #F2B9A0; }
 .push-ic.sm { width: 28px; height: 28px; border-radius: 8px; }
 .push-strip-cta { flex: none; font-size: 12.5px; font-weight: 600; color: #fff; background: var(--st); border-radius: 999px; padding: 6px 12px; }
 .push-strip-x { flex: none; width: 30px; height: 30px; display: grid; place-items: center; color: var(--ink-soft); border-radius: 50%; }
+
+/* Mis consultas */
+.my-consults { border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; background: #fff; }
+.my-consults summary { cursor: pointer; font-size: 13.5px; font-weight: 500; color: var(--st); }
+.my-consults[open] summary { margin-bottom: 8px; }
+.my-list { display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); }
+.my-row { display: flex; gap: 10px; align-items: flex-start; min-width: 0; }
+.my-row .grow { flex: 1 1 0; min-width: 0; }
+.my-row .row { min-width: 0; }
+.my-row .row > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.my-consults, .my-list { min-width: 0; overflow: hidden; }
+.my-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
+.my-pill { flex: none; font-size: 11px; font-weight: 600; border-radius: 999px; padding: 2px 8px; }
+.my-pill.ok { background: #DCEBE4; color: #3F584B; }
+.my-pill.wait { background: var(--gold-soft, #F4E6E8); color: var(--st); }
+.my-pill.late { background: #F6E3E6; color: #9A4A5E; }
+.answer-strip { border-color: color-mix(in srgb, var(--st) 35%, transparent); }

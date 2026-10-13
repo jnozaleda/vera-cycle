@@ -557,6 +557,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   // Consulta desde la portada, sin salir de ella: el mismo servicio y las mismas reglas que la hoja de la app
   // (2 gratuitas por correo, campo trampa, límite de envíos). Nada viaja en la URL.
   import { suggestContact } from './app/js/contacts.js';
+  import { addConsult } from './app/js/consults.js';
   const API = 'https://hera-consultas.tempcheck-app.workers.dev';
   const PROS = { gineco: { name: 'Gonzalo', img: 'gonzalo' }, matrona: { name: 'Marina', img: 'marina' }, pediatra: { name: 'Lucía', img: 'lucia' } };
   const local = ['localhost', '127.0.0.1'].includes(location.hostname);
@@ -622,7 +623,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       if (res.status === 429) throw new Error('Has enviado varias consultas seguidas. Espera unos minutos y vuelve a intentarlo.');
       if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');
       if (!res.ok && !j.limit) throw new Error('No se ha podido enviar. Inténtalo de nuevo en un rato.');
-      if (j.limit) showLimit(j); else { hit('enviada_portada'); showDone(to, j); }
+      if (j.limit) showLimit(j); else { hit('enviada_portada'); if (j.id) addConsult({ id: j.id, to, text }); showDone(to, j); }
     } catch (e) { showErr(e.message); }
     busy = false; send.disabled = false; refresh();
   });

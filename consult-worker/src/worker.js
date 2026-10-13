@@ -13,6 +13,7 @@
 //                      (beta testers / plan ilimitado). Se guarda solo la huella del correo: v:<hmac> = {plan, until, note, at}
 //   POST /hit          {e}                                                 navegador: evento anónimo de uso (texto plano)
 //   GET  /stats?days=N                                                     panel: Authorization: Bearer PANEL_CODE
+//   GET  /status?ids=a,b                                                   app: ¿respondida? por número de consulta (solo fechas)
 //
 // Medición (vera-backlog#6): D1 «hera-metrics» con recuentos por día (tabla counts) y huellas diarias para contar
 // personas distintas (tabla visitors: hash de IP + navegador + día + sal, se borran a las 48 h). Sin IP ni identificadores.
@@ -202,6 +203,16 @@ export default {
       } while (cursor);
       return reply(200, { list: list.sort((a, b) => String(b.at || '').localeCompare(String(a.at || ''))) });
     }
+    if (request.method === 'GET' && url.pathname === '/status') {
+      // Solo dice si cada consulta (número aleatorio que conoce quien la hizo) está respondida y cuándo; nada más
+      const ids = String(url.searchParams.get('ids') || '').split(',').filter((x) => /^[a-z0-9]{8}$/.test(x)).slice(0, 30);
+      const out = {};
+      for (const id of ids) {
+        const t = await loadThread(env, id);
+        out[id] = t ? { a: t.a || 0, c: t.c } : null;
+      }
+      return reply(200, { status: out });
+    }
     if (request.method === 'GET' && url.pathname === '/stats') {
       if (!env.PANEL_CODE || request.headers.get('Authorization') !== `Bearer ${env.PANEL_CODE}`) return reply(401, { error: 'unauthorized' });
       const days = Math.min(365, Math.max(1, Number(url.searchParams.get('days')) || 30));
@@ -308,7 +319,7 @@ export default {
         await saveThread(env, { id, p: pro.key || body.to, u: await sealEmail(env, q.email), uh: (await hmac(env.HASH_SALT, norm)).slice(0, 24),
           sp: pm.subject, su: cm.subject, rp: [], ru: [], c: Date.now(), a: 0, rem: false, n: 0 });
       }
-      return reply(200, { ok: true, remaining, freeLimit: limit, ...(unlimited ? { unlimited: true } : {}), dryRun: env.DRY_RUN === '1' });
+      return reply(200, { ok: true, remaining, freeLimit: limit, ...(unlimited ? { unlimited: true } : {}), ...(relay ? { id } : {}), dryRun: env.DRY_RUN === '1' });
     }
     return reply(404, { error: 'not_found' });
   },

@@ -145,6 +145,7 @@ async function countPerson(env, request, key) {
 /** Envía con Resend. Devuelve {id} si sale bien o null. refs: identificadores anteriores del hilo (para In-Reply-To/References) */
 async function sendMail(env, { to, replyTo, subject, html, text, bcc, from, refs, attachments }) {
   if (env.DRY_RUN === '1') { console.log(`[ensayo] correo a ${to}: ${subject}`); return { id: null }; }
+  // Resend pone su propio Message-ID; el real de cada correo enviado lo conocemos cuando nos responden (In-Reply-To)
   const headers = refs?.length ? { 'In-Reply-To': refs[refs.length - 1], References: refs.slice(-20).join(' ') } : undefined;
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -157,17 +158,6 @@ async function sendMail(env, { to, replyTo, subject, html, text, bcc, from, refs
   return { id: j.id || null };
 }
 
-/** Message-ID que puso Resend a un correo enviado (para encadenar el hilo) */
-async function sentMessageId(env, resendId) {
-  if (!resendId || env.DRY_RUN === '1') return null;
-  try {
-    const r = await fetch(`https://api.resend.com/emails/${resendId}`, { headers: { Authorization: `Bearer ${env.RESEND_API_KEY}` } });
-    if (!r.ok) return null;
-    const j = await r.json();
-    const mid = j.message_id || j.messageId || null;
-    return mid ? (mid.startsWith('<') ? mid : `<${mid}>`) : null;
-  } catch { return null; }
-}
 
 /** Límite simple por IP: 5 envíos cada 10 minutos */
 async function rateLimited(env, ip) {
@@ -279,9 +269,8 @@ export default {
       const sentU = await sendMail(env, { to: q.email, replyTo: relay ? await relayAddress(env, 'u', id) : pro.email, ...cm, bcc });
       // Sin relay no hay hilo que seguir (ni recordatorios): no se guarda nada más
       if (relay) {
-        const [mp, mu] = await Promise.all([sentMessageId(env, sent.id), sentMessageId(env, sentU?.id)]);
         await saveThread(env, { id, p: pro.key || body.to, u: await sealEmail(env, q.email), uh: (await hmac(env.HASH_SALT, norm)).slice(0, 24),
-          sp: pm.subject, su: cm.subject, rp: mp ? [mp] : [], ru: mu ? [mu] : [], c: Date.now(), a: 0, rem: false, n: 0 });
+          sp: pm.subject, su: cm.subject, rp: [], ru: [], c: Date.now(), a: 0, rem: false, n: 0 });
       }
       return reply(200, { ok: true, remaining, freeLimit: limit, dryRun: env.DRY_RUN === '1' });
     }
@@ -316,6 +305,7 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
   const pro = PROS[t.p] || (t.p === 'prueba' && env.COPY_TO ? { name: 'Prueba de Hera', short: 'Prueba', role: 'prueba', email: env.COPY_TO } : null);
   if (!pro) return { ok: false, why: 'pro' };
   const msg = await parseIncoming(raw);
+  console.log(`relay ${t.id} ${role} in-reply-to=${msg.inReplyTo || '-'}`);
   if (role === 'u') {
     // Solo la usuaria de la consulta puede escribir por su dirección
     const from = normalizeEmail(msg.from || envelopeFrom);
@@ -334,10 +324,12 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
     bcc: t.p === 'prueba' ? undefined : env.COPY_TO || undefined,
   });
   if (!sent) return { ok: false, why: 'send' };
-  // Encadenar: el mensaje entrante pasa a formar parte del hilo de quien lo escribió; el enviado, del otro lado
-  const outId = await sentMessageId(env, sent.id);
-  if (msg.messageId) (toUser ? t.rp : t.ru).push(msg.messageId.startsWith('<') ? msg.messageId : `<${msg.messageId}>`);
-  if (outId) (toUser ? t.ru : t.rp).push(outId);
+  // Encadenar el hilo de quien escribe: el correo al que responde (su Message-ID real) y su propio mensaje
+  const mine = toUser ? t.rp : t.ru;
+  for (const x of [msg.inReplyTo, msg.messageId]) {
+    const v = x && (x.startsWith('<') ? x : `<${x}>`);
+    if (v && !mine.includes(v)) mine.push(v);
+  }
   t.rp = t.rp.slice(-20); t.ru = t.ru.slice(-20);
   t.n = (t.n || 0) + 1;
   if (toUser && !t.a) {

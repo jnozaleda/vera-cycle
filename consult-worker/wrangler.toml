@@ -9,7 +9,7 @@ FREE_LIMIT = "2"
 # "1" = modo ensayo: cuenta y responde, pero no envía correos. Poner "0" cuando Resend esté listo.
 DRY_RUN = "0"
 # "1" = respuestas a través de Hera (direcciones hera-p-/hera-u-; requiere Email Routing catch-all → este Worker)
-RELAY = "0"
+RELAY = "1"
 
 [[kv_namespaces]]
 binding = "KV"

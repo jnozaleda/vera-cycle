@@ -119,5 +119,5 @@ export async function parseIncoming(raw) {
     let bin = ''; for (let i = 0; i < u8.length; i += 0x8000) bin += String.fromCharCode(...u8.subarray(i, i + 0x8000));
     attachments.push({ filename: a.filename || 'adjunto', content: btoa(bin), ...(a.mimeType ? { content_type: a.mimeType } : {}) });
   }
-  return { body, attachments, messageId: mail.messageId || null, from: mail.from?.address || '' };
+  return { body, attachments, messageId: mail.messageId || null, inReplyTo: mail.inReplyTo || null, from: mail.from?.address || '' };
 }

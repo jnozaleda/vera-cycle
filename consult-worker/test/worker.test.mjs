@@ -80,20 +80,20 @@ assert.deepEqual(await parseRelayAddress(env, pAddr), { role: 'p', id: tid });
 assert.equal(await parseRelayAddress(env, pAddr.replace(/-[a-f0-9]{10}@/, '-0000000000@')), null, 'firma falsa');
 let t = await loadThread(env, tid);
 assert.equal(await openEmail(env, t.u), 'Maria.Lopez@gmail.com');
-assert.ok(t.rp.length === 1 && t.ru.length === 1, 'guarda los Message-ID de los primeros correos');
-const mime = (from, to, body, extra = '') => `From: ${from}\r\nTo: ${to}\r\nSubject: Re: x\r\nMessage-ID: <in${Math.random()}@gmail.com>\r\n${extra}Content-Type: text/plain; charset=utf-8\r\n\r\n${body}`;
+
+const mime = (from, to, body, extra = '') => `From: ${from}\r\nTo: ${to}\r\nSubject: Re: x\r\nMessage-ID: <in${Math.random()}@gmail.com>\r\nIn-Reply-To: <ses${Math.random()}@amazonses.com>\r\n${extra}Content-Type: text/plain; charset=utf-8\r\n\r\n${body}`;
 let n0 = sent.length;
 let rr = await relayIncoming(env, t, 'p', mime('marina.personal@gmail.com', pAddr, 'Es normal al principio.\r\n\r\nEl lun, 13 oct 2026, Hera escribió:\r\n> Me duele'));
 assert.ok(rr.ok); const out = sent[n0];
 assert.equal(out.to[0], 'Maria.Lopez@gmail.com'); assert.equal(out.from, 'Marina · Hera <marina@hera-gine.com>');
 assert.equal(out.reply_to, uAddr); assert.ok(out.text.includes('Es normal al principio.') && !out.text.includes('Me duele'), 'sin lo citado');
-assert.ok(!out.text.includes('marina.personal'), 'no se ve el correo personal'); assert.ok(out.headers['In-Reply-To'] && out.headers.References, 'cabeceras de hilo');
+assert.ok(!out.text.includes('marina.personal'), 'no se ve el correo personal');
 t = await loadThread(env, tid); assert.ok(t.a > 0, 'consulta respondida'); assert.equal(cnt('respondida:matrona'), 1);
 rr = await relayIncoming(env, t, 'u', mime('otra@x.com', uAddr, 'hola')); assert.equal(rr.why, 'sender', 'solo la usuaria puede escribir por su dirección');
 n0 = sent.length;
 rr = await relayIncoming(env, await loadThread(env, tid), 'u', mime('maria.lopez@gmail.com', uAddr, '¿Y si sangra?'));
 assert.ok(rr.ok); assert.equal(sent[n0].to[0], 'marina@hera-gine.com'); assert.equal(sent[n0].reply_to, pAddr);
-assert.ok(sent[n0].headers.References.split(' ').length >= 2, 'el hilo del profesional incluye su propia respuesta');
+assert.ok(sent[n0].headers.References.split(' ').length >= 2, 'el hilo del profesional incluye el aviso original y su propia respuesta');
 // recordatorio a las 40 h
 await call('/ask', { ...q, email: 'nueva@x.com', to: 'gineco' });
 const old = [...store.keys()].filter((k) => k.startsWith('t:')).map((k) => [k, JSON.parse(store.get(k))]).find(([, v]) => v.p === 'gineco');

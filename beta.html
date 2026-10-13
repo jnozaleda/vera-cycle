@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Beta testers · Hera</title>
+<link rel="icon" href="app/icons/favicon-32.png">
+<style>
+  :root { --plum: #6B3D57; --plum-soft: #F3EAF0; --ink: #2C2C2A; --soft: #6E6A66; --line: #E7E0E4; --bg: #FBF9F7; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif; }
+  main { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-family: Georgia, serif; font-weight: 400; color: var(--plum); font-size: 30px; margin: 0; }
+  h2 { font-size: 15px; font-weight: 600; color: var(--plum); margin: 0 0 10px; }
+  .sub { color: var(--soft); font-size: 13.5px; margin: 4px 0 20px; }
+  .card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+  label { display: grid; gap: 4px; font-size: 13px; color: var(--soft); }
+  input { font: inherit; width: 100%; padding: 11px 12px; border: 1px solid var(--line); border-radius: 6px; background: #fff; color: var(--ink); }
+  .grid { display: grid; gap: 10px; }
+  @media (min-width: 600px) { .grid { grid-template-columns: 2fr 1.4fr 1fr; } }
+  button { font: inherit; cursor: pointer; border-radius: 6px; }
+  .primary { width: 100%; padding: 12px; border: 0; background: var(--plum); color: #fff; font-weight: 600; margin-top: 12px; }
+  .ghost { border: 1px solid var(--line); background: #fff; color: var(--ink); padding: 6px 10px; font-size: 13px; }
+  .msg { font-size: 13.5px; margin: 10px 0 0; }
+  .msg.err { color: #A3324A; } .msg.ok { color: #3F584B; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-weight: 500; color: var(--soft); font-size: 12.5px; padding: 6px 4px; border-bottom: 1px solid var(--line); }
+  td { padding: 9px 4px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+  td.r { text-align: right; }
+  .muted { color: var(--soft); }
+  .login { max-width: 360px; margin: 12vh auto; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <section class="login" id="login">
+    <h1>Beta testers</h1>
+    <p class="sub">Consultas ilimitadas para personas de confianza. Escribe el código de acceso.</p>
+    <form id="lf"><input id="code" type="password" autocomplete="current-password" placeholder="Código de acceso" required>
+      <button class="primary" type="submit">Entrar</button></form>
+    <p class="msg err" id="lerr" hidden></p>
+  </section>
+
+  <section id="app" hidden>
+    <h1>Beta testers</h1>
+    <p class="sub">Quien esté en esta lista hace consultas sin límite y sin gastar las gratuitas. Se identifica por el correo que escribe en el formulario de consulta. El correo no se guarda: solo una huella, así que en la lista verás la nota que pongas, no el correo.</p>
+
+    <div class="card">
+      <h2>Añadir</h2>
+      <form id="af">
+        <div class="grid">
+          <label>Correo que usará<input id="email" type="email" inputmode="email" autocomplete="off" required placeholder="nombre@correo.com"></label>
+          <label>Nota (para reconocerla)<input id="note" maxlength="60" placeholder="Ana, amiga de Marina"></label>
+          <label>Hasta (opcional)<input id="until" type="date"></label>
+        </div>
+        <button class="primary" type="submit">Añadir a la lista</button>
+      </form>
+      <p class="msg" id="amsg" hidden></p>
+    </div>
+
+    <div class="card">
+      <h2>En la lista</h2>
+      <div id="list" class="muted">Cargando…</div>
+    </div>
+    <p class="sub"><button class="ghost" id="out">Salir</button></p>
+  </section>
+</main>
+<script>
+  const API = 'https://hera-consultas.tempcheck-app.workers.dev/admin/vip';
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const fmt = (iso) => (iso ? new Date(iso).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) : '');
+  let code = '';
+  try { code = sessionStorage.getItem('hera-beta') || ''; } catch (e) {}
+
+  async function api(method, body) {
+    const r = await fetch(API, { method, headers: { Authorization: `Bearer ${code}`, ...(body ? { 'Content-Type': 'application/json' } : {}) }, body: body ? JSON.stringify(body) : undefined });
+    if (r.status === 401) throw new Error('auth');
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || 'error');
+    return j;
+  }
+
+  async function load() {
+    try {
+      const { list } = await api('GET');
+      $('login').hidden = true; $('app').hidden = false;
+      const now = Date.now();
+      $('list').innerHTML = list.length ? `<table><tr><th>Nota</th><th>Hasta</th><th>Alta</th><th></th></tr>${list.map((v) => {
+        const over = v.until && Date.parse(v.until) < now;
+        return `<tr><td>${esc(v.note) || '<span class="muted">(sin nota)</span>'}</td><td>${v.until ? `${fmt(v.until)}${over ? ' <span class="muted">· caducada</span>' : ''}` : 'Sin fin'}</td><td class="muted">${fmt(v.at)}</td><td class="r"><button class="ghost" data-id="${esc(v.id)}">Quitar</button></td></tr>`;
+      }).join('')}</table>` : '<p class="muted">Todavía no hay nadie.</p>';
+      document.querySelectorAll('[data-id]').forEach((b) => b.addEventListener('click', async () => {
+        b.disabled = true;
+        try { await api('POST', { id: b.dataset.id, remove: true }); load(); } catch (e) { b.disabled = false; }
+      }));
+    } catch (e) {
+      $('app').hidden = true; $('login').hidden = false;
+      if (code) { $('lerr').textContent = e.message === 'auth' ? 'Código incorrecto.' : 'No se ha podido cargar la lista.'; $('lerr').hidden = false; }
+    }
+  }
+
+  $('lf').addEventListener('submit', (ev) => {
+    ev.preventDefault(); code = $('code').value.trim();
+    try { sessionStorage.setItem('hera-beta', code); } catch (e) {}
+    load();
+  });
+  $('af').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const m = $('amsg');
+    try {
+      await api('POST', { email: $('email').value.trim(), note: $('note').value.trim(), until: $('until').value || undefined });
+      m.className = 'msg ok'; m.textContent = 'Añadida. Ya puede consultar sin límite con ese correo.'; m.hidden = false;
+      $('af').reset(); load();
+    } catch (e) {
+      m.className = 'msg err'; m.textContent = e.message === 'bad_email' ? 'Revisa el correo.' : 'No se ha podido añadir.'; m.hidden = false;
+    }
+  });
+  $('out').addEventListener('click', () => { code = ''; try { sessionStorage.removeItem('hera-beta'); } catch (e) {} $('app').hidden = true; $('login').hidden = false; });
+  if (code) load();
+</script>
+</body>
+</html>

@@ -8,7 +8,8 @@
 //   POST /ask          {email, to, text, context?, situation?, website?}   navegador (ALLOWED_ORIGINS)
 //   POST /notify       {email, consent: true}                              navegador
 //   POST /admin/reset  {email}                                             Authorization: Bearer ADMIN_TOKEN
-//   POST /admin/vip    {email, until?, note?, remove?}                     Authorization: Bearer ADMIN_TOKEN: consultas ilimitadas
+//   POST /admin/vip    {email, until?, note?} | {email|id, remove: true}   Authorization: Bearer ADMIN_TOKEN o BETA_CODE: consultas ilimitadas
+//   GET  /admin/vip                                                        lista (sin correos: id = huella, nota, fin, alta) — página beta.html
 //                      (beta testers / plan ilimitado). Se guarda solo la huella del correo: v:<hmac> = {plan, until, note, at}
 //   POST /hit          {e}                                                 navegador: evento anónimo de uso (texto plano)
 //   GET  /stats?days=N                                                     panel: Authorization: Bearer PANEL_CODE
@@ -186,6 +187,21 @@ export default {
     const reply = (status, body) => new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
     if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors });
 
+    const betaAuth = () => {
+      const a = request.headers.get('Authorization') || '';
+      return (!!env.ADMIN_TOKEN && a === `Bearer ${env.ADMIN_TOKEN}`) || (!!env.BETA_CODE && a === `Bearer ${env.BETA_CODE}`);
+    };
+    if (request.method === 'GET' && url.pathname === '/admin/vip') {
+      if (!betaAuth()) return reply(401, { error: 'unauthorized' });
+      const list = [];
+      let cursor;
+      do {
+        const page = await env.KV.list({ prefix: 'v:', cursor });
+        for (const k of page.keys) list.push({ id: k.name.slice(2), ...(k.metadata || {}) });
+        cursor = page.list_complete ? null : page.cursor;
+      } while (cursor);
+      return reply(200, { list: list.sort((a, b) => String(b.at || '').localeCompare(String(a.at || ''))) });
+    }
     if (request.method === 'GET' && url.pathname === '/stats') {
       if (!env.PANEL_CODE || request.headers.get('Authorization') !== `Bearer ${env.PANEL_CODE}`) return reply(401, { error: 'unauthorized' });
       const days = Math.min(365, Math.max(1, Number(url.searchParams.get('days')) || 30));
@@ -212,13 +228,16 @@ export default {
     }
 
     if (url.pathname === '/admin/vip') {
-      if (!env.ADMIN_TOKEN || request.headers.get('Authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return reply(401, { error: 'unauthorized' });
+      if (!betaAuth()) return reply(401, { error: 'unauthorized' });
+      if (body.remove && /^[a-f0-9]{64}$/.test(String(body.id || ''))) { await env.KV.delete(`v:${body.id}`); return reply(200, { ok: true, removed: true }); }
       const norm = normalizeEmail(body.email);
       if (!norm) return reply(400, { error: 'bad_email' });
       const vk = `v:${await hmac(env.HASH_SALT, norm)}`;
       if (body.remove) { await env.KV.delete(vk); return reply(200, { ok: true, removed: true }); }
-      const until = body.until && !Number.isNaN(Date.parse(body.until)) ? new Date(body.until).toISOString() : null;
-      await env.KV.put(vk, JSON.stringify({ plan: 'ilimitado', until, note: String(body.note || '').slice(0, 60), at: new Date().toISOString() }));
+      // Fin opcional (AAAA-MM-DD): válido hasta el final de ese día
+      const until = body.until && !Number.isNaN(Date.parse(body.until)) ? new Date(`${String(body.until).slice(0, 10)}T23:59:59Z`).toISOString() : null;
+      const rec = { plan: 'ilimitado', until, note: String(body.note || '').slice(0, 60), at: new Date().toISOString() };
+      await env.KV.put(vk, JSON.stringify(rec), { metadata: { note: rec.note, until, at: rec.at } });
       return reply(200, { ok: true, until });
     }
 

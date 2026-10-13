@@ -110,6 +110,11 @@ r = await call('/admin/vip', { email: 'beta@x.com' }, { Authorization: 'Bearer m
 r = await call('/admin/vip', { email: 'Be.ta@x.com', note: 'beta' }, { Authorization: 'Bearer adm' }); assert.equal(r.s, 200);
 for (let i = 0; i < 3; i++) { r = await call('/ask', { ...q, email: 'be.ta@x.com' }); assert.equal(r.j.unlimited, true, 'ilimitada'); }
 assert.ok(![...store.values()].some((v) => v.includes('be.ta')), 'la lista beta guarda solo la huella');
+const lst = await worker.fetch(new Request('https://w/admin/vip', { headers: { Authorization: 'Bearer adm' } }), env).then((r) => r.json());
+assert.equal(lst.list.length, 1); assert.equal(lst.list[0].note, 'beta'); assert.ok(!JSON.stringify(lst).includes('be.ta'), 'la lista no lleva correos');
 r = await call('/admin/vip', { email: 'be.ta@x.com', until: '2020-01-01' }, { Authorization: 'Bearer adm' });
 r = await call('/ask', { ...q, email: 'be.ta@x.com' }); assert.ok(!r.j.unlimited, 'caducada: vuelve a las gratuitas');
+r = await call('/admin/vip', { id: lst.list[0].id, remove: true }, { Authorization: 'Bearer beta' }); assert.equal(r.s, 401, 'sin BETA_CODE configurado no vale');
+env.BETA_CODE = 'beta';
+r = await call('/admin/vip', { id: lst.list[0].id, remove: true }, { Authorization: 'Bearer beta' }); assert.equal(r.j.removed, true, 'BETA_CODE puede quitar por id');
 console.log('consultas: OK');

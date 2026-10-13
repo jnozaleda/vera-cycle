@@ -794,11 +794,12 @@ function pushPromptCard() {
   const target = pushTarget();
   if (!target || pushDismissed() || (ui.pushState !== 'off' && ui.pushState !== 'needs-install')) return '';
   const pp = target.kind === 'postpartum';
-  return `<div class="card pad stack-8">
-    <button class="push-row" data-action="open-push"><span class="push-ic">${icon('bell', 16)}</span>
-      <span class="grow left"><span class="t-14 w-500 block">Activa el aviso semanal</span><span class="t-12 soft block">${pp ? 'Lo normal a la edad de tu bebé, en tu móvil' : 'Lo normal de cada semana nueva, en tu móvil'}</span></span>
-      <span class="soft">›</span></button>
-    <button class="link-soft self-start" data-action="push-dismiss">Ahora no</button>
+  // Una sola línea: no debe competir con la tarjeta principal de Hoy
+  return `<div class="push-strip">
+    <button class="push-strip-main" data-action="open-push"><span class="push-ic sm">${icon('bell', 14)}</span>
+      <span class="grow left t-13" title="${pp ? 'Lo normal a la edad de tu bebé' : 'Lo normal de cada semana nueva'}"><b class="w-500">Aviso semanal</b> en tu móvil</span>
+      <span class="push-strip-cta">Activar</span></button>
+    <button class="push-strip-x" data-action="push-dismiss" aria-label="Ahora no">${icon('x', 12)}</button>
   </div>`;
 }
 

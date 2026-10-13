@@ -80,7 +80,24 @@ section { padding: 64px 0; }
 .ask form, .ask .more { display: grid; gap: 12px; }
 .ask form > label { font-size: 14px; font-weight: 600; color: var(--plum); }
 .ask textarea, .ask input[type=email], .ask select { width: 100%; border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; font: 400 16px/1.5 'Inter', sans-serif; color: var(--ink); background: var(--ivory); }
-.ask textarea { min-height: 92px; resize: vertical; }
+.ask textarea { min-height: 76px; resize: vertical; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.who { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text); }
+.who b { color: var(--ink); font-weight: 600; }
+.who-faces { display: flex; flex: none; }
+.who-faces img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; }
+.who-faces img + img { margin-left: -9px; }
+/* Cabecera: en móvil, «Abrir Hera» mientras la caja de la duda se ve; al bajar, «Pregunta tu duda» */
+.top-cta { display: grid; }
+.top-cta .btn { grid-area: 1 / 1; justify-self: end; transition: opacity .2s ease, visibility .2s; }
+.btn-o { background: transparent; color: var(--plum); border: 1.5px solid #B39AA8; }
+.btn-o:hover { border-color: var(--plum); }
+#top-open { display: none; }
+@media (max-width: 699px) {
+  #top-open { display: inline-flex; }
+  body:not(.past-ask) #top-ask, body.past-ask #top-open { opacity: 0; visibility: hidden; }
+}
+@media (prefers-reduced-motion: reduce) { .top-cta .btn { transition: none; } }
 .ask select { appearance: none; padding-right: 36px; background: var(--ivory) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%23693D55' stroke-width='1.8'%3E%3Cpath d='m1 1.5 5 5 5-5'/%3E%3C/svg%3E") no-repeat right 14px center; }
 .ask textarea:focus, .ask input:focus, .ask select:focus { outline: none; border-color: var(--plum); box-shadow: 0 0 0 3px rgba(105,61,85,.18); }
 .ask .btn { width: 100%; }
@@ -276,8 +293,12 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <a href="#instalar">Instalar</a>
       <a href="#precio">Precio</a>
       <a href="#preguntas">Preguntas</a>
+      <a href="app/" data-cta="abrir_portada">Abrir Hera</a>
     </nav>
-    <a class="btn btn-p btn-sm" href="#ask" data-goask>Pregunta tu duda</a>
+    <div class="top-cta">
+      <a class="btn btn-o btn-sm" href="app/" data-cta="abrir_portada" id="top-open">Abrir Hera</a>
+      <a class="btn btn-p btn-sm" href="#ask" data-goask id="top-ask">Pregunta tu duda</a>
+    </div>
   </div>
 </header>
 
@@ -285,15 +306,15 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
 <div class="wrap">
   <div class="hero">
     <div>
-      <p class="eyebrow">Embarazo · Posparto · Bebé</p>
       <h1>Tus dudas del embarazo, resueltas por profesionales</h1>
-      <p class="lead">Cada semana, lo que te toca saber. Y cuando algo te preocupe, pregúntaselo a tu ginecólogo, tu matrona o tu pediatra.</p>
+      <p class="lead">Ginecólogo, matrona y pediatra te responden en menos de 48 h. Las dos primeras consultas, gratis.</p>
 
       <div class="askwrap">
       <div class="ask" id="ask">
       <form id="ask-form" novalidate>
-        <label for="duda">¿Qué te preocupa hoy?</label>
-        <textarea id="duda" name="duda" maxlength="2000" placeholder="Por ejemplo: «Estoy de 30 semanas y noto la tripa dura a ratos, ¿es normal?»"></textarea>
+        <div class="who"><span class="who-faces"><img src="portada/equipo/gonzalo.jpg?v=2" alt="" width="30" height="30"><img src="portada/equipo/marina.jpg?v=2" alt="" width="30" height="30"><img src="portada/equipo/lucia.jpg" alt="" width="30" height="30"></span><span>Te responde <b>Gonzalo, Marina o Lucía</b></span></div>
+        <label for="duda" class="sr">Tu duda</label>
+        <textarea id="duda" name="duda" maxlength="2000" placeholder="Escribe tu duda con tus palabras…"></textarea>
         <div class="more" id="ask-more" hidden>
           <fieldset class="picks">
             <legend>¿A quién se lo preguntas?</legend>
@@ -318,27 +339,11 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
           <input class="hp" id="ask-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
           <p class="err" id="ask-err" role="alert" hidden></p>
         </div>
-        <button class="btn btn-p" type="submit" id="ask-send">Pregunta tu duda gratis</button>
+        <button class="btn btn-p" type="submit" id="ask-send">Preguntar gratis</button>
         <p class="fine" id="ask-fine" hidden>Gratis, sin registro. Tu pregunta solo la ve la profesional que elijas. No es para urgencias. <a href="privacy.html#consultas">Cómo tratamos tus datos</a>.</p>
       </form>
       <div class="done" id="ask-done" hidden aria-live="polite"></div>
       </div>
-      </div>
-      <div class="examples" id="ask-examples" aria-label="Ejemplos de dudas">
-        <button type="button" data-ex="Me duele al dar el pecho, ¿es normal?">Lactancia</button>
-        <button type="button" data-ex="¿Puedo tomar paracetamol estando embarazada?">Medicación</button>
-        <button type="button" data-ex="Mi bebé tiene fiebre, ¿cuándo debo preocuparme?">Fiebre del bebé</button>
-        <button type="button" data-ex="Noto contracciones, ¿cómo sé si son de verdad?">Contracciones</button>
-      </div>
-      <p class="alt">¿Solo quieres mirar? <a class="link" href="app/" data-cta="abrir_portada">Abre Hera</a> y sigue tu embarazo semana a semana · <a class="link" href="#instalar">Cómo instalarla</a></p>
-
-      <div class="faces">
-        <div class="stack">
-          <img src="portada/equipo/gonzalo.jpg?v=2" alt="" width="44" height="44">
-          <img src="portada/equipo/marina.jpg?v=2" alt="" width="44" height="44">
-          <img src="portada/equipo/lucia.jpg" alt="" width="44" height="44">
-        </div>
-        <p><b>Gonzalo, Marina y Lucía</b><br>Ginecólogo, matrona y pediatra. Te responden en menos de 48 h.</p>
       </div>
     </div>
     <div class="hero-art">
@@ -579,7 +584,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   }
   function open() {
     if (opened) return;
-    opened = true; more.hidden = false; $('ask-fine').hidden = false; $('ask-examples').hidden = true;
+    opened = true; more.hidden = false; $('ask-fine').hidden = false;
     hit('pregunta_portada'); refresh();
   }
   function goAsk(to) {
@@ -590,6 +595,10 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   const showErr = (m) => { err.textContent = m; err.hidden = !m; };
 
   ta.addEventListener('input', () => { if (ta.value.trim()) open(); refresh(); });
+  // Cabecera en móvil: «Pregunta tu duda» solo cuando la caja ya no se ve
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(([e]) => document.body.classList.toggle('past-ask', !e.isIntersecting && e.boundingClientRect.top < 0)).observe(box);
+  } else document.body.classList.add('past-ask');
   radios.forEach((r) => r.addEventListener('change', () => { manual = true; refresh(); }));
   document.querySelectorAll('[data-ex]').forEach((b) => b.addEventListener('click', () => { ta.value = b.dataset.ex; open(); refresh(); ta.focus(); }));
   document.querySelectorAll('[data-goask], [data-to]').forEach((a) => a.addEventListener('click', (ev) => { ev.preventDefault(); goAsk(a.dataset.to); }));

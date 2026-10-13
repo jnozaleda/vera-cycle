@@ -914,11 +914,13 @@ function settingsSheet() {
       ${stageUI() ? stageSection() : ''}
       ${dm === 'pregnancy' ? pregnancyForm() : dm === 'postpartum' ? postpartumForm() : cycleForm}
       ${pushSection()}
-      ${listConsults().length ? `<div class="stack-10 data-box">
+      ${store.mode !== 'cycle' || listConsults().length ? `<div class="stack-10 data-box">
         ${eyebrow('Tus consultas')}
-        <p class="t-12 soft lh-3">Las que has hecho desde este dispositivo. La respuesta te llega por correo; aquí ves si ya está respondida.</p>
+        ${listConsults().length ? `<p class="t-12 soft lh-3">Las que has hecho desde este dispositivo. La respuesta te llega por correo; aquí ves si ya está respondida.</p>
         ${consultList()}
-        <button class="link-danger row gap-6 center self-start" data-action="consults-clear">${icon('trash', 12)} Borrar este historial</button>
+        <button class="link-danger row gap-6 center self-start" data-action="consults-clear">${icon('trash', 12)} Borrar este historial</button>`
+        : `<p class="t-12 soft lh-3">Aún no has hecho ninguna consulta desde este dispositivo. Cuando hagas una, la verás aquí y sabrás si ya te han respondido.</p>
+        <button class="pill-outline row gap-6 center self-start" data-action="open-ask" data-ctx="">${icon('mail', 13)} Hacer una consulta</button>`}
       </div>` : ''}
       ${syncAvailable() ? syncSection() : ''}
       <div class="stack-10 data-box">

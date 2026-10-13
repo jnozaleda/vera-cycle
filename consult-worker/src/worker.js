@@ -8,6 +8,8 @@
 //   POST /ask          {email, to, text, context?, situation?, website?}   navegador (ALLOWED_ORIGINS)
 //   POST /notify       {email, consent: true}                              navegador
 //   POST /admin/reset  {email}                                             Authorization: Bearer ADMIN_TOKEN
+//   POST /admin/vip    {email, until?, note?, remove?}                     Authorization: Bearer ADMIN_TOKEN: consultas ilimitadas
+//                      (beta testers / plan ilimitado). Se guarda solo la huella del correo: v:<hmac> = {plan, until, note, at}
 //   POST /hit          {e}                                                 navegador: evento anónimo de uso (texto plano)
 //   GET  /stats?days=N                                                     panel: Authorization: Bearer PANEL_CODE
 //
@@ -71,9 +73,9 @@ ${relay ? `<p style="font-size:13px;color:#5F5E5A"><b>Para contestar, responde a
   return { subject, html, text };
 }
 
-export function confirmEmail(pro, q, remaining, id = '') {
+export function confirmEmail(pro, q, remaining, id = '', unlimited = false) {
   const excerpt = q.text.length > 160 ? `${q.text.slice(0, 160).trim()}…` : q.text;
-  const left = remaining === 0 ? 'Era tu última consulta gratuita' : `Te ${remaining === 1 ? 'queda 1 consulta gratuita' : `quedan ${remaining} consultas gratuitas`}`;
+  const left = unlimited ? 'Tienes consultas ilimitadas' : remaining === 0 ? 'Era tu última consulta gratuita' : `Te ${remaining === 1 ? 'queda 1 consulta gratuita' : `quedan ${remaining} consultas gratuitas`}`;
   const subject = `Tu consulta a ${pro.short} · Hera${id ? ` #${id.toUpperCase()}` : ''}`;
   const html = shell(`<p>Hola,</p>
 <p>Tu consulta ha llegado a <b>${esc(pro.name)}, ${esc(pro.role)}</b>. Te responderá en esta misma conversación en menos de 48 h.</p>
@@ -209,6 +211,17 @@ export default {
       return reply(200, { ok: true });
     }
 
+    if (url.pathname === '/admin/vip') {
+      if (!env.ADMIN_TOKEN || request.headers.get('Authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return reply(401, { error: 'unauthorized' });
+      const norm = normalizeEmail(body.email);
+      if (!norm) return reply(400, { error: 'bad_email' });
+      const vk = `v:${await hmac(env.HASH_SALT, norm)}`;
+      if (body.remove) { await env.KV.delete(vk); return reply(200, { ok: true, removed: true }); }
+      const until = body.until && !Number.isNaN(Date.parse(body.until)) ? new Date(body.until).toISOString() : null;
+      await env.KV.put(vk, JSON.stringify({ plan: 'ilimitado', until, note: String(body.note || '').slice(0, 60), at: new Date().toISOString() }));
+      return reply(200, { ok: true, until });
+    }
+
     if (!allowed.includes(origin)) return reply(403, { error: 'origin' });
 
     if (url.pathname === '/hit') {
@@ -247,7 +260,10 @@ export default {
 
       const key = `c:${await hmac(env.HASH_SALT, norm)}`;
       const rec = (await env.KV.get(key, 'json')) || { n: 0, first: null, last: null };
-      if (!test && rec.n >= limit) { await bump(env, 'gratuitas_agotadas'); return reply(200, { limit: true, used: rec.n, freeLimit: limit }); }
+      // Consultas ilimitadas (beta testers / plan ilimitado): no gastan gratuitas
+      const vip = await env.KV.get(`v:${await hmac(env.HASH_SALT, norm)}`, 'json');
+      const unlimited = !!vip && (!vip.until || Date.parse(vip.until) > Date.now());
+      if (!test && !unlimited && rec.n >= limit) { await bump(env, 'gratuitas_agotadas'); return reply(200, { limit: true, used: rec.n, freeLimit: limit }); }
       if (!test && await rateLimited(env, request.headers.get('CF-Connecting-IP'))) return reply(429, { error: 'rate' });
 
       // Hilo: el profesional y la usuaria se responden a través de direcciones de Hera de un solo uso
@@ -259,20 +275,21 @@ export default {
       const sent = await sendMail(env, { to: pro.email, replyTo: relay ? await relayAddress(env, 'p', id) : q.email, ...pm, bcc });
       if (!sent) return reply(502, { error: 'send' });
       const now = new Date().toISOString();
-      const n = test ? rec.n : rec.n + 1;
+      const n = test || unlimited ? rec.n : rec.n + 1;
       if (!test) {
-        await env.KV.put(key, JSON.stringify({ n, first: rec.first || now, last: now }));
+        if (!unlimited) await env.KV.put(key, JSON.stringify({ n, first: rec.first || now, last: now }));
         await bump(env, `consulta:${body.to}`);
+        if (unlimited) await bump(env, 'consulta_ilimitada');
       }
       const remaining = Math.max(0, limit - n);
-      const cm = confirmEmail(pro, q, remaining, id);
+      const cm = confirmEmail(pro, q, remaining, id, unlimited);
       const sentU = await sendMail(env, { to: q.email, replyTo: relay ? await relayAddress(env, 'u', id) : pro.email, ...cm, bcc });
       // Sin relay no hay hilo que seguir (ni recordatorios): no se guarda nada más
       if (relay) {
         await saveThread(env, { id, p: pro.key || body.to, u: await sealEmail(env, q.email), uh: (await hmac(env.HASH_SALT, norm)).slice(0, 24),
           sp: pm.subject, su: cm.subject, rp: [], ru: [], c: Date.now(), a: 0, rem: false, n: 0 });
       }
-      return reply(200, { ok: true, remaining, freeLimit: limit, dryRun: env.DRY_RUN === '1' });
+      return reply(200, { ok: true, remaining, freeLimit: limit, ...(unlimited ? { unlimited: true } : {}), dryRun: env.DRY_RUN === '1' });
     }
     return reply(404, { error: 'not_found' });
   },

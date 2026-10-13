@@ -105,4 +105,11 @@ assert.equal((await st.json()).open.pendientes.gineco, 1);
 // otras direcciones: se reenvían
 let fw = null; await worker.email({ to: 'consultas@hera-gine.com', from: 'a@b.c', forward: async (x) => { fw = x; }, setReject() {} }, env);
 assert.equal(fw, 'copia@example.com');
+// consultas ilimitadas (beta)
+r = await call('/admin/vip', { email: 'beta@x.com' }, { Authorization: 'Bearer mal' }); assert.equal(r.s, 401);
+r = await call('/admin/vip', { email: 'Be.ta@x.com', note: 'beta' }, { Authorization: 'Bearer adm' }); assert.equal(r.s, 200);
+for (let i = 0; i < 3; i++) { r = await call('/ask', { ...q, email: 'be.ta@x.com' }); assert.equal(r.j.unlimited, true, 'ilimitada'); }
+assert.ok(![...store.values()].some((v) => v.includes('be.ta')), 'la lista beta guarda solo la huella');
+r = await call('/admin/vip', { email: 'be.ta@x.com', until: '2020-01-01' }, { Authorization: 'Bearer adm' });
+r = await call('/ask', { ...q, email: 'be.ta@x.com' }); assert.ok(!r.j.unlimited, 'caducada: vuelve a las gratuitas');
 console.log('consultas: OK');

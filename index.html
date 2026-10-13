@@ -200,7 +200,9 @@ section { padding: 64px 0; }
 
 /* Precio */
 .price { display: grid; gap: 16px; margin-top: 28px; }
-@media (min-width: 800px) { .price { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 640px) { .price { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1000px) { .price { grid-template-columns: repeat(4, 1fr); } }
+.plan .v small { font-family: 'Inter', sans-serif; font-size: 15px; color: var(--muted); font-weight: 500; }
 .plan { border: 1px solid var(--line); background: #fff; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 8px; }
 .plan.main { border: 2px solid var(--plum); }
 .plan .k { font-size: 13px; font-weight: 600; color: var(--mauve); letter-spacing: .06em; text-transform: uppercase; }
@@ -492,8 +494,9 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     <p class="sub">El contenido de cada semana es gratis siempre. Las consultas, las dos primeras también.</p>
     <div class="price">
       <div class="plan main"><span class="k">Para empezar</span><span class="v">2 consultas gratis</span><p>A quien quieras de las tres, sin tarjeta ni registro.</p></div>
-      <div class="plan"><span class="k">Después</span><span class="v">Consulta suelta</span><p>Pagas solo cuando preguntas. Precio próximamente.</p></div>
-      <div class="plan"><span class="k">Si preguntas a menudo</span><span class="v">Bono</span><p>Varias consultas a mejor precio. Próximamente.</p></div>
+      <div class="plan"><span class="k">Consulta suelta</span><span class="v">9 €</span><p>Pagas solo cuando preguntas.</p></div>
+      <div class="plan"><span class="k">Bono de 5 consultas</span><span class="v">35 € <small>· 7 € cada una</small></span><p>Para el embarazo o los primeros meses del bebé.</p></div>
+      <div class="plan"><span class="k">Ilimitado</span><span class="v">15 € <small>/ mes</small></span><p>Pregunta cuando lo necesites, sin permanencia. Uso razonable: hasta una consulta nueva al día.</p></div>
     </div>
   </div>
 </section>
@@ -507,7 +510,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <details><summary>¿Cuánto tardan en responder?</summary><p>Menos de 48 horas. La respuesta te llega a tu correo y, si te queda alguna duda, puedes contestar al mismo mensaje.</p></details>
       <details><summary>¿Y si es urgente?</summary><p>Hera no atiende urgencias. Si tienes un sangrado abundante, pérdida de líquido, fiebre alta, dolor intenso o notas que tu bebé se mueve menos, llama al 112 o acude a urgencias. En la app tienes una guía de cuándo ir.</p></details>
       <details><summary>¿Qué pasa con mis datos?</summary><p>Lo que apuntas en Hera se queda en tu móvil. Cuando haces una consulta, tu pregunta y tu correo van a la profesional que eliges para que pueda responderte; el texto de tu pregunta no se guarda en ningún servidor nuestro.</p></details>
-      <details><summary>¿Cuánto cuesta después de las consultas gratis?</summary><p>Podrás pagar consultas sueltas o un bono de varias. Estamos ultimando los precios; si se te acaban las gratuitas, puedes pedir que te avisemos.</p></details>
+      <details><summary>¿Cuánto cuesta después de las consultas gratis?</summary><p>9 € por consulta suelta, 35 € el bono de 5 consultas o 15 € al mes para preguntar sin límite. Estamos preparando el pago en la web: si se te acaban las gratuitas antes, deja tu correo y te avisamos en cuanto esté.</p></details>
       <details><summary>¿Tengo que crear una cuenta o instalar algo?</summary><p>No hace falta cuenta. Hera funciona en el navegador de tu móvil y, si quieres, puedes añadirla a tu pantalla de inicio para abrirla como una app y recibir avisos cada semana. <a href="#instalar">Te explicamos cómo</a>.</p></details>
     </div>
   </div>
@@ -632,7 +635,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   }
   function showLimit(j) {
     swap(`<h3>Has usado tus ${j.freeLimit || 2} consultas gratuitas</h3>
-      <p>Muy pronto podrás seguir preguntando a Gonzalo, Marina y Lucía con consultas sueltas o bonos.</p>
+      <p>Muy pronto podrás seguir preguntando a Gonzalo, Marina y Lucía: 9 € por consulta, bono de 5 por 35 € o ilimitado por 15 € al mes.</p>
       <div id="notify" style="display:grid;gap:10px;max-width:30em">
         <label><input type="checkbox" id="notify-ok"><span>Acepto que Hera guarde mi correo (${esc(lastEmail)}) solo para avisarme cuando haya consultas de pago. Puedo pedir que lo borren escribiendo a contacto@hera-gine.com.</span></label>
         <p class="err" id="notify-err" hidden></p>

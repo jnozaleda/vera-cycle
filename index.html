@@ -84,6 +84,7 @@ section { padding: 64px 0; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .who { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text); }
 .who b { color: var(--ink); font-weight: 600; }
+.who-link { text-decoration: underline; text-decoration-color: #CDB9C4; text-underline-offset: 3px; }
 .who-faces { display: flex; flex: none; }
 .who-faces img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; }
 .who-faces img + img { margin-left: -9px; }
@@ -290,7 +291,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     <a href="./" aria-label="Hera, inicio"><img class="logo" src="app/brand/hera-logo-compact.svg" alt="Hera" width="113" height="34"></a>
     <nav class="nav" aria-label="Secciones">
       <a href="#como-funciona">Cómo funciona</a>
-      <a href="#equipo">Profesionales</a>
+      <a href="equipo.html">Profesionales</a>
       <a href="#instalar">Instalar</a>
       <a href="#precio">Precio</a>
       <a href="#preguntas">Preguntas</a>
@@ -313,7 +314,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <div class="askwrap">
       <div class="ask" id="ask">
       <form id="ask-form" novalidate>
-        <div class="who"><span class="who-faces"><img src="portada/equipo/gonzalo.jpg?v=2" alt="" width="30" height="30"><img src="portada/equipo/marina.jpg?v=2" alt="" width="30" height="30"><img src="portada/equipo/lucia.jpg" alt="" width="30" height="30"></span><span>Te responde <b>Gonzalo, Marina o Lucía</b></span></div>
+        <div class="who"><span class="who-faces"><img src="portada/equipo/gonzalo.jpg?v=2" alt="" width="30" height="30"><img src="portada/equipo/marina.jpg?v=2" alt="" width="30" height="30"><img src="portada/equipo/lucia.jpg" alt="" width="30" height="30"></span><span>Te responde <a class="who-link" href="equipo.html"><b>Gonzalo, Marina o Lucía</b></a></span></div>
         <label for="duda" class="sr">Tu duda</label>
         <textarea id="duda" name="duda" maxlength="2000" placeholder="Escribe tu duda con tus palabras…"></textarea>
         <div class="more" id="ask-more" hidden>
@@ -415,7 +416,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   <div class="wrap">
     <p class="eyebrow">El equipo</p>
     <h2>Personas reales, con nombre y apellido</h2>
-    <p class="sub">Cada consulta la lee y la responde una de ellas. Nada de respuestas automáticas.</p>
+    <p class="sub">Cada consulta la lee y la responde una de ellas. Nada de respuestas automáticas. <a class="pro-more" href="equipo.html">Conoce al equipo →</a></p>
     <div class="team">
       <article class="pro">
         <div class="head"><img src="portada/equipo/gonzalo.jpg?v=2" alt="Gonzalo Nozaleda" width="72" height="72" loading="lazy">
@@ -547,6 +548,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <img class="logo" src="app/brand/hera-logo-compact.svg" alt="Hera" width="113" height="34" style="height:28px">
       <nav aria-label="Enlaces">
         <a href="app/">Abrir Hera</a>
+        <a href="equipo.html">El equipo</a>
         <a href="support.html">Soporte</a>
         <a href="privacy.html">Privacidad</a>
         <a href="mailto:contacto@hera-gine.com">contacto@hera-gine.com</a>

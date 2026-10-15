@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>El equipo · Hera</title>
+<meta name="description" content="Conoce a quien responde tus consultas en Hera: Gonzalo Nozaleda, ginecólogo; Marina Fernández, matrona y asesora de lactancia; y Lucía Carrascón, pediatra.">
+<!-- Sin indexar hasta tener las biografías completas de Gonzalo y Lucía -->
+<meta name="robots" content="noindex">
+<link rel="canonical" href="https://hera-gine.com/equipo.html">
+<meta name="theme-color" content="#FAF8F5">
+<link rel="icon" type="image/svg+xml" href="app/brand/favicon.svg">
+<link rel="apple-touch-icon" href="app/icons/apple-touch-icon.png">
+<style>
+@font-face { font-family: 'Inter'; src: url('app/fonts/inter.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: 'Fraunces'; src: url('app/fonts/fraunces.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
+:root {
+  --plum: #693D55; --plum-h: #563146; --plum-d: #2A1823; --mauve: #8E6178; --ivory: #FAF8F5; --rose: #F4E6E8; --sage: #DCEBE4;
+  --lav: #ECE6F0; --ink: #2E2630; --text: #4C444C; --muted: #655B61; --line: #E6DFE2; --peach: #F2B9A0;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { margin: 0; background: var(--ivory); color: var(--ink); font: 400 16px/1.6 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; }
+a { color: inherit; }
+img { max-width: 100%; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+:focus-visible { outline: 2px solid var(--plum); outline-offset: 3px; border-radius: 6px; }
+
+header.top { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--ivory) 92%, transparent); backdrop-filter: blur(8px); }
+.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 14px; }
+.logo { display: block; height: 34px; width: auto; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 20px; border: 0; cursor: pointer;
+  border-radius: 6px; font: 600 15px/1 'Inter', sans-serif; text-decoration: none; white-space: nowrap; transition: background .15s; }
+.btn-p { background: var(--plum); color: #fff; }
+.btn-p:hover { background: var(--plum-h); }
+.btn-sm { min-height: 40px; padding: 0 16px; font-size: 14px; }
+
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--mauve); margin: 0; }
+h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; font-weight: 500; color: var(--plum); letter-spacing: -.015em; text-wrap: balance; }
+h1 { font-size: 36px; line-height: 1.08; margin: 10px 0 12px; }
+h2 { font-size: 30px; line-height: 1.12; margin: 6px 0 4px; }
+h3 { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--mauve); margin: 22px 0 8px; }
+.lead { font-size: 18px; color: var(--text); margin: 0; max-width: 36em; }
+@media (min-width: 900px) { h1 { font-size: 50px; } h2 { font-size: 38px; } }
+
+.intro { padding-block: 36px 12px; }
+.jump { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+.jump a { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 5px 14px 5px 5px; font-size: 14px; color: var(--ink); }
+.jump img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+
+.person { padding: 40px 0; border-bottom: 1px solid var(--line); scroll-margin-top: 70px; }
+.person:last-of-type { border-bottom: 0; }
+.p-grid { display: grid; gap: 26px; align-items: start; }
+@media (min-width: 820px) { .p-grid { grid-template-columns: 320px 1fr; gap: 48px; } .person:nth-of-type(even) .p-grid { grid-template-columns: 1fr 320px; } .person:nth-of-type(even) .p-photo { order: 2; } }
+.p-photo { position: relative; max-width: 320px; }
+.p-photo::before { content: ''; position: absolute; inset: 18px -14px -14px 18px; border-radius: 12px; background: center / cover; z-index: 0; }
+.p-photo.seda-rosa::before { background-image: url('portada/fluido/seda-rosa.webp'); }
+.p-photo.seda-melocoton::before { background-image: url('portada/fluido/seda-melocoton.webp'); }
+.p-photo.via-lactea::before { background-image: url('portada/fluido/via-lactea-atardecer.webp'); }
+.p-photo img { position: relative; z-index: 1; display: block; width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 12px; }
+.role { font-size: 16px; color: var(--mauve); font-weight: 600; margin: 0; }
+.bio p { margin: 14px 0 0; color: var(--text); max-width: 38em; }
+.bio ul { margin: 0; padding-left: 20px; color: var(--text); display: grid; gap: 6px; }
+.bio ul.tags { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0 !important; }
+.bio ul.tags li { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; font-size: 14px; }
+.pending { display: inline-block; margin-top: 14px; font-size: 12.5px; color: var(--muted); background: var(--rose); border-radius: 6px; padding: 4px 10px; }
+.cta { margin-top: 24px; }
+
+.band { margin: 40px 0 64px; border-radius: 12px; padding: 36px 24px; color: #fff; text-align: center;
+  background: linear-gradient(90deg, rgba(42,24,35,.55), rgba(42,24,35,.3)), url('portada/fluido/via-lactea-atardecer.webp') center / cover, var(--plum-d); }
+.band h2 { color: #fff; margin: 0 0 10px; }
+.band p { margin: 0 auto 22px; color: rgba(255,255,255,.9); max-width: 30em; }
+.btn-w { background: #fff; color: var(--ink); }
+
+footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
+.foot { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: center; justify-content: space-between; }
+.foot nav { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 14px; }
+.foot nav a { color: var(--text); text-decoration: none; }
+.disclaimer { font-size: 13px; color: var(--muted); margin: 18px 0 0; max-width: 60em; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a href="./" aria-label="Hera, inicio"><img class="logo" src="app/brand/hera-logo-compact.svg" alt="Hera" width="113" height="34"></a>
+    <a class="btn btn-p btn-sm" href="./#ask">Pregunta tu duda</a>
+  </div>
+</header>
+
+<main>
+  <div class="wrap intro">
+    <p class="eyebrow">El equipo</p>
+    <h1>Quién responde tus consultas</h1>
+    <p class="lead">En Hera no contestan robots: cada duda la lee y la responde una de estas tres profesionales sanitarias, con nombre y apellido.</p>
+    <nav class="jump" aria-label="Ir a">
+      <a href="#gonzalo"><img src="portada/equipo/gonzalo.jpg?v=2" alt="" width="30" height="30">Gonzalo</a>
+      <a href="#marina"><img src="portada/equipo/marina.jpg?v=2" alt="" width="30" height="30">Marina</a>
+      <a href="#lucia"><img src="portada/equipo/lucia.jpg" alt="" width="30" height="30">Lucía</a>
+    </nav>
+  </div>
+
+  <section class="person" id="gonzalo">
+    <div class="wrap p-grid">
+      <div class="p-photo seda-rosa"><img src="portada/equipo/gonzalo.jpg?v=2" alt="Dr. Gonzalo Nozaleda" width="320" height="320"></div>
+      <div class="bio">
+        <h2>Dr. Gonzalo Nozaleda</h2>
+        <p class="role">Ginecólogo</p>
+        <span class="pending">Biografía provisional</span>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante venenatis dapibus, posuere velit aliquet. Donec ullamcorper nulla non metus auctor fringilla.</p>
+        <p>Vestibulum id ligula porta felis euismod semper. Cras mattis consectetur purus sit amet fermentum. Nulla vitae elit libero, a pharetra augue.</p>
+        <h3>Formación</h3>
+        <ul><li>Lorem ipsum dolor sit amet.</li><li>Consectetur adipiscing elit.</li></ul>
+        <h3>En Hera te puede ayudar con</h3>
+        <ul class="tags"><li>Embarazo y pruebas</li><li>Medicación</li><li>Anticoncepción</li><li>Regla y ciclo</li><li>Complicaciones</li></ul>
+        <div class="cta"><a class="btn btn-p" href="./#preguntar-gineco">Pregunta a Gonzalo</a></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="person" id="marina">
+    <div class="wrap p-grid">
+      <div class="p-photo seda-melocoton"><img src="portada/equipo/marina.jpg?v=2" alt="Marina Fernández" width="320" height="320"></div>
+      <div class="bio">
+        <h2>Marina Fernández</h2>
+        <p class="role">Matrona y asesora de lactancia materna</p>
+        <p>Marina acompaña a mujeres y familias durante el embarazo, el parto y el posparto. Como asesora de lactancia materna, ayuda a que los primeros días con el bebé sean más tranquilos: el agarre, el dolor o las grietas, la subida de la leche o la extracción y conservación, y también la lactancia mixta o con biberón.</p>
+        <p>Se formó como enfermera en Pamplona y como matrona en Londres, en King’s College London.</p>
+        <h3>Formación</h3>
+        <ul>
+          <li>Grado en Enfermería · Universidad de Navarra (Pamplona)</li>
+          <li>Especialidad de Matrona · King’s College London (Londres)</li>
+          <li>Asesora de lactancia materna</li>
+        </ul>
+        <h3>En Hera te puede ayudar con</h3>
+        <ul class="tags"><li>Lactancia</li><li>Preparación al parto</li><li>Posparto</li><li>Suelo pélvico</li><li>Cuidados del recién nacido</li></ul>
+        <div class="cta"><a class="btn btn-p" href="./#preguntar-matrona">Pregunta a Marina</a></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="person" id="lucia">
+    <div class="wrap p-grid">
+      <div class="p-photo via-lactea"><img src="portada/equipo/lucia.jpg" alt="Lucía Carrascón" width="320" height="320"></div>
+      <div class="bio">
+        <h2>Lucía Carrascón</h2>
+        <p class="role">Pediatra</p>
+        <span class="pending">Biografía provisional</span>
+        <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean lacinia bibendum nulla sed consectetur. Maecenas faucibus mollis interdum. Etiam porta sem malesuada magna mollis euismod.</p>
+        <p>Curabitur blandit tempus porttitor. Morbi leo risus, porta ac consectetur ac, vestibulum at eros.</p>
+        <h3>Formación</h3>
+        <ul><li>Lorem ipsum dolor sit amet.</li><li>Consectetur adipiscing elit.</li></ul>
+        <h3>En Hera te puede ayudar con</h3>
+        <ul class="tags"><li>Fiebre</li><li>Alimentación</li><li>Sueño</li><li>Desarrollo</li><li>Vacunas</li></ul>
+        <div class="cta"><a class="btn btn-p" href="./#preguntar-pediatra">Pregunta a Lucía</a></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="band">
+      <h2>¿Qué te preocupa hoy?</h2>
+      <p>Pregúntalo y te responde una de ellas en menos de 48 h. Tus dos primeras consultas, gratis.</p>
+      <a class="btn btn-w" href="./#ask">Pregunta tu duda gratis</a>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <img class="logo" src="app/brand/hera-logo-compact.svg" alt="Hera" width="113" height="34" style="height:28px">
+      <nav aria-label="Enlaces">
+        <a href="./">Inicio</a>
+        <a href="app/">Abrir Hera</a>
+        <a href="support.html">Soporte</a>
+        <a href="privacy.html">Privacidad</a>
+        <a href="mailto:contacto@hera-gine.com">contacto@hera-gine.com</a>
+      </nav>
+    </div>
+    <p class="disclaimer">Hera informa y acompaña, pero no sustituye a tu médico ni atiende urgencias. Si tienes un sangrado muy abundante, dolor intenso o fiebre, acude a tu médico o a urgencias.</p>
+  </div>
+</footer>
+</body>
+</html>

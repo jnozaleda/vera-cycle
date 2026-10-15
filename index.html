@@ -187,6 +187,7 @@ section { padding: 64px 0; }
 .pro .role { font-size: 14px; font-weight: 600; color: var(--mauve); margin: 2px 0 0; }
 .pro p { margin: 0; color: var(--text); font-size: 15px; }
 .pro .btn { margin-top: auto; }
+.pro-more { font-size: 14px; font-weight: 600; color: var(--plum); text-underline-offset: 3px; }
 
 /* Comparativa */
 .vs { display: grid; gap: 14px; margin-top: 28px; }
@@ -420,18 +421,21 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         <div class="head"><img src="portada/equipo/gonzalo.jpg?v=2" alt="Gonzalo Nozaleda" width="72" height="72" loading="lazy">
           <div><h3>Dr. Gonzalo Nozaleda</h3><p class="role">Ginecólogo</p></div></div>
         <p>Embarazo y pruebas, medicación, anticoncepción, la regla y el ciclo, y cualquier complicación.</p>
+        <a class="pro-more" href="equipo.html#gonzalo">Conocer a Gonzalo →</a>
         <a class="btn btn-s" href="#ask" data-to="gineco">Pregunta a Gonzalo</a>
       </article>
       <article class="pro">
         <div class="head"><img src="portada/equipo/marina.jpg?v=2" alt="Marina Fernández" width="72" height="72" loading="lazy">
           <div><h3>Marina Fernández</h3><p class="role">Matrona</p></div></div>
         <p>Lactancia, preparación al parto, posparto, suelo pélvico y los cuidados del recién nacido.</p>
+        <a class="pro-more" href="equipo.html#marina">Conocer a Marina →</a>
         <a class="btn btn-s" href="#ask" data-to="matrona">Pregunta a Marina</a>
       </article>
       <article class="pro">
         <div class="head"><img src="portada/equipo/lucia.jpg" alt="Lucía Carrascón" width="72" height="72" loading="lazy">
           <div><h3>Lucía Carrascón</h3><p class="role">Pediatra</p></div></div>
         <p>La salud y los cuidados de tu bebé: fiebre, alimentación, sueño, desarrollo y vacunas.</p>
+        <a class="pro-more" href="equipo.html#lucia">Conocer a Lucía →</a>
         <a class="btn btn-s" href="#ask" data-to="pediatra">Pregunta a Lucía</a>
       </article>
     </div>
@@ -596,6 +600,9 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   const showErr = (m) => { err.textContent = m; err.hidden = !m; };
 
   ta.addEventListener('input', () => { if (ta.value.trim()) open(); refresh(); });
+  // Desde la página del equipo: #preguntar-matrona abre la caja con esa profesional elegida
+  const fromHash = /^#preguntar-(gineco|matrona|pediatra)$/.exec(location.hash);
+  if (fromHash) { history.replaceState(null, '', location.pathname); setTimeout(() => goAsk(fromHash[1]), 50); }
   // Cabecera en móvil: «Pregunta tu duda» solo cuando la caja ya no se ve
   if ('IntersectionObserver' in window) {
     new IntersectionObserver(([e]) => document.body.classList.toggle('past-ask', !e.isIntersecting && e.boundingClientRect.top < 0)).observe(box);

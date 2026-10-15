@@ -65,6 +65,11 @@ h3 { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; letter
 .bio ul { margin: 0; padding-left: 20px; color: var(--text); display: grid; gap: 6px; }
 .bio ul.tags { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0 !important; }
 .bio ul.tags li { background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 5px 10px; font-size: 14px; }
+.areas { margin: 0; display: grid; gap: 12px; }
+.areas div { border-left: 3px solid var(--rose); padding-left: 12px; }
+.areas dt { font-weight: 600; color: var(--ink); }
+.areas dd { margin: 2px 0 0; color: var(--text); font-size: 15px; }
+.quote { margin: 22px 0 0; font-family: 'Fraunces', Georgia, serif; font-size: 24px; line-height: 1.25; color: var(--plum); }
 .pending { display: inline-block; margin-top: 14px; font-size: 12.5px; color: var(--muted); background: var(--rose); border-radius: 6px; padding: 4px 10px; }
 .cta { margin-top: 24px; }
 
@@ -98,7 +103,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     <nav class="jump" aria-label="Ir a">
       <a href="#gonzalo"><img src="portada/equipo/gonzalo.jpg?v=2" alt="" width="30" height="30">Gonzalo</a>
       <a href="#marina"><img src="portada/equipo/marina.jpg?v=2" alt="" width="30" height="30">Marina</a>
-      <a href="#lucia"><img src="portada/equipo/lucia.jpg" alt="" width="30" height="30">Lucía</a>
+      <a href="#lucia"><img src="portada/equipo/lucia.jpg?v=3" alt="" width="30" height="30">Lucía</a>
     </nav>
   </div>
 
@@ -126,16 +131,31 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <div class="bio">
         <h2>Marina Fernández</h2>
         <p class="role">Matrona y asesora de lactancia materna</p>
-        <p>Marina acompaña a mujeres y familias durante el embarazo, el parto y el posparto. Como asesora de lactancia materna, ayuda a que los primeros días con el bebé sean más tranquilos: el agarre, el dolor o las grietas, la subida de la leche o la extracción y conservación, y también la lactancia mixta o con biberón.</p>
-        <p>Se formó como enfermera en Pamplona y como matrona en Londres, en King’s College London.</p>
+        <p>Marina acompaña a mujeres y familias en las diferentes etapas de la vida, ofreciendo un cuidado cercano e individualizado, adaptado a las necesidades de cada momento.</p>
+        <h3>Cómo te acompaña</h3>
+        <dl class="areas">
+          <div><dt>Ciclo menstrual</dt><dd>Asesoramiento y resolución de dudas.</dd></div>
+          <div><dt>Consulta preconcepcional</dt><dd>Orientación y acompañamiento en la búsqueda del embarazo.</dd></div>
+          <div><dt>Embarazo</dt><dd>Información, acompañamiento y resolución de dudas.</dd></div>
+          <div><dt>Preparación al parto</dt><dd>Herramientas y recursos para afrontar el nacimiento con confianza y tranquilidad.</dd></div>
+          <div><dt>Posparto</dt><dd>Orientación y apoyo durante la adaptación a esta nueva etapa.</dd></div>
+          <div><dt>Suelo pélvico</dt></div>
+          <div><dt>Lactancia materna, diferida, mixta y artificial</dt><dd>Asesoramiento individualizado, respetando las necesidades de cada madre y bebé. Valora el agarre y acompaña en la resolución de dificultades como el dolor, las grietas, la subida de la leche y la extracción y conservación de leche.</dd></div>
+          <div><dt>Aceites esenciales</dt><dd>Orientación sobre su uso y las precauciones necesarias durante el embarazo y el parto.</dd></div>
+        </dl>
+        <blockquote class="quote">«Existen tantas lactancias como madres»</blockquote>
+        <p>Su forma de entender el acompañamiento parte de una idea fundamental: cada mujer, cada bebé y cada experiencia son únicos. Por eso, escucha sin juzgar, respeta las decisiones de cada familia y ofrece herramientas para que cada mujer encuentre su propio camino, sintiéndose acompañada, segura y comprendida en cada etapa.</p>
         <h3>Formación</h3>
         <ul>
           <li>Grado en Enfermería · Universidad de Navarra (Pamplona)</li>
           <li>Especialidad de Matrona · King’s College London (Londres)</li>
-          <li>Asesora de lactancia materna</li>
+          <li>Experto universitario en consultoría y asesoramiento en lactancia materna</li>
+          <li>Máster en Formación Permanente en Atención Especializada durante el embarazo para matronas</li>
+          <li>Curso de anquiloglosia y lactancia</li>
+          <li>KCH Hypnobirthing · Hipnoparto</li>
+          <li>Curso de técnicas de rebozo en gestación, parto y posparto</li>
+          <li>Curso Método AIPAP Agua</li>
         </ul>
-        <h3>En Hera te puede ayudar con</h3>
-        <ul class="tags"><li>Lactancia</li><li>Preparación al parto</li><li>Posparto</li><li>Suelo pélvico</li><li>Cuidados del recién nacido</li></ul>
         <div class="cta"><a class="btn btn-p" href="./#preguntar-matrona">Pregunta a Marina</a></div>
       </div>
     </div>
@@ -143,7 +163,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
 
   <section class="person" id="lucia">
     <div class="wrap p-grid">
-      <div class="p-photo via-lactea"><img src="portada/equipo/lucia.jpg" alt="Lucía Carrascón" width="320" height="320"></div>
+      <div class="p-photo via-lactea"><img src="portada/equipo/lucia-grande.jpg" alt="Lucía Carrascón" width="500" height="500"></div>
       <div class="bio">
         <h2>Lucía Carrascón</h2>
         <p class="role">Pediatra</p>

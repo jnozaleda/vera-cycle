@@ -923,6 +923,7 @@ function settingsSheet() {
         <button class="pill-outline row gap-6 center self-start" data-action="open-ask" data-ctx="">${icon('mail', 13)} Hacer una consulta</button>`}
       </div>` : ''}
       ${syncAvailable() ? syncSection() : ''}
+      ${aboutSection()}
       <div class="stack-10 data-box">
         ${eyebrow('Contacto')}
         <p class="t-13 soft lh-4">¿Tienes dudas sobre tu salud, sobre cómo usar Hera o quieres darnos tu opinión? Escríbenos cuando quieras.</p>
@@ -1270,6 +1271,7 @@ function askSheet() {
       ${askPickCard(CONSULTS.gineco, a, sugg)}${askPickCard(CONSULTS.matrona, a, sugg)}${askPickCard(CONSULTS.pediatra, a, sugg)}
     </div>
     <p class="t-12 soft lh-4" data-ask-hint>${esc(askHint(a, sugg))}</p>
+    <a class="link-deep t-12 self-start" href="../equipo.html" ${isStandalone() ? 'target="_blank" rel="noopener"' : ''}>¿Quiénes son? Conoce al equipo →</a>
     <p class="t-12 c-rose lh-4" data-ask-urgent ${sugg.urgent ? '' : 'hidden'}>Si es algo urgente (sangrado abundante, pérdida de líquido, el bebé no se mueve, dolor muy fuerte), no esperes: llama al 112 o ve a urgencias.</p>
     ${a.context ? `<div><button class="ctx-tag" data-action="ask-clear-ctx" aria-label="Quitar el tema">Sobre: ${esc(a.context)} ${icon('x', 10)}</button></div>` : ''}
     <textarea class="field ask-text" data-model="ask.text" rows="4" maxlength="2000" placeholder="Cuéntanos tu duda con tus palabras. Por ejemplo: «Desde hace 3 días tengo acidez por la noche, ¿qué puedo hacer?»">${esc(a.text)}</textarea>
@@ -1676,6 +1678,23 @@ function answerStrip() {
 }
 async function checkConsults(force = false) {
   if (await refreshConsults(CONSULT_API, { force })) render();
+}
+
+// MARK: - Enlaces a la web (con la app instalada se abren en el navegador, encima de la app)
+const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const webLink = (href, label, ic = 'right') => `<a class="web-row" href="${href}" ${isStandalone() ? 'target="_blank" rel="noopener"' : ''}><span class="grow">${label}</span>${icon(ic, 13, 'soft')}</a>`;
+function aboutSection() {
+  return `<div class="stack-10 data-box">
+    ${eyebrow('Sobre Hera')}
+    <div class="web-list">
+      ${webLink('../', 'Web de Hera')}
+      ${webLink('../equipo.html', 'Conoce al equipo')}
+      ${webLink('../#precio', 'Precios')}
+      ${webLink('../#instalar', 'Cómo instalarla')}
+      ${webLink('../support.html', 'Soporte')}
+      ${webLink('../privacy.html', 'Privacidad')}
+    </div>
+  </div>`;
 }
 
 /** Imagen fluida de cada trimestre: seda rosa, seda melocotón y Vía Láctea (diseno/fluido/) */
@@ -2289,7 +2308,7 @@ function mainView() {
     ${reminderBanner()}
     ${mode === 'cycle' ? irregularNudge() : ''}
     <main class="content">${view}</main>
-    <footer class="foot"><a href="${CONTACT_HREF}">Contacto</a> · <a href="../support.html">Soporte</a> · <a href="../privacy.html">Privacidad</a></footer>
+    <footer class="foot"><a href="../" ${isStandalone() ? 'target="_blank" rel="noopener"' : ''}>Web de Hera</a> · <a href="${CONTACT_HREF}">Contacto</a> · <a href="../support.html">Soporte</a> · <a href="../privacy.html">Privacidad</a></footer>
   </div>
   <nav class="tabbar ${tabs.length > 3 ? 'many' : ''}" aria-label="Secciones">
     ${tabs.map((t, i) => `<button class="tab ${ui.tab === i ? 'on' : ''}" data-action="tab" data-i="${i}" aria-current="${ui.tab === i ? 'page' : 'false'}">${icon(t.icon, 20)}<span>${t.label}</span></button>`).join('')}

@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#FAF8F5">
 <link rel="icon" type="image/svg+xml" href="app/brand/favicon.svg">
 <link rel="apple-touch-icon" href="app/icons/apple-touch-icon.png">
-<link rel="preload" href="app/fonts/fraunces.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="app/fonts/newsreader.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="app/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
 <meta property="og:type" content="website">
 <meta property="og:title" content="Hera · Tus dudas del embarazo, resueltas por profesionales">
@@ -27,9 +27,10 @@
 </script>
 <style>
 @font-face { font-family: 'Inter'; src: url('app/fonts/inter.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
-@font-face { font-family: 'Fraunces'; src: url('app/fonts/fraunces.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: 'Newsreader'; src: url('app/fonts/newsreader.woff2') format('woff2'); font-weight: 200 800; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Newsreader'; src: url('app/fonts/newsreader-italic.woff2') format('woff2'); font-weight: 200 800; font-style: italic; font-display: swap; }
 :root {
-  --plum: #693D55; --plum-h: #563146; --plum-d: #2A1823; --mauve: #8E6178; --ivory: #FAF8F5; --rose: #F4E6E8; --sage: #DCEBE4;
+  --plum: #693D55; --plum-h: #563146; --plum-d: #2A1823; --mauve: #8E6178; --ivory: #FBF7F1; --rose: #F4E6E8; --sage: #DCEBE4;
   --lav: #ECE6F0; --ink: #2E2630; --text: #4C444C; --muted: #655B61; --line: #E6DFE2; --sage-d: #56695A; --peach: #F2B9A0;
 }
 * { box-sizing: border-box; }
@@ -62,7 +63,8 @@ header.top { position: sticky; top: 0; z-index: 10; background: color-mix(in srg
 
 /* Tipografía */
 .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--mauve); margin: 0; }
-h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; font-weight: 500; color: var(--plum); letter-spacing: -.015em; text-wrap: balance; }
+h1, h2, h3 { font-family: 'Newsreader', Georgia, serif; font-weight: 400; color: var(--plum); letter-spacing: -.02em; text-wrap: balance; }
+h1 em { font-style: italic; font-weight: 300; color: var(--plum); }
 h1 { font-size: 36px; line-height: 1.06; margin: 14px 0 16px; }
 h2 { font-size: 30px; line-height: 1.12; margin: 10px 0 12px; }
 h3 { font-size: 21px; line-height: 1.2; margin: 0 0 6px; }
@@ -76,7 +78,7 @@ section { padding: 64px 0; }
 /* Portada */
 .hero { display: grid; gap: 36px; align-items: center; padding: 20px 0 48px; }
 @media (min-width: 960px) { .hero { grid-template-columns: 1.1fr .9fr; padding: 40px 0 72px; gap: 56px; } }
-.ask { margin-top: 26px; background: #fff; border: 1.5px solid #CDB9C4; border-radius: 12px; padding: 14px; max-width: 560px; scroll-margin-top: 84px; }
+.ask { margin-top: 26px; background: #fff; border: 1.5px solid #E8DCD6; box-shadow: 0 18px 40px -22px rgba(105,61,85,.4); border-radius: 12px; padding: 14px; max-width: 560px; scroll-margin-top: 84px; }
 .ask form, .ask .more { display: grid; gap: 12px; }
 .ask form > label { font-size: 14px; font-weight: 600; color: var(--plum); }
 .ask textarea, .ask input[type=email], .ask select { width: 100%; border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; font: 400 16px/1.5 'Inter', sans-serif; color: var(--ink); background: var(--ivory); }
@@ -88,6 +90,21 @@ section { padding: 64px 0; }
 .who-faces { display: flex; flex: none; }
 .who-faces img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; }
 .who-faces img + img { margin-left: -9px; }
+/* Franja de anuncio y nombre */
+.annc { background: var(--plum); text-align: center; padding: 10px 14px; }
+.annc a { color: #FBF1EC; font: 500 13px/1.3 'Inter', sans-serif; text-decoration: none; }
+.annc u { color: #fff; text-underline-offset: 3px; }
+.wordmark { font-family: 'Newsreader', Georgia, serif; font-size: 30px; font-weight: 400; letter-spacing: -.02em; line-height: 1; color: #3B2433; text-decoration: none; }
+.btn-pill { background: var(--plum); color: #fff; border-radius: 999px; }
+.btn-pill:hover { background: var(--plum-h); }
+.hero .eyebrow { font-size: 11.5px; letter-spacing: .2em; margin-bottom: 14px; }
+.hero h1 { color: #3B2433; }
+/* Tres datos con líneas finas bajo la caja (como en Function Health) */
+.facts { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 22px; max-width: 560px; border-top: 1px solid #E8DFD8; padding-top: 14px; }
+.facts div { padding: 0 10px; border-left: 1px solid #E8DFD8; min-width: 0; }
+.facts div:first-child { padding-left: 0; border-left: 0; }
+.facts b { display: block; font: 600 14px/1.25 'Inter', sans-serif; color: var(--ink); }
+.facts span { display: block; font-size: 12.5px; line-height: 1.3; color: var(--muted); margin-top: 2px; }
 /* Cabecera: en móvil, «Abrir Hera» mientras la caja de la duda se ve; al bajar, «Pregunta tu duda» */
 .top-cta { display: grid; }
 .top-cta .btn { grid-area: 1 / 1; justify-self: end; transition: opacity .2s ease, visibility .2s; }
@@ -148,18 +165,13 @@ section { padding: 64px 0; }
 .phone img { display: block; width: 100%; height: auto; border-radius: 32px; }
 
 /* Cifras */
-.proof { border-block: 1px solid var(--line); }
-.proof ul { list-style: none; margin: 0; padding: 26px 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px 16px; }
-@media (min-width: 800px) { .proof ul { grid-template-columns: repeat(4, 1fr); } }
-.proof b { display: block; font-family: 'Fraunces', Georgia, serif; font-weight: 500; font-size: 34px; line-height: 1; color: var(--plum); }
-.proof span { display: block; font-size: 14px; color: var(--text); margin-top: 6px; }
 
 /* Cómo funciona */
 .how { display: grid; gap: 40px; align-items: center; }
 @media (min-width: 900px) { .how { grid-template-columns: 1fr 1fr; } }
 .steps { list-style: none; margin: 26px 0 28px; padding: 0; display: grid; gap: 18px; }
 .steps li { display: grid; grid-template-columns: 40px 1fr; gap: 14px; align-items: start; }
-.steps .n { width: 40px; height: 40px; border-radius: 50%; background: var(--rose); color: var(--plum); font: 600 17px/40px 'Fraunces', serif; text-align: center; }
+.steps .n { width: 40px; height: 40px; border-radius: 50%; background: var(--rose); color: var(--plum); font: 600 17px/40px 'Newsreader', Georgia, serif; text-align: center; }
 .steps h3 { font: 600 17px/1.35 'Inter', sans-serif; color: var(--ink); margin: 6px 0 2px; }
 .steps p { margin: 0; color: var(--text); font-size: 15px; }
 .how .art { display: flex; justify-content: center; position: relative; padding: 24px 0; }
@@ -225,7 +237,7 @@ section { padding: 64px 0; }
 .plan { border: 1px solid var(--line); background: #fff; border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 8px; }
 .plan.main { border: 2px solid var(--plum); }
 .plan .k { font-size: 13px; font-weight: 600; color: var(--mauve); letter-spacing: .06em; text-transform: uppercase; }
-.plan .v { font-family: 'Fraunces', Georgia, serif; font-size: 32px; color: var(--plum); line-height: 1.1; }
+.plan .v { font-family: 'Newsreader', Georgia, serif; font-size: 32px; color: var(--plum); line-height: 1.1; }
 .plan p { margin: 0; color: var(--text); font-size: 15px; }
 
 /* Instalar */
@@ -267,28 +279,22 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
 
 @media (max-width: 699px) {
   .hero-art, .how .art { display: none; }
-  /* En móvil todo el principio va sobre la Vía Láctea, como un cielo (en ordenador el fluido va detrás del móvil) */
-  .hero { margin: 0 -20px; padding: 28px 20px 36px; color: #fff;
-    background: linear-gradient(180deg, rgba(28,16,24,.35), rgba(28,16,24,.1) 30%, rgba(28,16,24,.2) 55%, rgba(42,24,35,.85) 100%),
-      url('portada/fluido/via-lactea-atardecer.webp') 58% 22% / auto 125% no-repeat, var(--plum-d); }
-  .hero .eyebrow { color: var(--peach); }
-  .hero h1 { color: #fff; text-shadow: 0 2px 18px rgba(28,16,24,.45); }
-  .hero .lead { color: rgba(255,255,255,.92); text-shadow: 0 1px 12px rgba(28,16,24,.5); }
-  .hero .ask { border-color: transparent; box-shadow: 0 20px 40px -20px rgba(0,0,0,.6); }
-  .hero .examples button { background: rgba(255,255,255,.14); color: #fff; border-color: rgba(255,255,255,.3); }
-  .hero .alt { color: rgba(255,255,255,.85); }
-  .hero .alt .link { color: #fff; }
-  .hero .faces p, .hero .faces b { color: #fff; }
-  .hero .faces img { border-color: var(--plum-d); }
+  /* En móvil: fondo crema; la seda melocotón enmarca la caja de la duda (como el móvil sobre la seda en ordenador) */
+  .hero { padding: 30px 0 34px; }
+  .hero h1 { font-size: 42px; line-height: 1.03; margin-top: 0; }
+  .hero .lead { font-size: 16.5px; line-height: 1.5; }
+  .askwrap { margin-top: 26px; padding: 16px; border-radius: 12px; background: var(--peach) url('portada/fluido/seda-melocoton.webp') center / cover; }
+  .askwrap .ask { margin-top: 0; border-color: transparent; }
   .stage .shot { width: 170px; }
 }
 </style>
 </head>
 <body>
 
+<div class="annc"><a href="#ask" data-goask>Tus 2 primeras consultas, gratis · <u>Pregunta ahora</u></a></div>
 <header class="top">
   <div class="wrap">
-    <a href="./" aria-label="Hera, inicio"><img class="logo" src="app/brand/hera-logo-compact.svg" alt="Hera" width="113" height="34"></a>
+    <a href="./" class="wordmark" aria-label="Hera, inicio">Hera</a>
     <nav class="nav" aria-label="Secciones">
       <a href="#como-funciona">Cómo funciona</a>
       <a href="equipo.html">Profesionales</a>
@@ -298,7 +304,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <a href="app/" data-cta="abrir_portada">Abrir Hera</a>
     </nav>
     <div class="top-cta">
-      <a class="btn btn-o btn-sm" href="app/" data-cta="abrir_portada" id="top-open">Abrir Hera</a>
+      <a class="btn btn-pill btn-sm" href="app/" data-cta="abrir_portada" id="top-open">Abrir Hera</a>
       <a class="btn btn-p btn-sm" href="#ask" data-goask id="top-ask">Pregunta tu duda</a>
     </div>
   </div>
@@ -308,8 +314,9 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
 <div class="wrap">
   <div class="hero">
     <div>
-      <h1>Tus dudas del embarazo, resueltas por profesionales</h1>
-      <p class="lead">Ginecólogo, matrona y pediatra te responden en menos de 48 h. Las dos primeras consultas, gratis.</p>
+      <p class="eyebrow">Embarazo · Posparto · Bebé</p>
+      <h1>Tus dudas del embarazo, <em>resueltas por profesionales</em></h1>
+      <p class="lead">Ginecólogo, matrona y pediatra con nombre y apellido. Leen tu caso y te responden por escrito en menos de 48 h.</p>
 
       <div class="askwrap">
       <div class="ask" id="ask">
@@ -347,6 +354,11 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <div class="done" id="ask-done" hidden aria-live="polite"></div>
       </div>
       </div>
+      <div class="facts" aria-label="Hera en cifras">
+        <div><b>48 h</b><span>como máximo</span></div>
+        <div><b>Por escrito</b><span>para releerla</span></div>
+        <div><b>Sin anuncios</b><span>ni cookies</span></div>
+      </div>
     </div>
     <div class="hero-art">
       <div class="phone"><img src="portada/embarazo-hoy.jpg" width="560" height="1213" loading="eager" alt="Pantalla Hoy de Hera en la semana 20 de embarazo"></div>
@@ -354,16 +366,6 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   </div>
 </div>
 
-<div class="proof" aria-label="Hera en cifras">
-  <div class="wrap">
-    <ul>
-      <li><b>3</b><span>profesionales sanitarios: ginecología, matrona y pediatría</span></li>
-      <li><b>48 h</b><span>como máximo para responderte</span></li>
-      <li><b>2</b><span>consultas gratis para empezar</span></li>
-      <li><b>0</b><span>cookies y anuncios</span></li>
-    </ul>
-  </div>
-</div>
 
 <section id="como-funciona">
   <div class="wrap how">
@@ -545,7 +547,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
 <footer>
   <div class="wrap">
     <div class="foot">
-      <img class="logo" src="app/brand/hera-logo-compact.svg" alt="Hera" width="113" height="34" style="height:28px">
+      <span class="wordmark" style="font-size:26px">Hera</span>
       <nav aria-label="Enlaces">
         <a href="app/">Abrir Hera</a>
         <a href="equipo.html">El equipo</a>

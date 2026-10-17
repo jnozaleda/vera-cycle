@@ -11,9 +11,10 @@
 <link rel="apple-touch-icon" href="app/icons/apple-touch-icon.png">
 <style>
 @font-face { font-family: 'Inter'; src: url('app/fonts/inter.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
-@font-face { font-family: 'Fraunces'; src: url('app/fonts/fraunces.woff2') format('woff2'); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: 'Newsreader'; src: url('app/fonts/newsreader.woff2') format('woff2'); font-weight: 200 800; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Newsreader'; src: url('app/fonts/newsreader-italic.woff2') format('woff2'); font-weight: 200 800; font-style: italic; font-display: swap; }
 :root {
-  --plum: #693D55; --plum-h: #563146; --plum-d: #2A1823; --mauve: #8E6178; --ivory: #FAF8F5; --rose: #F4E6E8; --sage: #DCEBE4;
+  --plum: #693D55; --plum-h: #563146; --plum-d: #2A1823; --mauve: #8E6178; --ivory: #FBF7F1; --rose: #F4E6E8; --sage: #DCEBE4;
   --lav: #ECE6F0; --ink: #2E2630; --text: #4C444C; --muted: #655B61; --line: #E6DFE2; --peach: #F2B9A0;
 }
 * { box-sizing: border-box; }
@@ -36,7 +37,7 @@ header.top { position: sticky; top: 0; z-index: 10; background: color-mix(in srg
 .btn-sm { min-height: 40px; padding: 0 16px; font-size: 14px; }
 
 .eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: var(--mauve); margin: 0; }
-h1, h2, h3 { font-family: 'Fraunces', Georgia, serif; font-weight: 500; color: var(--plum); letter-spacing: -.015em; text-wrap: balance; }
+h1, h2, h3 { font-family: 'Newsreader', Georgia, serif; font-weight: 400; color: var(--plum); letter-spacing: -.015em; text-wrap: balance; }
 h1 { font-size: 36px; line-height: 1.08; margin: 10px 0 12px; }
 h2 { font-size: 30px; line-height: 1.12; margin: 6px 0 4px; }
 h3 { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--mauve); margin: 22px 0 8px; }
@@ -67,7 +68,7 @@ h3 { font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 600; letter
 .areas div { border-left: 3px solid var(--rose); padding-left: 12px; }
 .areas dt { font-weight: 600; color: var(--ink); }
 .areas dd { margin: 2px 0 0; color: var(--text); font-size: 15px; }
-.areas dd.q { margin-top: 8px; font-family: 'Fraunces', Georgia, serif; font-size: 20px; line-height: 1.3; color: var(--plum); }
+.areas dd.q { margin-top: 8px; font-family: 'Newsreader', Georgia, serif; font-size: 20px; line-height: 1.3; color: var(--plum); }
 .pending { display: inline-block; margin-top: 14px; font-size: 12.5px; color: var(--muted); background: var(--rose); border-radius: 6px; padding: 4px 10px; }
 .cta { margin-top: 24px; }
 
@@ -82,13 +83,14 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
 .foot nav { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: 14px; }
 .foot nav a { color: var(--text); text-decoration: none; }
 .disclaimer { font-size: 13px; color: var(--muted); margin: 18px 0 0; max-width: 60em; }
+.wordmark { font-family: 'Newsreader', Georgia, serif; font-size: 30px; font-weight: 400; letter-spacing: -.02em; line-height: 1; color: #3B2433; text-decoration: none; }
 </style>
 </head>
 <body>
 
 <header class="top">
   <div class="wrap">
-    <a href="./" aria-label="Hera, inicio"><img class="logo" src="app/brand/hera-logo-compact.svg" alt="Hera" width="113" height="34"></a>
+    <a href="./" class="wordmark" aria-label="Hera, inicio">Hera</a>
     <a class="btn btn-p btn-sm" href="./#ask">Pregunta tu duda</a>
   </div>
 </header>
@@ -196,7 +198,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
 <footer>
   <div class="wrap">
     <div class="foot">
-      <img class="logo" src="app/brand/hera-logo-compact.svg" alt="Hera" width="113" height="34" style="height:28px">
+      <span class="wordmark" style="font-size:26px">Hera</span>
       <nav aria-label="Enlaces">
         <a href="./">Inicio</a>
         <a href="app/">Abrir Hera</a>

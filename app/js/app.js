@@ -1701,11 +1701,18 @@ function aboutSection() {
 /** Imagen fluida de cada trimestre: seda rosa, seda melocotón y Vía Láctea (diseno/fluido/) */
 const flTrimester = (t) => (t <= 1 ? 'seda-rosa' : t === 2 ? 'seda-melocoton' : 'via-lactea-atardecer');
 const flStrip = (img) => `<div class="fl-strip ${img}" aria-hidden="true"></div>`;
-/** Barra fina fija con «Pregúntanos» al bajar por Hoy o Dudas: la etapa a la izquierda y la imagen de la tarjeta principal */
+/** Barra fina fija con «Pregúntanos» al bajar (en el ciclo, por todas las pestañas; en las etapas, por Hoy o Dudas): la etapa a la izquierda y la imagen de la tarjeta principal */
 function miniBar(mode, tab) {
-  if (mode === 'cycle' || !['today', 'guide', 'baby'].includes(tab)) return '';
+  if (mode !== 'cycle' && !['today', 'guide', 'baby'].includes(tab)) return '';
   let label, img;
-  if (mode === 'pregnancy') {
+  if (mode === 'cycle') {
+    const settings = store.data.settings;
+    if (settings.isRegular && settings.lastPeriod) {
+      const info = cycleInfo(settings);
+      label = [`Día ${info.day}`, PHASES[info.phase].label];
+    } else label = ['Mi ciclo', ''];
+    img = 'seda-rosa';
+  } else if (mode === 'pregnancy') {
     const g = gestation(store.stage.pregnancy);
     if (!g) return '';
     label = [`Semana ${g.weeks}`, TRIMESTER_LABEL[g.trimester]]; img = flTrimester(g.trimester);
@@ -1715,7 +1722,7 @@ function miniBar(mode, tab) {
     label = [s.weeks === 0 ? `${s.days} ${plural(s.days, 'día', 'días')}` : `${s.weeks} ${plural(s.weeks, 'semana', 'semanas')}`, 'Desde el parto']; img = 'seda-melocoton';
   }
   return `<div class="mini-bar ${img}" aria-hidden="true">
-    <span class="mini-label"><b>${esc(label[0])}</b><small>${esc(label[1])}</small></span>
+    <span class="mini-label"><b>${esc(label[0])}</b>${label[1] ? `<small>${esc(label[1])}</small>` : ''}</span>
     <button class="mini-ask" data-action="open-ask" data-ctx="" tabindex="-1">${consultPair('sm')}<span>Pregúntanos</span></button>
   </div>`;
 }
@@ -2305,7 +2312,7 @@ function mainView() {
           return `<button class="gear ${warn ? 'has-dot' : ''}" data-action="open-settings" aria-label="${warn ? 'Ajustes: la sincronización está en pausa' : 'Ajustes'}">${icon('gear', 16)}</button>`; })()}
       </div>
     </header>
-    ${miniBar(mode, mode === 'cycle' ? null : STAGE_TAB_IDS[mode][ui.tab])}
+    ${miniBar(mode, mode === 'cycle' ? 'today' : STAGE_TAB_IDS[mode][ui.tab])}
     ${reminderBanner()}
     ${mode === 'cycle' ? irregularNudge() : ''}
     <main class="content">${view}</main>

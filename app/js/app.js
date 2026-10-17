@@ -1847,7 +1847,7 @@ function stageSection() {
       ${icon(ic, 18)}<span>${label}</span>${store.mode === val ? `<em class="stage-current">${icon('check', 10)} Actual</em>` : ''}
     </button>`;
   return `<div class="stack-10"><div class="t-13 soft">¿En qué momento estás?</div>
-    <div class="row gap-8">${btn('Embarazo', 'pregnancy', 'sprout')}${btn('Posparto', 'postpartum', 'flower')}${btn('Ciclo', 'cycle', 'moon')}</div></div>
+    <div class="row gap-8">${btn('Regla', 'cycle', 'moon')}${btn('Embarazo', 'pregnancy', 'sprout')}${btn('Posparto', 'postpartum', 'flower')}</div></div>
     ${store.mode !== 'cycle' && d.mode === 'cycle' ? `<div class="note-mist lh-3"><span class="c-sage">${icon('info', 14)}</span><span>${store.mode === 'pregnancy'
       ? 'Si tu embarazo ha terminado, cuídate y date tiempo; puedes escribirnos cuando quieras. Indica abajo tu última regla cuando vuelva.'
       : 'Indica abajo el primer día de tu última regla. Los primeros ciclos tras el parto suelen ser irregulares.'}</span></div>` : ''}

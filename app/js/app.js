@@ -2821,13 +2821,50 @@ const actions = {
   'ob-demo': () => { ui.tab = 0; store.loadDemoData(); },
 };
 
+// Actividad anónima para el equipo (fase de pruebas): qué se usa, nunca el contenido
+const ACTION_EVENTS = {
+  'set-mood': 'diario:animo', 'toggle-symptom': 'diario:sintoma', 'set-flow': 'diario:regla', 'toggle-intimacy': 'diario:intimidad',
+  'set-lh': 'diario:ovulacion', 'set-stress': 'diario:estres', 'set-mucus': 'diario:flujo', 'num-step': 'diario:dato',
+  'save-med': 'medicacion', 'take-med': 'medicacion_tomada', 'save-settings': 'ajustes', 'appt-add': 'cita', 'weight-log': 'peso',
+  'bw-add': 'peso_bebe', 'bw-birth': 'nacimiento', 'ct-toggle': 'contraccion', 'open-contractions': 'abrir_contracciones',
+  'set-movement': 'movimientos', 'todo-toggle': 'tarea', 'open-urgent': 'urgencias', 'export': 'exportar', 'ob-demo': 'demo',
+};
+function trackAction(action, before) {
+  const ev = ACTION_EVENTS[action];
+  if (ev) track(ev);
+  // Bienvenida completada (y qué datos se dieron)
+  if (before.ob && !store.needsOnboarding) {
+    const mode = store.mode;
+    if (action !== 'ob-demo') track(`onboarding:${mode}`);
+    if (mode === 'pregnancy' && store.stage.pregnancy?.dueDate) track('fecha_parto');
+    if (mode === 'postpartum' && store.stage.postpartum?.birthDate) track('fecha_nacimiento');
+    if (mode === 'cycle' && action !== 'ob-demo') track(`ciclo:${store.data.settings?.isRegular === false ? 'irregular' : 'regular'}`);
+  }
+  // Fechas añadidas o cambiadas después, desde Ajustes
+  if (!before.ob && store.stage.pregnancy?.dueDate && store.stage.pregnancy.dueDate !== before.due) track('fecha_parto');
+  if (!before.ob && store.stage.postpartum?.birthDate && store.stage.postpartum.birthDate !== before.birth) track('fecha_nacimiento');
+  if (action === 'reset' && store.needsOnboarding && !before.ob) track('borrar_datos');
+}
+
 // Clicks
 root.addEventListener('click', (e) => {
   const el = e.target.closest('[data-action]');
   if (!el || el.disabled || el.tagName === 'INPUT') return;
   const fn = actions[el.dataset.action];
-  if (fn) { e.preventDefault(); fn(el); }
+  if (!fn) return;
+  e.preventDefault();
+  const before = { ob: store.needsOnboarding, due: store.stage?.pregnancy?.dueDate, birth: store.stage?.postpartum?.birthDate };
+  const r = fn(el);
+  if (r && typeof r.then === 'function') r.then(() => trackAction(el.dataset.action, before), () => {});
+  else trackAction(el.dataset.action, before);
 });
+// Clic en un enlace de correo de contacto
+document.addEventListener('click', (e) => { if (e.target.closest?.('a[href^="mailto:"]')) track('contacto'); }, true);
+// Instalación: Android avisa con «appinstalled»; en iPhone se detecta la primera vez que se abre desde el icono
+window.addEventListener('appinstalled', () => track('instalada'));
+try {
+  if (isStandalone() && !localStorage.getItem('hera-instalada')) { localStorage.setItem('hera-instalada', '1'); track('instalada'); }
+} catch { /* sin almacenamiento */ }
 
 // Teclado: Escape cierra el sheet; Enter/Espacio en el label de importar
 document.addEventListener('keydown', (e) => {

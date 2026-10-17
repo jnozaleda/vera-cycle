@@ -564,15 +564,17 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   // (2 gratuitas por correo, campo trampa, límite de envíos). Nada viaja en la URL.
   import { suggestContact } from './app/js/contacts.js';
   import { addConsult } from './app/js/consults.js';
+  import { device } from './app/js/track.js';
   const API = 'https://hera-consultas.tempcheck-app.workers.dev';
   const PROS = { gineco: { name: 'Gonzalo', img: 'gonzalo' }, matrona: { name: 'Marina', img: 'marina' }, pediatra: { name: 'Lucía', img: 'lucia' } };
   const local = ['localhost', '127.0.0.1'].includes(location.hostname);
-  const hit = (e) => { if (local) return; fetch(`${API}/hit`, { method: 'POST', body: JSON.stringify({ e }), keepalive: true }).catch(() => {}); };
+  const hit = (e) => { if (local) return; fetch(`${API}/hit`, { method: 'POST', body: JSON.stringify({ e, d: device() }), keepalive: true }).catch(() => {}); };
   const store = { get: (k) => { try { return localStorage.getItem(k) || ''; } catch { return ''; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch { /* sin almacenamiento */ } } };
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const isEmail = (e) => /^[^\s@<>()",;]+@[^\s@<>()",;]+\.[a-z]{2,24}$/i.test(e.trim());
   hit('portada');
+  document.addEventListener('click', (ev) => { if (ev.target.closest?.('a[href^="mailto:"]')) hit('contacto'); }, true);
 
   const box = $('ask'), form = $('ask-form'), ta = $('duda'), more = $('ask-more'), send = $('ask-send'), err = $('ask-err'), done = $('ask-done'), email = $('ask-email');
   const radios = [...form.querySelectorAll('input[name=to]')];

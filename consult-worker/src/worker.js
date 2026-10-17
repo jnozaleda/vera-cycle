@@ -25,6 +25,7 @@
 // Respuestas a través de Hera (relay.js): email() recibe lo que llega a hera-p-…/hera-u-… y lo reenvía al otro lado;
 // scheduled() avisa al profesional cuando una consulta lleva 40 h sin respuesta.
 
+import { isEvent, isDevice, record, personTag, hourlyDigest } from './activity.js';
 import { newThreadId, relayAddress, parseRelayAddress, sealEmail, openEmail, saveThread, loadThread, parseIncoming, isAutomatic } from './relay.js';
 
 export const PROS = {
@@ -119,8 +120,6 @@ export function madridDay(d = new Date()) {
   return `${p.year}-${p.month}-${p.day}`;
 }
 
-/** Eventos que acepta /hit (nombre o nombre:valor) */
-export const EVENT_RE = /^(apertura|portada|pregunta_portada|enviada_portada|abrir_portada|consulta_abierta|push_on|sync_on|etapa:(pregnancy|postpartum|cycle)|pestana:(today|diary|care|guide|cycle|trends|baby)|vista:(tu|bebe))$/;
 
 async function bump(env, k, day = madridDay(), by = 1) {
   if (!env.DB) return;
@@ -174,7 +173,7 @@ async function rateLimited(env, ip) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const origin = request.headers.get('Origin') ?? '';
     const allowed = (env.ALLOWED_ORIGINS ?? '').split(',').map((s) => s.trim()).filter(Boolean);
@@ -257,8 +256,10 @@ export default {
 
     if (url.pathname === '/hit') {
       const e = String(body.e || '');
-      if (!EVENT_RE.test(e)) return reply(400, { error: 'bad_event' });
+      if (!isEvent(e)) return reply(400, { error: 'bad_event' });
       await bump(env, e);
+      // Actividad en tiempo real para el equipo (activity.js): evento, dispositivo y etiqueta anónima del día
+      await record(env, { e, d: isDevice(body.d) ? body.d : '', p: await personTag(env, request, madridDay()) }, sendMail, ctx);
       if (e === 'apertura') await countPerson(env, request, 'app');
       if (e === 'portada') await countPerson(env, request, 'portada');
       return reply(200, { ok: true });
@@ -271,6 +272,7 @@ export default {
       const h = await hmac(env.HASH_SALT, norm);
       await env.KV.put(`w:${h}`, JSON.stringify({ email: String(body.email).trim(), at: new Date().toISOString() }));
       await bump(env, 'aviso_pago');
+      await record(env, { e: 'aviso_pago_pedido', p: await personTag(env, request, madridDay()) }, sendMail, ctx);
       return reply(200, { ok: true });
     }
 
@@ -294,7 +296,11 @@ export default {
       // Consultas ilimitadas (beta testers / plan ilimitado): no gastan gratuitas
       const vip = await env.KV.get(`v:${await hmac(env.HASH_SALT, norm)}`, 'json');
       const unlimited = !!vip && (!vip.until || Date.parse(vip.until) > Date.now());
-      if (!test && !unlimited && rec.n >= limit) { await bump(env, 'gratuitas_agotadas'); return reply(200, { limit: true, used: rec.n, freeLimit: limit }); }
+      if (!test && !unlimited && rec.n >= limit) {
+        await bump(env, 'gratuitas_agotadas');
+        await record(env, { e: 'gratuitas_agotadas', p: await personTag(env, request, madridDay()) }, sendMail, ctx);
+        return reply(200, { limit: true, used: rec.n, freeLimit: limit });
+      }
       if (!test && await rateLimited(env, request.headers.get('CF-Connecting-IP'))) return reply(429, { error: 'rate' });
 
       // Hilo: el profesional y la usuaria se responden a través de direcciones de Hera de un solo uso
@@ -311,6 +317,7 @@ export default {
         if (!unlimited) await env.KV.put(key, JSON.stringify({ n, first: rec.first || now, last: now }));
         await bump(env, `consulta:${body.to}`);
         if (unlimited) await bump(env, 'consulta_ilimitada');
+        await record(env, { e: `consulta:${body.to}`, p: await personTag(env, request, madridDay()) }, sendMail, ctx);
       }
       const remaining = Math.max(0, limit - n);
       const cm = confirmEmail(pro, q, remaining, id, unlimited);
@@ -345,6 +352,7 @@ export default {
   /** Cada hora: recordatorio al profesional si una consulta lleva 40 h sin respuesta */
   async scheduled(event, env) {
     await remindOverdue(env);
+    await hourlyDigest(env, sendMail);
   },
 };
 
@@ -385,6 +393,7 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
     if (t.p !== 'prueba') {
       await bump(env, `respondida:${t.p}`);
       await bump(env, `resp_horas:${t.p}`, madridDay(), Math.max(1, Math.round((t.a - t.c) / 3600000)));
+      await record(env, { e: `respondida:${t.p}` }, sendMail);
     }
   }
   if (t.p !== 'prueba') await bump(env, toUser ? 'mensaje:profesional' : 'mensaje:usuaria');

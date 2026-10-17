@@ -1,3 +1,4 @@
+import { isEvent, eventText, deviceText, hourlyDigest } from '../src/activity.js';
 import worker, { normalizeEmail, confirmEmail, PROS, relayIncoming, remindOverdue } from '../src/worker.js';
 import { stripQuoted, parseRelayAddress, relayAddress, loadThread, openEmail } from '../src/relay.js';
 import assert from 'node:assert/strict';
@@ -15,12 +16,13 @@ const metas = new Map();
 const KV = { async get(k, t) { const v = store.get(k); return v == null ? null : t === 'json' ? JSON.parse(v) : v; }, async put(k, v, o) { store.set(k, v); if (o?.metadata) metas.set(k, o.metadata); }, async delete(k) { store.delete(k); },
   async list({ prefix }) { return { keys: [...store.keys()].filter((k) => k.startsWith(prefix)).map((name) => ({ name, metadata: metas.get(name) })), list_complete: true }; } };
 const sent = [];
-const counts = new Map(); const visitors = new Set();
+const counts = new Map(); const visitors = new Set(); const activity = [];
 const DB = { prepare(sql) { return { bind(...a) { return { async run() {
   if (sql.startsWith('INSERT INTO counts')) { const k = a[0] + '|' + a[1]; counts.set(k, (counts.get(k) || 0) + 1); return { meta: { changes: 1 } }; }
+  if (sql.startsWith('INSERT INTO activity')) { activity.push({ ts: a[0], e: a[1], d: a[2], p: a[3] }); return { meta: { changes: 1 } }; }
   if (sql.startsWith('INSERT OR IGNORE')) { const k = a.join('|'); if (visitors.has(k)) return { meta: { changes: 0 } }; visitors.add(k); return { meta: { changes: 1 } }; }
   return { meta: { changes: 0 } }; },
-  async all() { return { results: [...counts].map(([k, n]) => ({ day: k.split('|')[0], k: k.split('|')[1], n })) }; } }; } }; } };
+  async all() { if (sql.includes('FROM activity')) return { results: activity.filter((r) => r.ts > a[0] && r.ts <= a[1]) }; return { results: [...counts].map(([k, n]) => ({ day: k.split('|')[0], k: k.split('|')[1], n })) }; } }; } }; } };
 const env = { KV, DB, PANEL_CODE: 'panel', COPY_TO: 'copia@example.com', HASH_SALT: 'sal', ADMIN_TOKEN: 'adm', ALLOWED_ORIGINS: 'https://hera-gine.com', FROM: 'Hera <consultas@hera-gine.com>', FREE_LIMIT: '2', DRY_RUN: '0', RELAY: '1', RESEND_API_KEY: 'k' };
 let rid = 0;
 globalThis.fetch = async (u, o) => {
@@ -121,4 +123,24 @@ r = await call('/ask', { ...q, email: 'be.ta@x.com' }); assert.ok(!r.j.unlimited
 r = await call('/admin/vip', { id: lst.list[0].id, remove: true }, { Authorization: 'Bearer beta' }); assert.equal(r.s, 401, 'sin BETA_CODE configurado no vale');
 env.BETA_CODE = 'beta';
 r = await call('/admin/vip', { id: lst.list[0].id, remove: true }, { Authorization: 'Bearer beta' }); assert.equal(r.j.removed, true, 'BETA_CODE puede quitar por id');
+// actividad para el equipo
+assert.ok(isEvent('onboarding:pregnancy') && isEvent('diario:sintoma') && !isEvent('hackeo') && !isEvent('onboarding:<x>'));
+assert.equal(eventText('onboarding:pregnancy'), 'Completó la bienvenida: embarazo'); assert.equal(eventText('consulta:matrona'), 'Envió una consulta a Marina');
+assert.equal(deviceText('ios-app'), 'iPhone · app instalada');
+const before = activity.length;
+r = await call('/hit', { e: 'fecha_parto', d: 'ios-app' }, { 'CF-Connecting-IP': '7.7.7.7', 'User-Agent': 'y' }); assert.equal(r.s, 200);
+assert.equal(activity.length, before + 1); assert.equal(activity.at(-1).d, 'ios-app'); assert.match(activity.at(-1).p, /^[0-9A-F]{4}$/, 'etiqueta de persona');
+assert.ok(activity.some((a) => a.e === 'consulta:matrona'), 'las consultas también quedan en la actividad');
+n0 = sent.length;
+env.ALERTS = '1';
+await call('/hit', { e: 'instalada', d: 'android-app' }, { 'CF-Connecting-IP': '8.8.8.8', 'User-Agent': 'z' });
+assert.equal(sent.length, n0 + 1, 'aviso al momento'); assert.match(sent.at(-1).subject, /Instaló la app/); assert.equal(sent.at(-1).to[0], 'copia@example.com');
+await call('/hit', { e: 'instalada', d: 'android-app' }, { 'CF-Connecting-IP': '8.8.8.8', 'User-Agent': 'z' });
+assert.equal(sent.length, n0 + 1, 'sin repetir el mismo aviso en 30 min');
+await call('/hit', { e: 'diario:sintoma', d: 'android-app' }, { 'CF-Connecting-IP': '8.8.8.8', 'User-Agent': 'z' });
+assert.equal(sent.length, n0 + 1, 'lo frecuente va al resumen');
+await KV.put('digest:last', String(Date.now() - 3600000));
+assert.ok(await hourlyDigest(env, async (e, m) => { sent.push({ ...m, to: [m.to] }); return { id: 'x' }; }) >= 3);
+assert.match(sent.at(-1).text, /Apuntó en el diario: síntomas/); assert.match(sent.at(-1).text, /Android · app instalada/);
+env.ALERTS = '0';
 console.log('consultas: OK');

@@ -48,7 +48,7 @@ export const CONSULTS = {
   },
   pediatra: {
     key: 'pediatra',
-    name: 'Lucía Carrascón',
+    name: 'Dra. Lucía Carrascón',
     short: 'Lucía',
     initials: 'LC',
     role: 'Pediatra',

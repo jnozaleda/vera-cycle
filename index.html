@@ -566,11 +566,11 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   // (2 gratuitas por correo, campo trampa, límite de envíos). Nada viaja en la URL.
   import { suggestContact } from './app/js/contacts.js';
   import { addConsult } from './app/js/consults.js';
-  import { device } from './app/js/track.js';
+  import { device, isTeam } from './app/js/track.js';
   const API = 'https://hera-consultas.tempcheck-app.workers.dev';
   const PROS = { gineco: { name: 'Gonzalo', img: 'gonzalo' }, matrona: { name: 'Marina', img: 'marina' }, pediatra: { name: 'Lucía', img: 'lucia' } };
   const local = ['localhost', '127.0.0.1'].includes(location.hostname);
-  const hit = (e) => { if (local) return; fetch(`${API}/hit`, { method: 'POST', body: JSON.stringify({ e, d: device() }), keepalive: true }).catch(() => {}); };
+  const hit = (e) => { if (local || isTeam()) return; fetch(`${API}/hit`, { method: 'POST', body: JSON.stringify({ e, d: device() }), keepalive: true }).catch(() => {}); };
   const store = { get: (k) => { try { return localStorage.getItem(k) || ''; } catch { return ''; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch { /* sin almacenamiento */ } } };
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -631,7 +631,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     lastEmail = email.value.trim(); store.set('hera-ask-email', lastEmail);
     try {
       const res = await fetch(`${API}/ask`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: lastEmail, to, text, context: '', situation: $('ask-moment').value, website: $('ask-hp').value }) });
+        body: JSON.stringify({ email: lastEmail, to, text, context: '', situation: $('ask-moment').value, website: $('ask-hp').value, ...(isTeam() ? { team: true } : {}) }) });
       const j = await res.json().catch(() => ({}));
       if (res.status === 429) throw new Error('Has enviado varias consultas seguidas. Espera unos minutos y vuelve a intentarlo.');
       if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');

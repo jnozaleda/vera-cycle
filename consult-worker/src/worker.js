@@ -315,9 +315,12 @@ export default {
       const n = test || unlimited ? rec.n : rec.n + 1;
       if (!test) {
         if (!unlimited) await env.KV.put(key, JSON.stringify({ n, first: rec.first || now, last: now }));
-        await bump(env, `consulta:${body.to}`);
-        if (unlimited) await bump(env, 'consulta_ilimitada');
-        await record(env, { e: `consulta:${body.to}`, p: await personTag(env, request, madridDay()) }, sendMail, ctx);
+        // Dispositivos del equipo (modo equipo en la app): la consulta se envía igual, pero no cuenta en métricas ni avisos
+        if (body.team !== true) {
+          await bump(env, `consulta:${body.to}`);
+          if (unlimited) await bump(env, 'consulta_ilimitada');
+          await record(env, { e: `consulta:${body.to}`, p: await personTag(env, request, madridDay()) }, sendMail, ctx);
+        }
       }
       const remaining = Math.max(0, limit - n);
       const cm = confirmEmail(pro, q, remaining, id, unlimited);

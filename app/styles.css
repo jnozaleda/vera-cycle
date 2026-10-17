@@ -1055,3 +1055,6 @@ body.ob-sky .ob-steps i.on { background: #F2B9A0; }
 .web-row { display: flex; align-items: center; gap: 10px; padding: 12px 14px; font-size: 14px; color: var(--ink); text-decoration: none; }
 .web-row + .web-row { border-top: 1px solid var(--line); }
 .web-row:active { background: var(--st-soft, #F4E6E8); }
+
+/* Modo equipo (Ajustes) */
+.team-note { display: flex; align-items: center; gap: 10px; font-size: 13px; background: var(--st-soft, #F4E6E8); border-radius: 12px; padding: 10px 12px; }

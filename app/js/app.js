@@ -26,7 +26,7 @@ import { spansPregnancy } from './predict.js';
 import { PREGNANCY_BETA_ONLY, CONSULT, CONSULTS, TAGLINE, CONSULT_API, CONSULT_FORM } from './config.js';
 import { suggestContact } from './contacts.js';
 import { listConsults, addConsult, markSeen, clearConsults, consultState, unseenAnswer, refreshConsults } from './consults.js';
-import { track } from './track.js';
+import { track, isTeam, setTeam } from './track.js';
 import { isBeta } from './beta.js';
 import { pushState, enablePush, disablePush, syncPush, testPush } from './push.js';
 import { sync, syncAvailable, onSyncChange, initSync, connect, reauthorize, disconnect, deleteRemote, syncNow, loadGis } from './sync.js';
@@ -1686,6 +1686,7 @@ const webLink = (href, label, ic = 'right') => `<a class="web-row" href="${href}
 function aboutSection() {
   return `<div class="stack-10 data-box">
     ${eyebrow('Sobre Hera')}
+    ${isTeam() ? `<div class="team-note"><span class="grow"><b>Modo equipo</b> · este dispositivo no cuenta en las métricas</span><button class="link-soft" data-action="team-off">Desactivar</button></div>` : ''}
     <div class="web-list">
       ${webLink('../', 'Web de Hera')}
       ${webLink('../equipo.html', 'Conoce al equipo')}
@@ -2571,6 +2572,7 @@ const actions = {
     setTimeout(() => root.querySelector('.ask-text')?.focus(), 300);
   },
   'ask-clear-ctx': () => { ui.ask.context = ''; render(); },
+  'team-off': () => { setTeam(false); render(); },
   'consult-seen': (el) => { markSeen(el.dataset.v); render(); },
   'consults-clear': () => { if (!confirm('¿Borrar el historial de consultas de este dispositivo? Las respuestas siguen en tu correo.')) return; clearConsults(); render(); },
   'hito-close': (el) => { try { localStorage.setItem(HITOS_KEY, JSON.stringify([...hitosVistos(), el.dataset.v])); } catch { /* sin almacenamiento */ } render(); },
@@ -2588,7 +2590,7 @@ const actions = {
       const meta = [];
       if (a.include) meta.push(...consultDetails());
       const res = await fetch(`${CONSULT_API}/ask`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: a.email.trim(), to: to.key, text: a.text.trim(), context: a.context, situation: meta.join('\n'), website: a.website || '' }) });
+        body: JSON.stringify({ email: a.email.trim(), to: to.key, text: a.text.trim(), context: a.context, situation: meta.join('\n'), website: a.website || '', ...(isTeam() ? { team: true } : {}) }) });
       const j = await res.json().catch(() => ({}));
       if (res.status === 429) throw new Error('Has enviado varias consultas seguidas. Espera unos minutos y vuelve a intentarlo.');
       if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');
@@ -3014,6 +3016,11 @@ function tick() {
 setInterval(tick, 60000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { tick(); checkConsults(); } });
 checkConsults(true);
+if (location.hash === '#equipo') {
+  setTeam(true);
+  history.replaceState(null, '', location.pathname + location.search);
+  setTimeout(() => alert('Modo equipo activado: lo que hagas en este dispositivo ya no cuenta en las métricas ni en los avisos. Puedes desactivarlo en Ajustes → Sobre Hera.'), 300);
+}
 
 // MARK: - Arranque
 

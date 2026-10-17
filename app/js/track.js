@@ -6,6 +6,11 @@
 import { CONSULT_API } from './config.js';
 
 const local = ['localhost', '127.0.0.1'].includes(location.hostname) && !/[?&]track\b/.test(location.search);
+const TEAM_KEY = 'hera-equipo';
+
+/** Modo equipo: los dispositivos del equipo (pruebas) no cuentan en las métricas ni en los avisos */
+export function isTeam() { try { return localStorage.getItem(TEAM_KEY) === '1'; } catch { return false; } }
+export function setTeam(on) { try { if (on) localStorage.setItem(TEAM_KEY, '1'); else localStorage.removeItem(TEAM_KEY); } catch { /* sin almacenamiento */ } }
 const sent = new Set();
 const recent = new Map();
 
@@ -20,7 +25,7 @@ export function device() {
 
 /** once: true → solo una vez por sesión de la página. El mismo evento seguido se envía como mucho una vez por minuto. */
 export function track(e, once = false) {
-  if (local || !e) return;
+  if (local || !e || isTeam()) return;
   if (once) { if (sent.has(e)) return; sent.add(e); }
   const last = recent.get(e) || 0;
   if (!once && Date.now() - last < 60000) return;

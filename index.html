@@ -3,6 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  // Si alguien añadió la portada (y no /app) a su pantalla de inicio, al abrirla desde el icono va directa a la app
+  try { if (navigator.standalone || matchMedia('(display-mode: standalone)').matches) location.replace('app/'); } catch (e) {}
+</script>
 <title>Hera · Tus dudas del embarazo, resueltas por profesionales</title>
 <meta name="description" content="Cada semana, lo que te toca saber del embarazo y de tu bebé. Y cuando algo te preocupe, pregúntaselo a tu ginecólogo, tu matrona o tu pediatra. Tus dos primeras consultas, gratis.">
 <meta name="theme-color" content="#FAF8F5">

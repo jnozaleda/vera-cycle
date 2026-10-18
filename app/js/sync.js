@@ -141,7 +141,14 @@ function requestToken({ consent = false } = {}) {
 async function api(url, opts = {}) {
   const res = await fetch(url, { ...opts, headers: { Authorization: `Bearer ${token}`, ...(opts.headers || {}) } });
   if (res.status === 401) { token = null; writeJSON(sessionStorage, TOKEN_KEY, null); throw Object.assign(new Error('auth'), { auth: true }); }
-  if (!res.ok) throw new Error(`Google Drive respondió ${res.status}`);
+  if (!res.ok) {
+    // Google explica el motivo (p. ej. Drive lleno): lo mostramos para poder ayudar a la usuaria
+    const err = await res.json().catch(() => null);
+    const reason = err?.error?.errors?.[0]?.reason || err?.error?.status || '';
+    if (reason === 'storageQuotaExceeded') throw new Error('Tu Google Drive está lleno. Libera espacio en Drive y vuelve a intentarlo.');
+    if (reason === 'insufficientPermissions' || reason === 'ACCESS_TOKEN_SCOPE_INSUFFICIENT') throw new Error('Falta el permiso de Google Drive. Pulsa «Volver a conectar» y marca la casilla de Drive.');
+    throw new Error(`Google Drive respondió ${res.status}${reason ? ` (${reason})` : ''}`);
+  }
   return res;
 }
 

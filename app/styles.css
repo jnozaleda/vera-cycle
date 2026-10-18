@@ -45,7 +45,7 @@
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%; touch-action: manipulation; } /* sin zoom por doble toque */
 body {
   font-family: var(--sans);
   background: var(--ivory);

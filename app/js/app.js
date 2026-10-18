@@ -2420,6 +2420,9 @@ function mainView() {
   ${ui.syncChoice ? syncChoiceDialog() : ''}`;
 }
 
+// Sin zoom con dos dedos: iOS ignora user-scalable=no, así que se bloquea el gesto (Safari)
+for (const ev of ['gesturestart', 'gesturechange']) document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
+
 const root = document.getElementById('app');
 let lastScreen = null;
 

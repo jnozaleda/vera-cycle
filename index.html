@@ -141,6 +141,8 @@ section { padding: 64px 0; }
 .fld { display: grid; gap: 6px; font-size: 13.5px; color: var(--text); }
 .fld i { font-style: normal; color: var(--muted); }
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; }
+.priv { display: flex; gap: 7px; align-items: flex-start; margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--plum); }
+.priv svg { flex: none; margin-top: 2px; }
 .fine { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
 .fine a { color: var(--plum); }
 .done { display: grid; gap: 10px; justify-items: center; text-align: center; padding: 14px 6px 8px; }
@@ -328,6 +330,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         <div class="who"><span class="who-faces"><img src="portada/equipo/gonzalo.jpg?v=2" alt="" width="30" height="30"><img src="portada/equipo/marina.jpg?v=2" alt="" width="30" height="30"><img src="portada/equipo/lucia.jpg?v=3" alt="" width="30" height="30"></span><span>Te responde <a class="who-link" href="equipo.html"><b>Gonzalo, Marina o Lucía</b></a></span></div>
         <label for="duda" class="sr">Tu duda</label>
         <textarea id="duda" name="duda" maxlength="2000" placeholder="Escribe tu duda con tus palabras…"></textarea>
+        <p class="priv"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span><b>Es privada.</b> Solo la lee la profesional que elijas y te responde a tu correo. No se publica en ningún sitio.</span></p>
         <div class="more" id="ask-more" hidden>
           <fieldset class="picks">
             <legend>¿A quién se lo preguntas?</legend>
@@ -353,7 +356,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
           <p class="err" id="ask-err" role="alert" hidden></p>
         </div>
         <button class="btn btn-p" type="submit" id="ask-send">Preguntar gratis</button>
-        <p class="fine" id="ask-fine" hidden>Gratis, sin registro. Tu pregunta solo la ve la profesional que elijas. No es para urgencias. <a href="privacy.html#consultas">Cómo tratamos tus datos</a>.</p>
+        <p class="fine" id="ask-fine" hidden>Gratis, sin registro. No es para urgencias. <a href="privacy.html#consultas">Cómo tratamos tus datos</a>.</p>
       </form>
       <div class="done" id="ask-done" hidden aria-live="polite"></div>
       </div>

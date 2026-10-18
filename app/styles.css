@@ -1061,3 +1061,6 @@ body.ob-sky .ob-steps i.on { background: #F2B9A0; }
 /* Aviso antes de conectar con Google: marcar la casilla de Drive */
 .scope-hint { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--deep) 7%, #fff); border: 1px solid color-mix(in srgb, var(--deep) 18%, transparent); }
 .scope-box { flex: none; width: 18px; height: 18px; margin-top: 1px; border-radius: 4px; background: #1a73e8; color: #fff; font-size: 12px; line-height: 18px; text-align: center; font-weight: 700; }
+/* La consulta es privada (no es una reseña pública) */
+.ask-private { display: flex; gap: 8px; align-items: flex-start; margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--deep); }
+.ask-private .ic { flex: none; margin-top: 2px; }

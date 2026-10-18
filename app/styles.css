@@ -1064,3 +1064,8 @@ body.ob-sky .ob-steps i.on { background: #F2B9A0; }
 /* La consulta es privada (no es una reseña pública) */
 .ask-private { display: flex; gap: 8px; align-items: flex-start; margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--deep); }
 .ask-private .ic { flex: none; margin-top: 2px; }
+/* Reglas registradas vs. previstas (vera-backlog#71): la prevista solo con borde discontinuo */
+.cal-cell.est, .wday.est { background: transparent; border: 1.5px dashed color-mix(in srgb, var(--pc) 65%, transparent); }
+.legend.box i.ph-period.est { background: transparent; border-style: dashed; }
+.c-period { color: var(--period); }
+.first-up::first-letter { text-transform: uppercase; }

@@ -10,6 +10,7 @@ import {
   averageCycleLength, settingsFromIrregularPeriods,
 } from './logic.js';
 import { QUALITY, BASIS, windowText, predictionNotices } from './predict.js';
+import { dayKind, periodAt, activePeriod, periodEndingBefore, startPeriod, endPeriod, removePeriod, effectiveEnd, periodLength } from './periods.js';
 import { store } from './store.js';
 import { icon } from './icons.js';
 import {
@@ -43,6 +44,9 @@ const fmtNum = (x, d) => x.toFixed(d).replace('.', ',');
 const fmtKg = (x) => (Number.isInteger(x) ? String(x) : fmtNum(x, 1));
 
 const PHASE_COLOR = { menstrual: 'period', ovulation: 'ovu', fertile: 'sage' };
+/** Clase de color de un día en la tira y el calendario: regla registrada, prevista (borde discontinuo) o fértil */
+const KIND_CLASS = { period: 'ph-period', 'period-est': 'ph-period est', fertile: 'ph-sage', ovulation: 'ph-ovu' };
+const dayClass = (dn) => KIND_CLASS[dayKind(store.data.settings, dn)] || null;
 
 function firstOfMonth(dn) {
   const p = partsFromDN(dn);
@@ -334,8 +338,9 @@ function todayView() {
   return `<div class="stack-18">
     ${postpartumCycleNote()}
     ${top}
+    ${periodCTA()}
     <div class="card pad stack-14">
-      <div class="row baseline between">${eyebrow(`Estás en fase ${phase.label.toLowerCase()}`)}<span class="t-11 soft nowrap">Día ${info.day}</span></div>
+      <div class="row baseline between">${eyebrow(`Estás en ${/^fase /i.test(phase.label) ? '' : 'fase '}${phase.label.toLowerCase()}`)}<span class="t-11 soft nowrap">Día ${info.day}</span></div>
       <div class="serif-19">${esc(phase.insightTitle)}</div>
       <p class="t-13 light soft lh-5">${esc(phase.insightText)}</p>
       <hr>
@@ -370,11 +375,10 @@ function weekStrip(phaseColors = true) {
     const isSel = ds === ui.selectedDate;
     const isToday = ds === today;
     const isFuture = ds > today;
-    const info = cycleInfo(store.data.settings, dn);
     const l = store.log(ds);
     const hasLog = l.flow != null || l.symptoms.length > 0 || l.mood != null;
-    const pc = phaseColors ? PHASE_COLOR[info.phase] : null;
-    const cls = ['wday', isSel && 'sel', isToday && !isSel && 'today', isFuture && 'future', pc && `ph-${pc}`, hasLog && 'logged'].filter(Boolean).join(' ');
+    const pc = phaseColors ? dayClass(dn) : null;
+    const cls = ['wday', isSel && 'sel', isToday && !isSel && 'today', isFuture && 'future', pc, hasLog && 'logged'].filter(Boolean).join(' ');
     days += `<button class="${cls}" data-action="select-day" data-date="${ds}" ${isFuture ? 'disabled' : ''} aria-label="${attr(fmtWeekdayLong(dn))}">
       <span class="wd-l">${esc(fmtWeekdayNarrow(dn))}</span>
       <span class="wd-n">${partsFromDN(dn).d}</span>
@@ -707,13 +711,12 @@ function calendarSheet() {
   const today = todayISO();
   const grid = monthGrid(ui.calMonth, (dn) => {
     const ds = isoFromDN(dn);
-    const info = cycleInfo(store.data.settings, dn);
-    const pc = store.mode === 'cycle' ? PHASE_COLOR[info.phase] : null;
+    const pc = store.mode === 'cycle' ? dayClass(dn) : null;
     const isPast = ds <= today;
-    const isSel = ds === ui.selectedDate;
+    const isSel = ds === (store.mode === 'cycle' && ui.calDay ? ui.calDay : ui.selectedDate);
     const l = store.log(ds);
     const hasLog = l.flow != null || l.symptoms.length > 0 || l.mood != null;
-    const cls = ['cal-cell', pc && `ph-${pc}`, isSel && 'sel', ds === today && !isSel && 'today', !isPast && 'future', hasLog && 'logged'].filter(Boolean).join(' ');
+    const cls = ['cal-cell', pc, isSel && 'sel', ds === today && !isSel && 'today', !isPast && 'future', hasLog && 'logged'].filter(Boolean).join(' ');
     return `<button class="${cls}" data-action="cal-pick" data-date="${ds}" ${isPast ? '' : 'disabled'} aria-label="${attr(fmtWeekdayLong(dn))}">${partsFromDN(dn).d}</button>`;
   });
   return sheetFrame('Calendario', `
@@ -726,11 +729,97 @@ function calendarSheet() {
       ${grid}
       <div class="row gap-14 justify-center wrap">
         ${store.mode === 'cycle' ? `<span class="legend box"><i class="ph-period"></i>Regla</span>
+        <span class="legend box"><i class="ph-period est"></i>Prevista</span>
         <span class="legend box"><i class="ph-sage"></i>Fértil</span>
         <span class="legend box"><i class="ph-ovu"></i>Ovulación</span>` : ''}
         <span class="legend"><i class="dot"></i>Con registro</span>
       </div>
+      ${store.mode === 'cycle' && ui.calDay ? calDayPanel(ui.calDay) : ''}
     </div>`);
+}
+
+/** Bajo el calendario: qué hacer con el día tocado (marcar inicio o fin de la regla, borrarla, ir al diario) */
+function calDayPanel(ds) {
+  const settings = store.data.settings;
+  const dn = dnFromISO(ds);
+  const isToday = ds === todayISO();
+  const p = periodAt(settings, dn);
+  const prev = p ? null : periodEndingBefore(settings, dn);
+  let sub, actions;
+  if (p) {
+    const s = dnFromISO(p.start);
+    const open = p === activePeriod(settings);
+    const range = open ? `desde el ${fmtDayMonthShort(s)}` : `del ${fmtDayMonthShort(s)} al ${fmtDayMonthShort(effectiveEnd(p, settings.periodLen))}`;
+    sub = `<div class="t-12 c-period">Día ${dn - s + 1} de tu regla · ${esc(range)}</div>`;
+    actions = `${open || p.end !== ds ? `<button class="outline-sage" data-action="period-end" data-date="${ds}">${isToday ? 'Ya se me ha ido' : 'Se me fue este día'}</button>` : ''}
+      <button class="link-danger row gap-6 center" data-action="period-remove" data-date="${attr(p.start)}">${icon('trash', 12)} Borrar esta regla</button>`;
+  } else if (prev) {
+    sub = `<div class="t-12 soft">Tu regla terminó el ${esc(fmtDayMonthShort(effectiveEnd(prev, settings.periodLen)))}</div>`;
+    actions = `<button class="outline-sage" data-action="period-end" data-date="${ds}">Me duró hasta este día</button>`;
+  } else {
+    sub = '';
+    actions = `<button class="btn-primary" data-action="period-start" data-date="${ds}">${isToday ? 'Me ha bajado la regla hoy' : 'Me bajó la regla este día'}</button>
+      <p class="t-11 soft-70 lh-3 mt--8">Marcamos ${settings.periodLen} días, tu duración habitual. Si se te va antes o después, lo ajustas aquí.</p>`;
+  }
+  return `<div class="card pad stack-10">
+    <div class="serif-19 first-up">${esc(fmtWeekdayLong(dn))}</div>
+    ${sub}
+    ${actions}
+    <button class="link-soft" data-action="cal-open-day" data-date="${ds}">Apuntar síntomas de este día →</button>
+  </div>`;
+}
+
+/** Al borrar una regla se quita también el flujo apuntado esos días (si no, la predicción la seguiría contando) */
+function clearFlow(ranges) {
+  for (const [a, b] of ranges) {
+    for (let d = a; d <= b; d++) {
+      const ds = isoFromDN(d);
+      const l = store.data.logs[ds];
+      if (l?.flow != null) store.data.logs[ds] = { ...l, flow: null, _u: Date.now() };
+    }
+  }
+}
+
+/** Hoy (ciclo): botón para marcar que ha bajado la regla o, si está en curso, que ya se ha ido */
+function periodCTA() {
+  const settings = store.data.settings;
+  const today = todayISO();
+  const act = activePeriod(settings);
+  if (act) {
+    const s = dnFromISO(act.start);
+    return `<div class="card pad row between center gap-12">
+      <div><div class="t-14 w-500 c-period">Día ${todayDN() - s + 1} de tu regla</div><div class="t-12 soft">Desde el ${esc(fmtDayMonthShort(s))}</div></div>
+      <button class="pill-outline" data-action="period-end" data-date="${today}">Ya se me ha ido</button>
+    </div>`;
+  }
+  const cur = periodAt(settings, todayDN());
+  if (cur) {
+    const s = dnFromISO(cur.start), e = effectiveEnd(cur, settings.periodLen);
+    return `<div class="card pad row between center gap-12">
+      <div><div class="t-14 w-500 c-period">Regla registrada</div><div class="t-12 soft">${s === e ? `El ${esc(fmtDayMonthShort(s))}` : `Del ${esc(fmtDayMonthShort(s))} al ${esc(fmtDayMonthShort(e))}`}</div></div>
+      <button class="pill-outline" data-action="open-calendar">Cambiar</button>
+    </div>`;
+  }
+  return `<button class="btn-primary row gap-8 center justify-center" data-action="period-start" data-date="${today}">${icon('drop', 14)} Me ha bajado la regla hoy</button>`;
+}
+
+/** Ajustes: reglas registradas (del más reciente al más antiguo) con su duración */
+function draftPeriodList(s) {
+  const ps = [...(s.periods || [])].reverse();
+  if (!ps.length) return '<div class="t-12 soft-70">Aún no has registrado ninguna.</div>';
+  const today = todayDN();
+  return ps.map((p) => {
+    const st = dnFromISO(p.start);
+    const open = !p.end && today - st < 10 && st <= today;
+    const n = periodLength(p, s.periodLen);
+    return `<div class="period-item">
+      <span class="c-rose">${icon('drop', 10)}</span>
+      <span class="t-13 w-500">${open ? `Desde el ${esc(fmtDayMonthShort(st))}` : `${esc(fmtDayMonthShort(st))} – ${esc(fmtDayMonthShort(effectiveEnd(p, s.periodLen)))}`}</span>
+      <span class="grow"></span>
+      <span class="t-11 soft">${open ? 'en curso' : `${n} ${plural(n, 'día', 'días')}`}</span>
+      <button class="icon-btn soft" data-action="draft-remove" data-date="${p.start}" aria-label="Borrar esta regla">${icon('xCircle', 16)}</button>
+    </div>`;
+  }).join('');
 }
 
 function periodList(list, removeAction) {
@@ -878,28 +967,25 @@ function syncChoiceDialog() {
 
 function settingsSheet() {
   const s = ui.draft;
-  const count = s.pastPeriods.length;
+  const count = (s.periods || []).length;
   const typeBtn = (label, sel, val) => `<button class="type-btn ${sel ? 'on' : ''}" aria-pressed="${sel}" data-action="draft-type" data-v="${val}">${label}</button>`;
-  const body = s.isRegular ? `
+  const list = `
     <div class="stack-8">
-      <div class="row gap-6 center"><span class="c-rose">${icon('drop', 11)}</span><span class="t-13 soft">Primer día de tu última regla</span></div>
-      <input type="date" class="field date" data-model="draft.lastPeriod" value="${attr(s.lastPeriod)}" max="${todayISO()}">
-    </div>
+      <div class="row gap-6 center"><span class="c-rose">${icon('drop', 11)}</span><span class="t-13 soft">Tus reglas</span></div>
+      <div class="t-12 soft-70">Se apuntan solas cuando marcas en Hoy o en el calendario que te ha bajado. Si te equivocaste, bórrala aquí.</div>
+      <div class="stack-8">${draftPeriodList(s)}</div>
+      <input type="date" class="field date" data-model="draftPicker" value="${attr(ui.draftPicker)}" max="${todayISO()}">
+      <button class="outline-sage" data-action="draft-add">${icon('plusCircle', 14)} Añadir una regla que empezó ese día</button>
+    </div>`;
+  const body = s.isRegular ? `${list}
     <hr>
     <div class="stack-8">
       <div class="t-13 soft">Duración del ciclo: <span data-out="draft.cycleLen">${s.cycleLen}</span> días</div>
       ${rangeRow({ key: 'draft.cycleLen', min: 21, max: 45, step: 1, value: s.cycleLen })}
-    </div>` : `
-    <div class="stack-8">
-      <div class="row gap-6 center"><span class="c-rose">${icon('drop', 11)}</span><span class="t-13 soft">Tus últimas reglas (primer día de sangrado)</span></div>
-      ${!count ? '<div class="t-12 soft-70">Añade al menos 3 fechas para calcular tu ciclo medio.</div>' : ''}
-      <div class="stack-8">${periodList(s.pastPeriods, 'draft-remove')}</div>
-      <input type="date" class="field date" data-model="draftPicker" value="${attr(ui.draftPicker)}" max="${todayISO()}">
-      <button class="outline-sage" data-action="draft-add">${icon('plusCircle', 14)} Añadir este día</button>
-      ${count >= 3
-        ? `<div class="note-mist"><span class="c-sage">${icon('checkCircle', 14)}</span><span>Ciclo medio: <b>${averageCycleLength(s.pastPeriods)} días</b> (calculado a partir de ${count} reglas)</span></div>`
-        : `<div class="t-12 soft-70">Añade ${3 - count} ${plural(3 - count, 'fecha', 'fechas')} más para calcular tu ciclo medio.</div>`}
-    </div>
+    </div>` : `${list}
+    ${count >= 3
+      ? `<div class="note-mist"><span class="c-sage">${icon('checkCircle', 14)}</span><span>Ciclo medio: <b>${averageCycleLength(s.pastPeriods)} días</b> (calculado a partir de ${count} reglas)</span></div>`
+      : `<div class="t-12 soft-70">Añade ${3 - count} ${plural(3 - count, 'regla', 'reglas')} más para calcular tu ciclo medio.</div>`}
     <hr>`;
 
   const dm = ui.draftStage.mode;
@@ -2385,10 +2471,7 @@ function toggleIn(arr, v) {
 
 function openSettings() {
   ui.draft = structuredClone(store.data.settings);
-  // En ciclo irregular la lista debe incluir la regla actual (si no, al guardar se perdería)
-  if (!ui.draft.isRegular && !ui.draft.pastPeriods.includes(ui.draft.lastPeriod)) {
-    ui.draft.pastPeriods = [...ui.draft.pastPeriods, ui.draft.lastPeriod].sort();
-  }
+  ui.draftRemoved = [];
   const st = store.stage;
   ui.draftStage = {
     mode: st.mode,
@@ -2417,17 +2500,33 @@ const actions = {
   'select-day': (el) => { ui.selectedDate = el.dataset.date; render(); },
   'week-prev': () => { ui.weekOffset -= 1; render(); },
   'week-next': () => { if (ui.weekOffset < 0) { ui.weekOffset += 1; render(); } },
-  'open-calendar': () => { ui.calMonth = firstOfMonth(dnFromISO(ui.selectedDate)); ui.sheet = 'calendar'; ui.sheetAnim = true; render(); },
+  'open-calendar': () => { ui.calDay = null; ui.calMonth = firstOfMonth(dnFromISO(ui.selectedDate)); ui.sheet = 'calendar'; ui.sheetAnim = true; render(); },
   'cal-prev': () => { ui.calMonth = addMonths(ui.calMonth, -1); render(); },
   'cal-next': () => { ui.calMonth = addMonths(ui.calMonth, 1); render(); },
   'cal-pick': (el) => {
+    // En el ciclo, tocar un día muestra debajo qué hacer con él (regla); en las etapas, abre ese día
+    if (store.mode === 'cycle') { ui.calDay = el.dataset.date; render(); return; }
+    actions['cal-open-day'](el);
+  },
+  'cal-open-day': (el) => {
     ui.selectedDate = el.dataset.date;
+    ui.calDay = null;
+    if (store.mode === 'cycle') ui.tab = 1;
     // Lleva la tira semanal a la semana del día elegido
     const t = todayDN();
     const sel = dnFromISO(ui.selectedDate);
     ui.weekOffset = Math.floor(((sel - mondayIndex(sel)) - (t - mondayIndex(t))) / 7);
     ui.sheet = null;
     render();
+  },
+
+  // Ciclo — reglas (vera-backlog#71)
+  'period-start': (el) => { store.updateSettings(startPeriod(store.data.settings, el.dataset.date)); track('regla:inicio'); },
+  'period-end': (el) => { store.updateSettings(endPeriod(store.data.settings, el.dataset.date)); track('regla:fin'); },
+  'period-remove': (el) => {
+    const r = removePeriod(store.data.settings, el.dataset.date);
+    if (r.range) clearFlow([r.range]);
+    store.updateSettings(r.settings);
   },
 
   // Ciclo — diario
@@ -2477,22 +2576,17 @@ const actions = {
   // Ajustes
   'draft-type': (el) => {
     ui.draft.isRegular = el.dataset.v === 'regular';
-    if (!ui.draft.isRegular && !ui.draft.pastPeriods.includes(ui.draft.lastPeriod)) {
-      ui.draft.pastPeriods = [...ui.draft.pastPeriods, ui.draft.lastPeriod].sort();
-    }
     render();
   },
   'draft-add': () => {
     const d = ui.draftPicker;
-    if (dnFromISO(d) != null && d <= todayISO() && !ui.draft.pastPeriods.includes(d)) {
-      ui.draft.pastPeriods.push(d);
-      if (ui.draft.pastPeriods.length >= 2) ui.draft.cycleLen = averageCycleLength(ui.draft.pastPeriods);
-    }
+    if (dnFromISO(d) != null && d <= todayISO() && !periodAt(ui.draft, dnFromISO(d))) ui.draft = startPeriod(ui.draft, d);
     render();
   },
   'draft-remove': (el) => {
-    ui.draft.pastPeriods = ui.draft.pastPeriods.filter((d) => d !== el.dataset.date);
-    if (ui.draft.pastPeriods.length >= 2) ui.draft.cycleLen = averageCycleLength(ui.draft.pastPeriods);
+    const r = removePeriod(ui.draft, el.dataset.date);
+    ui.draft = r.settings;
+    if (r.range) ui.draftRemoved.push(r.range);
     render();
   },
   'save-settings': () => {
@@ -2507,9 +2601,10 @@ const actions = {
       if (stage.mode !== 'cycle') { ui.sheet = null; render(); return; }
     }
     const s = ui.draft;
-    const final = s.isRegular ? { ...s } : settingsFromIrregularPeriods(s.pastPeriods, s.periodLen);
     ui.sheet = null;
-    store.updateSettings(final);
+    clearFlow(ui.draftRemoved || []);
+    ui.draftRemoved = [];
+    store.updateSettings(s);
   },
   'draft-stage': (el) => { ui.draftStage.mode = el.dataset.v; render(); },
   'draft-stage-field': (el) => {

@@ -154,6 +154,13 @@ export function cycleInfo(settings, dn = nowDN()) {
   else if (day < ovu) phase = 'follicular';
   else phase = 'luteal';
 
+  // Si la regla de este ciclo ya se registró como terminada, los días siguientes no son «fase menstrual»
+  if (phase === 'menstrual' && Array.isArray(settings.periods)) {
+    const lp = settings.periods[settings.periods.length - 1];
+    const today = Math.trunc(dn);
+    if (lp?.end && today - day === start && dnFromISO(lp.end) < today) phase = 'follicular';
+  }
+
   return { day: day + 1, phase, daysToNext: len - day, ovuDay: ovu + 1 };
 }
 

@@ -6,6 +6,7 @@ import {
   isoFromDN, todayDN, todayISO, dnFromISO, averageCycleLength,
 } from './logic.js';
 import { predict, clinicalAlerts } from './predict.js';
+import { ensurePeriods } from './periods.js';
 
 const STORAGE_KEY = 'vera-data-v1';
 
@@ -49,7 +50,9 @@ function normalizeStage(st) {
 
 /** Normaliza datos importados/guardados para tolerar campos ausentes */
 function normalize(raw) {
-  if (!raw || typeof raw !== 'object' || !raw.settings || typeof raw.settings.lastPeriod !== 'string') {
+  // lastPeriod es null cuando se han borrado todas las reglas (vera-backlog#71)
+  if (!raw || typeof raw !== 'object' || !raw.settings
+    || !(typeof raw.settings.lastPeriod === 'string' || (raw.settings.lastPeriod === null && Array.isArray(raw.settings.periods)))) {
     throw new Error('Formato de datos no válido');
   }
   const s = raw.settings;
@@ -59,13 +62,14 @@ function normalize(raw) {
     logs[k] = { ...emptyLog(), ...v };
   }
   return {
-    settings: {
+    settings: ensurePeriods({
       lastPeriod: s.lastPeriod,
       cycleLen: Number(s.cycleLen) || 28,
       periodLen: Number(s.periodLen) || 5,
       isRegular: s.isRegular !== false,
       pastPeriods: Array.isArray(s.pastPeriods) ? s.pastPeriods.filter((d) => dnFromISO(d) != null) : [],
-    },
+      ...(Array.isArray(s.periods) ? { periods: s.periods.filter((p) => p && dnFromISO(p.start) != null) } : {}),
+    }),
     logs,
     meds: Array.isArray(raw.meds) ? raw.meds.filter((m) => m && m.id && m.name) : [],
     profile: raw.profile && typeof raw.profile === 'object' ? raw.profile : {},
@@ -142,7 +146,7 @@ class Store {
 
   // MARK: Ajustes y perfil
 
-  updateSettings(settings) { this.data.settings = settings; this.data.settingsU = Date.now(); this.save(); }
+  updateSettings(settings) { this.data.settings = ensurePeriods(settings); this.data.settingsU = Date.now(); this.save(); }
   updateProfile(profile) { this.data.profile = profile; this.data.profileU = Date.now(); this.save(); }
 
   get stage() { return this.data.stage ?? defaultStage(); }
@@ -158,7 +162,7 @@ class Store {
 
   completeOnboarding(settings, profile = {}, stage = defaultStage()) {
     const now = Date.now();
-    this.data = { settings, logs: {}, meds: [], profile, settingsU: now, profileU: now, deletedMeds: {}, stage: normalizeStage(stage), stageU: now };
+    this.data = { settings: ensurePeriods(settings), logs: {}, meds: [], profile, settingsU: now, profileU: now, deletedMeds: {}, stage: normalizeStage(stage), stageU: now };
     this.needsOnboarding = false;
     this.save();
   }
@@ -279,7 +283,7 @@ class Store {
     add(p2 + 10, { lhTest: 'Negativo', cervicalMucus: 'Cremoso' });
     add(p2 + 12, { lhTest: 'Positivo', cervicalMucus: 'Elástico', basalTemp: 36.40 });
 
-    this.data = { settings, logs, meds: [], profile: { birthDate: '1993-04-12', weightKg: 63.0, hormonalCondition: null }, settingsU: Date.now(), profileU: Date.now(), deletedMeds: {}, stage: defaultStage(), stageU: Date.now() };
+    this.data = { settings: ensurePeriods(settings), logs, meds: [], profile: { birthDate: '1993-04-12', weightKg: 63.0, hormonalCondition: null }, settingsU: Date.now(), profileU: Date.now(), deletedMeds: {}, stage: defaultStage(), stageU: Date.now() };
     this.needsOnboarding = false;
     this.save();
   }

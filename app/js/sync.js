@@ -100,6 +100,9 @@ export function loadGis() {
 
 let token = null;
 let tokenExp = 0;
+/** La usuaria no marcó la casilla de Drive: la próxima vez se fuerza la pantalla de permisos completa */
+let scopeMissing = false;
+const SCOPE_MSG = 'No marcaste la casilla de Google Drive, y sin ella Hera no puede guardar tu copia. Vuelve a conectar y márcala.';
 
 function restoreToken() {
   const t = readJSON(sessionStorage, TOKEN_KEY);
@@ -119,9 +122,11 @@ function requestToken({ consent = false } = {}) {
       callback: (resp) => {
         if (resp.error) { reject(new Error(resp.error_description || resp.error)); return; }
         if (!google.accounts.oauth2.hasGrantedAllScopes(resp, DRIVE_SCOPE)) {
-          reject(new Error('Para sincronizar, marca el permiso de Google Drive al iniciar sesión.'));
+          scopeMissing = true;
+          reject(new Error(SCOPE_MSG));
           return;
         }
+        scopeMissing = false;
         token = resp.access_token;
         tokenExp = Date.now() + (Number(resp.expires_in) || 3600) * 1000;
         writeJSON(sessionStorage, TOKEN_KEY, { token, exp: tokenExp });
@@ -132,7 +137,7 @@ function requestToken({ consent = false } = {}) {
           : err?.type === 'popup_failed_to_open' ? 'Tu navegador ha bloqueado la ventana de Google. Permite las ventanas emergentes para esta web y vuelve a intentarlo.'
             : 'No se pudo iniciar sesión con Google.')),
     });
-    client.requestAccessToken({ prompt: consent ? 'consent' : '', login_hint: sync.email || undefined });
+    client.requestAccessToken({ prompt: consent || scopeMissing ? 'consent' : '', login_hint: sync.email || undefined });
   });
 }
 
@@ -146,7 +151,7 @@ async function api(url, opts = {}) {
     const err = await res.json().catch(() => null);
     const reason = err?.error?.errors?.[0]?.reason || err?.error?.status || '';
     if (reason === 'storageQuotaExceeded') throw new Error('Tu Google Drive está lleno. Libera espacio en Drive y vuelve a intentarlo.');
-    if (reason === 'insufficientPermissions' || reason === 'ACCESS_TOKEN_SCOPE_INSUFFICIENT') throw new Error('Falta el permiso de Google Drive. Pulsa «Volver a conectar» y marca la casilla de Drive.');
+    if (reason === 'insufficientPermissions' || reason === 'ACCESS_TOKEN_SCOPE_INSUFFICIENT') { scopeMissing = true; throw Object.assign(new Error(SCOPE_MSG), { auth: true }); }
     throw new Error(`Google Drive respondió ${res.status}${reason ? ` (${reason})` : ''}`);
   }
   return res;
@@ -220,7 +225,7 @@ export function syncNow() {
       writeJSON(localStorage, PREFS_KEY, { enabled: true, email: sync.email, lastSync: sync.lastSync });
       setStatus('ok');
     } catch (err) {
-      if (err.auth) setStatus('needs-auth');
+      if (err.auth) setStatus('needs-auth', scopeMissing ? SCOPE_MSG : null);
       else if (!navigator.onLine) setStatus('offline');
       else setStatus('error', err.message);
     }

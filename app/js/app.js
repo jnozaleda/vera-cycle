@@ -757,7 +757,7 @@ function syncStatusText() {
   switch (sync.status) {
     case 'syncing': return 'Sincronizando…';
     case 'ok': return `Sincronizado ${ago(sync.lastSync)}`;
-    case 'needs-auth': return 'Sincronización en pausa: vuelve a conectar con Google.';
+    case 'needs-auth': return sync.error || 'Sincronización en pausa: vuelve a conectar con Google.';
     case 'offline': return 'Sin conexión: se sincronizará al volver a tener internet.';
     case 'error': return `No se pudo sincronizar${sync.error ? `: ${sync.error}` : ''}`;
     default: return sync.lastSync ? `Última sincronización ${ago(sync.lastSync)}` : '';
@@ -831,6 +831,10 @@ function syncSection() {
     return `<div class="stack-10 data-box">
       ${eyebrow('Sincronización')}
       <p class="t-13 soft lh-4">Guarda tus datos en tu propio Google Drive para verlos desde cualquier dispositivo. Es opcional: sin cuenta, Hera funciona igual.</p>
+      <div class="scope-hint" aria-label="En la ventana de Google, marca la casilla de Google Drive">
+        <span class="scope-box" aria-hidden="true">✓</span>
+        <span class="t-12 lh-4"><b>Importante:</b> en la ventana de Google, <b>marca la casilla de Google Drive</b> («…su propia configuración en Google Drive»). Sin ella no podemos guardar tu copia.</span>
+      </div>
       <button class="google-btn" data-action="sync-connect">${GOOGLE_G} Continuar con Google</button>
       ${sync.error ? `<p class="t-12 c-rose">${esc(sync.error)}</p>` : ''}
       <p class="t-11 soft-70 lh-3">Tus datos se guardan en una carpeta privada de tu Google Drive a la que solo accede Hera. No aparece entre tus archivos. Nosotros no vemos tus datos.</p>

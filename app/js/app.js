@@ -1056,10 +1056,13 @@ function onboardingView() {
   let content;
   switch (ob.step) {
     case 0:
-      content = `<div class="text-center stack-0">
-        <h1 class="ob-logo"><img src="brand/hera-logo-white.svg" alt="Hera" width="264" height="80"></h1>
-        <div class="ob-tag">EMBARAZO · POSPARTO · BEBÉ</div>
-        <p class="t-17 light soft lh-6 mb-44">${esc(TAGLINE)} Con respuestas para cada semana y la posibilidad de preguntarle tus dudas cuando lo necesites.</p>
+      // Bienvenida con el estilo de la portada (crema, Newsreader, seda melocotón): sin el cielo nocturno
+      content = `<div class="ob-welcome">
+        <div class="ob-wordmark">Hera</div>
+        <div class="ob-eyebrow">Regla · Embarazo · Bebé</div>
+        <h1 class="ob-title">Tus dudas, <em>resueltas por profesionales</em></h1>
+        <p class="ob-lead">Sigue tu regla, tu embarazo o los primeros meses de tu bebé. Y cuando algo te preocupe, te responden tu ginecólogo, tu matrona o tu pediatra.</p>
+        <div class="ob-silk"><span class="ob-who">${consultPair('sm')}<span>Te responden <b>Gonzalo, Marina o Lucía</b></span></span></div>
         ${primaryButton('Comenzar', 'ob-next')}
         ${syncAvailable() ? `<button class="google-btn mt-16" data-action="sync-connect">${GOOGLE_G} ¿Ya usas Hera? Recuperar mis datos</button>` : ''}
         <button class="link-soft mt-16" data-action="ob-demo">Explorar con datos de ejemplo</button>
@@ -2432,8 +2435,7 @@ function render() {
   const stageNow = store.needsOnboarding ? (ui.ob.stageChosen ? ui.ob.flow : 'pregnancy') : store.mode;
   document.body.dataset.stage = stageNow;
   const tc = document.querySelector('meta[name=theme-color]');
-  const sky = (screen === 'ob' && ui.ob.step === 0) || (screen === 'main' && isNight());
-  document.body.classList.toggle('ob-sky', screen === 'ob' && ui.ob.step === 0);
+  const sky = screen === 'main' && isNight();
   if (tc) tc.content = sky ? '#2A1823' : '#FAF8F5';
   // Conserva el scroll interno del sheet al re-renderizar
   const sheetBody = root.querySelector('.sheet-body');

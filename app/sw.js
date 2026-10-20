@@ -2,7 +2,7 @@
 // Service worker de Hera web: permite abrir la app sin conexión.
 // Estrategia "red primero": siempre intenta la versión más reciente y usa la caché si no hay red.
 
-const CACHE = 'vera-web-v88';
+const CACHE = 'vera-web-v89';
 const SHELL = [
   './',
   'index.html',
@@ -37,6 +37,8 @@ const SHELL = [
   'img/fluido/seda-melocoton.webp',
   'fonts/inter.woff2',
   'fonts/fraunces.woff2',
+  'fonts/newsreader.woff2',
+  'fonts/newsreader-italic.woff2',
   'icons/icon-192.png',
   'icons/apple-touch-icon.png',
   'icons/favicon-32.png',

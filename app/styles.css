@@ -642,7 +642,7 @@ label.field { padding: 8px 14px; }
 .ask-done { align-items: center; padding: 10px 0 20px; }
 /* Imágenes fluidas de la marca (diseno/fluido/): confirmación de consulta y pastillas de Dudas */
 .sent-sky { align-self: stretch; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 26px 16px 22px; border-radius: 16px; color: #fff;
-  background: linear-gradient(180deg, rgba(28,16,24,.15), rgba(28,16,24,.45)), url('img/fluido/via-lactea-atardecer.webp') 35% 45% / cover, #2A1823; }
+  background: linear-gradient(180deg, rgba(42,24,35,.12), rgba(42,24,35,.42)), url('img/fluido/seda-melocoton.webp') 30% 50% / cover, #8E6178; }
 .sent-sky .serif-22 { color: #fff; }
 .sent-sky p { color: rgba(255,255,255,.88); margin: 0; }
 .sent-sky .cav { box-shadow: 0 0 0 3px rgba(255,255,255,.85); }
@@ -1004,10 +1004,6 @@ body[data-stage="postpartum"] { --st-soft: #ECE6F0; }
 .ask-pill { color: #fff; border-color: transparent; font-weight: 600;
   background: linear-gradient(90deg, rgba(42,24,35,.45), rgba(42,24,35,.55)), url('img/fluido/seda-melocoton.webp') 20% 60% / 300%, #8E6178; text-shadow: 0 1px 2px rgba(42,24,35,.5); }
 .ask-pill .cav { box-shadow: 0 0 0 1.5px rgba(255,255,255,.9); }
-/* Cabecera nocturna (0 a 6 h) */
-.app-header.night { background: linear-gradient(180deg, rgba(28,16,24,.2), rgba(28,16,24,.45)), url('img/fluido/via-lactea-atardecer.webp') 45% 40% / cover, #2A1823;
-  border-radius: 0 0 20px 20px; margin-bottom: 14px; }
-.app-header.night .brand-tag { color: #F2B9A0; }
 
 /* Aviso de sincronización en pausa: un punto en el engranaje (se reconecta en Ajustes) */
 .gear { position: relative; }

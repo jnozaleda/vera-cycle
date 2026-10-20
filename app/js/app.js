@@ -1833,8 +1833,6 @@ function updateMiniBar() {
 }
 window.addEventListener('scroll', () => { if (miniTick) return; miniTick = true; requestAnimationFrame(() => { miniTick = false; updateMiniBar(); }); }, { passive: true });
 
-/** De madrugada (0 a 6 h) la cabecera pasa a cielo nocturno: tomas, contracciones, insomnio */
-const isNight = () => new Date().getHours() < 6;
 
 /** Hitos: una tarjeta especial durante la semana en que se cumplen; se puede cerrar */
 const HITOS_KEY = 'hera-hitos-vistos';
@@ -2398,8 +2396,8 @@ function mainView() {
     view = fns[ids[ui.tab]]();
   }
   return `<div class="shell">
-    <header class="app-header ${isNight() ? 'night' : ''}">
-      <div><h1 class="brand"><img src="brand/hera-logo-compact${isNight() ? '-white' : ''}.svg" alt="Hera" width="113" height="34"></h1><div class="brand-tag">${MODE_TAG[mode]}</div></div>
+    <header class="app-header">
+      <div><h1 class="brand"><img src="brand/hera-logo-compact.svg" alt="Hera" width="113" height="34"></h1><div class="brand-tag">${MODE_TAG[mode]}</div></div>
       <div class="row gap-8 center">
         <button class="ask-pill" data-action="open-ask" data-ctx="" aria-label="Pregunta a tu ginecólogo, a tu matrona o a tu pediatra" title="Pregunta a tu equipo">${consultPair('sm')}<span class="ask-label">Pregúntanos</span></button>
         ${(() => { const warn = sync.enabled && (sync.status === 'needs-auth' || sync.status === 'error');
@@ -2435,8 +2433,7 @@ function render() {
   const stageNow = store.needsOnboarding ? (ui.ob.stageChosen ? ui.ob.flow : 'pregnancy') : store.mode;
   document.body.dataset.stage = stageNow;
   const tc = document.querySelector('meta[name=theme-color]');
-  const sky = screen === 'main' && isNight();
-  if (tc) tc.content = sky ? '#2A1823' : '#FAF8F5';
+  if (tc) tc.content = '#FAF8F5';
   // Conserva el scroll interno del sheet al re-renderizar
   const sheetBody = root.querySelector('.sheet-body');
   const sheetScroll = sheetBody ? sheetBody.scrollTop : 0;

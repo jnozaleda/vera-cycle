@@ -1,7 +1,7 @@
 // Hera · actividad en tiempo real para el equipo (fase de pruebas).
 //
 // Cada evento anónimo que llega a /hit (o que genera el propio servicio, como una consulta) se apunta en D1
-// (tabla activity, 7 días) con: hora, evento, dispositivo («ios-app», «android-web»…) y una etiqueta de persona
+// (tabla activity, 31 días) con: hora, evento, dispositivo («ios-app», «android-web»…) y una etiqueta de persona
 // que cambia cada día (huella de conexión + navegador + día, la misma que ya se usa para contar personas).
 // Nunca el contenido: «apuntó síntomas», no cuáles; «añadió su fecha de parto», no la fecha.
 //
@@ -91,6 +91,7 @@ export async function personTag(env, request, day) {
   return (await hmacHex(`${env.HASH_SALT}:persona:${day}`, `${ip}|${ua}`)).slice(0, 4).toUpperCase();
 }
 
+const panelLink = (env) => (env.DASH_KEY ? `\nPanel: https://hera-consultas.tempcheck-app.workers.dev/panel?k=${env.DASH_KEY}` : '');
 const madridTime = (ts) => new Intl.DateTimeFormat('es-ES', { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit' }).format(new Date(ts));
 const madridDayTime = (ts) => new Intl.DateTimeFormat('es-ES', { timeZone: 'Europe/Madrid', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(ts));
 
@@ -107,7 +108,7 @@ export async function record(env, { e, d = '', p = '' }, send, ctx) {
   if (p && env.KV) { if (await env.KV.get(k)) return; await env.KV.put(k, '1', { expirationTtl: 1800 }); }
   const who = p ? `Persona ${p}` : 'Hera';
   const line = `${eventText(e)}`;
-  const text = `${line}\n\n${who}${d ? ` · ${deviceText(d)}` : ''} · ${madridDayTime(ts)}\n\nResumen de todo cada hora. Panel: https://hera-gine.com/panel.html`;
+  const text = `${line}\n\n${who}${d ? ` · ${deviceText(d)}` : ''} · ${madridDayTime(ts)}\n\nResumen de todo cada hora.${panelLink(env)}`;
   const job = notify(env, `Hera · ${line}`, text, send);
   if (ctx?.waitUntil) ctx.waitUntil(job); else await job;
 }
@@ -119,7 +120,7 @@ export async function hourlyDigest(env, send) {
   const since = Number((await env.KV.get('digest:last')) || now - 3600000);
   const { results = [] } = await env.DB.prepare('SELECT ts, e, d, p FROM activity WHERE ts > ?1 AND ts <= ?2 ORDER BY ts').bind(since, now).all();
   await env.KV.put('digest:last', String(now));
-  try { await env.DB.prepare('DELETE FROM activity WHERE ts < ?1').bind(now - 7 * 86400000).run(); } catch { /* sin tabla */ }
+  try { await env.DB.prepare('DELETE FROM activity WHERE ts < ?1').bind(now - 31 * 86400000).run(); } catch { /* sin tabla */ }
   if (!results.length) return 0;
   const groups = new Map();
   for (const r of results) {
@@ -130,7 +131,7 @@ export async function hourlyDigest(env, send) {
   const people = [...groups.keys()].filter((k) => k !== 'Hera').length;
   const parts = [...groups.entries()].map(([k, g]) => `${k === 'Hera' ? 'Servicio' : `Persona ${k}`}${g.d ? ` · ${deviceText(g.d)}` : ''}\n${g.rows.map((r) => `  ${madridTime(r.ts)}  ${eventText(r.e)}`).join('\n')}`);
   const subject = `Hera · última hora: ${results.length} ${results.length === 1 ? 'acción' : 'acciones'} de ${people} ${people === 1 ? 'persona' : 'personas'}`;
-  const text = `${subject}\n${madridDayTime(since)} – ${madridTime(now)}\n\n${parts.join('\n\n')}\n\n«Persona XXXX» es una etiqueta anónima que cambia cada día. Panel: https://hera-gine.com/panel.html`;
+  const text = `${subject}\n${madridDayTime(since)} – ${madridTime(now)}\n\n${parts.join('\n\n')}\n\n«Persona XXXX» es una etiqueta anónima que cambia cada día. ${panelLink(env)}`;
   await notify(env, subject, text, send);
   return results.length;
 }

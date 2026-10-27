@@ -13,6 +13,7 @@
 //                      (beta testers / plan ilimitado). Se guarda solo la huella del correo: v:<hmac> = {plan, until, note, at}
 //   POST /hit          {e}                                                 navegador: evento anónimo de uso (texto plano)
 //   GET  /stats?days=N                                                     panel: Authorization: Bearer PANEL_CODE
+//   GET  /panel?k=DASH_KEY&d=1|7|30                                     panel privado para el móvil (HTML, sin login)
 //   GET  /status?ids=a,b                                                   app: ¿respondida? por número de consulta (solo fechas)
 //
 // Medición (vera-backlog#6): D1 «hera-metrics» con recuentos por día (tabla counts) y huellas diarias para contar
@@ -25,6 +26,7 @@
 // Respuestas a través de Hera (relay.js): email() recibe lo que llega a hera-p-…/hera-u-… y lo reenvía al otro lado;
 // scheduled() avisa al profesional cuando una consulta lleva 40 h sin respuesta.
 
+import { panel } from './panel.js';
 import { isEvent, isDevice, record, personTag, hourlyDigest } from './activity.js';
 import { newThreadId, relayAddress, parseRelayAddress, sealEmail, openEmail, saveThread, loadThread, parseIncoming, isAutomatic } from './relay.js';
 
@@ -211,6 +213,13 @@ export default {
         out[id] = t ? { a: t.a || 0, c: t.c } : null;
       }
       return reply(200, { status: out });
+    }
+    // Panel privado para el móvil (clave en el enlace, sin login; guárdalo en favoritos)
+    if (request.method === 'GET' && url.pathname === '/panel') {
+      if (!env.DASH_KEY || url.searchParams.get('k') !== env.DASH_KEY) return new Response('Not found', { status: 404, headers: { 'x-robots-tag': 'noindex' } });
+      return new Response(await panel(env, url, openThreads), {
+        headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex, nofollow', 'referrer-policy': 'no-referrer' },
+      });
     }
     if (request.method === 'GET' && url.pathname === '/stats') {
       if (!env.PANEL_CODE || request.headers.get('Authorization') !== `Bearer ${env.PANEL_CODE}`) return reply(401, { error: 'unauthorized' });

@@ -143,4 +143,10 @@ await KV.put('digest:last', String(Date.now() - 3600000));
 assert.ok(await hourlyDigest(env, async (e, m) => { sent.push({ ...m, to: [m.to] }); return { id: 'x' }; }) >= 3);
 assert.match(sent.at(-1).text, /Apuntó en el diario: síntomas/); assert.match(sent.at(-1).text, /Android · app instalada/);
 env.ALERTS = '0';
+// panel privado
+env.DASH_KEY = 'dk';
+let pg = await worker.fetch(new Request('https://w/panel?k=dk&d=30'), env);
+assert.equal(pg.status, 200); const html = await pg.text();
+assert.match(html, /<h1>Panel<\/h1>/); assert.match(html, /Consultas/); assert.ok(!html.includes('copia@example.com'), 'sin correos en el panel');
+pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal(pg.status, 404);
 console.log('consultas: OK');

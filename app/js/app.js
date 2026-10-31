@@ -1356,7 +1356,7 @@ function askSheet() {
     <a class="link-deep t-12 self-start" href="../equipo.html" ${isStandalone() ? 'target="_blank" rel="noopener"' : ''}>¿Quiénes son? Conoce al equipo →</a>
     <p class="t-12 c-rose lh-4" data-ask-urgent ${sugg.urgent ? '' : 'hidden'}>Si es algo urgente (sangrado abundante, pérdida de líquido, el bebé no se mueve, dolor muy fuerte), no esperes: llama al 112 o ve a urgencias.</p>
     ${a.context ? `<div><button class="ctx-tag" data-action="ask-clear-ctx" aria-label="Quitar el tema">Sobre: ${esc(a.context)} ${icon('x', 10)}</button></div>` : ''}
-    <p class="ask-private">${icon('lock', 13)}<span><b>Es privada.</b> Solo la lee ${to ? esc(to.short) : 'la profesional que elijas'}, que te responde a tu correo. No se publica en ningún sitio.</span></p>
+    <p class="ask-private">${icon('lock', 13)}<span><b>Privada, sin nombre ni registro.</b> No se publica en ningún sitio y ${to ? esc(to.short) : 'la profesional'} no ve tu correo: lo usamos para hacerte llegar su respuesta.</span></p>
     <textarea class="field ask-text" data-model="ask.text" rows="4" maxlength="2000" placeholder="Cuéntanos tu duda con tus palabras. Por ejemplo: «Desde hace 3 días tengo acidez por la noche, ¿qué puedo hacer?»">${esc(a.text)}</textarea>
     ${details.length ? `<label class="ask-check"><input type="checkbox" data-ask-include ${a.include ? 'checked' : ''}>
       <span><span class="t-13">Incluir mi situación</span><span class="t-11 soft block lh-3">${details.map(esc).join(' · ')}</span></span></label>` : ''}

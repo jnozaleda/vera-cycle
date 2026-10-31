@@ -147,6 +147,12 @@ section { padding: 64px 0; }
 .fld { display: grid; gap: 6px; font-size: 13.5px; color: var(--text); }
 .fld i { font-style: normal; color: var(--muted); }
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; }
+.eg { display: flex; flex-wrap: wrap; gap: 6px; }
+.eg button { font: inherit; font-size: 12.5px; line-height: 1.3; color: var(--plum); background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; cursor: pointer; text-align: left; }
+.eg button:hover { border-color: var(--mauve); }
+.eg-box { margin: 18px 0 22px; padding: 16px 18px; background: #fff; border: 1px solid var(--line); border-radius: 12px; font-size: 14.5px; }
+.eg-box p { margin: 0 0 8px; }
+.eg-box small { display: block; color: var(--muted); margin-bottom: 8px; }
 .priv { display: flex; gap: 7px; align-items: flex-start; margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--plum); }
 .priv svg { flex: none; margin-top: 2px; }
 .fine { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
@@ -312,6 +318,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <a href="#como-funciona">Cómo funciona</a>
       <a href="equipo.html">Profesionales</a>
       <a href="#instalar">Instalar</a>
+      <a href="guias/">Guías</a>
       <a href="#precio">Precio</a>
       <a href="#preguntas">Preguntas</a>
       <a href="app/" data-cta="abrir_portada">Abrir Hera</a>
@@ -337,7 +344,13 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         <div class="who"><span class="who-faces"><img src="portada/equipo/gonzalo.jpg?v=2" alt="" width="30" height="30"><img src="portada/equipo/marina.jpg?v=2" alt="" width="30" height="30"><img src="portada/equipo/lucia.jpg?v=3" alt="" width="30" height="30"></span><span>Te responde <a class="who-link" href="equipo.html"><b>Gonzalo, Marina o Lucía</b></a></span></div>
         <label for="duda" class="sr">Tu duda</label>
         <textarea id="duda" name="duda" maxlength="2000" placeholder="Escribe tu duda con tus palabras…"></textarea>
-        <p class="priv"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span><b>Es privada.</b> Solo la lee la profesional que elijas y te responde a tu correo. No se publica en ningún sitio.</span></p>
+        <div class="eg" id="ask-eg" aria-label="Dudas de ejemplo">
+          <button type="button">Tengo un sangrado y no sé si es normal</button>
+          <button type="button">¿Qué puedo tomar para el ardor en el embarazo?</button>
+          <button type="button">Mi bebé tiene fiebre, ¿qué hago?</button>
+          <button type="button">Tengo sofocos por la noche, ¿es normal?</button>
+        </div>
+        <p class="priv"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span><b>Privada, sin nombre ni registro.</b> No se publica en ningún sitio y la profesional no ve tu correo: lo usamos para hacerte llegar su respuesta.</span></p>
         <div class="more" id="ask-more" hidden>
           <fieldset class="picks">
             <legend>¿A quién se lo preguntas?</legend>
@@ -392,6 +405,9 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         <li><span class="n">2</span><div><h3>Elige a quién preguntar</h3><p>Hera te sugiere ginecología, matrona o pediatría según lo que escribas. Siempre puedes cambiarlo.</p></div></li>
         <li><span class="n">3</span><div><h3>Recibe la respuesta en tu correo</h3><p>En menos de 48 h, de la profesional que la ha leído. Si te queda algo, contestas al mismo correo.</p></div></li>
       </ol>
+      <div class="eg-box"><small>Ejemplo orientativo, no es una consulta real</small>
+        <p><b>Tu duda:</b> «Estoy de 32 semanas y tengo ardor por las noches. ¿Qué puedo hacer?»</p>
+        <p style="margin:0"><b>La respuesta:</b> «Suelen ayudar las comidas pequeñas, no tumbarte justo después de comer y elevar un poco la cabecera de la cama. Si no basta, hay antiácidos seguros en el embarazo.»</p></div>
       <a class="btn btn-p" href="#ask" data-goask>Pregunta tu duda gratis</a>
     </div>
     <div class="art">
@@ -571,6 +587,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <nav aria-label="Enlaces">
         <a href="app/">Abrir Hera</a>
         <a href="equipo.html">El equipo</a>
+        <a href="guias/">Guías</a>
         <a href="support.html">Soporte</a>
         <a href="privacy.html">Privacidad</a>
         <a href="mailto:contacto@hera-gine.com">contacto@hera-gine.com</a>
@@ -615,9 +632,17 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   }
   function open() {
     if (opened) return;
-    opened = true; more.hidden = false; $('ask-fine').hidden = false;
+    opened = true; more.hidden = false; $('ask-fine').hidden = false; $('ask-eg').hidden = true;
     hit('pregunta_portada'); refresh();
   }
+  // Dudas de ejemplo: para quien no sabe cómo empezar. Se ocultan al abrir la caja.
+  $('ask-eg').addEventListener('click', (ev) => {
+    const b = ev.target.closest('button');
+    if (!b) return;
+    ta.value = b.textContent; hit('ejemplo_duda'); open(); ta.focus();
+  });
+  radios.forEach((r) => r.addEventListener('change', () => hit('elige_pro'), { once: true }));
+  email.addEventListener('focus', () => hit('correo_portada'), { once: true });
   function goAsk(to) {
     box.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
     if (to) { open(); manual = true; radios.forEach((r) => { r.checked = r.value === to; }); refresh(); }

@@ -91,7 +91,7 @@ table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:
 </div>
 <div class="card"><h2>Personas por día</h2><div class="days">${perDay.map(([d, a, w]) => `<div><span>${a + w || ''}</span><span class="pair"><i style="height:${Math.round((a / maxDay) * 64)}px"></i><i class="web" style="height:${Math.round((w / maxDay) * 64)}px"></i></span>${esc(d)}</div>`).join('')}</div>
 <div class="legend"><span><b style="background:var(--plum)"></b>App</span><span><b style="background:var(--web)"></b>Web</span></div></div>
-<div class="card"><h2>De la web a la consulta</h2>${bars([['Visitaron la web', g('personas_portada')], ['Empezaron a escribir una duda', g('pregunta_portada')], ['Enviaron la consulta desde la web', g('enviada_portada')], ['Pulsaron «Abrir Hera»', g('abrir_portada')]])}</div>
+<div class="card"><h2>De la web a la consulta</h2>${bars([['Visitaron la web', g('personas_portada')], ['Tocaron una duda de ejemplo', g('ejemplo_duda')], ['Empezaron a escribir una duda', g('pregunta_portada')], ['Cambiaron de profesional', g('elige_pro')], ['Llegaron al campo de correo', g('correo_portada')], ['Enviaron la consulta desde la web', g('enviada_portada')], ['Pulsaron «Abrir Hera»', g('abrir_portada')]])}</div>
 <div class="card"><h2>En la app</h2>${bars([['Abrieron la app', g('apertura')], ['Completaron la bienvenida', sum('onboarding:')], ['Añadieron fecha de parto', g('fecha_parto')], ['Añadieron fecha de nacimiento', g('fecha_nacimiento')], ['Activaron el aviso semanal', g('push_on')], ['Conectaron Google Drive', g('sync_on')], ['Pulsaron «Contacto»', g('contacto')]])}</div>
 <div class="card"><h2>Etapa al empezar</h2>${bars(STAGES.map(([k2, l]) => [l, g(`onboarding:${k2}`)]))}</div>
 <div class="card"><h2>Consultas</h2>

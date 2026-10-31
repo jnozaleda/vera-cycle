@@ -5,5 +5,6 @@ Disallow: /beta.html
 Disallow: /diseno/
 Disallow: /consult-worker/
 Disallow: /push-worker/
+Disallow: /tools/
 
 Sitemap: https://hera-gine.com/sitemap.xml

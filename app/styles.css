@@ -1087,3 +1087,4 @@ body[data-stage="menopause"] { --st-soft: #EFE6D8; }
 .ob-who b { font-weight: 600; color: #3B2433; }
 .ob-welcome .google-btn, .ob-welcome .link-soft { align-self: stretch; }
 .ob-welcome .link-soft.mt-16 { align-self: center; }
+.ask-add { cursor: pointer; }

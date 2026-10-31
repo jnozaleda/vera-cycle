@@ -163,4 +163,15 @@ assert.deepEqual(f.rows.map((r) => r.n), [4, 2, 1]);
 assert.deepEqual(f.rows.map((r) => r.lost), [2, 1, 0]);
 assert.equal(f.dropped, 3); assert.equal(f.lost.length, 3); assert.equal(f.lost[0].p, 'P2'); assert.equal(f.lost[0].d, 'android-web');
 assert.equal(dropoff([], steps).started, 0);
+// adjuntos: se validan por contenido, limitan cantidad y tamaño, y limpian el nombre
+const { validateAttachments, MAX_BYTES } = await import('../src/attachments.js');
+const png = btoa(String.fromCharCode(0x89, 0x50, 0x4e, 0x47, 13, 10, 26, 10, 1, 2, 3, 4));
+const pdf = btoa('%PDF-1.7 hola');
+assert.deepEqual(validateAttachments(undefined), { files: [] });
+let va = validateAttachments([{ filename: '../../a<b>.exe', content: png, content_type: 'text/html' }, { filename: 'informe.pdf', content: pdf }]);
+assert.equal(va.files[0].content_type, 'image/png'); assert.equal(va.files[0].filename, 'ab.png'); assert.equal(va.files[1].content_type, 'application/pdf');
+assert.equal(validateAttachments([{ content: btoa('<html>evil</html>') }]).error, 'bad_files');
+assert.equal(validateAttachments([{ content: 'no base64!!' }]).error, 'bad_files');
+assert.equal(validateAttachments(Array(4).fill({ content: png })).error, 'bad_files');
+assert.equal(validateAttachments([{ content: 'A'.repeat(Math.ceil((MAX_BYTES * 4) / 3) + 8) }]).error, 'too_large');
 console.log('consultas: OK');

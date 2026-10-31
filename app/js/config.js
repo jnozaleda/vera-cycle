@@ -11,6 +11,8 @@ export const GOOGLE_CLIENT_ID = '922678499713-qi6icefe2piid172c0ns62brq40rhiuo.a
 export const SYNC_BETA_ONLY = false;
 // Menopausia: abierta a todas por decisión de Noza; los textos siguen pendientes de revisión clínica (vera-backlog#75)
 export const MENOPAUSE_BETA_ONLY = false;
+// Fotos y PDF en la consulta (vera-backlog#78)
+export const CONSULT_ATTACH = true;
 
 // Modo embarazo y posparto: solo visible con ?beta hasta que el contenido clínico esté revisado.
 export const PREGNANCY_BETA_ONLY = false;

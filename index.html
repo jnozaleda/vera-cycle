@@ -155,6 +155,11 @@ section { padding: 64px 0; }
 .eg-box small { display: block; color: var(--muted); margin-bottom: 8px; }
 .priv { display: flex; gap: 7px; align-items: flex-start; margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--plum); }
 .priv svg { flex: none; margin-top: 2px; }
+.files { display: grid; gap: 8px; }
+.file-add { justify-self: start; font-size: 13.5px; font-weight: 500; color: var(--plum); border: 1px solid var(--line); background: #fff; border-radius: 6px; padding: 8px 12px; cursor: pointer; }
+.files ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.files li { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13.5px; background: #fff; border: 1px solid var(--line); border-radius: 6px; padding: 6px 10px; overflow-wrap: anywhere; }
+.files li button { font: inherit; color: var(--plum); background: none; border: 0; cursor: pointer; white-space: nowrap; }
 .fine { margin: 0; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
 .fine a { color: var(--plum); }
 .done { display: grid; gap: 10px; justify-items: center; text-align: center; padding: 14px 6px 8px; }
@@ -373,6 +378,12 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
             </select></label>
           <label class="fld"><span>Tu correo, para que te respondan</span>
             <input id="ask-email" type="email" inputmode="email" autocomplete="email" placeholder="nombre@correo.com"></label>
+          <div class="files" id="ask-files" hidden>
+            <label class="file-add">Añadir foto o PDF<input id="ask-file" type="file" hidden multiple accept="image/*,application/pdf"></label>
+            <ul id="ask-file-list"></ul>
+            <p class="err" id="ask-file-err" hidden></p>
+            <p class="fine" id="ask-file-note"></p>
+          </div>
           <input class="hp" id="ask-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
           <p class="err" id="ask-err" role="alert" hidden></p>
         </div>
@@ -603,6 +614,9 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   // (2 gratuitas por correo, campo trampa, límite de envíos). Nada viaja en la URL.
   import { suggestContact } from './app/js/contacts.js';
   import { addConsult } from './app/js/consults.js';
+  import { addFiles, filesPayload, ATTACH_NOTE } from './app/js/attach.js';
+  import { CONSULT_ATTACH } from './app/js/config.js';
+  import { isBeta } from './app/js/beta.js';
   import { device, isTeam } from './app/js/track.js';
   const API = 'https://hera-consultas.tempcheck-app.workers.dev';
   const PROS = { gineco: { name: 'Gonzalo', img: 'gonzalo' }, matrona: { name: 'Marina', img: 'marina' }, pediatra: { name: 'Lucía', img: 'lucia' } };
@@ -643,6 +657,27 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   });
   radios.forEach((r) => r.addEventListener('change', () => hit('elige_pro'), { once: true }));
   email.addEventListener('focus', () => hit('correo_portada'), { once: true });
+  // Adjuntos (vera-backlog#78)
+  let files = [];
+  if (CONSULT_ATTACH || isBeta()) {
+    $('ask-files').hidden = false;
+    $('ask-file-note').textContent = `Hasta 3 archivos y 10 MB. ${ATTACH_NOTE} Hera no los guarda: solo llegan a la profesional.`;
+    const drawFiles = (error = '') => {
+      const list = $('ask-file-list'); list.textContent = '';
+      files.forEach((f, i) => {
+        const li = document.createElement('li'); const name = document.createElement('span'); name.textContent = f.filename;
+        const x = document.createElement('button'); x.type = 'button'; x.textContent = 'Quitar';
+        x.addEventListener('click', () => { files.splice(i, 1); drawFiles(); });
+        li.append(name, x); list.append(li);
+      });
+      $('ask-file-err').textContent = error; $('ask-file-err').hidden = !error;
+    };
+    $('ask-file').addEventListener('change', async (ev) => {
+      const r = await addFiles(files, [...ev.target.files]);
+      files = r.files; ev.target.value = ''; drawFiles(r.error);
+      if (files.length) hit('adjunto_portada');
+    });
+  }
   function goAsk(to) {
     box.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
     if (to) { open(); manual = true; radios.forEach((r) => { r.checked = r.value === to; }); refresh(); }
@@ -677,10 +712,11 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     lastEmail = email.value.trim(); store.set('hera-ask-email', lastEmail);
     try {
       const res = await fetch(`${API}/ask`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: lastEmail, to, text, context: '', situation: $('ask-moment').value, website: $('ask-hp').value, ...(isTeam() ? { team: true } : {}) }) });
+        body: JSON.stringify({ email: lastEmail, to, text, context: '', situation: $('ask-moment').value, website: $('ask-hp').value, attachments: filesPayload(files), ...(isTeam() ? { team: true } : {}) }) });
       const j = await res.json().catch(() => ({}));
       if (res.status === 429) throw new Error('Has enviado varias consultas seguidas. Espera unos minutos y vuelve a intentarlo.');
       if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');
+      if (j.error === 'bad_files' || j.error === 'too_large') throw new Error('Revisa los archivos: solo fotos o PDF, hasta 10 MB en total.');
       if (!res.ok && !j.limit) throw new Error('No se ha podido enviar. Inténtalo de nuevo en un rato.');
       if (j.limit) { hit('limite_portada'); showLimit(j); } else { hit('enviada_portada'); if (j.id) addConsult({ id: j.id, to, text }); showDone(to, j); }
     } catch (e) { hit('error_portada'); showErr(e.message); }

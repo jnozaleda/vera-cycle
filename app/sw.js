@@ -2,7 +2,7 @@
 // Service worker de Hera web: permite abrir la app sin conexión.
 // Estrategia "red primero": siempre intenta la versión más reciente y usa la caché si no hay red.
 
-const CACHE = 'vera-web-v97';
+const CACHE = 'vera-web-v99';
 const SHELL = [
   './',
   'index.html',
@@ -24,6 +24,7 @@ const SHELL = [
   'js/track.js',
   'js/consults.js',
   'js/periods.js',
+  'js/attach.js',
   'js/push.js',
   'js/fetus3d.js',
   'js/fetus-core.js',

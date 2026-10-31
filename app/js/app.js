@@ -24,7 +24,8 @@ import { FOODS, FOOD_CATEGORIES, FOOD_STATUS, foodFor, bmi, gainRange, gainBandA
 import { GUIDE_INTRO, PREGNANCY_GUIDE, POSTPARTUM_GUIDE, guideSectionFor } from './guide.js';
 import { PREGNANCY_LINE, pregnancyNormal, pregnancyFaqs, postpartumLine, postpartumNormal, postpartumBabyNormal, postpartumFaqs } from './today.js';
 import { spansPregnancy } from './predict.js';
-import { PREGNANCY_BETA_ONLY, MENOPAUSE_BETA_ONLY, CONSULT, CONSULTS, TAGLINE, CONSULT_API, CONSULT_FORM } from './config.js';
+import { addFiles, filesPayload, ATTACH_NOTE } from './attach.js';
+import { CONSULT_ATTACH, PREGNANCY_BETA_ONLY, MENOPAUSE_BETA_ONLY, CONSULT, CONSULTS, TAGLINE, CONSULT_API, CONSULT_FORM } from './config.js';
 import { suggestContact } from './contacts.js';
 import { listConsults, addConsult, markSeen, clearConsults, consultState, unseenAnswer, refreshConsults } from './consults.js';
 import { track, isTeam, setTeam } from './track.js';
@@ -1363,6 +1364,10 @@ function askSheet() {
     ${consultFormOn() ? `<label class="stack-4"><span class="t-12 soft">Tu correo, para que te respondan</span>
       <input class="field" type="email" inputmode="email" autocomplete="email" data-model="ask.email" value="${attr(a.email)}" placeholder="nombre@correo.com"></label>
       <input class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" data-model="ask.website" value="">` : ''}
+    ${consultFormOn() && (CONSULT_ATTACH || isBeta()) ? `<div class="stack-6"><label class="pill-outline row gap-6 center self-start ask-add">${icon('plusCircle', 13)} Añadir foto o PDF<input type="file" hidden multiple accept="image/*,application/pdf" data-ask-files></label>
+      ${(a.files || []).map((f, i) => `<div class="period-item"><span class="t-13 grow">${esc(f.filename)}</span><button class="icon-btn soft" data-action="ask-file-remove" data-i="${i}" aria-label="Quitar ${attr(f.filename)}">${icon('xCircle', 16)}</button></div>`).join('')}
+      ${a.fileError ? `<p class="t-12 c-rose">${esc(a.fileError)}</p>` : ''}
+      <p class="t-11 soft-70 lh-3">Hasta 3 archivos y 10 MB. ${esc(ATTACH_NOTE)} Hera no los guarda: solo llegan a la profesional.</p></div>` : ''}
     ${a.status === 'error' ? `<p class="t-12 c-rose">${esc(a.error || 'No se ha podido enviar. Inténtalo de nuevo.')}</p>` : ''}
     <button class="btn-primary" data-action="${consultFormOn() ? 'ask-submit' : 'ask-send'}" data-v="email" data-ask-send ${to && a.status !== 'sending' ? '' : 'disabled'}>${a.status === 'sending' ? 'Enviando…' : to ? `Enviar a ${esc(to.short)}` : 'Elige a quién preguntar'}</button>
     ${to?.whatsapp ? `<button class="outline-sage" data-action="ask-send" data-v="whatsapp">Prefiero escribir por WhatsApp</button>` : ''}
@@ -2744,18 +2749,20 @@ const actions = {
       const meta = [];
       if (a.include) meta.push(...consultDetails());
       const res = await fetch(`${CONSULT_API}/ask`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: a.email.trim(), to: to.key, text: a.text.trim(), context: a.context, situation: meta.join('\n'), website: a.website || '', ...(isTeam() ? { team: true } : {}) }) });
+        body: JSON.stringify({ email: a.email.trim(), to: to.key, text: a.text.trim(), context: a.context, situation: meta.join('\n'), website: a.website || '', attachments: filesPayload(a.files || []), ...(isTeam() ? { team: true } : {}) }) });
       const j = await res.json().catch(() => ({}));
       if (res.status === 429) throw new Error('Has enviado varias consultas seguidas. Espera unos minutos y vuelve a intentarlo.');
       if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');
+      if (j.error === 'bad_files' || j.error === 'too_large') throw new Error('Revisa los archivos: solo fotos o PDF, hasta 10 MB en total.');
       if (!res.ok && !j.limit) throw new Error('No se ha podido enviar. Inténtalo de nuevo en un rato.');
       a.status = null; a.result = j; a.sentTo = to.key;
       track(j.limit ? 'consulta_limite' : 'consulta_enviada');
       if (j.ok && j.id) addConsult({ id: j.id, to: to.key, text: a.text.trim() });
-      if (j.ok) a.text = '';
+      if (j.ok) { a.text = ''; a.files = []; a.fileError = ''; }
     } catch (e) { a.status = 'error'; a.error = e.message; track('consulta_error'); }
     render();
   },
+  'ask-file-remove': (el) => { ui.ask.files.splice(+el.dataset.i, 1); ui.ask.fileError = ''; render(); },
   'ask-notify-open': () => { ui.ask.notify = { open: true, consent: false }; render(); },
   'ask-notify-send': async () => {
     const n = ui.ask.notify || (ui.ask.notify = {});
@@ -3069,7 +3076,14 @@ root.addEventListener('input', (e) => {
     root.querySelectorAll(`[data-out="${key}"]`).forEach((o) => { o.textContent = fmtOut(v); });
   }
 });
-root.addEventListener('change', (e) => {
+root.addEventListener('change', async (e) => {
+  if (e.target.matches?.('[data-ask-files]')) {
+    const { files, error } = await addFiles(ui.ask.files || [], [...e.target.files]);
+    ui.ask.files = files; ui.ask.fileError = error;
+    if (files.length) track('consulta_adjunto', true);
+    render();
+    return;
+  }
   const el = e.target;
   if (el.dataset.action === 'import') {
     const file = el.files?.[0];

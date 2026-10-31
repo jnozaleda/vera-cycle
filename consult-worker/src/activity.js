@@ -23,6 +23,8 @@ export const EVENTS = {
   intento_portada: ['Pulsó enviar en la web', false],
   error_portada: ['Falló el envío en la web', false],
   limite_portada: ['Agotó las gratuitas en la web', false],
+  adjunto_portada: ['Añadió un archivo en la web', false],
+  consulta_adjunto: ['Añadió un archivo en la app', false],
   consulta_abierta: ['Abrió la hoja de consulta', false],
   consulta_escribe: ['Empezó a escribir una duda en la app', false],
   consulta_correo: ['Escribió su correo en la app', false],

@@ -26,6 +26,7 @@
 // Respuestas a través de Hera (relay.js): email() recibe lo que llega a hera-p-…/hera-u-… y lo reenvía al otro lado;
 // scheduled() avisa al profesional cuando una consulta lleva 40 h sin respuesta.
 
+import { validateAttachments } from './attachments.js';
 import { panel } from './panel.js';
 import { isEvent, isDevice, record, personTag, hourlyDigest } from './activity.js';
 import { newThreadId, relayAddress, parseRelayAddress, sealEmail, openEmail, saveThread, loadThread, parseIncoming, isAutomatic } from './relay.js';
@@ -38,6 +39,7 @@ export const PROS = {
 
 const EMAIL_RE = /^[^\s@<>()",;]{1,64}@[^\s@<>()",;]{1,190}\.[a-z]{2,24}$/i;
 const MAX_BODY = 6000;
+const MAX_ASK_BODY = 14 * 1024 * 1024 + 6000; // /ask lleva los adjuntos en base64 (10 MB reales)
 
 /** Minúsculas; sin «+etiqueta»; en Gmail, sin puntos. Así un mismo buzón cuenta una vez. */
 export function normalizeEmail(raw) {
@@ -72,6 +74,7 @@ export function proEmail(pro, q, id = '', relay = true) {
 <div style="background:#F1EFE8;border-radius:10px;padding:14px;margin:12px 0">${nl2br(q.text)}</div>
 ${q.context ? `<p style="font-size:13px;color:#5F5E5A">Sobre: ${esc(q.context)}</p>` : ''}
 ${q.situation ? `<p style="font-size:13px;color:#5F5E5A">Situación: ${nl2br(q.situation)}</p>` : ''}
+${q.files ? `<p style="font-size:13px;color:#5F5E5A">Incluye ${q.files} ${q.files === 1 ? 'archivo adjunto' : 'archivos adjuntos'}. Hera no los guarda: solo están en este correo.</p>` : ''}
 ${relay ? `<p style="font-size:13px;color:#5F5E5A"><b>Para contestar, responde a este correo</b> desde el móvil o el ordenador. Tu respuesta le llegará a la usuaria desde ${esc(pro.email)}: tu correo personal no se muestra. Si ella vuelve a escribir, te llegará en esta misma conversación. Plazo comprometido: 48 h.</p>`
     : `<p style="font-size:13px;color:#5F5E5A">Responde a este correo para contestar directamente a la usuaria (${esc(q.email)}). Plazo comprometido: 48 h.</p>`}`);
   const text = `Nueva consulta para ${pro.name}\n\n${q.text}\n\n${q.context ? `Sobre: ${q.context}\n` : ''}${q.situation ? `Situación: ${q.situation}\n` : ''}\n${relay ? `Para contestar, responde a este correo: tu respuesta le llegará a la usuaria desde ${pro.email}, sin mostrar tu correo personal. Plazo: 48 h.` : `Responde a este correo para contestar a la usuaria (${q.email}).`}`;
@@ -233,7 +236,7 @@ export default {
     let body;
     try {
       const raw = await request.text();
-      if (raw.length > MAX_BODY) return reply(413, { error: 'too_large' });
+      if (raw.length > (url.pathname === '/ask' ? MAX_ASK_BODY : MAX_BODY)) return reply(413, { error: 'too_large' });
       body = JSON.parse(raw || '{}');
     } catch { return reply(400, { error: 'bad_request' }); }
     const limit = Number(env.FREE_LIMIT || 2);
@@ -296,7 +299,9 @@ export default {
       if (!pro) return reply(400, { error: 'bad_to' });
       const text = String(body.text || '').trim();
       if (text.length < 5 || text.length > 2000) return reply(400, { error: 'bad_text' });
-      const q = { email: String(body.email).trim(), text, context: String(body.context || '').slice(0, 120), situation: String(body.situation || '').slice(0, 500) };
+      const { files, error: fileError } = validateAttachments(body.attachments);
+      if (fileError) return reply(fileError === 'too_large' ? 413 : 400, { error: fileError });
+      const q = { files: files.length, email: String(body.email).trim(), text, context: String(body.context || '').slice(0, 120), situation: String(body.situation || '').slice(0, 500) };
       // Prueba de principio a fin (solo con ADMIN_TOKEN): el «profesional» es COPY_TO y no cuenta como consulta gratuita
       const test = body.to === 'prueba' && env.ADMIN_TOKEN && request.headers.get('Authorization') === `Bearer ${env.ADMIN_TOKEN}` && env.COPY_TO;
 
@@ -318,8 +323,11 @@ export default {
       // RELAY="1": respuestas a través de Hera (necesita la regla catch-all → Worker en Email Routing). Las pruebas siempre lo usan.
       const relay = env.RELAY === '1' || !!test;
       const pm = proEmail(pro, q, id, relay);
-      const sent = await sendMail(env, { to: pro.email, replyTo: relay ? await relayAddress(env, 'p', id) : q.email, ...pm, bcc });
+      // Con adjuntos, la copia de control va aparte y sin los archivos: solo los recibe la profesional
+      const proReply = relay ? await relayAddress(env, 'p', id) : q.email;
+      const sent = await sendMail(env, { to: pro.email, replyTo: proReply, ...pm, bcc: files.length ? undefined : bcc, attachments: files });
       if (!sent) return reply(502, { error: 'send' });
+      if (files.length && bcc) await sendMail(env, { to: bcc, replyTo: proReply, ...pm, subject: `[Copia sin adjuntos] ${pm.subject}` });
       const now = new Date().toISOString();
       const n = test || unlimited ? rec.n : rec.n + 1;
       if (!test) {

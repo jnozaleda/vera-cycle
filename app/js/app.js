@@ -2738,6 +2738,7 @@ const actions = {
     if (!a.text.trim() || a.text.trim().length < 5) { root.querySelector('.ask-text')?.focus(); return; }
     if (!isEmail(a.email)) { a.status = 'error'; a.error = 'Escribe tu correo para que te puedan responder.'; render(); root.querySelector('[data-model="ask.email"]')?.focus(); return; }
     a.status = 'sending'; a.error = ''; render();
+    track('consulta_intento');
     try { localStorage.setItem('hera-ask-email', a.email.trim()); } catch { /* sin almacenamiento */ }
     try {
       const meta = [];
@@ -2749,9 +2750,10 @@ const actions = {
       if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');
       if (!res.ok && !j.limit) throw new Error('No se ha podido enviar. Inténtalo de nuevo en un rato.');
       a.status = null; a.result = j; a.sentTo = to.key;
+      track(j.limit ? 'consulta_limite' : 'consulta_enviada');
       if (j.ok && j.id) addConsult({ id: j.id, to: to.key, text: a.text.trim() });
       if (j.ok) a.text = '';
-    } catch (e) { a.status = 'error'; a.error = e.message; }
+    } catch (e) { a.status = 'error'; a.error = e.message; track('consulta_error'); }
     render();
   },
   'ask-notify-open': () => { ui.ask.notify = { open: true, consent: false }; render(); },
@@ -3051,7 +3053,7 @@ function setModel(path, value) {
 }
 root.addEventListener('input', (e) => {
   const el = e.target;
-  if (el.dataset.model) { setModel(el.dataset.model, el.value); if (el.dataset.model === 'ask.text') refreshAskSuggestion(); return; }
+  if (el.dataset.model) { setModel(el.dataset.model, el.value); if (el.dataset.model === 'ask.text') { refreshAskSuggestion(); if (el.value.trim()) track('consulta_escribe', true); } if (el.dataset.model === 'ask.email' && el.value.trim()) track('consulta_correo', true); return; }
   if (el.matches('[data-guide-search]')) { ui.guideQuery = el.value; applyGuideFilter(); return; }
   if (el.matches('[data-food-search]')) { ui.foodQuery = el.value; applyFoodFilter(); return; }
   if (el.dataset.range) {

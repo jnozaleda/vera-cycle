@@ -149,4 +149,18 @@ let pg = await worker.fetch(new Request('https://w/panel?k=dk&d=30'), env);
 assert.equal(pg.status, 200); const html = await pg.text();
 assert.match(html, /<h1>Panel<\/h1>/); assert.match(html, /Consultas/); assert.ok(!html.includes('copia@example.com'), 'sin correos en el panel');
 pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal(pg.status, 404);
+// embudo: personas distintas por día, quien avanza cuenta en los pasos anteriores
+const { dropoff } = await import('../src/panel.js');
+const T = Date.UTC(2026, 9, 31, 12);
+const steps = [['Empieza', 'a', 'a2'], ['Correo', 'b'], ['Envía', 'c']];
+const f = dropoff([
+  { ts: T, e: 'a', p: 'P1', d: 'ios-web' }, { ts: T + 1, e: 'a', p: 'P1' }, { ts: T + 2, e: 'c', p: 'P1' },
+  { ts: T, e: 'a2', p: 'P2' }, { ts: T + 5, e: 'b', p: 'P2', d: 'android-web' },
+  { ts: T, e: 'a', p: 'P3' }, { ts: T - 86400000, e: 'a', p: 'P3' },
+  { ts: T, e: 'otro', p: 'P4' }, { ts: T, e: 'a' },
+], steps);
+assert.deepEqual(f.rows.map((r) => r.n), [4, 2, 1]);
+assert.deepEqual(f.rows.map((r) => r.lost), [2, 1, 0]);
+assert.equal(f.dropped, 3); assert.equal(f.lost.length, 3); assert.equal(f.lost[0].p, 'P2'); assert.equal(f.lost[0].d, 'android-web');
+assert.equal(dropoff([], steps).started, 0);
 console.log('consultas: OK');

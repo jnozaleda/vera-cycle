@@ -13,6 +13,28 @@ const STAGES = [['pregnancy', 'Embarazo'], ['postpartum', 'Posparto'], ['cycle',
 const TABS = [['today', 'Hoy'], ['diary', 'Diario'], ['care', 'Cuidados'], ['guide', 'Dudas'], ['baby', 'Tu bebé'], ['cycle', 'Ciclo'], ['trends', 'Patrones']];
 const DIARY = [['sintoma', 'Síntomas'], ['animo', 'Ánimo'], ['regla', 'Regla'], ['dato', 'Peso, sueño o temperatura'], ['flujo', 'Flujo'], ['estres', 'Estrés'], ['intimidad', 'Relaciones'], ['ovulacion', 'Test de ovulación']];
 
+/**
+ * Embudo por persona y día (actividad anónima). Cada paso es [texto, ...eventos]; quien llega a un paso cuenta también
+ * en los anteriores. Devuelve las personas de cada paso, cuántas se caen ahí y la lista de las últimas caídas.
+ */
+export function dropoff(act, steps) {
+  const reached = new Map(); // persona-día → { paso más avanzado, última hora, dispositivo }
+  for (const r of act) {
+    if (!r.p) continue;
+    const i = steps.findIndex(([, ...ev]) => ev.includes(r.e));
+    if (i < 0) continue;
+    const k = `${dayISO(r.ts)}:${r.p}`;
+    const c = reached.get(k);
+    if (!c) reached.set(k, { step: i, ts: r.ts, d: r.d, p: r.p });
+    else { c.step = Math.max(c.step, i); if (r.ts > c.ts) { c.ts = r.ts; c.d = r.d; } }
+  }
+  const rows = steps.map(([label], i) => ({ label, n: [...reached.values()].filter((c) => c.step >= i).length }));
+  rows.forEach((row, i) => { row.lost = i < rows.length - 1 ? row.n - rows[i + 1].n : 0; });
+  const started = rows[0].n, done = rows[rows.length - 1].n;
+  const lost = [...reached.values()].filter((c) => c.step < steps.length - 1).sort((a, b) => b.ts - a.ts);
+  return { rows, started, done, dropped: started - done, lost };
+}
+
 export async function panel(env, url, openThreads) {
   const days = [1, 7, 30].includes(Number(url.searchParams.get('d'))) ? Number(url.searchParams.get('d')) : 7;
   const now = Date.now();
@@ -48,6 +70,15 @@ export async function panel(env, url, openThreads) {
   const horas = PROS.reduce((a, [k]) => a + g(`resp_horas:${k}`), 0);
   const pendientes = Object.values(open.pendientes || {}).reduce((a, x) => a + x, 0);
 
+  const funnels = [
+    ['En la web', dropoff(act, [['Empezaron a escribir', 'pregunta_portada', 'ejemplo_duda'], ['Llegaron al correo', 'correo_portada'], ['Pulsaron enviar', 'intento_portada'], ['Enviaron', 'enviada_portada']])],
+    ['En la app', dropoff(act, [['Abrieron la consulta', 'consulta_abierta'], ['Empezaron a escribir', 'consulta_escribe'], ['Escribieron el correo', 'consulta_correo'], ['Pulsaron enviar', 'consulta_intento'], ['Enviaron', 'consulta_enviada']])],
+  ];
+  const funnelCard = ([title, f]) => `<h3 class="fh">${title}</h3>${f.started ? `<p class="drop"><b>${f.dropped}</b> de ${f.started} se cayeron (${Math.round((f.dropped / f.started) * 100)} %)</p>
+<table><tr><th></th><th>Personas</th><th>Se caen aquí</th></tr>${f.rows.map((r, i) => `<tr><td>${esc(r.label)}</td><td>${r.n}</td><td>${i < f.rows.length - 1 ? r.lost : '–'}</td></tr>`).join('')}</table>` : '<p class="mute">Nada todavía.</p>'}`;
+  const lostFeed = funnels.flatMap(([title, f]) => f.lost.map((c) => ({ ...c, title, last: f.rows[c.step].label }))).sort((a, b) => b.ts - a.ts).slice(0, 12)
+    .map((c) => `<li><time>${madrid(c.ts, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</time><span>${esc(c.title)}: se quedó en «${esc(c.last)}»</span><small>Persona ${esc(c.p)}${c.d ? ` · ${esc(deviceText(c.d))}` : ''}</small></li>`).join('');
+
   const feed = act.slice(0, 80).map((r) => `<li><time>${madrid(r.ts, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</time>
 <span>${esc(eventText(r.e))}</span><small>${r.p ? `Persona ${esc(r.p)}` : 'Servicio'}${r.d ? ` · ${esc(deviceText(r.d))}` : ''}</small></li>`).join('');
 
@@ -62,6 +93,7 @@ export async function panel(env, url, openThreads) {
 .w{max-width:640px;margin:0 auto;padding:18px 16px 40px}
 h1{font:500 28px/1.1 Georgia,serif;color:var(--plum);margin:4px 0 2px}h2{font-size:15px;font-weight:650;color:var(--plum);margin:0 0 10px}
 .mute{color:var(--mute);font-size:13px;margin:0}
+.fh{font-size:14px;font-weight:600;margin:16px 0 6px}.drop{margin:0 0 8px;font-size:15px}.drop b{font-size:22px}
 .tabs{display:flex;gap:6px;margin:14px 0}.tabs a{flex:1;text-align:center;padding:9px;border-radius:6px;background:var(--card);border:1px solid var(--line);color:var(--ink);text-decoration:none;font-weight:600;font-size:14px}
 .tabs a.on{background:var(--plum);border-color:var(--plum);color:#fff}
 .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -91,6 +123,7 @@ table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:
 </div>
 <div class="card"><h2>Personas por día</h2><div class="days">${perDay.map(([d, a, w]) => `<div><span>${a + w || ''}</span><span class="pair"><i style="height:${Math.round((a / maxDay) * 64)}px"></i><i class="web" style="height:${Math.round((w / maxDay) * 64)}px"></i></span>${esc(d)}</div>`).join('')}</div>
 <div class="legend"><span><b style="background:var(--plum)"></b>App</span><span><b style="background:var(--web)"></b>Web</span></div></div>
+<div class="card"><h2>¿Quién empieza a preguntar y se cae?</h2><p class="mute">Personas distintas por día. Los pasos nuevos se miden desde el 31 de octubre.</p>${funnels.map(funnelCard).join('')}${lostFeed ? `<h3 class="fh">Últimas caídas</h3><ul class="feed">${lostFeed}</ul>` : ''}</div>
 <div class="card"><h2>De la web a la consulta</h2>${bars([['Visitaron la web', g('personas_portada')], ['Tocaron una duda de ejemplo', g('ejemplo_duda')], ['Empezaron a escribir una duda', g('pregunta_portada')], ['Cambiaron de profesional', g('elige_pro')], ['Llegaron al campo de correo', g('correo_portada')], ['Enviaron la consulta desde la web', g('enviada_portada')], ['Pulsaron «Abrir Hera»', g('abrir_portada')]])}</div>
 <div class="card"><h2>En la app</h2>${bars([['Abrieron la app', g('apertura')], ['Completaron la bienvenida', sum('onboarding:')], ['Añadieron fecha de parto', g('fecha_parto')], ['Añadieron fecha de nacimiento', g('fecha_nacimiento')], ['Activaron el aviso semanal', g('push_on')], ['Conectaron Google Drive', g('sync_on')], ['Pulsaron «Contacto»', g('contacto')]])}</div>
 <div class="card"><h2>Etapa al empezar</h2>${bars(STAGES.map(([k2, l]) => [l, g(`onboarding:${k2}`)]))}</div>

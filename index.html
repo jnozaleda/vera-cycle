@@ -668,6 +668,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     if (busy) return;
     const text = ta.value.trim();
     open();
+    hit('intento_portada');
     if (text.length < 5) { showErr('Cuéntanos tu duda con un poco más de detalle.'); ta.focus(); return; }
     const to = chosen();
     if (!to) { showErr('Elige a quién se lo preguntas.'); radios[0].focus(); return; }
@@ -681,8 +682,8 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       if (res.status === 429) throw new Error('Has enviado varias consultas seguidas. Espera unos minutos y vuelve a intentarlo.');
       if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');
       if (!res.ok && !j.limit) throw new Error('No se ha podido enviar. Inténtalo de nuevo en un rato.');
-      if (j.limit) showLimit(j); else { hit('enviada_portada'); if (j.id) addConsult({ id: j.id, to, text }); showDone(to, j); }
-    } catch (e) { showErr(e.message); }
+      if (j.limit) { hit('limite_portada'); showLimit(j); } else { hit('enviada_portada'); if (j.id) addConsult({ id: j.id, to, text }); showDone(to, j); }
+    } catch (e) { hit('error_portada'); showErr(e.message); }
     busy = false; send.disabled = false; refresh();
   });
 

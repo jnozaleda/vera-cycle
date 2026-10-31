@@ -1603,7 +1603,7 @@ function postpartumToday() {
 }
 
 /** Aviso en Hoy (ciclo) durante los 6 meses siguientes al posparto */
-// Menopausia: textos de muestra, solo visibles con ?beta hasta que los revise Gonzalo (vera-backlog#75)
+// Menopausia: textos pendientes de revisión clínica de Gonzalo (vera-backlog#75)
 const MENO_SYMPTOMS = ['Sofocos', 'Sudores nocturnos', 'Peor sueño', 'Cambios de humor', 'Sequedad vaginal', 'Sangrado'];
 function menopauseToday() {
   const status = store.stage.menopause?.status || 'unknown';

@@ -9,8 +9,8 @@ export const GOOGLE_CLIENT_ID = '922678499713-qi6icefe2piid172c0ns62brq40rhiuo.a
 // aparece al abrir Hera con ?beta (se recuerda en este navegador; ?beta=off lo desactiva).
 // Pasar a false al publicar la app en Google Auth Platform.
 export const SYNC_BETA_ONLY = false;
-// Menopausia: solo con ?beta hasta que Gonzalo revise los textos (vera-backlog#75)
-export const MENOPAUSE_BETA_ONLY = true;
+// Menopausia: abierta a todas por decisión de Noza; los textos siguen pendientes de revisión clínica (vera-backlog#75)
+export const MENOPAUSE_BETA_ONLY = false;
 
 // Modo embarazo y posparto: solo visible con ?beta hasta que el contenido clínico esté revisado.
 export const PREGNANCY_BETA_ONLY = false;

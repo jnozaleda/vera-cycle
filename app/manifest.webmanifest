@@ -1,7 +1,7 @@
 {
-  "name": "Hera · Embarazo, posparto y bebé",
+  "name": "Hera · Salud de la mujer",
   "short_name": "Hera",
-  "description": "Embarazo, posparto y tu bebé, acompañada por tu ginecólogo, tu matrona y tu pediatra. También para seguir tu ciclo. Tus datos se quedan en tu dispositivo.",
+  "description": "Regla, embarazo, posparto, tu bebé y menopausia, acompañada por tu ginecólogo, tu matrona y tu pediatra.",
   "lang": "es",
   "start_url": "./",
   "scope": "./",

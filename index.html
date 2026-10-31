@@ -11,8 +11,8 @@
     if ((navigator.standalone || matchMedia('(display-mode: standalone)').matches) && !sessionStorage.getItem('hera-web') && !document.referrer.startsWith(location.origin)) location.replace('app/');
   } catch (e) {}
 </script>
-<title>Hera · Tus dudas del embarazo, resueltas por profesionales</title>
-<meta name="description" content="Cada semana, lo que te toca saber del embarazo y de tu bebé. Y cuando algo te preocupe, pregúntaselo a tu ginecólogo, tu matrona o tu pediatra. Tus dos primeras consultas, gratis.">
+<title>Hera · Salud de la mujer, con profesionales</title>
+<meta name="description" content="Regla, embarazo, posparto, tu bebé y menopausia. Pregunta a tu ginecólogo, tu matrona o tu pediatra. Tus dos primeras consultas, gratis.">
 <meta name="theme-color" content="#FAF8F5">
 <link rel="icon" type="image/svg+xml" href="app/brand/favicon.svg">
 <link rel="apple-touch-icon" href="app/icons/apple-touch-icon.png">
@@ -20,7 +20,7 @@
 <link rel="preload" href="app/fonts/inter.woff2" as="font" type="font/woff2" crossorigin>
 <meta property="og:type" content="website">
 <meta property="og:title" content="Hera · Salud de la mujer">
-<meta property="og:description" content="Regla, embarazo, posparto y tu bebé. Ginecólogo, matrona y pediatra te responden por escrito en menos de 48 h.">
+<meta property="og:description" content="Regla, embarazo, posparto, tu bebé y menopausia. Ginecólogo, matrona y pediatra te responden por escrito en menos de 48 h.">
 <meta property="og:image" content="https://hera-gine.com/portada/compartir.jpg">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -191,9 +191,10 @@ section { padding: 64px 0; }
 
 /* Etapas */
 .stages { display: grid; gap: 16px; margin-top: 30px; }
-@media (min-width: 800px) { .stages { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 640px) { .stages { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1040px) { .stages { grid-template-columns: repeat(4, 1fr); } }
 .stage { border-radius: 12px; padding: 24px 22px 0; overflow: hidden; display: flex; flex-direction: column; }
-.stage.sage { background: var(--sage); } .stage.lav { background: var(--lav); } .stage.rose { background: var(--rose); }
+.stage.sage { background: var(--sage); } .stage.lav { background: var(--lav); } .stage.rose { background: var(--rose); } .stage.sand { background: #EFE6D8; }
 .tile { width: 104px; height: 72px; border-radius: 6px; background: var(--plum) center / cover; display: grid; place-items: center; margin-bottom: 18px; box-shadow: inset 0 0 0 72px rgba(42,24,35,.18); }
 .tile svg { filter: drop-shadow(0 1px 3px rgba(42,24,35,.6)); }
 .stage p { margin: 0 0 18px; color: var(--text); font-size: 15px; }
@@ -326,8 +327,8 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
 <div class="wrap">
   <div class="hero">
     <div>
-      <p class="eyebrow">Regla · Embarazo · Bebé</p>
-      <h1>Tus dudas del embarazo, <em>resueltas por profesionales</em></h1>
+      <p class="eyebrow">Regla · Embarazo · Bebé · Menopausia</p>
+      <h1>Tus dudas de salud, <em>resueltas por profesionales</em></h1>
       <p class="lead">Ginecólogo, matrona y pediatra con nombre y apellido. Leen tu caso y te responden por escrito en menos de 48 h.</p>
 
       <div class="askwrap">
@@ -403,7 +404,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   <div class="wrap">
     <p class="eyebrow">Para cada etapa</p>
     <h2>Lo que necesitas saber, cuando lo necesitas</h2>
-    <p class="sub">Hera se adapta a tu momento: tu ciclo, tu embarazo o el primer año con tu bebé. Cada etapa con su color, como en la app.</p>
+    <p class="sub">Hera se adapta a tu momento: tu ciclo, tu embarazo, el primer año con tu bebé o la menopausia. Cada etapa con su color, como en la app.</p>
     <div class="stages">
       <div class="stage rose">
         <div class="tile" style="background-image:url('portada/fluido/seda-rosa.webp')" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5s-6 6.4-6 10.8a6 6 0 0 0 12 0C18 9.9 12 3.5 12 3.5Z"/></svg></div>
@@ -423,6 +424,12 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         <p>Tu recuperación, la lactancia y el suelo pélvico. Y el primer año de tu bebé: lo normal a su edad, su peso, el sueño, las vacunas y cuándo ir a urgencias.</p>
         <div class="shot"><img src="portada/etapa-posparto.jpg" width="560" height="1213" loading="lazy" alt="Hera en el posparto: 4 semanas desde el parto"></div>
       </div>
+      <div class="stage sand">
+        <div class="tile" style="background-image:url('portada/fluido/seda-melocoton.webp');background-size:300%;background-position:70% 30%" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg></div>
+        <h3>Menopausia</h3>
+        <p>Si se acerca o ya ha llegado: apunta sofocos, sueño y otros cambios, entiende qué es normal y pregunta a tu ginecólogo cuando algo te preocupe.</p>
+        <div class="shot"><img src="portada/etapa-menopausia.jpg" width="560" height="1213" loading="lazy" alt="Hera en la menopausia: tu momento y cómo estás hoy"></div>
+      </div>
     </div>
   </div>
 </section>
@@ -436,7 +443,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <article class="pro">
         <div class="head"><img src="portada/equipo/gonzalo.jpg?v=2" alt="Gonzalo Nozaleda" width="72" height="72" loading="lazy">
           <div><h3>Dr. Gonzalo Nozaleda</h3><p class="role">Ginecólogo</p></div></div>
-        <p>Embarazo y pruebas, medicación, anticoncepción, la regla y el ciclo, y cualquier complicación.</p>
+        <p>Embarazo y pruebas, medicación, anticoncepción, la regla y el ciclo, la menopausia y cualquier complicación.</p>
         <a class="pro-more" href="equipo.html#gonzalo">Conocer a Gonzalo →</a>
         <a class="btn btn-s" href="#ask" data-to="gineco">Pregunta a Gonzalo</a>
       </article>
@@ -520,7 +527,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     <div class="price">
       <div class="plan main"><span class="k">Para empezar</span><span class="v">2 consultas gratis</span><p>A quien quieras de las tres, sin tarjeta ni registro.</p></div>
       <div class="plan"><span class="k">Consulta suelta</span><span class="v">9 €</span><p>Pagas solo cuando preguntas.</p></div>
-      <div class="plan"><span class="k">Bono de 5 consultas</span><span class="v">35 € <small>· 7 € cada una</small></span><p>Para el embarazo o los primeros meses del bebé.</p></div>
+      <div class="plan"><span class="k">Bono de 5 consultas</span><span class="v">35 € <small>· 7 € cada una</small></span><p>Para cuando necesites preguntar más de una vez.</p></div>
       <div class="plan"><span class="k">Ilimitado</span><span class="v">15 € <small>/ mes</small></span><p>Pregunta cuando lo necesites, sin permanencia. Uso razonable: hasta una consulta nueva al día.</p></div>
     </div>
   </div>

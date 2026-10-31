@@ -47,7 +47,7 @@ export function suggestContact({ text = '', context = '', mode = 'pregnancy' } =
   }
   if (!score.gineco && !score.matrona && !score.pediatra) {
     // Sin pistas: en ciclo y sin nada más, ginecología; en embarazo y posparto, que elija ella
-    return { to: mode === 'cycle' ? 'gineco' : null, reason: '', urgent };
+    return { to: mode === 'cycle' || mode === 'menopause' ? 'gineco' : null, reason: '', urgent };
   }
   const ranked = Object.entries(score).sort((x, y) => y[1] - x[1]);
   if (ranked[0][1] === ranked[1][1]) return { to: null, reason: '', urgent }; // empate: que elija ella

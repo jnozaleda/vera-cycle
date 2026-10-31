@@ -6,6 +6,7 @@
 //
 //   POST /subscribe     {sub, due}        embarazo: fecha probable de parto  (o {sub, birth}: posparto, fecha de nacimiento del bebé)
 //                                         navegador, solo desde ALLOWED_ORIGINS
+//                                         o {sub, period}: ciclo, fecha prevista de la regla (aviso si se retrasa, máx. uno por fecha)
 //   POST /unsubscribe   {endpoint}        navegador
 //   POST /test          {endpoint}        navegador: «Enviar un aviso de prueba» (máx. 1 por minuto y suscripción)
 //   POST /send-now      {hash}            solo pruebas, Authorization: Bearer ADMIN_TOKEN
@@ -50,7 +51,16 @@ export function weeksSinceBirth(birthISO, todayISO) {
 /** Posparto: semanal los primeros 3 meses y luego cada 4 semanas, hasta el año. */
 export const babyNoticeWeek = (w) => w >= 1 && w <= 52 && (w <= 12 || w % 4 === 0);
 
+/** Ciclo: días de retraso antes de avisar; pasado este plazo sin abrir la app, se borra el registro */
+export const PERIOD_LATE_DAYS = 2;
+export const PERIOD_DROP_DAYS = 60;
+export const periodNoticeDue = (rec, todayISO) => {
+  const late = dayNumber(todayISO) - dayNumber(rec.date);
+  return late >= PERIOD_LATE_DAYS && late <= PERIOD_DROP_DAYS && rec.last !== rec.date;
+};
+
 export function messageFor(week, kind = 'pregnancy') {
+  if (kind === 'cycle') return { title: '¿Te ha bajado la regla?', body: 'La esperábamos hace unos días. Apúntalo en Hera cuando quieras y ajustamos tu próxima fecha.', url: './' };
   if (kind === 'postpartum') {
     const items = postpartumBabyNormal(week);
     const age = week < 12 ? `${week} ${week === 1 ? 'semana' : 'semanas'}` : `${Math.round(week / 4.345)} meses`;
@@ -74,9 +84,10 @@ const validEndpoint = (e) => {
   } catch { return false; }
 };
 const validBirth = (d) => { const n = dayNumber(d), t = dayNumber(madridNow().date); return n != null && n <= t && n > t - 400; };
+const validPeriod = (d) => { const n = dayNumber(d), t = dayNumber(madridNow().date); return n != null && n >= t - 30 && n <= t + 120; };
 const validDue = (due) => { const d = dayNumber(due); return d != null && d > dayNumber('2020-01-01') && d < dayNumber('2100-01-01'); };
 
-const kindOf = (rec) => (rec.kind === 'postpartum' ? 'postpartum' : 'pregnancy');
+const kindOf = (rec) => (rec.kind === 'postpartum' || rec.kind === 'cycle' ? rec.kind : 'pregnancy');
 const dateOf = (rec) => rec.date || rec.due; // los registros anteriores guardaban `due`
 const weekOf = (rec, todayISO) => (kindOf(rec) === 'postpartum' ? weeksSinceBirth(dateOf(rec), todayISO) : weekFor(dateOf(rec), todayISO));
 
@@ -95,6 +106,17 @@ async function runDaily(env, now = madridNow(), force = false) {
     for (const k of page.keys) {
       const rec = await env.SUBS.get(k.name, 'json');
       if (!rec) continue;
+      if (kindOf(rec) === 'cycle') {
+        if (dayNumber(now.date) - dayNumber(rec.date) > PERIOD_DROP_DAYS) { await env.SUBS.delete(k.name); dropped++; continue; }
+        if (!periodNoticeDue(rec, now.date)) continue;
+        try {
+          const res = await notify(env, rec, null);
+          if (res.status === 404 || res.status === 410) { await env.SUBS.delete(k.name); dropped++; continue; }
+          if (res.ok) { await env.SUBS.put(k.name, JSON.stringify({ ...rec, last: rec.date })); sent++; }
+          else console.log(`push ${k.name.slice(0, 10)} → ${res.status}`);
+        } catch (e) { console.log(`push ${k.name.slice(0, 10)} falló: ${e.message}`); }
+        continue;
+      }
       const week = weekOf(rec, now.date);
       const pp = kindOf(rec) === 'postpartum';
       if (week == null || week > (pp ? 56 : 42)) { await env.SUBS.delete(k.name); dropped++; continue; }
@@ -144,14 +166,16 @@ export default {
         }
         const sub = body.sub;
         if (!sub || !validEndpoint(sub.endpoint) || typeof sub.keys?.p256dh !== 'string' || typeof sub.keys?.auth !== 'string') return reply(400, { error: 'bad subscription' });
-        const pp = typeof body.birth === 'string';
-        if (pp ? !validBirth(body.birth) : !validDue(body.due)) return reply(400, { error: 'bad date' });
-        const date = pp ? body.birth : body.due;
-        const kind = pp ? 'postpartum' : 'pregnancy';
+        const isCycle = typeof body.period === 'string';
+        const pp = !isCycle && typeof body.birth === 'string';
+        if (isCycle ? !validPeriod(body.period) : pp ? !validBirth(body.birth) : !validDue(body.due)) return reply(400, { error: 'bad date' });
+        const date = isCycle ? body.period : pp ? body.birth : body.due;
+        const kind = isCycle ? 'cycle' : pp ? 'postpartum' : 'pregnancy';
         const key = `s:${await hashOf(sub.endpoint)}`;
         const prev = await env.SUBS.get(key, 'json');
-        const week = pp ? weeksSinceBirth(date, madridNow().date) : weekFor(date, madridNow().date);
+        const week = isCycle ? null : pp ? weeksSinceBirth(date, madridNow().date) : weekFor(date, madridNow().date);
         // Si la fecha cambia o es nueva, no se avisa de la semana actual (ya la está viendo): se avisa de la siguiente.
+        // En el ciclo, una fecha nueva vuelve a permitir un aviso.
         const last = prev && kindOf(prev) === kind && dateOf(prev) === date ? prev.last : week;
         await env.SUBS.put(key, JSON.stringify({ sub: { endpoint: sub.endpoint, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } }, kind, date, last }));
         return reply(200, { ok: true, week });

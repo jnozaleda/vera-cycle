@@ -23,7 +23,7 @@ export async function pushState() {
 }
 
 const keyOf = (t) => `${t.kind}:${t.date}`;
-const payload = (sub, t) => (t.kind === 'postpartum' ? { sub: sub.toJSON(), birth: t.date } : { sub: sub.toJSON(), due: t.date });
+const payload = (sub, t) => (t.kind === 'cycle' ? { sub: sub.toJSON(), period: t.date } : t.kind === 'postpartum' ? { sub: sub.toJSON(), birth: t.date } : { sub: sub.toJSON(), due: t.date });
 
 const urlB64ToBytes = (s) => Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/') + '='.repeat((4 - (s.length % 4)) % 4)), (c) => c.charCodeAt(0));
 
@@ -41,7 +41,7 @@ export async function enablePush(target) {
   if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToBytes(VAPID_PUBLIC) });
   await post('/subscribe', payload(sub, target));
   try { localStorage.setItem(KEY, keyOf(target)); } catch { /* sin almacenamiento */ }
-  await reg.showNotification('Avisos activados', { body: target.kind === 'postpartum' ? 'Te avisaremos de lo normal a cada edad de tu bebé.' : 'Cada semana nueva te contaremos qué es lo normal en esos días.', icon: 'icons/icon-192.png', tag: 'vera-welcome' });
+  await reg.showNotification('Avisos activados', { body: target.kind === 'cycle' ? 'Si tu regla se retrasa, te avisaremos para que la apuntes.' : target.kind === 'postpartum' ? 'Te avisaremos de lo normal a cada edad de tu bebé.' : 'Cada semana nueva te contaremos qué es lo normal en esos días.', icon: 'icons/icon-192.png', tag: 'vera-welcome' });
 }
 
 export async function disablePush() {

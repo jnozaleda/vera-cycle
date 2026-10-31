@@ -133,6 +133,18 @@ export function dayKind(settings, dn, today = todayDN()) {
   return null;
 }
 
+/**
+ * Fecha para el aviso de regla: la última regla + un ciclo (+3 días si es irregular, por el margen).
+ * Si ya pasó de largo hace tiempo, salta al ciclo siguiente. Sin aviso con anticonceptivo o sin reglas.
+ */
+export function periodNoticeDate(settings, today = todayDN()) {
+  const last = dnFromISO(settings.lastPeriod);
+  if (last == null || settings.hormonal) return null;
+  let due = last + settings.cycleLen + (settings.isRegular ? 0 : 3);
+  while (due < today - 14) due += settings.cycleLen;
+  return isoFromDN(due);
+}
+
 /** Días que duró (o lleva) una regla */
 export function periodLength(p, periodLen, today = todayDN()) {
   return effectiveEnd(p, periodLen, today) - dnFromISO(p.start) + 1;

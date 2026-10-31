@@ -88,6 +88,11 @@ export function roundHalfAway(x) {
 // MARK: - Fases del ciclo
 
 export const PHASES = {
+  hormonal: {
+    label: 'Con anticonceptivo hormonal',
+    insightTitle: 'Sin fases que calcular',
+    insightText: 'Con anticonceptivo hormonal no calculamos ovulación ni días fértiles. Puedes seguir apuntando sangrados y síntomas, y consultarnos cualquier duda.',
+  },
   menstrual: {
     label: 'Fase menstrual',
     insightTitle: 'Descanso y calidez',
@@ -116,6 +121,7 @@ export const PHASES = {
 };
 
 export const PHASE_TIPS = {
+  hormonal: ['Apunta sangrados o síntomas nuevos para poder comentarlos', 'Si tienes dudas sobre tu anticonceptivo, pregúntanos'],
   menstrual: ['Energía en su punto más bajo — respeta tu ritmo',
     'El calor (bolsa de agua caliente) alivia los cólicos',
     'Alimentos ricos en hierro ayudan a recuperarte'],
@@ -154,11 +160,14 @@ export function cycleInfo(settings, dn = nowDN()) {
   else if (day < ovu) phase = 'follicular';
   else phase = 'luteal';
 
+  // Con anticonceptivo hormonal no hay ovulación ni días fértiles que calcular
+  if (settings.hormonal && phase !== 'menstrual') phase = 'hormonal';
+
   // Si la regla de este ciclo ya se registró como terminada, los días siguientes no son «fase menstrual»
   if (phase === 'menstrual' && Array.isArray(settings.periods)) {
     const lp = settings.periods[settings.periods.length - 1];
     const today = Math.trunc(dn);
-    if (lp?.end && today - day === start && dnFromISO(lp.end) < today) phase = 'follicular';
+    if (lp?.end && today - day === start && dnFromISO(lp.end) < today) phase = settings.hormonal ? 'hormonal' : 'follicular';
   }
 
   return { day: day + 1, phase, daysToNext: len - day, ovuDay: ovu + 1 };
@@ -172,6 +181,7 @@ export function nextPeriodDN(settings) {
 // MARK: - Síntomas por fase del ciclo
 
 export const PHASE_SYMPTOMS = {
+  hormonal: ['Sangrado', 'Manchado', 'Dolor de cabeza', 'Cambios de humor', 'Náuseas', 'Sensibilidad mamaria', 'Hinchazón'],
   menstrual: ['Sangrado', 'Cólicos', 'Dolor lumbar', 'Dolor de cabeza',
     'Fatiga', 'Náuseas', 'Hinchazón', 'Sensibilidad mamaria', 'Cambios de humor'],
   follicular: ['Fatiga residual', 'Acné', 'Flujo blanquecino',

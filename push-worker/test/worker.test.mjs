@@ -1,4 +1,4 @@
-import { weekFor, weeksSinceBirth, babyNoticeWeek, messageFor, madridNow, runDaily } from '../src/worker.js';
+import { weekFor, weeksSinceBirth, babyNoticeWeek, messageFor, madridNow, runDaily, periodNoticeDue } from '../src/worker.js';
 import assert from 'node:assert/strict';
 
 // Semana: 280 días = 40+0. Parto el 2027-02-21 → el 2026-10-05 son 139 días antes → día 141 → semana 20.
@@ -48,4 +48,17 @@ const r = await runDaily({ ...env, VAPID_PUBLIC: 'x', VAPID_PRIVATE: 'y', VAPID_
 assert.ok(!store.has('s:caducada'), 'suscripción con parto pasado se elimina');
 assert.ok(!store.has('s:bebe-viejo'), 'bebé de más de un año se elimina');
 assert.ok(store.has('s:ya-avisada'), 'la ya avisada se conserva');
+// Ciclo: aviso solo si la regla se retrasa 2 días o más, una vez por fecha
+assert.equal(messageFor(null, 'cycle').title, '¿Te ha bajado la regla?');
+assert.equal(periodNoticeDue({ date: '2026-10-10' }, '2026-10-11'), false, 'un día de retraso no avisa');
+assert.equal(periodNoticeDue({ date: '2026-10-10' }, '2026-10-12'), true, 'dos días de retraso avisa');
+assert.equal(periodNoticeDue({ date: '2026-10-10', last: '2026-10-10' }, '2026-10-20'), false, 'ya avisada no repite');
+assert.equal(periodNoticeDue({ date: '2026-11-07', last: '2026-10-10' }, '2026-11-09'), true, 'fecha nueva vuelve a avisar');
+const mc = (date, last) => JSON.stringify({ sub: { endpoint: 'https://fcm.googleapis.com/z', keys: { p256dh: 'a', auth: 'b' } }, kind: 'cycle', date, last });
+store.set('s:ciclo-pronto', mc('2026-10-20'));
+store.set('s:ciclo-avisada', mc('2026-10-01', '2026-10-01'));
+store.set('s:ciclo-vieja', mc('2026-07-01'));
+await runDaily({ ...env, VAPID_PUBLIC: 'x', VAPID_PRIVATE: 'y', VAPID_SUBJECT: 'mailto:a@b.c' }, { date: '2026-10-05', hour: 9 });
+assert.ok(store.has('s:ciclo-pronto') && store.has('s:ciclo-avisada'), 'las de ciclo vigentes se conservan');
+assert.ok(!store.has('s:ciclo-vieja'), 'la de ciclo sin actividad se elimina');
 console.log('worker: OK', JSON.stringify(r));

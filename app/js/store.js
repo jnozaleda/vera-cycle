@@ -37,11 +37,12 @@ function defaultData() {
 }
 
 function normalizeStage(st) {
-  if (!st || typeof st !== 'object' || !['cycle', 'pregnancy', 'postpartum'].includes(st.mode)) return defaultStage();
+  if (!st || typeof st !== 'object' || !['cycle', 'pregnancy', 'postpartum', 'menopause'].includes(st.mode)) return defaultStage();
   return {
     mode: st.mode,
     pregnancy: st.pregnancy && typeof st.pregnancy === 'object' ? st.pregnancy : null,
     postpartum: st.postpartum && typeof st.postpartum === 'object' ? st.postpartum : null,
+    menopause: st.menopause && typeof st.menopause === 'object' ? st.menopause : null,
     history: Array.isArray(st.history) ? st.history.filter((h) => h && dnFromISO(h.from) != null && dnFromISO(h.to) != null) : [],
     appointments: Array.isArray(st.appointments)
       ? st.appointments.filter((x) => x && x.id && typeof x.title === 'string' && dnFromISO(x.date) != null) : [],
@@ -68,6 +69,7 @@ function normalize(raw) {
       periodLen: Number(s.periodLen) || 5,
       isRegular: s.isRegular !== false,
       pastPeriods: Array.isArray(s.pastPeriods) ? s.pastPeriods.filter((d) => dnFromISO(d) != null) : [],
+      ...(s.hormonal ? { hormonal: true } : {}),
       ...(Array.isArray(s.periods) ? { periods: s.periods.filter((p) => p && dnFromISO(p.start) != null) } : {}),
     }),
     logs,

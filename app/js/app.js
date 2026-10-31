@@ -10,7 +10,7 @@ import {
   averageCycleLength, settingsFromIrregularPeriods,
 } from './logic.js';
 import { QUALITY, BASIS, windowText, predictionNotices } from './predict.js';
-import { dayKind, periodAt, activePeriod, periodEndingBefore, startPeriod, endPeriod, removePeriod, effectiveEnd, periodLength } from './periods.js';
+import { periodNoticeDate, dayKind, periodAt, activePeriod, periodEndingBefore, startPeriod, endPeriod, removePeriod, effectiveEnd, periodLength } from './periods.js';
 import { store } from './store.js';
 import { icon } from './icons.js';
 import {
@@ -24,7 +24,7 @@ import { FOODS, FOOD_CATEGORIES, FOOD_STATUS, foodFor, bmi, gainRange, gainBandA
 import { GUIDE_INTRO, PREGNANCY_GUIDE, POSTPARTUM_GUIDE, guideSectionFor } from './guide.js';
 import { PREGNANCY_LINE, pregnancyNormal, pregnancyFaqs, postpartumLine, postpartumNormal, postpartumBabyNormal, postpartumFaqs } from './today.js';
 import { spansPregnancy } from './predict.js';
-import { PREGNANCY_BETA_ONLY, CONSULT, CONSULTS, TAGLINE, CONSULT_API, CONSULT_FORM } from './config.js';
+import { PREGNANCY_BETA_ONLY, MENOPAUSE_BETA_ONLY, CONSULT, CONSULTS, TAGLINE, CONSULT_API, CONSULT_FORM } from './config.js';
 import { suggestContact } from './contacts.js';
 import { listConsults, addConsult, markSeen, clearConsults, consultState, unseenAnswer, refreshConsults } from './consults.js';
 import { track, isTeam, setTeam } from './track.js';
@@ -189,15 +189,14 @@ function cycleDial(settings, info) {
     <svg viewBox="0 0 ${S} ${S}" width="100%" height="100%">
       <circle cx="${cx}" cy="${cy}" r="${r}" stroke="var(--line)" stroke-width="10" fill="none"/>
       ${arc(0.15, settings.periodLen - 0.15, 'period', 10)}
-      ${arc(ovu - 5, ovu + 1.4, 'fertile', 10)}
-      ${arc(ovu + 0.32, ovu + 0.72, 'ovu', 13)}
+      ${settings.hormonal ? '' : `${arc(ovu - 5, ovu + 1.4, 'fertile', 10)}${arc(ovu + 0.32, ovu + 0.72, 'ovu', 13)}`}
       ${ticks}
       <circle cx="${dx.toFixed(2)}" cy="${dy.toFixed(2)}" r="9" fill="var(--st)" stroke="var(--ivory)" stroke-width="3"/>
     </svg>
     <div class="dial-center">
       <div class="dial-dia">DÍA</div>
       <div class="dial-num">${info.day}</div>
-      <div class="dial-phase">${esc(PHASES[info.phase].label.toUpperCase())}</div>
+      <div class="dial-phase">${info.phase === 'hormonal' ? 'ANTICONCEPTIVO' : esc(PHASES[info.phase].label.toUpperCase())}</div>
     </div>
   </div>`;
 }
@@ -295,24 +294,24 @@ function todayView() {
       ${cycleDial(settings, info)}
       <div class="row gap-18 justify-center">
         <span class="legend"><i class="bg-period"></i>Regla</span>
-        <span class="legend"><i class="bg-fertile"></i>Ventana fértil</span>
-        <span class="legend"><i class="bg-ovu"></i>Ovulación</span>
+        ${settings.hormonal ? '' : `<span class="legend"><i class="bg-fertile"></i>Ventana fértil</span>
+        <span class="legend"><i class="bg-ovu"></i>Ovulación</span>`}
       </div>
     </div>
     <div class="card pad stack-10 preg-hero">
-      ${eyebrow('Tu próxima regla')}
+      ${eyebrow(settings.hormonal ? 'Tu próximo sangrado (estimado)' : 'Tu próxima regla')}
       <div class="row between center">
         <div class="row baseline gap-10">
           <span class="preg-weeks sm">${info.daysToNext}</span>
-          <span class="stack-0"><span class="serif-22">${plural(info.daysToNext, 'día', 'días')}</span><span class="t-12 soft">para la regla</span></span>
+          <span class="stack-0"><span class="serif-22">${plural(info.daysToNext, 'día', 'días')}</span><span class="t-12 soft">${settings.hormonal ? 'para el sangrado' : 'para la regla'}</span></span>
         </div>
         <div class="text-right"><div class="t-11 soft">Prevista el</div><div class="t-14 w-500">${esc(fmtDayMonthShort(next))}</div></div>
       </div>
-      <hr>
+      ${settings.hormonal ? '' : `<hr>
       <div class="hero-dates">
         <div>${icon('leaf', 14)}<div><div class="t-11 soft">Ventana fértil</div><div class="t-14 w-500">${esc(fmtDayMonthShort(ovDN - 5))} – ${esc(fmtDayMonthShort(ovDN + 1))}</div></div></div>
         <div>${icon('ovum', 14)}<div><div class="t-11 soft">Ovulación estimada</div><div class="t-14 w-500">${esc(fmtDayMonthShort(ovDN))}</div></div></div>
-      </div>
+      </div>`}
     </div>`;
   } else {
     top = irregularPredictionCard(store.prediction);
@@ -339,8 +338,10 @@ function todayView() {
     ${postpartumCycleNote()}
     ${top}
     ${periodCTA()}
+    ${pushPromptCard()}
+    ${!store.data.profile.birthDate && !store.data.profile.weightKg ? '<button class="link-soft self-center" data-action="open-profile">Mejora tus predicciones: edad, peso y diagnóstico</button>' : ''}
     <div class="card pad stack-14">
-      <div class="row baseline between">${eyebrow(`Estás en ${/^fase /i.test(phase.label) ? '' : 'fase '}${phase.label.toLowerCase()}`)}<span class="t-11 soft nowrap">Día ${info.day}</span></div>
+      <div class="row baseline between">${eyebrow(info.phase === 'hormonal' ? phase.label : `Estás en ${/^fase /i.test(phase.label) ? '' : 'fase '}${phase.label.toLowerCase()}`)}<span class="t-11 soft nowrap">Día ${info.day}</span></div>
       <div class="serif-19">${esc(phase.insightTitle)}</div>
       <p class="t-13 light soft lh-5">${esc(phase.insightText)}</p>
       <hr>
@@ -730,8 +731,8 @@ function calendarSheet() {
       <div class="row gap-14 justify-center wrap">
         ${store.mode === 'cycle' ? `<span class="legend box"><i class="ph-period"></i>Regla</span>
         <span class="legend box"><i class="ph-period est"></i>Prevista</span>
-        <span class="legend box"><i class="ph-sage"></i>Fértil</span>
-        <span class="legend box"><i class="ph-ovu"></i>Ovulación</span>` : ''}
+        ${store.data.settings.hormonal ? '' : `<span class="legend box"><i class="ph-sage"></i>Fértil</span>
+        <span class="legend box"><i class="ph-ovu"></i>Ovulación</span>`}` : ''}
         <span class="legend"><i class="dot"></i>Con registro</span>
       </div>
       ${store.mode === 'cycle' && ui.calDay ? calDayPanel(ui.calDay) : ''}
@@ -857,6 +858,7 @@ function syncStatusText() {
 function pushTarget() {
   if (store.mode === 'pregnancy' && store.stage.pregnancy?.dueDate) return { kind: 'pregnancy', date: store.stage.pregnancy.dueDate };
   if (store.mode === 'postpartum' && store.stage.postpartum?.birthDate) return { kind: 'postpartum', date: store.stage.postpartum.birthDate };
+  if (store.mode === 'cycle') { const date = periodNoticeDate(store.data.settings); return date ? { kind: 'cycle', date } : null; }
   return null;
 }
 
@@ -864,9 +866,8 @@ const PUSH_DISMISS = 'vera-push-dismissed';
 const pushDismissed = () => { try { return localStorage.getItem(PUSH_DISMISS) === '1'; } catch { return false; } };
 
 /** Texto de lo que se avisa, según la etapa */
-const pushWhat = (pp) => (pp
-  ? 'Te avisamos con lo normal a la edad de tu bebé: cada semana los 3 primeros meses y luego cada mes, a las 9:00.'
-  : 'Cada semana nueva de tu embarazo, a las 9:00, te avisamos con lo normal de esos días.');
+const pushWhat = (kind) => ({ cycle: 'Si tu regla se retrasa, te avisamos para que la apuntes: como máximo una vez por ciclo, a las 9:00.', postpartum: 'Te avisamos con lo normal a la edad de tu bebé: cada semana los 3 primeros meses y luego cada mes, a las 9:00.', pregnancy: 'Cada semana nueva de tu embarazo, a las 9:00, te avisamos con lo normal de esos días.' }[kind]);
+const pushName = (kind) => (kind === 'cycle' ? 'Aviso de regla' : 'Aviso semanal');
 
 /** Fila de Ajustes que abre la hoja de avisos (como «Aviso diario» en Florvia) */
 function pushSection() {
@@ -875,7 +876,7 @@ function pushSection() {
   const on = ui.pushState === 'on';
   return `<div class="stack-10 data-box">${eyebrow('Avisos')}
     <button class="push-row" data-action="open-push"><span class="push-ic">${icon('bell', 16)}</span>
-      <span class="grow left"><span class="t-13 w-500 block">Aviso semanal</span><span class="t-12 soft block">${on ? 'Activado · a las 9:00' : 'Desactivado'}</span></span>
+      <span class="grow left"><span class="t-13 w-500 block">${pushName(target.kind)}</span><span class="t-12 soft block">${on ? (target.kind === 'cycle' ? 'Activado · solo si se retrasa' : 'Activado · a las 9:00') : 'Desactivado'}</span></span>
       <span class="soft">›</span></button></div>`;
 }
 
@@ -883,11 +884,10 @@ function pushSection() {
 function pushPromptCard() {
   const target = pushTarget();
   if (!target || pushDismissed() || (ui.pushState !== 'off' && ui.pushState !== 'needs-install')) return '';
-  const pp = target.kind === 'postpartum';
   // Una sola línea: no debe competir con la tarjeta principal de Hoy
   return `<div class="push-strip">
     <button class="push-strip-main" data-action="open-push"><span class="push-ic sm">${icon('bell', 14)}</span>
-      <span class="grow left t-13" title="${pp ? 'Lo normal a la edad de tu bebé' : 'Lo normal de cada semana nueva'}"><b class="w-500">Aviso semanal</b> en tu móvil</span>
+      <span class="grow left t-13" title="${attr(pushWhat(target.kind))}"><b class="w-500">${pushName(target.kind)}</b> en tu móvil</span>
       <span class="push-strip-cta">Activar</span></button>
     <button class="push-strip-x" data-action="push-dismiss" aria-label="Ahora no">${icon('x', 12)}</button>
   </div>`;
@@ -898,17 +898,17 @@ function pushSheet() {
   const pp = target?.kind === 'postpartum';
   const st = ui.pushState;
   let inner;
-  if (!target) inner = '<p class="t-13 soft lh-4">Los avisos están disponibles en embarazo y posparto.</p>';
+  if (!target) inner = '<p class="t-13 soft lh-4">Los avisos están disponibles en ciclo, embarazo y posparto.</p>';
   else if (st === 'needs-install') inner = '<p class="soft-note">En iPhone, los avisos solo funcionan con la app instalada: botón Compartir → «Añadir a pantalla de inicio», y ábrela desde el icono.</p>';
   else if (st === 'unsupported') inner = '<p class="soft-note">Este navegador no admite avisos.</p>';
   else if (st === 'denied') inner = '<p class="soft-note">Tienes bloqueadas las notificaciones de Hera. Puedes permitirlas en los ajustes de tu navegador o de tu móvil, en Notificaciones, y volver aquí.</p>';
-  else if (st === 'on') inner = `<div class="sync-box"><span class="c-sage">${icon('checkCircle', 18)}</span><div class="grow"><div class="t-13 w-500">Activado</div><div class="t-12 soft">${pp ? 'Cada semana los 3 primeros meses y luego cada mes, a las 9:00.' : 'Cada semana nueva, a las 9:00.'}</div></div></div>
+  else if (st === 'on') inner = `<div class="sync-box"><span class="c-sage">${icon('checkCircle', 18)}</span><div class="grow"><div class="t-13 w-500">Activado</div><div class="t-12 soft">${target.kind === 'cycle' ? 'Solo si tu regla se retrasa, como máximo una vez por ciclo.' : pp ? 'Cada semana los 3 primeros meses y luego cada mes, a las 9:00.' : 'Cada semana nueva, a las 9:00.'}</div></div></div>
       <button class="pill-outline" data-action="push-test" ${ui.pushBusy ? 'disabled' : ''}>Enviar un aviso de prueba</button>
       <button class="link-danger" data-action="push-disable" ${ui.pushBusy ? 'disabled' : ''}>Desactivar el aviso</button>`;
-  else inner = `<button class="btn-primary" data-action="push-enable" ${ui.pushBusy ? 'disabled' : ''}>Activar aviso semanal</button>`;
-  const note = `<p class="t-11 soft-70 lh-3">Para enviarte los avisos guardamos, en un servicio de Cloudflare, la dirección de aviso de tu navegador y ${pp ? 'la fecha de nacimiento de tu bebé' : 'tu fecha probable de parto'}. Nada más. Al desactivarlos se borra.</p>`;
-  return sheetFrame('Aviso semanal', `<div class="stack-14">
-    <p class="t-14 lh-5">${pushWhat(pp)} Es opcional.</p>
+  else inner = `<button class="btn-primary" data-action="push-enable" ${ui.pushBusy ? 'disabled' : ''}>Activar ${pushName(target?.kind).toLowerCase()}</button>`;
+  const note = `<p class="t-11 soft-70 lh-3">Para enviarte los avisos guardamos, en un servicio de Cloudflare, la dirección de aviso de tu navegador y ${target?.kind === 'cycle' ? 'la fecha aproximada de tu próxima regla' : pp ? 'la fecha de nacimiento de tu bebé' : 'tu fecha probable de parto'}. Nada más. Al desactivarlos se borra.</p>`;
+  return sheetFrame(pushName(target?.kind), `<div class="stack-14">
+    <p class="t-14 lh-5">${target ? pushWhat(target.kind) : ''} Es opcional.</p>
     ${ui.pushMsg ? `<p class="${/^(No |Sin )/.test(ui.pushMsg) ? 'soft-note' : 't-13 c-sage w-500'}">${esc(ui.pushMsg)}</p>` : ''}
     ${inner}
     ${st === 'denied' || st === 'needs-install' || st === 'unsupported' ? '' : note}
@@ -965,6 +965,19 @@ function syncChoiceDialog() {
   </div>`;
 }
 
+/** Datos opcionales que afinan las predicciones (antes se pedían en la bienvenida) */
+function profileDetails() {
+  const p = ui.draftProfile;
+  return `<details class="my-consults" data-id="profile" ${ui.openDetails.has('profile') ? 'open' : ''}><summary>Mejora tus predicciones (opcional)</summary>
+    <div class="stack-10 mt-12">
+      <label class="stack-4"><span class="t-13 soft">Fecha de nacimiento</span><input type="date" class="field date" data-model="draftProfile.birthDate" value="${attr(p.birthDate || '')}" max="${todayISO()}" min="1920-01-01"></label>
+      <label class="stack-4"><span class="t-13 soft">Peso aproximado (kg)</span><input type="number" inputmode="numeric" class="field" min="35" max="150" data-model="draftProfile.weightKg" value="${attr(p.weightKg ?? '')}"></label>
+      <label class="stack-4"><span class="t-13 soft">Diagnóstico</span><select class="field" data-model="draftProfile.hormonalCondition">
+        ${HORMONAL_CONDITIONS.map((o) => `<option value="${attr(o === 'Ninguna' ? '' : o)}" ${(p.hormonalCondition || '') === (o === 'Ninguna' ? '' : o) ? 'selected' : ''}>${esc(o)}</option>`).join('')}
+      </select></label>
+    </div></details>`;
+}
+
 function settingsSheet() {
   const s = ui.draft;
   const count = (s.periods || []).length;
@@ -990,19 +1003,22 @@ function settingsSheet() {
 
   const dm = ui.draftStage.mode;
   const cycleForm = `<div class="stack-10"><div class="t-13 soft">Tipo de ciclo</div>
-        <div class="row gap-10">${typeBtn('Regular', s.isRegular, 'regular')}${typeBtn('Irregular', !s.isRegular, 'irregular')}</div></div>
+        <div class="row gap-10">${typeBtn('Regular', s.isRegular && !s.hormonal, 'regular')}${typeBtn('Irregular', !s.isRegular, 'irregular')}</div>
+        ${typeBtn('Con anticonceptivo hormonal', s.isRegular && !!s.hormonal, 'hormonal')}
+        ${s.hormonal ? '<p class="t-12 soft lh-4">Con anticonceptivo hormonal no calculamos ovulación ni días fértiles. Puedes seguir apuntando sangrados y síntomas.</p>' : ''}</div>
       <hr>
       ${body}
       <div class="stack-8">
         <div class="t-13 soft">Duración de la regla: <span data-out="draft.periodLen">${s.periodLen}</span> días</div>
         ${rangeRow({ key: 'draft.periodLen', min: 2, max: 9, step: 1, value: s.periodLen, tone: 'rose' })}
       </div>
-      <hr>`;
-  const title = { cycle: 'Mi ciclo', pregnancy: 'Mi embarazo', postpartum: 'Mi posparto' }[dm];
+      <hr>
+      ${profileDetails()}`;
+  const title = { cycle: 'Mi ciclo', pregnancy: 'Mi embarazo', postpartum: 'Mi posparto', menopause: 'Mi menopausia' }[dm];
   return sheetFrame(title, `
     <div class="stack-20">
       ${stageUI() ? stageSection() : ''}
-      ${dm === 'pregnancy' ? pregnancyForm() : dm === 'postpartum' ? postpartumForm() : cycleForm}
+      ${dm === 'pregnancy' ? pregnancyForm() : dm === 'postpartum' ? postpartumForm() : dm === 'menopause' ? menopauseForm() : cycleForm}
       ${pushSection()}
       ${store.mode !== 'cycle' || listConsults().length ? `<div class="stack-10 data-box">
         ${eyebrow('Tus consultas')}
@@ -1051,38 +1067,49 @@ function sheetFrame(title, content, handle = false) {
 // MARK: - Onboarding
 // =========================================================================
 
+const obStageOption = (title, sub, ic, val) => `<button class="option" data-action="ob-stage" data-v="${val}">
+  <span class="opt-ic">${icon(ic, 20)}</span>
+  <span class="grow left"><span class="t-15 w-500 block">${title}</span><span class="t-13 soft block lh-3">${sub}</span></span>
+  ${icon('right', 14, 'soft')}
+</button>`;
+
 function onboardingView() {
   const ob = ui.ob;
   let content;
   switch (ob.step) {
     case 0:
-      // Bienvenida con el estilo de la portada (crema, Newsreader, seda melocotón): sin el cielo nocturno
+      // Pantalla única de entrada: cada usuaria elige su momento y sigue su camino hasta Hoy
       content = `<div class="ob-welcome">
         <div class="ob-wordmark">Hera</div>
-        <div class="ob-eyebrow">Regla · Embarazo · Bebé</div>
-        <h1 class="ob-title">Tus dudas, <em>resueltas por profesionales</em></h1>
-        <p class="ob-lead">Sigue tu regla, tu embarazo o los primeros meses de tu bebé. Y cuando algo te preocupe, te responden tu ginecólogo, tu matrona o tu pediatra.</p>
-        <div class="ob-silk"><span class="ob-who">${consultPair('sm')}<span>Te responden <b>Gonzalo, Marina o Lucía</b></span></span></div>
-        ${primaryButton('Comenzar', 'ob-next')}
+        <h1 class="ob-title">¿En qué momento estás?</h1>
+        <p class="ob-lead">Podrás cambiarlo cuando quieras.</p>
+        <div class="stack-8">
+          ${obStageOption('Sigo mi ciclo', 'Regla, fases y síntomas.', 'moon', 'cycle')}
+          ${obStageOption('Estoy embarazada', 'Semana a semana, con tu equipo.', 'sprout', 'pregnancy')}
+          ${obStageOption('He tenido a mi bebé', 'Tu recuperación y los cuidados de tu bebé.', 'flower', 'postpartum')}
+          ${menopauseOn() ? obStageOption('Estoy en la menopausia', 'O creo que se acerca.', 'leaf', 'menopause') : ''}
+        </div>
+        <div class="ob-who">${consultPair('sm')}<span>Te responden <b>Gonzalo, Marina o Lucía</b></span></div>
         ${syncAvailable() ? `<button class="google-btn mt-16" data-action="sync-connect">${GOOGLE_G} ¿Ya usas Hera? Recuperar mis datos</button>` : ''}
         <button class="link-soft mt-16" data-action="ob-demo">Explorar con datos de ejemplo</button>
         ${sync.error ? `<p class="t-12 c-rose mt-12">${esc(sync.error)}</p>` : ''}
       </div>`;
       break;
-    case 1: if (stageUI() && !ob.stageChosen) {
-      const opt = (title, sub, ic, val) => `<button class="option" data-action="ob-stage" data-v="${val}">
+    case 1: if (ob.flow === 'menopause') {
+      const opt = (title, sub, ic, val) => `<button class="option ${ob.menoStatus === val ? 'on' : ''}" aria-pressed="${ob.menoStatus === val}" data-action="ob-meno" data-v="${val}">
         <span class="opt-ic">${icon(ic, 20)}</span>
         <span class="grow left"><span class="t-15 w-500 block">${title}</span><span class="t-13 soft block lh-3">${sub}</span></span>
-        ${icon('right', 14, 'soft')}
+        <span class="opt-check">${icon(ob.menoStatus === val ? 'checkCircle' : 'circle', 20)}</span>
       </button>`;
       content = `<div>
-        <h2 class="ob-h">¿En qué momento estás?</h2>
-        <p class="t-14 soft lh-4 mb-30">Hera se adapta a cada etapa. Podrás cambiarla cuando quieras desde los ajustes.</p>
-        <div class="stack-12">
-          ${opt('Estoy embarazada', 'Tus semanas, el desarrollo de tu bebé, las pruebas de cada etapa y las dudas frecuentes.', 'sprout', 'pregnancy')}
-          ${opt('He tenido a mi bebé', 'Tu recuperación, la lactancia y el peso, la salud y la alimentación de tu bebé.', 'flower', 'postpartum')}
-          ${opt('Quiero seguir mi ciclo', 'Reglas, ventana fértil, síntomas y medicación.', 'moon', 'cycle')}
+        <h2 class="ob-h">¿Dónde te encuentras?</h2>
+        <p class="t-14 soft lh-4 mb-30">No hace falta tenerlo claro.</p>
+        <div class="stack-12 mb-32">
+          ${opt(MENO_STATUS.approaching, 'Reglas irregulares, sofocos o peor sueño.', 'wave', 'approaching')}
+          ${opt(MENO_STATUS.post, 'Desde hace 12 meses o más.', 'leaf', 'post')}
+          ${opt(MENO_STATUS.unknown, 'Te ayudamos a orientarte.', 'helpCircle', 'unknown')}
         </div>
+        ${primaryButton('Empezar', 'ob-finish-stage')}
       </div>`;
       break;
     } else if (ob.flow === 'pregnancy') {
@@ -1111,8 +1138,9 @@ function onboardingView() {
         <h2 class="ob-h">¿Cómo es tu ciclo?</h2>
         <p class="t-14 soft lh-4 mb-30">Esto nos ayuda a predecir tus fases con mayor precisión.</p>
         <div class="stack-12 mb-32">
-          ${opt('Regular', 'Mi ciclo suele durar más o menos los mismos días cada mes.', 'clock', ob.isRegular, 'regular')}
+          ${opt('Regular', 'Mi ciclo suele durar más o menos los mismos días cada mes.', 'clock', ob.isRegular && !ob.hormonal, 'regular')}
           ${opt('Irregular', 'La duración de mis ciclos varía bastante de un mes a otro.', 'wave', !ob.isRegular, 'irregular')}
+          ${opt('Con anticonceptivo hormonal', 'No calculamos ovulación ni días fértiles.', 'drop', ob.isRegular && ob.hormonal, 'hormonal')}
         </div>
         ${primaryButton('Continuar', 'ob-next')}
       </div>`;
@@ -1140,7 +1168,7 @@ function onboardingView() {
             </div>
             ${grid}
           </div>
-          ${primaryButton('Continuar', 'ob-next')}
+          ${primaryButton('Empezar', 'ob-finish')}
         </div>`;
       } else {
         const count = ob.pastPeriods.length;
@@ -1158,55 +1186,14 @@ function onboardingView() {
             <button class="outline-sage" data-action="ob-add">${icon('plusCircle', 14)} Añadir este día</button>
           </div>
           ${progress}
-          ${primaryButton('Continuar', 'ob-next')}
+          ${primaryButton('Empezar', 'ob-finish', ob.pastPeriods.length === 0)}
         </div>`;
       }
       break;
-    case 3:
-      content = `<div>
-        <h2 class="ob-h mb-22">Tu ciclo habitual</h2>
-        ${ob.isRegular ? `
-          <div class="t-13 soft mb-8">Duración habitual del ciclo: <span data-out="ob.cycleLen">${ob.cycleLen}</span> días</div>
-          <div class="mb-20">${rangeRow({ key: 'ob.cycleLen', min: 21, max: 45, step: 1, value: ob.cycleLen })}</div>`
-        : `<div class="note-mist mb-20"><span class="c-sage">${icon('checkCircle', 14)}</span><span>Ciclo medio calculado automáticamente: <b>${averageCycleLength(ob.pastPeriods)} días</b></span></div>`}
-        <div class="t-13 soft mb-8">Duración habitual de la regla: <span data-out="ob.periodLen">${ob.periodLen}</span> días</div>
-        <div class="mb-8">${rangeRow({ key: 'ob.periodLen', min: 2, max: 9, step: 1, value: ob.periodLen, tone: 'rose' })}</div>
-        <p class="t-125 soft mb-32">Podrás ajustarlo cuando quieras desde los ajustes.</p>
-        ${primaryButton('Continuar', 'ob-next')}
-      </div>`;
-      break;
-    case 4: {
-      const dots = [0, 1, 2].map((i) => `<i class="${i === ob.profileSubStep ? 'on' : ''}"></i>`).join('');
-      let sub;
-      if (ob.profileSubStep === 0) {
-        const t = partsFromDN(todayDN());
-        const maxBirth = `${t.y - 10}-${String(t.m).padStart(2, '0')}-${String(t.d).padStart(2, '0')}`;
-        sub = `<h2 class="ob-h">¿Cuándo naciste?</h2>
-          <p class="t-14 soft lh-4 mb-32">Lo usamos para contextualizar mejor tus síntomas y fases.</p>
-          <input type="date" class="field date big mb-36" data-model="ob.birthDate" value="${attr(ob.birthDate)}" max="${maxBirth}" min="1920-01-01" aria-label="Fecha de nacimiento">
-          ${primaryButton('Continuar', 'ob-sub', false, 'data-v="1"')}`;
-      } else if (ob.profileSubStep === 1) {
-        sub = `<h2 class="ob-h">¿Cuánto pesas?</h2>
-          <p class="t-14 soft lh-4 mb-48">Un dato aproximado es suficiente. Lo puedes cambiar cuando quieras.</p>
-          <div class="ob-weight"><span data-out="ob.weightKg">${ob.weightKg}</span> kg</div>
-          <div class="mb-8">${rangeRow({ key: 'ob.weightKg', min: 35, max: 150, step: 1, value: ob.weightKg })}</div>
-          <div class="row between t-11 soft mb-44"><span>35 kg</span><span>150 kg</span></div>
-          ${primaryButton('Continuar', 'ob-sub', false, 'data-v="2"')}`;
-      } else {
-        sub = `<h2 class="ob-h">¿Tienes algún diagnóstico?</h2>
-          <p class="t-14 soft lh-4 mb-24">Esto nos ayuda a personalizar los síntomas sugeridos.</p>
-          <div class="stack-10 mb-28">${HORMONAL_CONDITIONS.map((o) => {
-            const sel = ob.hormonalCondition === o;
-            return `<button class="option compact ${sel ? 'on' : ''}" aria-pressed="${sel}" data-action="ob-condition" data-v="${attr(o)}"><span class="grow left t-15">${esc(o)}</span><span class="opt-check">${icon(sel ? 'checkCircle' : 'circle', 20)}</span></button>`;
-          }).join('')}</div>
-          ${primaryButton('Empezar a cuidarme', 'ob-finish')}`;
-      }
-      content = `<div><div class="sub-dots mb-28">${dots}</div>${sub}</div>`;
-      break;
-    }
     default: content = '';
   }
-  const steps = [0, 1, 2, 3, 4].map((i) => `<i class="${i === ob.step ? 'on' : ''}"></i>`).join('');
+  const total = ob.step === 0 ? 1 : ob.flow === 'cycle' ? 3 : 2;
+  const steps = total > 1 ? Array.from({ length: total }, (_, i) => `<i class="${i === ob.step ? 'on' : ''}"></i>`).join('') : '';
   return `<div class="ob">
     <div class="ob-top">${ob.step > 0 ? `<button class="link-soft row gap-6 center t-14" data-action="ob-back">${icon('left', 14)} Atrás</button>` : ''}</div>
     <div class="ob-content" key="${ob.step}-${ob.profileSubStep}">${content}</div>
@@ -1248,6 +1235,8 @@ function consultDetails() {
   if (st.mode === 'pregnancy') {
     const g = gestation(st.pregnancy);
     if (g && g.totalDays >= 0) lines.push(`Embarazo: semana ${g.weeks} + ${g.days} días (FPP ${fmtDayMonthYear(g.due)})`);
+  } else if (st.mode === 'menopause') {
+    lines.push(`Menopausia: ${MENO_STATUS[st.menopause?.status] || MENO_STATUS.unknown}`);
   } else if (st.mode === 'postpartum') {
     const sb = sinceBirth(st.postpartum);
     if (sb) lines.push(`Posparto: ${sb.weeks} ${plural(sb.weeks, 'semana', 'semanas')} y ${sb.days} ${plural(sb.days, 'día', 'días')} desde el parto`);
@@ -1402,8 +1391,10 @@ function refreshAskSuggestion() {
   }, 250);
 }
 
+const menopauseOn = () => !MENOPAUSE_BETA_ONLY || isBeta() || store.mode === 'menopause';
+const MENO_STATUS = { approaching: 'Se acerca', post: 'Ya no tengo la regla', unknown: 'No lo sé' };
 const stageUI = () => !PREGNANCY_BETA_ONLY || isBeta() || store.mode !== 'cycle';
-const MODE_TAG = { cycle: 'MI CICLO', pregnancy: 'EMBARAZO', postpartum: 'POSPARTO' };
+const MODE_TAG = { cycle: 'MI CICLO', pregnancy: 'EMBARAZO', postpartum: 'POSPARTO', menopause: 'MENOPAUSIA' };
 
 
 
@@ -1612,6 +1603,43 @@ function postpartumToday() {
 }
 
 /** Aviso en Hoy (ciclo) durante los 6 meses siguientes al posparto */
+// Menopausia: textos de muestra, solo visibles con ?beta hasta que los revise Gonzalo (vera-backlog#75)
+const MENO_SYMPTOMS = ['Sofocos', 'Sudores nocturnos', 'Peor sueño', 'Cambios de humor', 'Sequedad vaginal', 'Sangrado'];
+function menopauseToday() {
+  const status = store.stage.menopause?.status || 'unknown';
+  const ds = todayISO();
+  const log = store.log(ds);
+  const week = new Set();
+  for (let o = 0; o < 7; o++) for (const x of store.log(isoFromDN(todayDN() - o)).symptoms) if (MENO_SYMPTOMS.includes(x)) week.add(x);
+  ui.selectedDate = ds;
+  return `<div class="stack-18">
+    <div class="card pad stack-10 preg-hero">
+      ${eyebrow('Tu momento')}
+      <div class="serif-22">${esc(MENO_STATUS[status])}</div>
+      <p class="t-13 soft lh-4">Apunta cómo estás: te ayudará a ver cambios y a contárselos a tu ginecólogo.</p>
+    </div>
+    <div class="card pad stack-12">
+      ${eyebrow('¿Cómo estás hoy?')}
+      <div class="row gap-8 wrap">${MENO_SYMPTOMS.map((x) => symptomChip(x, log)).join('')}</div>
+      ${week.size ? `<div class="t-12 soft">Esta semana: ${esc([...week].join(', '))}</div>` : ''}
+      ${askLink('¿Te preocupa algo?', 'Pregúntanos', 'Menopausia')}
+    </div>
+  </div>`;
+}
+function menopauseGuide() {
+  const sec = (t, items) => `<div class="card pad stack-10">${eyebrow(t)}<ul class="tips">${items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></div>`;
+  return `<div class="stack-18">
+    ${sec('Qué es', ['Se habla de menopausia cuando llevas 12 meses seguidos sin regla.', 'Antes suele haber una etapa de cambios: reglas irregulares, sofocos o peor sueño.'])}
+    ${sec('Cuándo consultar', ['Si sangras después de llevar 12 meses sin regla.', 'Si los síntomas te impiden hacer tu vida con normalidad.', 'Si tienes dudas sobre tratamientos.'])}
+    ${askLink('¿Otra duda?', 'Pregúntanos', 'Menopausia')}
+  </div>`;
+}
+function menopauseForm() {
+  const d = ui.draftStage.menopause;
+  return `<div class="stack-10"><div class="t-13 soft">¿Dónde te encuentras?</div>
+    ${Object.entries(MENO_STATUS).map(([v, l]) => `<button class="type-btn ${d.status === v ? 'on' : ''}" aria-pressed="${d.status === v}" data-action="draft-meno" data-v="${v}">${esc(l)}</button>`).join('')}</div>`;
+}
+
 function postpartumCycleNote() {
   const end = dnFromISO(store.stage.postpartum?.endedAt);
   if (end == null || todayDN() - end > 183) return '';
@@ -1799,7 +1827,9 @@ const flStrip = (img) => `<div class="fl-strip ${img}" aria-hidden="true"></div>
 function miniBar(mode, tab) {
   if (mode !== 'cycle' && !['today', 'guide', 'baby'].includes(tab)) return '';
   let label, img;
-  if (mode === 'cycle') {
+  if (mode === 'menopause') {
+    label = ['Menopausia', MENO_STATUS[store.stage.menopause?.status] || '']; img = 'seda-melocoton';
+  } else if (mode === 'cycle') {
     const settings = store.data.settings;
     if (settings.isRegular && settings.lastPeriod) {
       const info = cycleInfo(settings);
@@ -1926,7 +1956,7 @@ function applyGuideFilter() {
 
 // MARK: - Ajustes de etapa
 
-const STAGE_NAME = { cycle: 'Ciclo', pregnancy: 'Embarazo', postpartum: 'Posparto' };
+const STAGE_NAME = { cycle: 'Ciclo', pregnancy: 'Embarazo', postpartum: 'Posparto', menopause: 'Menopausia' };
 const settingsSnapshot = () => JSON.stringify({ d: ui.draft, s: ui.draftStage });
 const settingsDirty = () => ui.sheet === 'settings' && ui.settingsBaseline != null && settingsSnapshot() !== ui.settingsBaseline;
 
@@ -1946,7 +1976,7 @@ function stageSection() {
       ${icon(ic, 18)}<span>${label}</span>${store.mode === val ? `<em class="stage-current">${icon('check', 10)} Actual</em>` : ''}
     </button>`;
   return `<div class="stack-10"><div class="t-13 soft">¿En qué momento estás?</div>
-    <div class="row gap-8">${btn('Regla', 'cycle', 'moon')}${btn('Embarazo', 'pregnancy', 'sprout')}${btn('Posparto', 'postpartum', 'flower')}</div></div>
+    <div class="row gap-8">${btn('Regla', 'cycle', 'moon')}${btn('Embarazo', 'pregnancy', 'sprout')}${btn('Posparto', 'postpartum', 'flower')}${menopauseOn() ? btn('Menopausia', 'menopause', 'leaf') : ''}</div></div>
     ${store.mode !== 'cycle' && d.mode === 'cycle' ? `<div class="note-mist lh-3"><span class="c-sage">${icon('info', 14)}</span><span>${store.mode === 'pregnancy'
       ? 'Si tu embarazo ha terminado, cuídate y date tiempo; puedes escribirnos cuando quieras. Indica abajo tu última regla cuando vuelva.'
       : 'Indica abajo el primer día de tu última regla. Los primeros ciclos tras el parto suelen ser irregulares.'}</span></div>` : ''}
@@ -2017,6 +2047,10 @@ function buildStage() {
     const due = dnFromISO(d.pregnancy.dueDate);
     if (due == null || due < today - 100 || due > today + 300) return { error: 'Indica una fecha probable de parto válida (o calcúlala con tu última regla).' };
     return { stage: { ...cur, mode: 'pregnancy', pregnancy: { ...d.pregnancy }, history } };
+  }
+  if (d.mode === 'menopause') {
+    closePregnancy(todayISO());
+    return { stage: { ...cur, mode: 'menopause', pregnancy: null, menopause: { status: d.menopause.status || 'unknown' }, history } };
   }
   if (d.mode === 'postpartum') {
     const birth = dnFromISO(d.postpartum.birthDate);
@@ -2378,7 +2412,7 @@ const STAGE_TAB = {
   care: { icon: 'heart', label: 'CUIDADOS' },
   guide: { icon: 'helpCircle', label: 'DUDAS' },
 };
-const STAGE_TAB_IDS = { pregnancy: ['today', 'diary', 'care', 'guide'], postpartum: ['today', 'diary', 'care', 'guide'] };
+const STAGE_TAB_IDS = { pregnancy: ['today', 'diary', 'care', 'guide'], postpartum: ['today', 'diary', 'care', 'guide'], menopause: ['today', 'guide'] };
 const tabIndex = (id) => Math.max(0, (STAGE_TAB_IDS[store.mode] || []).indexOf(id));
 
 function mainView() {
@@ -2392,7 +2426,8 @@ function mainView() {
     const ids = STAGE_TAB_IDS[mode];
     ui.tab = Math.min(ui.tab, ids.length - 1);
     tabs = ids.map((id) => STAGE_TAB[id]);
-    const fns = { today: mode === 'pregnancy' ? pregnancyToday : postpartumToday, baby: babyView, diary: stageDiary, care: careView, guide: guideView };
+    const fns = mode === 'menopause' ? { today: menopauseToday, guide: menopauseGuide }
+      : { today: mode === 'pregnancy' ? pregnancyToday : postpartumToday, baby: babyView, diary: stageDiary, care: careView, guide: guideView };
     view = fns[ids[ui.tab]]();
   }
   return `<div class="shell">
@@ -2474,11 +2509,13 @@ function toggleIn(arr, v) {
 function openSettings() {
   ui.draft = structuredClone(store.data.settings);
   ui.draftRemoved = [];
+  ui.draftProfile = { birthDate: '', weightKg: '', hormonalCondition: '', ...store.data.profile };
   const st = store.stage;
   ui.draftStage = {
     mode: st.mode,
     pregnancy: { dueDate: '', multiple: null, rh: null, toxo: null, ...(st.pregnancy || {}) },
     postpartum: { birthDate: '', feeding: null, ...(st.mode === 'postpartum' ? st.postpartum : {}) },
+    menopause: { status: 'unknown', ...(st.menopause || {}) },
   };
   ui.draftLmp = '';
   ui.dueMode = st.pregnancy?.dueDate ? 'due' : 'lmp';
@@ -2502,6 +2539,7 @@ const actions = {
   'select-day': (el) => { ui.selectedDate = el.dataset.date; render(); },
   'week-prev': () => { ui.weekOffset -= 1; render(); },
   'week-next': () => { if (ui.weekOffset < 0) { ui.weekOffset += 1; render(); } },
+  'open-profile': () => { ui.openDetails.add('profile'); actions['open-settings'](); },
   'open-calendar': () => { ui.calDay = null; ui.calMonth = firstOfMonth(dnFromISO(ui.selectedDate)); ui.sheet = 'calendar'; ui.sheetAnim = true; render(); },
   'cal-prev': () => { ui.calMonth = addMonths(ui.calMonth, -1); render(); },
   'cal-next': () => { ui.calMonth = addMonths(ui.calMonth, 1); render(); },
@@ -2577,7 +2615,8 @@ const actions = {
 
   // Ajustes
   'draft-type': (el) => {
-    ui.draft.isRegular = el.dataset.v === 'regular';
+    ui.draft.isRegular = el.dataset.v !== 'irregular';
+    ui.draft.hormonal = el.dataset.v === 'hormonal';
     render();
   },
   'draft-add': () => {
@@ -2604,10 +2643,15 @@ const actions = {
     }
     const s = ui.draft;
     ui.sheet = null;
+    const dp = ui.draftProfile || {};
+    const kg = Number(dp.weightKg);
+    const profile = { ...store.data.profile, birthDate: dnFromISO(dp.birthDate) != null ? dp.birthDate : null, weightKg: kg >= 35 && kg <= 150 ? kg : null, hormonalCondition: dp.hormonalCondition || null };
+    if (JSON.stringify({ a: profile.birthDate, b: profile.weightKg, c: profile.hormonalCondition }) !== JSON.stringify({ a: store.data.profile.birthDate ?? null, b: store.data.profile.weightKg ?? null, c: store.data.profile.hormonalCondition ?? null })) store.updateProfile(profile);
     clearFlow(ui.draftRemoved || []);
     ui.draftRemoved = [];
     store.updateSettings(s);
   },
+  'draft-meno': (el) => { ui.draftStage.menopause.status = el.dataset.v; render(); },
   'draft-stage': (el) => { ui.draftStage.mode = el.dataset.v; render(); },
   'draft-stage-field': (el) => {
     const target = ui.draftStage.mode === 'postpartum' ? ui.draftStage.postpartum : ui.draftStage.pregnancy;
@@ -2877,12 +2921,12 @@ const actions = {
   'ob-next': () => { ui.ob.step += 1; render(); },
   'ob-back': () => {
     const ob = ui.ob;
-    if (ob.step === 1 && ob.stageChosen && stageUI()) { ob.stageChosen = false; ob.flow = 'cycle'; render(); return; }
-    if (ob.step === 4 && ob.profileSubStep > 0) ob.profileSubStep -= 1;
-    else { ob.profileSubStep = 0; ob.step -= 1; }
+    ob.step -= 1;
+    if (ob.step === 0) { ob.stageChosen = false; ob.flow = 'cycle'; }
     render();
   },
-  'ob-regular': (el) => { ui.ob.isRegular = el.dataset.v === 'regular'; render(); },
+  'ob-regular': (el) => { ui.ob.isRegular = el.dataset.v !== 'irregular'; ui.ob.hormonal = el.dataset.v === 'hormonal'; render(); },
+  'ob-meno': (el) => { ui.ob.menoStatus = el.dataset.v; render(); },
   'ob-pick-last': (el) => { ui.ob.lastPeriod = el.dataset.date; render(); },
   'ob-month-prev': () => { ui.ob.month = addMonths(ui.ob.month, -1); render(); },
   'ob-month-next': () => { ui.ob.month = addMonths(ui.ob.month, 1); render(); },
@@ -2892,22 +2936,15 @@ const actions = {
     render();
   },
   'ob-remove': (el) => { ui.ob.pastPeriods = ui.ob.pastPeriods.filter((d) => d !== el.dataset.date); render(); },
-  'ob-sub': (el) => { ui.ob.profileSubStep = +el.dataset.v; render(); },
-  'ob-condition': (el) => { ui.ob.hormonalCondition = el.dataset.v; render(); },
   'ob-finish': () => {
     const ob = ui.ob;
     const settings = ob.isRegular
-      ? { lastPeriod: ob.lastPeriod, cycleLen: ob.cycleLen, periodLen: ob.periodLen, isRegular: true, pastPeriods: [] }
+      ? { lastPeriod: ob.lastPeriod, cycleLen: ob.cycleLen, periodLen: ob.periodLen, isRegular: true, pastPeriods: [], ...(ob.hormonal ? { hormonal: true } : {}) }
       : settingsFromIrregularPeriods(ob.pastPeriods, ob.periodLen);
-    const profile = {
-      birthDate: dnFromISO(ob.birthDate) != null ? ob.birthDate : null,
-      weightKg: ob.weightKg,
-      hormonalCondition: ob.hormonalCondition === 'Ninguna' ? null : ob.hormonalCondition,
-    };
     ui.tab = 0;
-    store.completeOnboarding(settings, profile);
+    store.completeOnboarding(settings, {});
   },
-  'ob-stage': (el) => { ui.ob.flow = el.dataset.v; ui.ob.stageChosen = true; render(); },
+  'ob-stage': (el) => { ui.ob.flow = el.dataset.v; ui.ob.stageChosen = true; ui.ob.step = 1; render(); },
   'ob-finish-stage': () => {
     const ob = ui.ob;
     const today = todayDN();
@@ -2921,6 +2958,8 @@ const actions = {
       if (due == null || due < today - 100 || due > today + 300) { alert('Indica tu fecha probable de parto o el primer día de tu última regla.'); return; }
       if (lmp != null && lmp <= today) settings.lastPeriod = ob.lmp;
       stage = { mode: 'pregnancy', pregnancy: { dueDate: isoFromDN(due), multiple: null, rh: null, toxo: null }, postpartum: null, history: [] };
+    } else if (ob.flow === 'menopause') {
+      stage = { mode: 'menopause', pregnancy: null, postpartum: null, menopause: { status: ob.menoStatus || 'unknown' }, history: [] };
     } else {
       const birth = dnFromISO(ob.birthDate2);
       if (birth == null || birth > today) { alert('Indica la fecha del parto.'); return; }
@@ -2992,6 +3031,7 @@ function setModel(path, value) {
   if (head === 'newMed') ui.newMed[key] = value;
   else if (head === 'draft') ui.draft[key] = value;
   else if (head === 'draftPicker') ui.draftPicker = value;
+  else if (head === 'draftProfile') ui.draftProfile[key] = value;
   else if (head === 'ob') ui.ob[key] = value;
   else if (head === 'draftLmp') ui.draftLmp = value;
   else if (head === 'newAppt') ui.newAppt[key] = value;

@@ -1782,10 +1782,10 @@ function aboutSection() {
     ${eyebrow('Sobre Hera')}
     ${isTeam() ? `<div class="team-note"><span class="grow"><b>Modo equipo</b> · este dispositivo no cuenta en las métricas</span><button class="link-soft" data-action="team-off">Desactivar</button></div>` : ''}
     <div class="web-list">
-      ${webLink('../', 'Web de Hera')}
+      ${webLink('../?web=1', 'Web de Hera')}
       ${webLink('../equipo.html', 'Conoce al equipo')}
-      ${webLink('../#precio', 'Precios')}
-      ${webLink('../#instalar', 'Cómo instalarla')}
+      ${webLink('../?web=1#precio', 'Precios')}
+      ${webLink('../?web=1#instalar', 'Cómo instalarla')}
       ${webLink('../support.html', 'Soporte')}
       ${webLink('../privacy.html', 'Privacidad')}
     </div>
@@ -2408,7 +2408,7 @@ function mainView() {
     ${reminderBanner()}
     ${mode === 'cycle' ? irregularNudge() : ''}
     <main class="content">${view}</main>
-    <footer class="foot"><a href="../" ${isStandalone() ? 'target="_blank" rel="noopener"' : ''}>Web de Hera</a> · <a href="${CONTACT_HREF}">Contacto</a> · <a href="../support.html">Soporte</a> · <a href="../privacy.html">Privacidad</a></footer>
+    <footer class="foot"><a href="../?web=1" ${isStandalone() ? 'target="_blank" rel="noopener"' : ''}>Web de Hera</a> · <a href="${CONTACT_HREF}">Contacto</a> · <a href="../support.html">Soporte</a> · <a href="../privacy.html">Privacidad</a></footer>
   </div>
   <nav class="tabbar ${tabs.length > 3 ? 'many' : ''}" aria-label="Secciones">
     ${tabs.map((t, i) => `<button class="tab ${ui.tab === i ? 'on' : ''}" data-action="tab" data-i="${i}" aria-current="${ui.tab === i ? 'page' : 'false'}">${icon(t.icon, 20)}<span>${t.label}</span></button>`).join('')}

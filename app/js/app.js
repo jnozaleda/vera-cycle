@@ -1307,6 +1307,7 @@ function askLimitView(a) {
       <div class="t-15 w-500 c-deep">Has usado tus ${a.result.freeLimit || 2} consultas gratuitas</div>
       <p class="t-13 lh-4 c-deep">Muy pronto podrás seguir preguntando a Gonzalo, Marina y Lucía: 9 € por consulta, bono de 5 por 35 € o ilimitado por 15 € al mes.</p>
     </div>
+    <p class="t-13 lh-4">Para seguir con una consulta anterior, responde al correo de la profesional: <b>no gasta consultas</b>.</p>
     ${notify}
     <a class="outline-sage" href="${CONTACT_HREF}">${icon('mail', 14)} Escribir a ${esc(CONTACT_EMAIL)}</a>
     <p class="t-11 soft-70 lh-3">Si es urgente, no esperes: llama al 112 o acude a tu centro de salud. Mientras tanto, mira las respuestas en <button class="inline-link" data-action="open-guide">Dudas</button>.</p>

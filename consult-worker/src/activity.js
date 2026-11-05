@@ -63,11 +63,13 @@ export const EVENTS = {
   consulta: ['Envió una consulta a', true],
   respondida: ['Respondida una consulta por', true],
   gratuitas_agotadas: ['Intentó consultar con las gratuitas agotadas', true],
+  pago_elegido: ['Eligió un plan de pago', true],
+  pago_hecho: ['Volvió de pagar', true],
 };
 
 const VALUE_LABEL = {
   pregnancy: 'embarazo', postpartum: 'posparto', cycle: 'ciclo', regular: 'regular', irregular: 'irregular',
-  gineco: 'Gonzalo', matrona: 'Marina', pediatra: 'Lucía', prueba: 'prueba',
+  suelta: 'consulta suelta', bono: 'bono de 5', mensual: 'ilimitado mensual', gineco: 'Gonzalo', matrona: 'Marina', pediatra: 'Lucía', prueba: 'prueba',
   today: 'Hoy', diary: 'Diario', care: 'Cuidados', guide: 'Dudas', trends: 'Patrones', baby: 'Tu bebé', tu: 'Tú', bebe: 'Tu bebé',
   sintoma: 'síntomas', animo: 'ánimo', regla: 'regla', dato: 'peso, sueño o temperatura', intimidad: 'relaciones', ovulacion: 'test de ovulación',
   estres: 'estrés', flujo: 'flujo',

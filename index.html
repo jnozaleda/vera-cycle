@@ -721,7 +721,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');
       if (j.error === 'bad_files' || j.error === 'too_large') throw new Error('Revisa los archivos: solo fotos o PDF, hasta 10 MB en total.');
       if (!res.ok && !j.limit) throw new Error('No se ha podido enviar. Inténtalo de nuevo en un rato.');
-      if (j.limit) { hit('limite_portada'); showLimit(j); } else { hit('enviada_portada'); if (j.id) addConsult({ id: j.id, to, text }); showDone(to, j); }
+      if (j.limit) { hit('limite_portada'); showLimit(j, { to, text, follow: $('ask-follow').checked }); } else { hit('enviada_portada'); if (j.id) addConsult({ id: j.id, to, text }); showDone(to, j); }
     } catch (e) { hit('error_portada'); showErr(e.message); }
     busy = false; send.disabled = false; refresh();
   });
@@ -741,7 +741,39 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     done.querySelector('[data-open]').addEventListener('click', () => hit('abrir_portada'));
     done.querySelector('[data-again]').addEventListener('click', () => { ta.value = ''; manual = false; done.hidden = true; form.hidden = false; refresh(); ta.focus(); });
   }
-  function showLimit(j) {
+  // Pagos (vera-backlog#56): elegir plan → Stripe → vuelve a la app, que recupera la pregunta (sin adjuntos) de este dispositivo
+  const PLANS = [['bono', 'Bono de 5 consultas', '7 € cada una · válido 12 meses', '35 €'], ['suelta', 'Consulta suelta', 'Solo esta pregunta', '9 €'],
+    ['mensual', 'Ilimitado', 'Una consulta nueva al día · sin permanencia', '15 €/mes']];
+  function showPlans(j, q) {
+    swap(`<h3>Has usado tus ${j.freeLimit || 2} consultas gratuitas</h3>
+      <p>Para seguir preguntando a Gonzalo, Marina y Lucía, elige cómo. Tu pregunta queda guardada y la envías al volver.</p>
+      <div style="display:grid;gap:8px;max-width:30em;margin:0 auto;text-align:left">
+        ${PLANS.map(([k, name, note, price], i) => `<button type="button" data-plan="${k}" style="display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;padding:14px 16px;border-radius:14px;background:#fff;color:inherit;font:inherit;cursor:pointer;border:1.5px solid ${i ? '#C9AEBB' : '#693D55'}">
+          <span style="display:grid;gap:2px;text-align:left"><b style="font-weight:600">${name}</b><span class="small" style="margin:0">${note}</span></span><b style="font-weight:600;white-space:nowrap">${price}</b></button>`).join('')}
+      </div>
+      <p class="err" id="plan-err" hidden></p>
+      <p class="small">Pagas en Stripe con tarjeta, Apple Pay o Google Pay, a nombre de ${esc(lastEmail)}. Hera no ve tu tarjeta.</p>
+      <p>Para seguir con una consulta anterior, responde al correo de la profesional: <b>no gasta consultas</b>.</p>
+      <p class="small">Si es urgente, no esperes: llama al 112 o acude a tu centro de salud.</p>`);
+    done.querySelectorAll('[data-plan]').forEach((b) => b.addEventListener('click', async () => {
+      const plan = b.dataset.plan;
+      done.querySelectorAll('[data-plan]').forEach((x) => { x.disabled = true; });
+      b.lastElementChild.textContent = 'Abriendo…';
+      hit(`pago_elegido:${plan}`);
+      store.set('hera-pay-draft', JSON.stringify({ to: q.to, manual: true, text: q.text, context: '', include: true, follow: q.follow, at: Date.now() }));
+      try {
+        const r = await fetch(`${API}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: lastEmail, plan }) });
+        const k = await r.json().catch(() => ({}));
+        if (!r.ok || !k.url) throw new Error();
+        location.href = k.url;
+      } catch {
+        showPlans(j, q);
+        const e = $('plan-err'); e.textContent = 'No se ha podido abrir el pago. Inténtalo de nuevo en un rato.'; e.hidden = false;
+      }
+    }));
+  }
+  function showLimit(j, q = {}) {
+    if (j.pay) { showPlans(j, q); return; }
     swap(`<h3>Has usado tus ${j.freeLimit || 2} consultas gratuitas</h3>
       <p>Muy pronto podrás seguir preguntando a Gonzalo, Marina y Lucía: 9 € por consulta, bono de 5 por 35 € o ilimitado por 15 € al mes.</p>
       <p>Para seguir con una consulta anterior, responde al correo de la profesional: <b>no gasta consultas</b>.</p>

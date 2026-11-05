@@ -223,7 +223,14 @@ export default {
       return reply(200, { status: out });
     }
     const payHooks = {
-      paid: async (plan, s) => { await bump(env, `pago:${plan}`); await notify(env, `Hera: nuevo pago · ${PLANS[plan].label} (${PLANS[plan].eur} €)`, `${PLANS[plan].label}, ${PLANS[plan].eur} €${s.livemode ? '' : ' · modo de prueba'}.`, sendMail); },
+      paid: async (plan, s) => {
+        await bump(env, `pago:${plan}`);
+        // Aviso al equipo: sin correo de la usuaria; enlace al pago en el panel de Stripe
+        const dash = `https://dashboard.stripe.com/${s.livemode ? '' : 'test/'}${s.payment_intent ? `payments/${s.payment_intent}` : s.subscription ? `subscriptions/${typeof s.subscription === 'string' ? s.subscription : s.subscription.id}` : 'payments'}`;
+        const hora = new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid', dateStyle: 'medium', timeStyle: 'short' });
+        await notify(env, `Hera: nuevo pago · ${PLANS[plan].label} (${PLANS[plan].eur} €)${s.livemode ? '' : ' · prueba'}`,
+          `${PLANS[plan].label}: ${PLANS[plan].eur} €${s.livemode ? '' : ' (modo de prueba, sin dinero real)'}\n${hora}\n\nVer en Stripe: ${dash}`, sendMail);
+      },
       cancelled: async () => { await bump(env, 'pago:baja_mensual'); },
     };
     if (request.method === 'POST' && url.pathname === '/stripe/webhook') return new Response(null, { status: await handleWebhook(env, request, payHooks) });

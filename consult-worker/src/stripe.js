@@ -49,18 +49,20 @@ async function priceId(env, lookup) {
 }
 
 /** Crea la sesión de pago y devuelve su URL */
-export async function createCheckout(env, { email, plan, h, origin }) {
+export async function createCheckout(env, { email, plan, h, origin, back }) {
   const p = PLANS[plan];
   // Vuelve al mismo sitio desde el que se pagó (la web real, o localhost en pruebas)
-  const APP = origin && origin !== 'https://hera-gine.com' ? `${origin}/app/` : APP_URL;
+  // back = 'web': desde la portada, vuelve a la portada (?web=1 evita que salte a la app instalada)
+  const root = origin && origin !== 'https://hera-gine.com' ? origin : APP_URL.replace(/\/app\/$/, '');
+  const ret = back === 'web' ? `${root}/?web=1&` : `${root}/app/?`;
   const params = {
     mode: p.mode,
     'line_items[0][price]': await priceId(env, p.lookup),
     'line_items[0][quantity]': '1',
     customer_email: email,
     locale: 'es',
-    success_url: `${APP}?pago=ok&cs={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${APP}?pago=no`,
+    success_url: `${ret}pago=ok&cs={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${ret}pago=no`,
     'metadata[h]': h,
     'metadata[plan]': plan,
   };

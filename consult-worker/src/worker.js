@@ -310,7 +310,7 @@ export default {
       if (!PLANS[body.plan]) return reply(400, { error: 'bad_plan' });
       if (await rateLimited(env, request.headers.get('CF-Connecting-IP'))) return reply(429, { error: 'rate' });
       try {
-        const checkoutUrl = await createCheckout(env, { email: String(body.email).trim(), plan: body.plan, h: await hmac(env.HASH_SALT, norm), origin });
+        const checkoutUrl = await createCheckout(env, { email: String(body.email).trim(), plan: body.plan, h: await hmac(env.HASH_SALT, norm), origin, back: body.back === 'web' ? 'web' : 'app' });
         await bump(env, `pago_inicio:${body.plan}`);
         return reply(200, { url: checkoutUrl });
       } catch (e) { console.log(e.message); return reply(502, { error: 'stripe' }); }

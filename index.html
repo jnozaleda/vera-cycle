@@ -692,6 +692,36 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   // Desde la página del equipo: #preguntar-matrona abre la caja con esa profesional elegida
   const fromHash = /^#preguntar-(gineco|matrona|pediatra)$/.exec(location.hash);
   if (fromHash) { history.replaceState(null, '', location.pathname); setTimeout(() => goAsk(fromHash[1]), 50); }
+  // Vuelta de Stripe (?pago=ok|no): recupera la pregunta guardada en este dispositivo y dice qué se ha comprado
+  {
+    const qs = new URLSearchParams(location.search);
+    const pago = qs.get('pago');
+    if (pago) {
+      history.replaceState(null, '', location.pathname + '?web=1');
+      let d = null;
+      try { d = JSON.parse(store.get('hera-pay-draft') || 'null'); localStorage.removeItem('hera-pay-draft'); } catch { /* sin almacenamiento */ }
+      if (d && Date.now() - d.at > 86400000) d = null;
+      if (d?.text) ta.value = d.text;
+      if (d?.follow) $('ask-follow').checked = true;
+      open();
+      if (d?.to) { manual = true; radios.forEach((r) => { r.checked = r.value === d.to; }); }
+      refresh();
+      const note = document.createElement('p');
+      note.style.cssText = 'background:#F4E6E8;border-radius:12px;padding:12px 14px;margin:0 0 12px;line-height:1.45';
+      form.prepend(note);
+      const say = (html) => { note.innerHTML = html; };
+      if (pago === 'no') say('No se ha hecho ningún pago. Tu pregunta sigue aquí.');
+      else {
+        say('Comprobando el pago…');
+        fetch(`${API}/checkout/status?cs=${encodeURIComponent(qs.get('cs') || '')}`).then((r) => r.json()).then((j) => {
+          if (!j.paid) throw new Error();
+          hit(`pago_hecho:${j.plan}`);
+          say(`<b>Pago hecho.</b> ${j.unlimited ? 'Tienes el plan ilimitado: una consulta nueva al día.' : `Tienes ${j.credits === 1 ? '1 consulta pagada' : `${j.credits} consultas pagadas`}.`} ${ta.value.trim() ? 'Tu pregunta está aquí: revísala y envíala.' : 'Escribe tu pregunta y envíala.'}${j.portal ? ` <a href="${esc(j.portal)}" target="_blank" rel="noopener">Gestionar suscripción</a>` : ''}`);
+        }).catch(() => say(`No hemos podido confirmar el pago todavía. Si te han cobrado, envía la consulta en unos minutos o escríbenos a contacto@hera-gine.com.`));
+      }
+      setTimeout(() => box.scrollIntoView({ block: 'start' }), 50);
+    }
+  }
   // Cabecera en móvil: «Pregunta tu duda» solo cuando la caja ya no se ve
   if ('IntersectionObserver' in window) {
     new IntersectionObserver(([e]) => document.body.classList.toggle('past-ask', !e.isIntersecting && e.boundingClientRect.top < 0)).observe(box);
@@ -762,7 +792,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       hit(`pago_elegido:${plan}`);
       store.set('hera-pay-draft', JSON.stringify({ to: q.to, manual: true, text: q.text, context: '', include: true, follow: q.follow, at: Date.now() }));
       try {
-        const r = await fetch(`${API}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: lastEmail, plan }) });
+        const r = await fetch(`${API}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: lastEmail, plan, back: 'web' }) });
         const k = await r.json().catch(() => ({}));
         if (!r.ok || !k.url) throw new Error();
         location.href = k.url;

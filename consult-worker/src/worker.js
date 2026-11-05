@@ -64,20 +64,21 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const nl2br = (s) => esc(s).replace(/\n/g, '<br>');
 
 function shell(inner) {
-  return `<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;color:#2C2C2A;font-size:15px;line-height:1.55">
-<div style="font-family:Georgia,serif;font-size:24px;color:#3F584B;margin-bottom:16px">Hera</div>${inner}
-<p style="font-size:12px;color:#888780;margin-top:24px;border-top:1px solid #E4DED0;padding-top:12px">Hera · Embarazo, posparto y bebé · <a href="https://hera-gine.com" style="color:#3F584B">hera-gine.com</a></p></div>`;
+  return `<div style="background:#FBF7F1;padding:24px 16px;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#2E2630;font-size:15px;line-height:1.55">
+<div style="max-width:520px;margin:0 auto">
+<div style="font-family:Georgia,serif;font-size:28px;color:#3B2433;margin-bottom:18px">Hera</div>${inner}
+<p style="font-size:12px;color:#8A8A8E;margin-top:24px;border-top:1px solid #E6DFE2;padding-top:12px">Hera · Salud de la mujer, con profesionales · <a href="https://hera-gine.com" style="color:#693D55">hera-gine.com</a></p></div></div>`;
 }
 
 export function proEmail(pro, q, id = '', relay = true) {
   const subject = `Consulta Hera${id ? ` #${id.toUpperCase()}` : ''}${q.context ? ` · ${q.context}` : ''}`;
   const html = shell(`<p>Nueva consulta para <b>${esc(pro.name)}</b>.</p>
-<div style="background:#F1EFE8;border-radius:10px;padding:14px;margin:12px 0">${nl2br(q.text)}</div>
-${q.context ? `<p style="font-size:13px;color:#5F5E5A">Sobre: ${esc(q.context)}</p>` : ''}
-${q.situation ? `<p style="font-size:13px;color:#5F5E5A">Situación: ${nl2br(q.situation)}</p>` : ''}
-${q.files ? `<p style="font-size:13px;color:#5F5E5A">Incluye ${q.files} ${q.files === 1 ? 'archivo adjunto' : 'archivos adjuntos'}. Hera no los guarda: solo están en este correo.</p>` : ''}
-${relay ? `<p style="font-size:13px;color:#5F5E5A"><b>Para contestar, responde a este correo</b> desde el móvil o el ordenador. Tu respuesta le llegará a la usuaria desde ${esc(pro.email)}: tu correo personal no se muestra. Si ella vuelve a escribir, te llegará en esta misma conversación. Plazo comprometido: 48 h.</p>`
-    : `<p style="font-size:13px;color:#5F5E5A">Responde a este correo para contestar directamente a la usuaria (${esc(q.email)}). Plazo comprometido: 48 h.</p>`}`);
+<div style="background:#F4E6E8;border-radius:10px;padding:14px;margin:12px 0">${nl2br(q.text)}</div>
+${q.context ? `<p style="font-size:13px;color:#655B61">Sobre: ${esc(q.context)}</p>` : ''}
+${q.situation ? `<p style="font-size:13px;color:#655B61">Situación: ${nl2br(q.situation)}</p>` : ''}
+${q.files ? `<p style="font-size:13px;color:#655B61">Incluye ${q.files} ${q.files === 1 ? 'archivo adjunto' : 'archivos adjuntos'}. Hera no los guarda: solo están en este correo.</p>` : ''}
+${relay ? `<p style="font-size:13px;color:#655B61"><b>Para contestar, responde a este correo</b> desde el móvil o el ordenador. Tu respuesta le llegará a la usuaria desde ${esc(pro.email)}: tu correo personal no se muestra. Si ella vuelve a escribir, te llegará en esta misma conversación. Plazo comprometido: 48 h.</p>`
+    : `<p style="font-size:13px;color:#655B61">Responde a este correo para contestar directamente a la usuaria (${esc(q.email)}). Plazo comprometido: 48 h.</p>`}`);
   const text = `Nueva consulta para ${pro.name}\n\n${q.text}\n\n${q.context ? `Sobre: ${q.context}\n` : ''}${q.situation ? `Situación: ${q.situation}\n` : ''}\n${relay ? `Para contestar, responde a este correo: tu respuesta le llegará a la usuaria desde ${pro.email}, sin mostrar tu correo personal. Plazo: 48 h.` : `Responde a este correo para contestar a la usuaria (${q.email}).`}`;
   return { subject, html, text };
 }
@@ -88,11 +89,11 @@ export function confirmEmail(pro, q, remaining, id = '', unlimited = false) {
   const subject = `Tu consulta a ${pro.short} · Hera${id ? ` #${id.toUpperCase()}` : ''}`;
   const html = shell(`<p>Hola,</p>
 <p>Tu consulta ha llegado a <b>${esc(pro.name)}, ${esc(pro.role)}</b>. Te responderá en esta misma conversación en menos de 48 h.</p>
-<div style="background:#F1EFE8;border-radius:10px;padding:12px;margin:12px 0;font-size:14px;color:#444441">«${esc(excerpt)}»${q.context ? `<br><span style="color:#5F5E5A">Sobre: ${esc(q.context)}</span>` : ''}</div>
-<p><span style="display:inline-block;background:#E7EDE6;color:#3F584B;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600">${left}</span></p>
-<p style="font-size:13px;color:#5F5E5A">¿Quieres añadir algo o enviar una foto? Responde a este correo y le llegará a ${esc(pro.short)}.</p>
-<p style="font-size:13px;color:#5F5E5A">No es un servicio de urgencias. Si algo no va bien, llama al 112 o acude a tu centro de salud.</p>
-<p style="font-size:12px;color:#888780">¿No has escrito tú esta consulta? Escríbenos a contacto@hera-gine.com y la borramos.</p>`);
+<div style="background:#F4E6E8;border-radius:10px;padding:12px;margin:12px 0;font-size:14px;color:#2E2630">«${esc(excerpt)}»${q.context ? `<br><span style="color:#655B61">Sobre: ${esc(q.context)}</span>` : ''}</div>
+<p><span style="display:inline-block;background:#ffffff;color:#693D55;border:1.5px solid #693D55;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600">${left}</span></p>
+<p style="font-size:13px;color:#655B61">¿Quieres añadir algo o enviar una foto? Responde a este correo y le llegará a ${esc(pro.short)}.</p>
+<p style="font-size:13px;color:#655B61">No es un servicio de urgencias. Si algo no va bien, llama al 112 o acude a tu centro de salud.</p>
+<p style="font-size:12px;color:#8A8A8E">¿No has escrito tú esta consulta? Escríbenos a contacto@hera-gine.com y la borramos.</p>`);
   const text = `Tu consulta ha llegado a ${pro.name}, ${pro.role}. Te responderá en esta misma conversación en menos de 48 h.\n\n«${excerpt}»\n\n${left}.\n\n¿Quieres añadir algo o enviar una foto? Responde a este correo y le llegará a ${pro.short}.\n\nNo es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.\n¿No has escrito tú esta consulta? Escríbenos a contacto@hera-gine.com y la borramos.`;
   return { subject, html, text };
 }
@@ -100,13 +101,13 @@ export function confirmEmail(pro, q, remaining, id = '', unlimited = false) {
 
 /** Mensaje reenviado por el hilo: del profesional a la usuaria o de la usuaria al profesional */
 export function relayEmail(pro, role, id, body, nAttach) {
-  const head = role === 'p' ? `<p style="font-size:13px;color:#5F5E5A;margin-bottom:6px">${esc(pro.name)}, ${esc(pro.role)}, te responde:</p>`
-    : `<p style="font-size:13px;color:#5F5E5A;margin-bottom:6px">La usuaria de la consulta #${id.toUpperCase()} ha escrito:</p>`;
-  const att = nAttach ? `<p style="font-size:13px;color:#5F5E5A">📎 ${nAttach} ${nAttach === 1 ? 'archivo adjunto' : 'archivos adjuntos'}</p>` : '';
+  const head = role === 'p' ? `<p style="font-size:13px;color:#655B61;margin-bottom:6px">${esc(pro.name)}, ${esc(pro.role)}, te responde:</p>`
+    : `<p style="font-size:13px;color:#655B61;margin-bottom:6px">La usuaria de la consulta #${id.toUpperCase()} ha escrito:</p>`;
+  const att = nAttach ? `<p style="font-size:13px;color:#655B61">${nAttach} ${nAttach === 1 ? 'archivo adjunto' : 'archivos adjuntos'}</p>` : '';
   const foot = role === 'p'
     ? 'Si necesitas aclarar algo, responde a este correo. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.'
     : `Responde a este correo para contestarle; le llegará desde ${pro.email}.`;
-  const html = shell(`${head}<div style="white-space:normal">${nl2br(body)}</div>${att}<p style="font-size:12px;color:#888780;margin-top:18px">${esc(foot)}</p>`);
+  const html = shell(`${head}<div style="white-space:normal">${nl2br(body)}</div>${att}<p style="font-size:12px;color:#8A8A8E;margin-top:18px">${esc(foot)}</p>`);
   const text = `${role === 'p' ? `${pro.name}, ${pro.role}, te responde:` : `La usuaria de la consulta #${id.toUpperCase()} ha escrito:`}\n\n${body}\n\n${nAttach ? `[${nAttach} adjunto(s)]\n\n` : ''}${foot}`;
   return { html, text };
 }

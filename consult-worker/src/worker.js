@@ -15,6 +15,8 @@
 //   GET  /stats?days=N                                                     panel: Authorization: Bearer PANEL_CODE
 //   GET  /panel?k=DASH_KEY&d=1|7|30                                     panel privado para el móvil (HTML, sin login)
 //   GET  /status?ids=a,b                                                   app: ¿respondida? por número de consulta (solo fechas)
+//   POST /checkout     {email, plan, payTest?}  GET /checkout/status?cs=…   pagos (stripe.js)
+//   POST /stripe/webhook                                                   avisos firmados de Stripe
 //
 // Medición (vera-backlog#6): D1 «hera-metrics» con recuentos por día (tabla counts) y huellas diarias para contar
 // personas distintas (tabla visitors: hash de IP + navegador + día + sal, se borran a las 48 h). Sin IP ni identificadores.
@@ -29,7 +31,8 @@
 import { validateAttachments } from './attachments.js';
 import { sendFeedbackDue, handleOpinion, feedbackEmail, feedbackSig } from './feedback.js';
 import { panel } from './panel.js';
-import { isEvent, isDevice, record, personTag, hourlyDigest } from './activity.js';
+import { isEvent, isDevice, record, personTag, hourlyDigest, notify } from './activity.js';
+import { PLANS, paymentsOn, createCheckout, sessionStatus, handleWebhook, getBalance, spendCredit, markDay } from './stripe.js';
 import { newThreadId, relayAddress, parseRelayAddress, sealEmail, openEmail, saveThread, loadThread, parseIncoming, isAutomatic } from './relay.js';
 
 export const PROS = {
@@ -83,9 +86,9 @@ ${relay ? `<p style="font-size:13px;color:#655B61"><b>Para contestar, responde a
   return { subject, html, text };
 }
 
-export function confirmEmail(pro, q, remaining, id = '', unlimited = false) {
+export function confirmEmail(pro, q, remaining, id = '', unlimited = false, leftText = '') {
   const excerpt = q.text.length > 160 ? `${q.text.slice(0, 160).trim()}…` : q.text;
-  const left = unlimited ? 'Tienes consultas ilimitadas' : remaining === 0 ? 'Era tu última consulta gratuita' : `Te ${remaining === 1 ? 'queda 1 consulta gratuita' : `quedan ${remaining} consultas gratuitas`}`;
+  const left = leftText || (unlimited ? 'Tienes consultas ilimitadas' : remaining === 0 ? 'Era tu última consulta gratuita' : `Te ${remaining === 1 ? 'queda 1 consulta gratuita' : `quedan ${remaining} consultas gratuitas`}`);
   const subject = `Tu consulta a ${pro.short} · Hera${id ? ` #${id.toUpperCase()}` : ''}`;
   const html = shell(`<p>Hola,</p>
 <p>Tu consulta ha llegado a <b>${esc(pro.name)}, ${esc(pro.role)}</b>. Te responderá en esta misma conversación en menos de 48 h.</p>
@@ -219,6 +222,15 @@ export default {
       }
       return reply(200, { status: out });
     }
+    const payHooks = {
+      paid: async (plan, s) => { await bump(env, `pago:${plan}`); await notify(env, `Hera: nuevo pago · ${PLANS[plan].label} (${PLANS[plan].eur} €)`, `${PLANS[plan].label}, ${PLANS[plan].eur} €${s.livemode ? '' : ' · modo de prueba'}.`, sendMail); },
+      cancelled: async () => { await bump(env, 'pago:baja_mensual'); },
+    };
+    if (request.method === 'POST' && url.pathname === '/stripe/webhook') return new Response(null, { status: await handleWebhook(env, request, payHooks) });
+    if (request.method === 'GET' && url.pathname === '/checkout/status') {
+      if (!env.STRIPE_SECRET_KEY) return reply(404, { error: 'not_found' });
+      try { return reply(200, await sessionStatus(env, url.searchParams.get('cs'), payHooks)); } catch (e) { console.log(e.message); return reply(502, { error: 'stripe' }); }
+    }
     // Panel privado para el móvil (clave en el enlace, sin login; guárdalo en favoritos)
     if (request.method === 'GET' && url.pathname === '/panel') {
       if (!env.DASH_KEY || url.searchParams.get('k') !== env.DASH_KEY) return new Response('Not found', { status: 404, headers: { 'x-robots-tag': 'noindex' } });
@@ -291,6 +303,19 @@ export default {
       return reply(200, { ok: true });
     }
 
+    if (url.pathname === '/checkout') {
+      if (!env.STRIPE_SECRET_KEY || !paymentsOn(env, body)) return reply(404, { error: 'not_found' });
+      const norm = normalizeEmail(body.email);
+      if (!norm) return reply(400, { error: 'bad_email' });
+      if (!PLANS[body.plan]) return reply(400, { error: 'bad_plan' });
+      if (await rateLimited(env, request.headers.get('CF-Connecting-IP'))) return reply(429, { error: 'rate' });
+      try {
+        const checkoutUrl = await createCheckout(env, { email: String(body.email).trim(), plan: body.plan, h: await hmac(env.HASH_SALT, norm), origin });
+        await bump(env, `pago_inicio:${body.plan}`);
+        return reply(200, { url: checkoutUrl });
+      } catch (e) { console.log(e.message); return reply(502, { error: 'stripe' }); }
+    }
+
     if (url.pathname === '/notify') {
       const norm = normalizeEmail(body.email);
       if (!norm) return reply(400, { error: 'bad_email' });
@@ -319,15 +344,25 @@ export default {
       // Prueba de principio a fin (solo con ADMIN_TOKEN): el «profesional» es COPY_TO y no cuenta como consulta gratuita
       const test = body.to === 'prueba' && env.ADMIN_TOKEN && request.headers.get('Authorization') === `Bearer ${env.ADMIN_TOKEN}` && env.COPY_TO;
 
-      const key = `c:${await hmac(env.HASH_SALT, norm)}`;
+      const h = await hmac(env.HASH_SALT, norm);
+      const key = `c:${h}`;
       const rec = (await env.KV.get(key, 'json')) || { n: 0, first: null, last: null };
       // Consultas ilimitadas (beta testers / plan ilimitado): no gastan gratuitas
-      const vip = await env.KV.get(`v:${await hmac(env.HASH_SALT, norm)}`, 'json');
-      const unlimited = !!vip && (!vip.until || Date.parse(vip.until) > Date.now());
-      if (!test && !unlimited && rec.n >= limit) {
-        await bump(env, 'gratuitas_agotadas');
-        await record(env, { e: 'gratuitas_agotadas', p: await personTag(env, request, madridDay()) }, sendMail, ctx);
-        return reply(200, { limit: true, used: rec.n, freeLimit: limit });
+      const vip = await env.KV.get(`v:${h}`, 'json');
+      const beta = !!vip && (!vip.until || Date.parse(vip.until) > Date.now());
+      // Lo pagado (stripe.js). Ilimitado de pago: uso razonable, una consulta nueva al día (las de beta no tienen tope)
+      const bal = env.STRIPE_SECRET_KEY ? await getBalance(env, h) : { credits: 0, sub: false, day: null };
+      const subscriber = !beta && bal.sub;
+      const unlimited = beta || subscriber;
+      const pay = paymentsOn(env, body) && !!env.STRIPE_SECRET_KEY;
+      if (!test && subscriber && bal.day === madridDay()) return reply(200, { limit: true, daily: true, freeLimit: limit, ...(env.STRIPE_PORTAL_URL ? { portal: env.STRIPE_PORTAL_URL } : {}) });
+      const credits = unlimited ? 0 : bal.credits;
+      if (!test && !unlimited && rec.n >= limit && credits <= 0) {
+        if (body.team !== true) {
+          await bump(env, 'gratuitas_agotadas');
+          await record(env, { e: 'gratuitas_agotadas', p: await personTag(env, request, madridDay()) }, sendMail, ctx);
+        }
+        return reply(200, { limit: true, used: rec.n, freeLimit: limit, ...(pay ? { pay: true } : {}) });
       }
       if (!test && await rateLimited(env, request.headers.get('CF-Connecting-IP'))) return reply(429, { error: 'rate' });
 
@@ -343,9 +378,14 @@ export default {
       if (!sent) return reply(502, { error: 'send' });
       if (files.length && bcc) await sendMail(env, { to: bcc, replyTo: proReply, ...pm, subject: `[Copia sin adjuntos] ${pm.subject}` });
       const now = new Date().toISOString();
-      const n = test || unlimited ? rec.n : rec.n + 1;
+      // Primero se gastan las gratuitas y después las pagadas
+      const paid = !test && !unlimited && rec.n >= limit;
+      const n = test || unlimited || paid ? rec.n : rec.n + 1;
+      let creditsLeft = credits;
       if (!test) {
-        if (!unlimited) await env.KV.put(key, JSON.stringify({ n, first: rec.first || now, last: now }));
+        if (paid) creditsLeft = await spendCredit(env, h);
+        else if (!unlimited) await env.KV.put(key, JSON.stringify({ n, first: rec.first || now, last: now }));
+        if (subscriber) await markDay(env, h, madridDay());
         // Dispositivos del equipo (modo equipo en la app): la consulta se envía igual, pero no cuenta en métricas ni avisos
         if (body.team !== true) {
           await bump(env, `consulta:${body.to}`);
@@ -354,14 +394,16 @@ export default {
         }
       }
       const remaining = Math.max(0, limit - n);
-      const cm = confirmEmail(pro, q, remaining, id, unlimited);
+      const paidLeft = remaining === 0 && !unlimited && creditsLeft >= 0 && (paid || credits > 0)
+        ? (creditsLeft === 0 ? 'Era tu última consulta pagada' : `Te ${creditsLeft === 1 ? 'queda 1 consulta pagada' : `quedan ${creditsLeft} consultas pagadas`}`) : '';
+      const cm = confirmEmail(pro, q, remaining, id, unlimited, subscriber ? 'Tienes el plan ilimitado: una consulta nueva al día' : paidLeft);
       const sentU = await sendMail(env, { to: q.email, replyTo: relay ? await relayAddress(env, 'u', id) : pro.email, ...cm, bcc });
       // Sin relay no hay hilo que seguir (ni recordatorios): no se guarda nada más
       if (relay) {
         await saveThread(env, { id, p: pro.key || body.to, u: await sealEmail(env, q.email), uh: (await hmac(env.HASH_SALT, norm)).slice(0, 24),
           sp: pm.subject, su: cm.subject, rp: [], ru: [], c: Date.now(), a: 0, rem: false, n: 0, ...(body.follow === true ? { f: 1 } : {}) });
       }
-      return reply(200, { ok: true, remaining, freeLimit: limit, ...(unlimited ? { unlimited: true } : {}), ...(relay ? { id } : {}), dryRun: env.DRY_RUN === '1' });
+      return reply(200, { ok: true, remaining, freeLimit: limit, ...(unlimited ? { unlimited: true } : {}), ...(paid || credits > 0 ? { credits: creditsLeft } : {}), ...(relay ? { id } : {}), dryRun: env.DRY_RUN === '1' });
     }
     return reply(404, { error: 'not_found' });
   },

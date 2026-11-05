@@ -9,3 +9,7 @@ CREATE INDEX IF NOT EXISTS activity_ts ON activity (ts);
 
 -- Opiniones tras la consulta: sin correo ni número de consulta. nombre solo si la usuaria deja publicarlo.
 CREATE TABLE IF NOT EXISTS opiniones (id INTEGER PRIMARY KEY AUTOINCREMENT, ts INTEGER NOT NULL, pro TEXT NOT NULL, rating INTEGER NOT NULL, texto TEXT NOT NULL, nombre TEXT, publicable INTEGER NOT NULL DEFAULT 0);
+
+-- Pagos (src/stripe.js, vera-backlog#56). Solo la huella del correo, nunca el correo ni la consulta.
+CREATE TABLE IF NOT EXISTS pagos (session TEXT PRIMARY KEY, h TEXT NOT NULL, plan TEXT NOT NULL, live INTEGER NOT NULL DEFAULT 0, at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS saldo (h TEXT PRIMARY KEY, n INTEGER NOT NULL DEFAULT 0, until TEXT, sub TEXT, sub_until TEXT, day TEXT);

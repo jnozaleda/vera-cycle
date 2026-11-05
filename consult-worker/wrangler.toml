@@ -12,6 +12,9 @@ DRY_RUN = "0"
 RELAY = "1"
 # "1" = avisos de actividad al equipo (al momento + resumen cada hora) a ALERT_TO o COPY_TO
 ALERTS = "1"
+# Pagos (src/stripe.js): "off" | "test" (solo con ?pagos=1 en la app) | "on"
+PAYMENTS = "test"
+STRIPE_PORTAL_URL = "https://billing.stripe.com/p/login/test_fZu14n5rBaBCbK8b9Jao800"
 
 [[kv_namespaces]]
 binding = "KV"

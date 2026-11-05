@@ -1088,3 +1088,14 @@ body[data-stage="menopause"] { --st-soft: #EFE6D8; }
 .ob-welcome .google-btn, .ob-welcome .link-soft { align-self: stretch; }
 .ob-welcome .link-soft.mt-16 { align-self: center; }
 .ask-add { cursor: pointer; }
+
+/* Pagos (vera-backlog#56) */
+.plan-pick { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; text-align: left;
+  background: #fff; border: 1.5px solid var(--st-mid); border-radius: 14px; padding: 14px 16px; cursor: pointer; font: inherit; color: inherit; }
+.plan-pick:first-child { border-color: var(--st); }
+.plan-pick:disabled { opacity: .6; cursor: default; }
+.plan-pick-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pay-ok { background: var(--st-soft); border-radius: 12px; padding: 12px 14px; color: var(--deep, inherit); }
+.pay-ok.is-warn { background: #FBEDEA; }
+.pay-ok a { color: inherit; font-weight: 600; }
+.plan-pick .nowrap { white-space: nowrap; }

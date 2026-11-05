@@ -1288,8 +1288,55 @@ const isEmail = (e) => /^[^\s@<>()",;]+@[^\s@<>()",;]+\.[a-z]{2,24}$/i.test(Stri
 /** Puntos de gratuitas usadas / disponibles */
 const freeDots = (used, total) => `<span class="free-dots" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i < used ? 'on' : ''}"></i>`).join('')}</span>`;
 
+// Pagos (vera-backlog#56). Mientras el servicio está en «test», solo se ofrecen en un dispositivo que abrió la app con ?pagos=1
+const PAY_TEST_KEY = 'hera-pagos-test';
+const PAY_DRAFT_KEY = 'hera-pay-draft';
+const payTest = () => { try { return localStorage.getItem(PAY_TEST_KEY) === '1'; } catch { return false; } };
+const PLANS_UI = [
+  { k: 'bono', name: 'Bono de 5 consultas', price: '35 €', note: '7 € cada una · válido 12 meses' },
+  { k: 'suelta', name: 'Consulta suelta', price: '9 €', note: 'Solo esta pregunta' },
+  { k: 'mensual', name: 'Ilimitado', price: '15 € / mes', note: 'Una consulta nueva al día · sin permanencia' },
+];
+
+/** Pantalla B con pagos: elegir plan; la pregunta escrita se guarda para enviarla al volver */
+function askPayView(a) {
+  const busy = a.buy?.busy;
+  return sheetFrame('Consulta', `<div class="stack-14">
+    <div class="limit-card stack-8">
+      ${consultPair('sm')}
+      <div class="t-15 w-500 c-deep">Has usado tus ${a.result.freeLimit || 2} consultas gratuitas</div>
+      <p class="t-13 lh-4 c-deep">Para seguir preguntando a Gonzalo, Marina y Lucía, elige cómo. Tu pregunta queda guardada y la envías al volver.</p>
+    </div>
+    <div class="stack-8">
+      ${PLANS_UI.map((p) => `<button class="plan-pick" data-action="ask-buy" data-v="${p.k}" ${busy ? 'disabled' : ''}>
+        <span class="plan-pick-main"><span class="t-15 w-600 c-deep">${p.name}</span><span class="t-12 soft">${p.note}</span></span>
+        <span class="t-15 w-600 c-deep nowrap">${busy === p.k ? 'Abriendo…' : p.price}</span></button>`).join('')}
+    </div>
+    ${a.buy?.error ? `<p class="t-12 c-rose">${esc(a.buy.error)}</p>` : ''}
+    <p class="t-12 soft lh-4">Pagas en Stripe con tarjeta, Apple Pay o Google Pay, a nombre de ${esc(a.email)}. Hera no ve tu tarjeta.</p>
+    <p class="t-13 lh-4">Para seguir con una consulta anterior, responde al correo de la profesional: <b>no gasta consultas</b>.</p>
+    <p class="t-11 soft-70 lh-3">Si es urgente, no esperes: llama al 112 o acude a tu centro de salud.</p>
+  </div>`);
+}
+
+/** Ilimitado: ya hizo hoy su consulta nueva */
+function askDailyView(a) {
+  return sheetFrame('Consulta', `<div class="stack-14">
+    <div class="limit-card stack-8">
+      ${consultPair('sm')}
+      <div class="t-15 w-500 c-deep">Ya has hecho tu consulta nueva de hoy</div>
+      <p class="t-13 lh-4 c-deep">El plan ilimitado incluye una consulta nueva al día. Mañana puedes hacer otra; tu pregunta sigue aquí escrita.</p>
+    </div>
+    <p class="t-13 lh-4">Para seguir con la de hoy, responde al correo de la profesional: <b>no gasta consultas</b>.</p>
+    ${a.result.portal ? `<a class="outline-sage" href="${esc(a.result.portal)}" target="_blank" rel="noopener">Gestionar o cancelar mi suscripción</a>` : ''}
+    <p class="t-11 soft-70 lh-3">Si es urgente, no esperes: llama al 112 o acude a tu centro de salud.</p>
+  </div>`);
+}
+
 /** Pantalla B: gratuitas agotadas (sin pasarela de pago todavía) */
 function askLimitView(a) {
+  if (a.result.daily) return askDailyView(a);
+  if (a.result.pay) return askPayView(a);
   const n = a.notify || {};
   const notify = n.done
     ? `<p class="t-13 c-sage w-500 text-center">Hecho: te avisaremos en ${esc(a.email)} cuando estén disponibles.</p>`
@@ -1329,7 +1376,7 @@ function askSheet() {
         <p class="t-13">Tu duda va camino de ${esc(who.short)}</p>
       </div>
       <p class="t-13 soft lh-4">${esc(who.short)} te responderá en menos de ${who.responseHours} h a <b class="w-500">${esc(a.email)}</b>. Te hemos mandado una copia.</p>
-      ${a.result.unlimited ? '<p class="t-12 soft">Tienes consultas ilimitadas</p>' : `${freeDots(total - rem, total)}
+      ${a.result.unlimited ? '<p class="t-12 soft">Tienes consultas ilimitadas</p>' : a.result.credits != null && rem === 0 ? `<p class="t-12 soft">${a.result.credits === 0 ? 'Era tu última consulta pagada' : `Te ${a.result.credits === 1 ? 'queda 1 consulta pagada' : `quedan ${a.result.credits} consultas pagadas`}`}</p>` : `${freeDots(total - rem, total)}
       <p class="t-12 soft">${rem === 0 ? 'Era tu última consulta gratuita' : `Te ${rem === 1 ? 'queda 1 consulta gratuita' : `quedan ${rem} consultas gratuitas`}`}</p>`}
       ${a.result.dryRun ? '<p class="t-11 c-rose">Modo ensayo: no se ha enviado ningún correo.</p>' : ''}
       <button class="link-soft self-center" data-action="ask-reset">Escribir otra pregunta</button>
@@ -1349,7 +1396,12 @@ function askSheet() {
   const sugg = suggestContact({ text: a.text, context: a.context, mode: store.mode });
   const details = consultDetails();
   const mine = listConsults();
+  const pd = a.paid;
+  const paidBanner = !pd ? '' : pd.checking ? '<div class="pay-ok t-13">Comprobando el pago…</div>'
+    : pd.error ? `<div class="pay-ok is-warn t-13 lh-4">No hemos podido confirmar el pago todavía. Si te han cobrado, envía la consulta en unos minutos o escríbenos a ${esc(CONTACT_EMAIL)}.</div>`
+    : `<div class="pay-ok t-13 lh-4"><b>Pago hecho.</b> ${pd.unlimited ? 'Tienes el plan ilimitado: una consulta nueva al día.' : `Tienes ${pd.credits === 1 ? '1 consulta pagada' : `${pd.credits} consultas pagadas`}.`} ${a.text ? 'Tu pregunta está aquí: revísala y envíala.' : 'Escribe tu pregunta y envíala.'}${pd.unlimited && pd.portal ? ` <a href="${esc(pd.portal)}" target="_blank" rel="noopener">Gestionar suscripción</a>` : ''}</div>`;
   return sheetFrame('Consulta', `<div class="stack-14">
+    ${paidBanner}
     ${mine.length ? `<details class="my-consults" data-id="my-consults" ${ui.openDetails.has('my-consults') ? 'open' : ''}><summary>Tus consultas (${mine.length})</summary>${consultList(10)}</details>` : ''}
     <div class="stack-8 ask-picks" role="radiogroup" aria-label="¿A quién quieres preguntar?">
       ${askPickCard(CONSULTS.gineco, a, sugg)}${askPickCard(CONSULTS.matrona, a, sugg)}${askPickCard(CONSULTS.pediatra, a, sugg)}
@@ -2751,7 +2803,7 @@ const actions = {
       const meta = [];
       if (a.include) meta.push(...consultDetails());
       const res = await fetch(`${CONSULT_API}/ask`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: a.email.trim(), to: to.key, text: a.text.trim(), context: a.context, situation: meta.join('\n'), website: a.website || '', attachments: filesPayload(a.files || []), follow: !!a.follow, ...(isTeam() ? { team: true } : {}) }) });
+        body: JSON.stringify({ email: a.email.trim(), to: to.key, text: a.text.trim(), context: a.context, situation: meta.join('\n'), website: a.website || '', attachments: filesPayload(a.files || []), follow: !!a.follow, ...(isTeam() ? { team: true } : {}), ...(payTest() ? { payTest: true } : {}) }) });
       const j = await res.json().catch(() => ({}));
       if (res.status === 429) throw new Error('Has enviado varias consultas seguidas. Espera unos minutos y vuelve a intentarlo.');
       if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');
@@ -2760,11 +2812,26 @@ const actions = {
       a.status = null; a.result = j; a.sentTo = to.key;
       track(j.limit ? 'consulta_limite' : 'consulta_enviada');
       if (j.ok && j.id) addConsult({ id: j.id, to: to.key, text: a.text.trim() });
-      if (j.ok) { a.text = ''; a.files = []; a.fileError = ''; }
+      if (j.ok) { a.text = ''; a.files = []; a.fileError = ''; a.paid = null; }
     } catch (e) { a.status = 'error'; a.error = e.message; track('consulta_error'); }
     render();
   },
   'ask-file-remove': (el) => { ui.ask.files.splice(+el.dataset.i, 1); ui.ask.fileError = ''; render(); },
+  'ask-buy': async (el) => {
+    const a = ui.ask;
+    const plan = el.dataset.v;
+    a.buy = { busy: plan }; render();
+    track(`pago_elegido:${plan}`);
+    // Solo en este dispositivo: la pregunta (sin adjuntos) para recuperarla al volver de Stripe. Nunca va en la URL.
+    try { localStorage.setItem(PAY_DRAFT_KEY, JSON.stringify({ to: a.to, manual: a.manual, text: a.text, context: a.context, include: a.include, follow: !!a.follow, at: Date.now() })); } catch { /* sin almacenamiento */ }
+    try {
+      const res = await fetch(`${CONSULT_API}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: a.email.trim(), plan, ...(payTest() ? { payTest: true } : {}) }) });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || !j.url) throw new Error();
+      location.href = j.url;
+    } catch { a.buy = { error: 'No se ha podido abrir el pago. Inténtalo de nuevo en un rato.' }; render(); }
+  },
   'ask-notify-open': () => { ui.ask.notify = { open: true, consent: false }; render(); },
   'ask-notify-send': async () => {
     const n = ui.ask.notify || (ui.ask.notify = {});
@@ -3216,6 +3283,31 @@ if (location.hash === '#preguntar') {
   ui.ask.to = suggestContact({ text: draft, context: '', mode: store.mode }).to;
   ui.sheet = 'ask'; ui.sheetAnim = true; render();
   track('consulta_abierta');
+}
+// Pagos: ?pagos=1 activa la prueba en este dispositivo; ?pago=ok|no es la vuelta de Stripe
+{
+  const qs = new URLSearchParams(location.search);
+  if (qs.get('pagos') === '1') { try { localStorage.setItem(PAY_TEST_KEY, '1'); } catch { /* sin almacenamiento */ } }
+  if (qs.get('pagos') === '0') { try { localStorage.removeItem(PAY_TEST_KEY); } catch { /* sin almacenamiento */ } }
+  const pago = qs.get('pago');
+  if (pago || qs.has('pagos')) history.replaceState(null, '', location.pathname);
+  if (pago) {
+    let d = null;
+    try { d = JSON.parse(localStorage.getItem(PAY_DRAFT_KEY) || 'null'); localStorage.removeItem(PAY_DRAFT_KEY); } catch { /* sin almacenamiento */ }
+    if (d && Date.now() - d.at > 86400000) d = null;
+    ui.ask = { ...ui.ask, sent: null, status: null, result: null, buy: null, paid: null,
+      ...(d ? { to: d.to, manual: d.manual, text: d.text || '', context: d.context || '', include: d.include !== false, follow: !!d.follow } : {}) };
+    if (!ui.ask.to) ui.ask.to = suggestContact({ text: ui.ask.text, context: ui.ask.context, mode: store.mode }).to;
+    ui.sheet = 'ask'; ui.sheetAnim = true;
+    if (pago === 'ok') {
+      ui.ask.paid = { checking: true }; render();
+      fetch(`${CONSULT_API}/checkout/status?cs=${encodeURIComponent(qs.get('cs') || '')}`).then((r) => r.json()).then((j) => {
+        ui.ask.paid = j.paid ? j : { error: true };
+        if (j.paid) track(`pago_hecho:${j.plan}`);
+        render();
+      }).catch(() => { ui.ask.paid = { error: true }; render(); });
+    } else render();
+  }
 }
 track('apertura', true);
 if (!store.needsOnboarding) track(`etapa:${store.mode}`, true);

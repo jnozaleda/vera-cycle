@@ -14,7 +14,7 @@ RELAY = "1"
 ALERTS = "1"
 # Pagos (src/stripe.js): "off" | "test" (solo con ?pagos=1 en la app) | "on"
 PAYMENTS = "on"
-STRIPE_PORTAL_URL = "https://billing.stripe.com/p/login/test_fZu14n5rBaBCbK8b9Jao800"
+STRIPE_PORTAL_URL = "https://billing.stripe.com/p/login/test_5kQ8wPcrXa1B2mLgw2bMQ00"
 
 [[kv_namespaces]]
 binding = "KV"

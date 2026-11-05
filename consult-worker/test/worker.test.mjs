@@ -202,6 +202,10 @@ assert.equal(validateAttachments([{ content: 'A'.repeat(Math.ceil((MAX_BYTES * 4
   await call('/opinion', { t: r2.j.id, s: s2, r: 1 });
   await call('/opinion/comentario', { t: r2.j.id, s: s2, text: 'Me respondió rapidísimo', name: 'Laura G.', publish: true });
   const last = opiniones.at(-1); assert.deepEqual([last.publicable, last.nombre, last.pro], [1, 'Laura G.', 'matrona']);
+  const avisos = sent.filter((m) => /^Hera · (opinión|comentario)/.test(m.subject || ''));
+  assert.ok(avisos.some((m) => m.subject === 'Hera · opinión: «Sí, mucho» para Marina'), 'aviso de opinión al equipo');
+  assert.ok(avisos.some((m) => m.subject.startsWith('Hera · comentario') && m.text.includes('Laura G.')), 'aviso de comentario con el nombre');
+  assert.ok(avisos.every((m) => m.to[0] === 'copia@example.com' && !m.text.includes('contenta@')), 'al equipo y sin el correo de la usuaria');
   assert.ok(!JSON.stringify(opiniones).includes('@'), 'las opiniones no llevan correos');
   await call('/opinion/baja', { t: r2.j.id, s: s2 });
   t = await loadThread(env, r2.j.id); t.a = Date.now() - 25 * 3600000; await saveThread(env, t);

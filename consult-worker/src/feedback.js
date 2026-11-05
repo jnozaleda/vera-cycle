@@ -2,6 +2,9 @@
 // Las valoraciones se cuentan por profesional; los comentarios se guardan sin el correo ni el número de consulta.
 // El seguimiento lo hace la profesional por el mismo hilo de Hera, así que no hace falta guardar el correo más de 30 días.
 import { loadThread, saveThread, relayAddress, openEmail } from './relay.js';
+import { notify } from './activity.js';
+
+const PANEL = 'https://hera-consultas.tempcheck-app.workers.dev/panel';
 
 export const RATING = { 1: 'Sí, mucho', 2: 'Más o menos', 3: 'No' };
 const SITE = 'https://hera-gine.com';
@@ -93,6 +96,9 @@ export async function handleOpinion(env, path, body, { PROS, sendMail, bump }) {
       // Si ya dio permiso al preguntar y no quedó satisfecha, la profesional recibe el aviso al momento
       if (r > 1 && t.f && !t.fs && pro) await askFollowUp(env, t, pro, sendMail);
       await saveThread(env, t);
+      // Aviso al equipo de cada opinión, positiva o negativa (sin el correo de la usuaria)
+      if (t.p !== 'prueba') await notify(env, `Hera · opinión: «${RATING[r]}» para ${pro?.short || t.p}`,
+        `Nueva opinión sobre una consulta respondida por ${pro?.short || t.p}: «${RATING[r]}».${r > 1 ? (t.f ? '\nPidió seguimiento al preguntar: la profesional ya tiene el aviso.' : '\nTodavía no ha pedido seguimiento.') : ''}\n\nSi deja un comentario, te llegará en otro aviso. Panel: ${PANEL}`, sendMail);
     }
     return [200, { ok: true, r: t.fr, done: !!t.fc, followSent: !!t.fs, ...info }];
   }
@@ -110,8 +116,11 @@ export async function handleOpinion(env, path, body, { PROS, sendMail, bump }) {
     t.fc = Date.now();
     if (text && t.fr > 1) t.ft = text.slice(0, 500);
     if (body.follow === true && t.fr > 1) t.f = 1;
+    const before = !!t.fs;
     if (t.f && t.fr > 1 && !t.fs && pro) await askFollowUp(env, t, pro, sendMail);
     await saveThread(env, t);
+    if (t.p !== 'prueba' && (text || (t.fs && !before))) await notify(env, `Hera · comentario: «${RATING[t.fr]}» para ${pro?.short || t.p}`,
+      `${text ? `Comentario sobre la respuesta de ${pro?.short || t.p} («${RATING[t.fr]}»):\n\n«${text}»\n\n${publish ? `Se puede publicar en la web como «${name}».` : 'No dio permiso para publicarlo.'}` : `Sin comentario.`}${t.fs && !before ? `\n\nHa pedido seguimiento: ${pro?.short || 'la profesional'} ya tiene el aviso para escribirle.` : ''}\n\nPanel: ${PANEL}`, sendMail);
     return [200, { ok: true, followSent: !!t.fs }];
   }
   return [404, { error: 'not_found' }];

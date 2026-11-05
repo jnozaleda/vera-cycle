@@ -1304,8 +1304,11 @@ function askPayView(a) {
   return sheetFrame('Consulta', `<div class="stack-14">
     <div class="limit-card stack-8">
       ${consultPair('sm')}
-      <div class="t-15 w-500 c-deep">Has usado tus ${a.result.freeLimit || 2} consultas gratuitas</div>
-      <p class="t-13 lh-4 c-deep">Para seguir preguntando a Gonzalo, Marina y Lucía, elige cómo. Tu pregunta queda guardada y la envías al volver.</p>
+      ${a.result.early
+        ? `<div class="t-15 w-500 c-deep">Bono o plan ilimitado</div>
+      <p class="t-13 lh-4 c-deep">Si aún te quedan consultas gratuitas, se usan primero: lo que compres queda para después. Tu pregunta queda guardada y la envías al volver.</p>`
+        : `<div class="t-15 w-500 c-deep">Has usado tus ${a.result.freeLimit || 2} consultas gratuitas</div>
+      <p class="t-13 lh-4 c-deep">Para seguir preguntando a Gonzalo, Marina y Lucía, elige cómo. Tu pregunta queda guardada y la envías al volver.</p>`}
     </div>
     <div class="stack-8">
       ${PLANS_UI.map((p) => `<button class="plan-pick" data-action="ask-buy" data-v="${p.k}" ${busy ? 'disabled' : ''}>
@@ -1314,6 +1317,7 @@ function askPayView(a) {
     </div>
     ${a.buy?.error ? `<p class="t-12 c-rose">${esc(a.buy.error)}</p>` : ''}
     <p class="t-12 soft lh-4">Pagas en Stripe con tarjeta, Apple Pay o Google Pay, a nombre de ${esc(a.email)}. Hera no ve tu tarjeta.</p>
+    ${a.result.early ? '<button class="link-soft self-center" data-action="ask-pay-back">Volver a mi pregunta</button>' : ''}
     <p class="t-13 lh-4">Para seguir con una consulta anterior, responde al correo de la profesional: <b>no gasta consultas</b>.</p>
     <p class="t-11 soft-70 lh-3">Si es urgente, no esperes: llama al 112 o acude a tu centro de salud.</p>
   </div>`);
@@ -1424,7 +1428,7 @@ function askSheet() {
     ${consultFormOn() ? `<label class="ask-check"><input type="checkbox" data-ask-follow ${a.follow ? 'checked' : ''}><span class="t-13 lh-4">Quiero que Hera me haga seguimiento si la respuesta no me deja satisfecha.</span></label>` : ''}
     ${a.status === 'error' ? `<p class="t-12 c-rose">${esc(a.error || 'No se ha podido enviar. Inténtalo de nuevo.')}</p>` : ''}
     <button class="btn-primary" data-action="${consultFormOn() ? 'ask-submit' : 'ask-send'}" data-v="email" data-ask-send ${to && a.status !== 'sending' ? '' : 'disabled'}>${a.status === 'sending' ? 'Enviando…' : to ? `Enviar a ${esc(to.short)}` : 'Elige a quién preguntar'}</button>
-    ${payTest() ? '<button class="link-soft self-center" data-action="ask-pay-preview">Ver los planes de pago (prueba)</button>' : ''}
+    <button class="link-soft self-center" data-action="ask-pay-preview">¿Prefieres un bono o el plan ilimitado? Ver planes</button>
     ${to?.whatsapp ? `<button class="outline-sage" data-action="ask-send" data-v="whatsapp">Prefiero escribir por WhatsApp</button>` : ''}
     <p class="t-11 soft-70 lh-3">No es para urgencias: si algo no va bien, contacta con tu centro de salud o tu unidad de referencia.</p>
   </div>`);
@@ -2779,7 +2783,7 @@ const actions = {
   'open-ask': (el) => {
     track('consulta_abierta');
     const ctx = el.dataset.ctx || '';
-    if (ui.ask.sent || ui.ask.result?.ok || ui.ask.context !== ctx) ui.ask = { ...ui.ask, context: ctx, include: true, text: ui.ask.sent || ui.ask.result?.ok ? '' : ui.ask.text, sent: null, to: null, manual: false, status: null, result: ui.ask.result?.limit ? ui.ask.result : null };
+    if (ui.ask.sent || ui.ask.result?.ok || ui.ask.context !== ctx) ui.ask = { ...ui.ask, context: ctx, include: true, text: ui.ask.sent || ui.ask.result?.ok ? '' : ui.ask.text, sent: null, to: null, manual: false, status: null, result: ui.ask.result?.limit && !ui.ask.result.early ? ui.ask.result : null };
     if (!ui.ask.manual) ui.ask.to = suggestContact({ text: ui.ask.text, context: ui.ask.context, mode: store.mode }).to;
     ui.sheet = 'ask'; ui.sheetAnim = true; render();
     setTimeout(() => root.querySelector('.ask-text')?.focus(), 300);
@@ -2789,7 +2793,7 @@ const actions = {
   'consult-seen': (el) => { markSeen(el.dataset.v); render(); },
   'consults-clear': () => { if (!confirm('¿Borrar el historial de consultas de este dispositivo? Las respuestas siguen en tu correo.')) return; clearConsults(); render(); },
   'hito-close': (el) => { try { localStorage.setItem(HITOS_KEY, JSON.stringify([...hitosVistos(), el.dataset.v])); } catch { /* sin almacenamiento */ } render(); },
-  'ask-reset': () => { ui.ask = { ...ui.ask, context: '', include: true, text: '', sent: null, to: null, manual: false, status: null, result: ui.ask.result?.limit ? ui.ask.result : null, notify: null }; render(); },
+  'ask-reset': () => { ui.ask = { ...ui.ask, context: '', include: true, text: '', sent: null, to: null, manual: false, status: null, result: ui.ask.result?.limit && !ui.ask.result.early ? ui.ask.result : null, notify: null }; render(); },
   'ask-pick': (el) => { ui.ask.to = el.dataset.v; ui.ask.manual = true; render(); },
   'ask-submit': async () => {
     const a = ui.ask;
@@ -2818,11 +2822,13 @@ const actions = {
     render();
   },
   'ask-file-remove': (el) => { ui.ask.files.splice(+el.dataset.i, 1); ui.ask.fileError = ''; render(); },
-  // Solo en un dispositivo con ?pagos=1: ver la pantalla de planes aunque queden gratuitas
+  // Comprar sin esperar a gastar las gratuitas (las gratuitas se siguen usando primero)
   'ask-pay-preview': () => {
-    if (!isEmail(ui.ask.email)) { ui.ask.status = 'error'; ui.ask.error = 'Escribe tu correo: el pago de prueba va a su nombre.'; render(); return; }
-    ui.ask.result = { limit: true, pay: true, freeLimit: 2 }; render();
+    if (!isEmail(ui.ask.email)) { ui.ask.status = 'error'; ui.ask.error = 'Escribe tu correo: el plan va a su nombre.'; render(); root.querySelector('[data-model="ask.email"]')?.focus(); return; }
+    track('planes_abiertos');
+    ui.ask.status = null; ui.ask.result = { limit: true, pay: true, early: true, freeLimit: 2 }; render();
   },
+  'ask-pay-back': () => { ui.ask.result = null; ui.ask.buy = null; render(); },
   'ask-buy': async (el) => {
     const a = ui.ask;
     const plan = el.dataset.v;

@@ -171,6 +171,7 @@ section { padding: 64px 0; }
 .done .dots { display: flex; gap: 6px; } .done .dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); } .done .dots i.on { background: var(--plum); }
 .done .small { font-size: 13.5px; color: var(--muted); }
 .done .btn { width: auto; margin-top: 6px; }
+.linkplans { display: block; margin: 10px auto 0; background: none; border: 0; color: var(--plum); font: 500 14px 'Inter', sans-serif; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 6px; }
 .done .linkbtn { background: none; border: 0; color: var(--plum); font: 600 14px 'Inter', sans-serif; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 6px; }
 .done label { display: flex; gap: 10px; text-align: left; font-size: 13px; color: var(--text); align-items: flex-start; }
 .done label input { margin-top: 3px; accent-color: var(--plum); }
@@ -391,6 +392,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
           <p class="err" id="ask-err" role="alert" hidden></p>
         </div>
         <button class="btn btn-p" type="submit" id="ask-send">Preguntar gratis</button>
+        <button type="button" class="linkplans" id="ask-plans">¿Prefieres un bono o el plan ilimitado? Ver planes</button>
         <p class="fine" id="ask-fine" hidden>Gratis, sin registro. No es para urgencias. <a href="privacy.html#consultas">Cómo tratamos tus datos</a>.</p>
       </form>
       <div class="done" id="ask-done" hidden aria-live="polite"></div>
@@ -560,6 +562,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <div class="plan"><span class="k">Bono de 5 consultas</span><span class="v">35 € <small>· 7 € cada una</small></span><p>Para cuando necesites preguntar más de una vez.</p></div>
       <div class="plan"><span class="k">Ilimitado</span><span class="v">15 € <small>/ mes</small></span><p>Pregunta cuando lo necesites, sin permanencia. Uso razonable: hasta una consulta nueva al día.</p></div>
     </div>
+    <p style="margin-top:14px"><a href="#ask" data-goplans style="color:var(--plum);font-weight:600">Comprar un bono o el ilimitado →</a></p>
   </div>
 </section>
 
@@ -775,16 +778,20 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   const PLANS = [['bono', 'Bono de 5 consultas', '7 € cada una · válido 12 meses', '35 €'], ['suelta', 'Consulta suelta', 'Solo esta pregunta', '9 €'],
     ['mensual', 'Ilimitado', 'Una consulta nueva al día · sin permanencia', '15 €/mes']];
   function showPlans(j, q) {
-    swap(`<h3>Has usado tus ${j.freeLimit || 2} consultas gratuitas</h3>
-      <p>Para seguir preguntando a Gonzalo, Marina y Lucía, elige cómo. Tu pregunta queda guardada y la envías al volver.</p>
+    swap(`${j.early ? `<h3>Bono o plan ilimitado</h3>
+      <p>Si aún te quedan consultas gratuitas, se usan primero: lo que compres queda para después. Tu pregunta queda guardada y la envías al volver.</p>`
+      : `<h3>Has usado tus ${j.freeLimit || 2} consultas gratuitas</h3>
+      <p>Para seguir preguntando a Gonzalo, Marina y Lucía, elige cómo. Tu pregunta queda guardada y la envías al volver.</p>`}
       <div style="display:grid;gap:8px;max-width:30em;margin:0 auto;text-align:left">
         ${PLANS.map(([k, name, note, price], i) => `<button type="button" data-plan="${k}" style="display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;padding:14px 16px;border-radius:14px;background:#fff;color:inherit;font:inherit;cursor:pointer;border:1.5px solid ${i ? '#C9AEBB' : '#693D55'}">
           <span style="display:grid;gap:2px;text-align:left"><b style="font-weight:600">${name}</b><span class="small" style="margin:0">${note}</span></span><b style="font-weight:600;white-space:nowrap">${price}</b></button>`).join('')}
       </div>
       <p class="err" id="plan-err" hidden></p>
       <p class="small">Pagas en Stripe con tarjeta, Apple Pay o Google Pay, a nombre de ${esc(lastEmail)}. Hera no ve tu tarjeta.</p>
+      ${j.early ? '<button type="button" class="linkbtn" data-back>Volver a mi pregunta</button>' : ''}
       <p>Para seguir con una consulta anterior, responde al correo de la profesional: <b>no gasta consultas</b>.</p>
       <p class="small">Si es urgente, no esperes: llama al 112 o acude a tu centro de salud.</p>`);
+    done.querySelector('[data-back]')?.addEventListener('click', () => { done.hidden = true; form.hidden = false; refresh(); });
     done.querySelectorAll('[data-plan]').forEach((b) => b.addEventListener('click', async () => {
       const plan = b.dataset.plan;
       done.querySelectorAll('[data-plan]').forEach((x) => { x.disabled = true; });
@@ -802,6 +809,16 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       }
     }));
   }
+  // Comprar sin esperar a gastar las gratuitas
+  function openPlans() {
+    open();
+    if (!isEmail(email.value)) { showErr('Escribe tu correo: el plan va a su nombre.'); email.focus(); return; }
+    showErr(''); lastEmail = email.value.trim(); store.set('hera-ask-email', lastEmail);
+    hit('planes_abiertos');
+    showPlans({ freeLimit: 2, early: true }, { to: chosen(), text: ta.value.trim(), follow: $('ask-follow').checked });
+  }
+  $('ask-plans').addEventListener('click', openPlans);
+  document.querySelectorAll('[data-goplans]').forEach((a) => a.addEventListener('click', (ev) => { ev.preventDefault(); goAsk(); if (isEmail(email.value)) openPlans(); else { open(); showErr('Escribe tu correo y toca «Ver planes»: el plan va a su nombre.'); } }));
   function showLimit(j, q = {}) {
     if (j.pay) { showPlans(j, q); return; }
     swap(`<h3>Has usado tus ${j.freeLimit || 2} consultas gratuitas</h3>

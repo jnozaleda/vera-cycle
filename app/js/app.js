@@ -1424,6 +1424,7 @@ function askSheet() {
     ${consultFormOn() ? `<label class="ask-check"><input type="checkbox" data-ask-follow ${a.follow ? 'checked' : ''}><span class="t-13 lh-4">Quiero que Hera me haga seguimiento si la respuesta no me deja satisfecha.</span></label>` : ''}
     ${a.status === 'error' ? `<p class="t-12 c-rose">${esc(a.error || 'No se ha podido enviar. Inténtalo de nuevo.')}</p>` : ''}
     <button class="btn-primary" data-action="${consultFormOn() ? 'ask-submit' : 'ask-send'}" data-v="email" data-ask-send ${to && a.status !== 'sending' ? '' : 'disabled'}>${a.status === 'sending' ? 'Enviando…' : to ? `Enviar a ${esc(to.short)}` : 'Elige a quién preguntar'}</button>
+    ${payTest() ? '<button class="link-soft self-center" data-action="ask-pay-preview">Ver los planes de pago (prueba)</button>' : ''}
     ${to?.whatsapp ? `<button class="outline-sage" data-action="ask-send" data-v="whatsapp">Prefiero escribir por WhatsApp</button>` : ''}
     <p class="t-11 soft-70 lh-3">No es para urgencias: si algo no va bien, contacta con tu centro de salud o tu unidad de referencia.</p>
   </div>`);
@@ -2817,6 +2818,11 @@ const actions = {
     render();
   },
   'ask-file-remove': (el) => { ui.ask.files.splice(+el.dataset.i, 1); ui.ask.fileError = ''; render(); },
+  // Solo en un dispositivo con ?pagos=1: ver la pantalla de planes aunque queden gratuitas
+  'ask-pay-preview': () => {
+    if (!isEmail(ui.ask.email)) { ui.ask.status = 'error'; ui.ask.error = 'Escribe tu correo: el pago de prueba va a su nombre.'; render(); return; }
+    ui.ask.result = { limit: true, pay: true, freeLimit: 2 }; render();
+  },
   'ask-buy': async (el) => {
     const a = ui.ask;
     const plan = el.dataset.v;

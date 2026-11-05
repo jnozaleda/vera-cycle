@@ -17,7 +17,7 @@ const secrets = JSON.parse(fs.readFileSync(SECRETS, 'utf8'));
 const KEY = secrets.STRIPE_SECRET_KEY;
 if (!/^[sr]k_(test|live)_/.test(KEY || '')) { console.error('Falta STRIPE_SECRET_KEY en .secrets.json'); process.exit(1); }
 const WEBHOOK_URL = 'https://hera-consultas.tempcheck-app.workers.dev/stripe/webhook';
-const EVENTS = ['checkout.session.completed', 'checkout.session.async_payment_succeeded', 'invoice.paid', 'customer.subscription.deleted'];
+const EVENTS = ['checkout.session.completed', 'checkout.session.async_payment_succeeded', 'invoice.paid', 'customer.subscription.deleted', 'charge.refunded'];
 
 async function api(method, path, params = {}) {
   const qs = new URLSearchParams(params).toString();

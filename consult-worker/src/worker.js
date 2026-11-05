@@ -232,6 +232,10 @@ export default {
           `${PLANS[plan].label}: ${PLANS[plan].eur} €${s.livemode ? '' : ' (modo de prueba, sin dinero real)'}\n${hora}\n\nVer en Stripe: ${dash}`, sendMail);
       },
       cancelled: async () => { await bump(env, 'pago:baja_mensual'); },
+      refunded: async (plan, charge) => {
+        await bump(env, `pago:devuelto_${plan}`);
+        await notify(env, `Hera: reembolso · ${PLANS[plan].label} (${PLANS[plan].eur} €)`, `Reembolsado: ${PLANS[plan].label}. Se han quitado ${PLANS[plan].credits === 1 ? 'esa consulta' : `esas ${PLANS[plan].credits} consultas`} del saldo (si quedaban).\n\nVer en Stripe: https://dashboard.stripe.com/${charge.livemode ? '' : 'test/'}payments/${charge.payment_intent}`, sendMail);
+      },
     };
     if (request.method === 'POST' && url.pathname === '/stripe/webhook') return new Response(null, { status: await handleWebhook(env, request, payHooks) });
     if (request.method === 'GET' && url.pathname === '/checkout/status') {

@@ -7,7 +7,7 @@
 // A Stripe solo le llegan el correo, el plan y la huella del correo (metadata.h). Nunca el texto de la consulta.
 //
 // D1 (no KV: KV tarda hasta un minuto en verse igual en todas partes y podría sumar un bono dos veces):
-//   pagos(session PK, h, plan, live, at)   cada sesión pagada, una vez
+//   pagos(session PK, h, plan, live, at)   cada sesión pagada, una vez (plan «…:devuelto» si se reembolsó)
 //   saldo(h PK, n, until, sub, sub_until, day)   consultas pagadas (caducan 12 meses tras la última compra) e ilimitado
 //   (day = último día de Madrid con consulta nueva del ilimitado: tope de una al día)
 //
@@ -162,6 +162,19 @@ export async function handleWebhook(env, request, hooks) {
       if (subId) {
         const sub = await api(env, 'GET', `subscriptions/${subId}`);
         if (/^[a-f0-9]{64}$/.test(sub.metadata?.h || '') && sub.status === 'active') await setSubscription(env, sub.metadata.h, sub);
+      }
+    } else if (ev.type === 'charge.refunded' && o.refunded && o.payment_intent) {
+      // Reembolso completo de una suelta o un bono: se quitan esas consultas del saldo (una sola vez)
+      const found = await api(env, 'GET', 'checkout/sessions', { payment_intent: o.payment_intent, limit: '1' });
+      const cs = found.data?.[0];
+      const plan = cs?.metadata?.plan;
+      const h = cs?.metadata?.h;
+      if (PLANS[plan]?.credits && /^[a-f0-9]{64}$/.test(h || '')) {
+        const r = await env.DB.prepare("UPDATE pagos SET plan = plan || ':devuelto' WHERE session = ?1 AND plan NOT LIKE '%:devuelto'").bind(cs.id).run();
+        if (r.meta?.changes) {
+          await env.DB.prepare('UPDATE saldo SET n = MAX(0, n - ?2) WHERE h = ?1').bind(h, PLANS[plan].credits).run();
+          await hooks?.refunded?.(plan, o);
+        }
       }
     } else if (ev.type === 'customer.subscription.deleted') {
       const h = o.metadata?.h;

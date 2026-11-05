@@ -15,7 +15,7 @@ import fs from 'node:fs';
 const SECRETS = new URL('../.secrets.json', import.meta.url);
 const secrets = JSON.parse(fs.readFileSync(SECRETS, 'utf8'));
 const KEY = secrets.STRIPE_SECRET_KEY;
-if (!/^sk_(test|live)_/.test(KEY || '')) { console.error('Falta STRIPE_SECRET_KEY en .secrets.json'); process.exit(1); }
+if (!/^[sr]k_(test|live)_/.test(KEY || '')) { console.error('Falta STRIPE_SECRET_KEY en .secrets.json'); process.exit(1); }
 const WEBHOOK_URL = 'https://hera-consultas.tempcheck-app.workers.dev/stripe/webhook';
 const EVENTS = ['checkout.session.completed', 'checkout.session.async_payment_succeeded', 'invoice.paid', 'customer.subscription.deleted'];
 
@@ -37,7 +37,7 @@ const PRICES = [
   { lookup: 'hera_mensual', name: 'Hera ilimitado', desc: 'Consultas por escrito sin límite (hasta una nueva al día). Sin permanencia.', amount: 1500, monthly: true },
 ];
 
-const mode = KEY.startsWith('sk_live_') ? 'REAL' : 'prueba';
+const mode = /^[sr]k_live_/.test(KEY) ? 'REAL' : 'prueba';
 console.log(`Cuenta de Stripe en modo ${mode}`);
 
 for (const p of PRICES) {

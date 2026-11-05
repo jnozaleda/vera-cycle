@@ -155,6 +155,8 @@ section { padding: 64px 0; }
 .eg-box small { display: block; color: var(--muted); margin-bottom: 8px; }
 .priv { display: flex; gap: 7px; align-items: flex-start; margin: 0; font-size: 12.5px; line-height: 1.45; color: var(--plum); }
 .priv svg { flex: none; margin-top: 2px; }
+.fld-ck { display: flex; gap: 9px; align-items: flex-start; font-size: 13.5px; line-height: 1.45; color: var(--text); }
+.fld-ck input { width: 17px; height: 17px; margin-top: 1px; accent-color: var(--plum); flex: none; }
 .files { display: grid; gap: 8px; }
 .file-add { justify-self: start; font-size: 13.5px; font-weight: 500; color: var(--plum); border: 1px solid var(--line); background: #fff; border-radius: 6px; padding: 8px 12px; cursor: pointer; }
 .files ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
@@ -384,6 +386,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
             <p class="err" id="ask-file-err" hidden></p>
             <p class="fine" id="ask-file-note"></p>
           </div>
+          <label class="fld-ck"><input type="checkbox" id="ask-follow"><span>Quiero que Hera me haga seguimiento si la respuesta no me deja satisfecha.</span></label>
           <input class="hp" id="ask-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
           <p class="err" id="ask-err" role="alert" hidden></p>
         </div>
@@ -712,7 +715,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     lastEmail = email.value.trim(); store.set('hera-ask-email', lastEmail);
     try {
       const res = await fetch(`${API}/ask`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: lastEmail, to, text, context: '', situation: $('ask-moment').value, website: $('ask-hp').value, attachments: filesPayload(files), ...(isTeam() ? { team: true } : {}) }) });
+        body: JSON.stringify({ email: lastEmail, to, text, context: '', situation: $('ask-moment').value, website: $('ask-hp').value, attachments: filesPayload(files), follow: $('ask-follow').checked, ...(isTeam() ? { team: true } : {}) }) });
       const j = await res.json().catch(() => ({}));
       if (res.status === 429) throw new Error('Has enviado varias consultas seguidas. Espera unos minutos y vuelve a intentarlo.');
       if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');

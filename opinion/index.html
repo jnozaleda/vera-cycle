@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tu opinión · Hera</title><meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#FAF8F5"><link rel="icon" type="image/svg+xml" href="/app/brand/favicon.svg">
+<style>
+@font-face{font-family:Newsreader;src:url('/app/fonts/newsreader.woff2') format('woff2');font-weight:200 800;font-display:swap}
+@font-face{font-family:Inter;src:url('/app/fonts/inter.woff2') format('woff2');font-weight:100 900;font-display:swap}
+*{box-sizing:border-box;margin:0}body{background:#FBF7F1;color:#2E2630;font:16px/1.55 Inter,system-ui,sans-serif}
+main{max-width:520px;margin:0 auto;padding:22px 20px 48px}.wm{font:400 30px/1 Newsreader,Georgia,serif;color:#3B2433;text-decoration:none;display:inline-block;margin-bottom:26px}
+h1{font:400 32px/1.1 Newsreader,Georgia,serif;color:#3B2433;letter-spacing:-.02em;margin:12px 0 6px;text-wrap:balance}.sub{color:#4C444C;margin-bottom:22px}
+.ok{width:42px;height:42px;border-radius:50%;background:#DCEBE4;color:#3F584B;display:grid;place-items:center;font-weight:700}
+label.lb{display:block;font-size:14px;margin:0 0 6px}label.lb i{font-style:normal;color:#655B61}
+textarea,input[type=text]{font:inherit;width:100%;border:1px solid #E6DFE2;border-radius:8px;padding:11px 12px;background:#fff;color:#2E2630}textarea{min-height:110px;resize:vertical}
+textarea:focus,input:focus{outline:none;border-color:#693D55;box-shadow:0 0 0 3px rgba(105,61,85,.15)}
+.ck{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;margin:14px 0}.ck input{width:18px;height:18px;margin-top:1px;accent-color:#693D55;flex:none}
+.field{margin-top:14px}button{font:inherit;font-weight:600;width:100%;background:#693D55;color:#fff;border:0;border-radius:6px;padding:13px;margin-top:8px;cursor:pointer}button:hover{background:#563146}button:disabled{opacity:.6}
+.fine{font-size:13px;color:#655B61;margin-top:12px}.err{color:#8F2F3F;font-size:14px;margin-top:10px}[hidden]{display:none!important}
+</style></head><body><main>
+<a class="wm" href="/">Hera</a>
+<div id="loading"><p class="sub">Un momento…</p></div>
+<div id="bad" hidden><h1>Este enlace no funciona</h1><p class="sub">Puede que esté incompleto o que la consulta ya no exista. Si quieres contarnos algo, escríbenos a contacto@hera-gine.com.</p></div>
+<div id="baja" hidden><div class="ok">✓</div><h1>Hecho: no te escribiremos más</h1><p class="sub">No volverás a recibir correos de opinión de Hera.</p></div>
+<div id="form" hidden>
+  <div class="ok">✓</div><h1>Gracias, nos ayuda mucho</h1><p class="sub" id="lead"></p>
+  <label class="lb" for="txt">¿Algo que podamos mejorar? <i>(opcional)</i></label>
+  <textarea id="txt" maxlength="1000"></textarea>
+  <div id="pub" hidden>
+    <div class="field"><label class="lb" for="name">Tu nombre, tal como quieras que aparezca <i>(por ejemplo, «Laura G.»)</i></label><input type="text" id="name" maxlength="40" autocomplete="off"></div>
+    <label class="ck"><input type="checkbox" id="publish"><span>Podéis publicar mi comentario en la web de Hera con este nombre.</span></label>
+  </div>
+  <label class="ck" id="followWrap" hidden><input type="checkbox" id="follow"><span>Quiero que Hera me haga seguimiento: que la profesional me vuelva a escribir por esta conversación.</span></label>
+  <p class="fine" id="followSent" hidden></p>
+  <button id="send" type="button">Enviar</button>
+  <p class="err" id="err" hidden></p>
+  <p class="fine">Tu comentario se guarda sin tu correo.</p>
+</div>
+<div id="thanks" hidden><div class="ok">✓</div><h1>¡Recibido!</h1><p class="sub" id="thanksText">Gracias por tomarte un momento.</p><p class="fine"><a href="/" style="color:#693D55">Volver a Hera</a></p></div>
+</main>
+<script type="module">
+const API = 'https://hera-consultas.tempcheck-app.workers.dev';
+const $ = (id) => document.getElementById(id);
+const show = (id) => ['loading', 'bad', 'baja', 'form', 'thanks'].forEach((x) => { $(x).hidden = x !== id; });
+const qs = new URLSearchParams(location.search);
+const base = { t: qs.get('t') || '', s: qs.get('s') || '' };
+const post = async (path, body) => { const r = await fetch(API + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...base, ...body }) }); return { ok: r.ok, j: await r.json().catch(() => ({})) }; };
+(async () => {
+  try {
+    if (qs.has('baja')) { const r = await post('/opinion/baja', {}); show(r.ok ? 'baja' : 'bad'); return; }
+    const r = await post('/opinion', { r: Number(qs.get('r')) });
+    if (!r.ok) { show('bad'); return; }
+    const { r: rating, pro, followAsked, followSent, done } = r.j;
+    if (done) { $('thanksText').textContent = 'Ya nos dejaste tu opinión sobre esta consulta. ¡Gracias!'; show('thanks'); return; }
+    $('lead').textContent = rating === 1 ? `Nos alegra que te ayudara. Se lo diremos a ${pro}.` : `Siento que no te ayudara del todo. Se lo diremos a ${pro}.`;
+    $('pub').hidden = rating !== 1;
+    if (rating > 1) {
+      if (followSent) { $('followSent').textContent = `Como lo pediste al preguntar, ${pro} te volverá a escribir por la misma conversación.`; $('followSent').hidden = false; }
+      else $('followWrap').hidden = false;
+    }
+    show('form');
+    $('send').addEventListener('click', async () => {
+      const name = $('name').value.trim();
+      if ($('publish').checked && !name) { $('err').textContent = 'Escribe el nombre con el que quieres que aparezca.'; $('err').hidden = false; return; }
+      $('send').disabled = true;
+      const c = await post('/opinion/comentario', { text: $('txt').value, name, publish: $('publish').checked, follow: $('follow').checked });
+      if (!c.ok) { $('send').disabled = false; $('err').textContent = 'No se ha podido enviar. Inténtalo de nuevo.'; $('err').hidden = false; return; }
+      if (c.j.followSent) $('thanksText').textContent = `${pro} te volverá a escribir por la misma conversación.`;
+      show('thanks');
+    });
+  } catch { show('bad'); }
+})();
+</script>
+<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "edc55b126e2943d8828e3241ae0c4efd"}'></script>
+</body></html>

@@ -63,7 +63,7 @@ export async function openEmail(env, sealed) {
 // MARK: - Hilo en KV
 
 export const threadKey = (id) => `t:${id}`;
-const meta = (t) => ({ p: t.p, c: t.c, a: t.a || 0, r: t.rem ? 1 : 0 });
+const meta = (t) => ({ p: t.p, c: t.c, a: t.a || 0, r: t.rem ? 1 : 0, f: t.fb ? 1 : 0 });
 export async function saveThread(env, t) {
   await env.KV.put(threadKey(t.id), JSON.stringify(t), { expirationTtl: THREAD_TTL, metadata: meta(t) });
 }

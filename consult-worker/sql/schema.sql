@@ -6,3 +6,6 @@ CREATE TABLE IF NOT EXISTS visitors (day TEXT NOT NULL, h TEXT NOT NULL, PRIMARY
 -- Actividad en tiempo real para el equipo (fase de pruebas): eventos anónimos con dispositivo y etiqueta de persona del día; 31 días.
 CREATE TABLE IF NOT EXISTS activity (ts INTEGER NOT NULL, e TEXT NOT NULL, d TEXT, p TEXT);
 CREATE INDEX IF NOT EXISTS activity_ts ON activity (ts);
+
+-- Opiniones tras la consulta: sin correo ni número de consulta. nombre solo si la usuaria deja publicarlo.
+CREATE TABLE IF NOT EXISTS opiniones (id INTEGER PRIMARY KEY AUTOINCREMENT, ts INTEGER NOT NULL, pro TEXT NOT NULL, rating INTEGER NOT NULL, texto TEXT NOT NULL, nombre TEXT, publicable INTEGER NOT NULL DEFAULT 0);

@@ -27,6 +27,7 @@
 // scheduled() avisa al profesional cuando una consulta lleva 40 h sin respuesta.
 
 import { validateAttachments } from './attachments.js';
+import { sendFeedbackDue, handleOpinion, feedbackEmail, feedbackSig } from './feedback.js';
 import { panel } from './panel.js';
 import { isEvent, isDevice, record, personTag, hourlyDigest } from './activity.js';
 import { newThreadId, relayAddress, parseRelayAddress, sealEmail, openEmail, saveThread, loadThread, parseIncoming, isAutomatic } from './relay.js';
@@ -266,6 +267,18 @@ export default {
 
     if (!allowed.includes(origin)) return reply(403, { error: 'origin' });
 
+    if (url.pathname.startsWith('/opinion')) {
+      if (!allowed.includes(origin)) return reply(403, { error: 'origin' });
+      const [status, out] = await handleOpinion(env, url.pathname, body, { PROS, sendMail, bump });
+      return reply(status, out);
+    }
+    // Prueba: manda ya el correo de opinión de una consulta de prueba (para verlo en el móvil)
+    if (url.pathname === '/admin/opinion-test' && request.headers.get('Authorization') === `Bearer ${env.ADMIN_TOKEN}` && env.ADMIN_TOKEN) {
+      const t = await loadThread(env, String(body.id || ''));
+      if (!t || t.p !== 'prueba') return reply(404, { error: 'not_found' });
+      const fe = feedbackEmail({ short: 'Marina', role: 'matrona' }, t.id, await feedbackSig(env, t.id));
+      return reply(200, { sent: !!(await sendMail(env, { to: await openEmail(env, t.u), replyTo: 'contacto@hera-gine.com', ...fe })) });
+    }
     if (url.pathname === '/hit') {
       const e = String(body.e || '');
       if (!isEvent(e)) return reply(400, { error: 'bad_event' });
@@ -345,7 +358,7 @@ export default {
       // Sin relay no hay hilo que seguir (ni recordatorios): no se guarda nada más
       if (relay) {
         await saveThread(env, { id, p: pro.key || body.to, u: await sealEmail(env, q.email), uh: (await hmac(env.HASH_SALT, norm)).slice(0, 24),
-          sp: pm.subject, su: cm.subject, rp: [], ru: [], c: Date.now(), a: 0, rem: false, n: 0 });
+          sp: pm.subject, su: cm.subject, rp: [], ru: [], c: Date.now(), a: 0, rem: false, n: 0, ...(body.follow === true ? { f: 1 } : {}) });
       }
       return reply(200, { ok: true, remaining, freeLimit: limit, ...(unlimited ? { unlimited: true } : {}), ...(relay ? { id } : {}), dryRun: env.DRY_RUN === '1' });
     }
@@ -372,6 +385,7 @@ export default {
   /** Cada hora: recordatorio al profesional si una consulta lleva 40 h sin respuesta */
   async scheduled(event, env) {
     await remindOverdue(env);
+    await sendFeedbackDue(env, sendMail, PROS);
     await hourlyDigest(env, sendMail);
   },
 };

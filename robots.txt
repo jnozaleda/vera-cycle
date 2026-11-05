@@ -6,5 +6,6 @@ Disallow: /diseno/
 Disallow: /consult-worker/
 Disallow: /push-worker/
 Disallow: /tools/
+Disallow: /opinion/
 
 Sitemap: https://hera-gine.com/sitemap.xml

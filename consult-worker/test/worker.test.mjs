@@ -16,13 +16,14 @@ const metas = new Map();
 const KV = { async get(k, t) { const v = store.get(k); return v == null ? null : t === 'json' ? JSON.parse(v) : v; }, async put(k, v, o) { store.set(k, v); if (o?.metadata) metas.set(k, o.metadata); }, async delete(k) { store.delete(k); },
   async list({ prefix }) { return { keys: [...store.keys()].filter((k) => k.startsWith(prefix)).map((name) => ({ name, metadata: metas.get(name) })), list_complete: true }; } };
 const sent = [];
-const counts = new Map(); const visitors = new Set(); const activity = [];
+const counts = new Map(); const visitors = new Set(); const activity = []; const opiniones = [];
 const DB = { prepare(sql) { return { bind(...a) { return { async run() {
   if (sql.startsWith('INSERT INTO counts')) { const k = a[0] + '|' + a[1]; counts.set(k, (counts.get(k) || 0) + 1); return { meta: { changes: 1 } }; }
+  if (sql.startsWith('INSERT INTO opiniones')) { opiniones.push({ ts: a[0], pro: a[1], rating: a[2], texto: a[3], nombre: a[4], publicable: a[5] }); return { meta: { changes: 1 } }; }
   if (sql.startsWith('INSERT INTO activity')) { activity.push({ ts: a[0], e: a[1], d: a[2], p: a[3] }); return { meta: { changes: 1 } }; }
   if (sql.startsWith('INSERT OR IGNORE')) { const k = a.join('|'); if (visitors.has(k)) return { meta: { changes: 0 } }; visitors.add(k); return { meta: { changes: 1 } }; }
   return { meta: { changes: 0 } }; },
-  async all() { if (sql.includes('FROM activity')) return { results: activity.filter((r) => r.ts > a[0] && r.ts <= a[1]) }; return { results: [...counts].map(([k, n]) => ({ day: k.split('|')[0], k: k.split('|')[1], n })) }; } }; } }; } };
+  async all() { if (sql.includes('FROM opiniones')) return { results: opiniones }; if (sql.includes('FROM activity')) return { results: activity.filter((r) => r.ts > a[0] && r.ts <= a[1]) }; return { results: [...counts].map(([k, n]) => ({ day: k.split('|')[0], k: k.split('|')[1], n })) }; } }; } }; } };
 const env = { KV, DB, PANEL_CODE: 'panel', COPY_TO: 'copia@example.com', HASH_SALT: 'sal', ADMIN_TOKEN: 'adm', ALLOWED_ORIGINS: 'https://hera-gine.com', FROM: 'Hera <consultas@hera-gine.com>', FREE_LIMIT: '2', DRY_RUN: '0', RELAY: '1', RESEND_API_KEY: 'k' };
 let rid = 0;
 globalThis.fetch = async (u, o) => {
@@ -174,4 +175,39 @@ assert.equal(validateAttachments([{ content: btoa('<html>evil</html>') }]).error
 assert.equal(validateAttachments([{ content: 'no base64!!' }]).error, 'bad_files');
 assert.equal(validateAttachments(Array(4).fill({ content: png })).error, 'bad_files');
 assert.equal(validateAttachments([{ content: 'A'.repeat(Math.ceil((MAX_BYTES * 4) / 3) + 8) }]).error, 'too_large');
+// opinión: 24 h después de la primera respuesta, una vez; comentario sin correo; seguimiento por el hilo
+{
+  const { feedbackSig } = await import('../src/feedback.js');
+  const { saveThread } = await import('../src/relay.js');
+  sent.length = 0;
+  const rr = await call('/ask', { email: 'opina@example.com', to: 'gineco', text: 'Duda para probar la opinión', follow: true });
+  const id = rr.j.id; let t = await loadThread(env, id);
+  assert.equal(t.f, 1, 'permiso de seguimiento guardado en el hilo');
+  t.a = Date.now() - 25 * 3600000; await saveThread(env, t);
+  sent.length = 0; await worker.scheduled({}, env);
+  const fb = sent.find((m) => m.subject === '¿Te ayudó la respuesta de Gonzalo?');
+  assert.ok(fb, 'correo de opinión enviado'); assert.equal(fb.to[0], 'opina@example.com');
+  const s = await feedbackSig(env, id); assert.ok(fb.html.includes(`t=${id}&s=${s}&r=1`));
+  sent.length = 0; await worker.scheduled({}, env);
+  assert.ok(!sent.some((m) => m.subject?.startsWith('¿Te ayudó')), 'solo una vez por consulta');
+  let o = await call('/opinion', { t: id, s: 'mala', r: 1 }); assert.equal(o.s, 404, 'firma obligatoria');
+  sent.length = 0;
+  o = await call('/opinion', { t: id, s, r: 3 }); assert.equal(o.j.followSent, true, 'no le ayudó y dio permiso: aviso a la profesional');
+  assert.equal(sent[0].to[0], 'gonzalo@hera-gine.com'); assert.match(sent[0].reply_to, /^hera-p-/); assert.ok(!sent[0].html.includes('opina@'), 'sin el correo de la usuaria');
+  o = await call('/opinion/comentario', { t: id, s, text: 'No me quedó claro', name: 'Ana', publish: true });
+  assert.equal(o.s, 200); assert.equal(opiniones.at(-1).publicable, 0, 'solo se publica una valoración positiva'); assert.equal(opiniones.at(-1).nombre, null);
+  // positiva y publicable: se guarda el nombre, nunca el correo
+  const r2 = await call('/ask', { email: 'contenta@example.com', to: 'matrona', text: 'Otra duda para probar' });
+  const s2 = await feedbackSig(env, r2.j.id);
+  await call('/opinion', { t: r2.j.id, s: s2, r: 1 });
+  await call('/opinion/comentario', { t: r2.j.id, s: s2, text: 'Me respondió rapidísimo', name: 'Laura G.', publish: true });
+  const last = opiniones.at(-1); assert.deepEqual([last.publicable, last.nombre, last.pro], [1, 'Laura G.', 'matrona']);
+  assert.ok(!JSON.stringify(opiniones).includes('@'), 'las opiniones no llevan correos');
+  await call('/opinion/baja', { t: r2.j.id, s: s2 });
+  t = await loadThread(env, r2.j.id); t.a = Date.now() - 25 * 3600000; await saveThread(env, t);
+  sent.length = 0; await worker.scheduled({}, env);
+  assert.ok(!sent.some((m) => m.subject?.startsWith('¿Te ayudó')), 'baja respetada');
+  const pg2 = await (await worker.fetch(new Request('https://w/panel?k=dk&d=30'), env)).text();
+  assert.match(pg2, /Opiniones tras la consulta/); assert.match(pg2, /Laura G\./);
+}
 console.log('consultas: OK');

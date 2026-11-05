@@ -70,6 +70,12 @@ export async function panel(env, url, openThreads) {
   const horas = PROS.reduce((a, [k]) => a + g(`resp_horas:${k}`), 0);
   const pendientes = Object.values(open.pendientes || {}).reduce((a, x) => a + x, 0);
 
+  // Opiniones tras la consulta: valoraciones por profesional y últimos comentarios (sin correo ni número de consulta)
+  let opiniones = [];
+  try { opiniones = (await env.DB.prepare('SELECT ts, pro, rating, texto, nombre, publicable FROM opiniones WHERE ts > ?1 ORDER BY ts DESC LIMIT 40').bind(now - days * 86400000).all()).results || []; } catch { /* sin tabla */ }
+  const RATE = { 1: 'Sí, mucho', 2: 'Más o menos', 3: 'No' };
+  const opRows = PROS.map(([k2, name]) => { const v = [1, 2, 3].map((r) => g(`opinion:${k2}:${r}`)); return v.some(Boolean) ? `<tr><td>${esc(name)}</td>${v.map((x) => `<td>${x}</td>`).join('')}</tr>` : ''; }).join('');
+  const opFeed = opiniones.map((o) => `<li><time>${madrid(o.ts, { day: 'numeric', month: 'short' })}</time><span>«${esc(o.texto)}»</span><small>${esc((PROS.find(([k2]) => k2 === o.pro) || [, o.pro])[1])} · ${RATE[o.rating] || ''}${o.publicable ? ` · <b>se puede publicar como «${esc(o.nombre)}»</b>` : ' · no publicar'}</small></li>`).join('');
   const funnels = [
     ['En la web', dropoff(act, [['Empezaron a escribir', 'pregunta_portada', 'ejemplo_duda'], ['Llegaron al correo', 'correo_portada'], ['Pulsaron enviar', 'intento_portada'], ['Enviaron', 'enviada_portada']])],
     ['En la app', dropoff(act, [['Abrieron la consulta', 'consulta_abierta'], ['Empezaron a escribir', 'consulta_escribe'], ['Escribieron el correo', 'consulta_correo'], ['Pulsaron enviar', 'consulta_intento'], ['Enviaron', 'consulta_enviada']])],
@@ -123,6 +129,7 @@ table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:
 </div>
 <div class="card"><h2>Personas por día</h2><div class="days">${perDay.map(([d, a, w]) => `<div><span>${a + w || ''}</span><span class="pair"><i style="height:${Math.round((a / maxDay) * 64)}px"></i><i class="web" style="height:${Math.round((w / maxDay) * 64)}px"></i></span>${esc(d)}</div>`).join('')}</div>
 <div class="legend"><span><b style="background:var(--plum)"></b>App</span><span><b style="background:var(--web)"></b>Web</span></div></div>
+<div class="card"><h2>Opiniones tras la consulta</h2>${opRows ? `<table><tr><th></th><th>Sí, mucho</th><th>Más o menos</th><th>No</th></tr>${opRows}</table>` : '<p class="mute">Nada todavía.</p>'}${opFeed ? `<h3 class="fh">Comentarios</h3><ul class="feed">${opFeed}</ul>` : ''}</div>
 <div class="card"><h2>¿Quién empieza a preguntar y se cae?</h2><p class="mute">Personas distintas por día. Los pasos nuevos se miden desde el 31 de octubre.</p>${funnels.map(funnelCard).join('')}${lostFeed ? `<h3 class="fh">Últimas caídas</h3><ul class="feed">${lostFeed}</ul>` : ''}</div>
 <div class="card"><h2>De la web a la consulta</h2>${bars([['Visitaron la web', g('personas_portada')], ['Tocaron una duda de ejemplo', g('ejemplo_duda')], ['Empezaron a escribir una duda', g('pregunta_portada')], ['Cambiaron de profesional', g('elige_pro')], ['Llegaron al campo de correo', g('correo_portada')], ['Enviaron la consulta desde la web', g('enviada_portada')], ['Pulsaron «Abrir Hera»', g('abrir_portada')]])}</div>
 <div class="card"><h2>En la app</h2>${bars([['Abrieron la app', g('apertura')], ['Completaron la bienvenida', sum('onboarding:')], ['Añadieron fecha de parto', g('fecha_parto')], ['Añadieron fecha de nacimiento', g('fecha_nacimiento')], ['Activaron el aviso semanal', g('push_on')], ['Conectaron Google Drive', g('sync_on')], ['Pulsaron «Contacto»', g('contacto')]])}</div>

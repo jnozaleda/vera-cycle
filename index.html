@@ -633,6 +633,18 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const isEmail = (e) => /^[^\s@<>()",;]+@[^\s@<>()",;]+\.[a-z]{2,24}$/i.test(e.trim());
   hit('portada');
+  // Anuncios (vera-backlog#56): quien llega con gclid o utm_medium=cpc queda marcado 30 días en este dispositivo
+  // (localStorage, sin cookies). Solo se usa para contar consultas y pagos que vienen de anuncios.
+  const AD_KEY = 'hera-src';
+  {
+    const q0 = new URLSearchParams(location.search);
+    if (q0.has('gclid') || /^(cpc|ppc|paid)$/i.test(q0.get('utm_medium') || '')) {
+      const c = (q0.get('utm_campaign') || '').toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 24);
+      store.set(AD_KEY, JSON.stringify({ c, at: Date.now() }));
+      hit(c ? `anuncio_visita:${c}` : 'anuncio_visita');
+    }
+  }
+  const adSrc = () => { try { const a = JSON.parse(store.get(AD_KEY) || 'null'); return a && Date.now() - a.at < 30 * 86400000 ? { src: 'ads', ...(a.c ? { camp: a.c } : {}) } : {}; } catch { return {}; } };
   document.addEventListener('click', (ev) => { if (ev.target.closest?.('a[href^="mailto:"]')) hit('contacto'); }, true);
 
   const box = $('ask'), form = $('ask-form'), ta = $('duda'), more = $('ask-more'), send = $('ask-send'), err = $('ask-err'), done = $('ask-done'), email = $('ask-email');
@@ -748,7 +760,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     lastEmail = email.value.trim(); store.set('hera-ask-email', lastEmail);
     try {
       const res = await fetch(`${API}/ask`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: lastEmail, to, text, context: '', situation: $('ask-moment').value, website: $('ask-hp').value, attachments: filesPayload(files), follow: $('ask-follow').checked, ...(isTeam() ? { team: true } : {}) }) });
+        body: JSON.stringify({ email: lastEmail, to, text, context: '', situation: $('ask-moment').value, website: $('ask-hp').value, attachments: filesPayload(files), follow: $('ask-follow').checked, ...(isTeam() ? { team: true } : {}), ...adSrc() }) });
       const j = await res.json().catch(() => ({}));
       if (res.status === 429) throw new Error('Has enviado varias consultas seguidas. Espera unos minutos y vuelve a intentarlo.');
       if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');
@@ -799,7 +811,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       hit(`pago_elegido:${plan}`);
       store.set('hera-pay-draft', JSON.stringify({ to: q.to, manual: true, text: q.text, context: '', include: true, follow: q.follow, at: Date.now() }));
       try {
-        const r = await fetch(`${API}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: lastEmail, plan, back: 'web' }) });
+        const r = await fetch(`${API}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: lastEmail, plan, back: 'web', ...adSrc() }) });
         const k = await r.json().catch(() => ({}));
         if (!r.ok || !k.url) throw new Error();
         location.href = k.url;

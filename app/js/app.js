@@ -1290,6 +1290,8 @@ const freeDots = (used, total) => `<span class="free-dots" aria-hidden="true">${
 
 // Pagos (vera-backlog#56). Mientras el servicio está en «test», solo se ofrecen en un dispositivo que abrió la app con ?pagos=1
 const PAY_TEST_KEY = 'hera-pagos-test';
+// Llegó desde un anuncio (lo marca la portada, 30 días): solo para contar consultas y pagos de anuncios
+const adSrc = () => { try { const a = JSON.parse(localStorage.getItem('hera-src') || 'null'); return a && Date.now() - a.at < 30 * 86400000 ? { src: 'ads', ...(a.c ? { camp: a.c } : {}) } : {}; } catch { return {}; } };
 const PAY_DRAFT_KEY = 'hera-pay-draft';
 const payTest = () => { try { return localStorage.getItem(PAY_TEST_KEY) === '1'; } catch { return false; } };
 const PLANS_UI = [
@@ -2808,7 +2810,7 @@ const actions = {
       const meta = [];
       if (a.include) meta.push(...consultDetails());
       const res = await fetch(`${CONSULT_API}/ask`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: a.email.trim(), to: to.key, text: a.text.trim(), context: a.context, situation: meta.join('\n'), website: a.website || '', attachments: filesPayload(a.files || []), follow: !!a.follow, ...(isTeam() ? { team: true } : {}), ...(payTest() ? { payTest: true } : {}) }) });
+        body: JSON.stringify({ email: a.email.trim(), to: to.key, text: a.text.trim(), context: a.context, situation: meta.join('\n'), website: a.website || '', attachments: filesPayload(a.files || []), follow: !!a.follow, ...(isTeam() ? { team: true } : {}), ...(payTest() ? { payTest: true } : {}), ...adSrc() }) });
       const j = await res.json().catch(() => ({}));
       if (res.status === 429) throw new Error('Has enviado varias consultas seguidas. Espera unos minutos y vuelve a intentarlo.');
       if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');
@@ -2838,7 +2840,7 @@ const actions = {
     try { localStorage.setItem(PAY_DRAFT_KEY, JSON.stringify({ to: a.to, manual: a.manual, text: a.text, context: a.context, include: a.include, follow: !!a.follow, at: Date.now() })); } catch { /* sin almacenamiento */ }
     try {
       const res = await fetch(`${CONSULT_API}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: a.email.trim(), plan, ...(payTest() ? { payTest: true } : {}) }) });
+        body: JSON.stringify({ email: a.email.trim(), plan, ...(payTest() ? { payTest: true } : {}), ...adSrc() }) });
       const j = await res.json().catch(() => ({}));
       if (!res.ok || !j.url) throw new Error();
       location.href = j.url;

@@ -63,6 +63,7 @@ export const EVENTS = {
   consulta: ['Envió una consulta a', true],
   respondida: ['Respondida una consulta por', true],
   gratuitas_agotadas: ['Intentó consultar con las gratuitas agotadas', true],
+  anuncio_visita: ['Llegó desde un anuncio', true],
   planes_abiertos: ['Abrió los planes de pago sin agotar las gratuitas', true],
   pago_elegido: ['Eligió un plan de pago', true],
   pago_hecho: ['Volvió de pagar', true],

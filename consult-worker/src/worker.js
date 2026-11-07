@@ -225,6 +225,7 @@ export default {
     const payHooks = {
       paid: async (plan, s) => {
         await bump(env, `pago:${plan}`);
+        if (s.metadata?.src === 'ads') { await bump(env, `anuncio_pago:${plan}`); await bump(env, 'anuncio_eur', madridDay(), PLANS[plan].eur); }
         // Aviso al equipo: sin correo de la usuaria; enlace al pago en el panel de Stripe
         const dash = `https://dashboard.stripe.com/${s.livemode ? '' : 'test/'}${s.payment_intent ? `payments/${s.payment_intent}` : s.subscription ? `subscriptions/${typeof s.subscription === 'string' ? s.subscription : s.subscription.id}` : 'payments'}`;
         const hora = new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid', dateStyle: 'medium', timeStyle: 'short' });
@@ -311,6 +312,7 @@ export default {
       await record(env, { e, d: isDevice(body.d) ? body.d : '', p: await personTag(env, request, madridDay()) }, sendMail, ctx);
       if (e === 'apertura') await countPerson(env, request, 'app');
       if (e === 'portada') await countPerson(env, request, 'portada');
+      if (e.startsWith('anuncio_visita')) await countPerson(env, request, 'anuncio');
       return reply(200, { ok: true });
     }
 
@@ -321,7 +323,7 @@ export default {
       if (!PLANS[body.plan]) return reply(400, { error: 'bad_plan' });
       if (await rateLimited(env, request.headers.get('CF-Connecting-IP'))) return reply(429, { error: 'rate' });
       try {
-        const checkoutUrl = await createCheckout(env, { email: String(body.email).trim(), plan: body.plan, h: await hmac(env.HASH_SALT, norm), origin, back: body.back === 'web' ? 'web' : 'app' });
+        const checkoutUrl = await createCheckout(env, { email: String(body.email).trim(), plan: body.plan, h: await hmac(env.HASH_SALT, norm), origin, back: body.back === 'web' ? 'web' : 'app', ad: body.src === 'ads' });
         await bump(env, `pago_inicio:${body.plan}`);
         return reply(200, { url: checkoutUrl });
       } catch (e) { console.log(e.message); return reply(502, { error: 'stripe' }); }
@@ -370,6 +372,7 @@ export default {
       const credits = unlimited ? 0 : bal.credits;
       if (!test && !unlimited && rec.n >= limit && credits <= 0) {
         if (body.team !== true) {
+          if (body.src === 'ads') await bump(env, 'anuncio_limite');
           await bump(env, 'gratuitas_agotadas');
           await record(env, { e: 'gratuitas_agotadas', p: await personTag(env, request, madridDay()) }, sendMail, ctx);
         }
@@ -400,6 +403,7 @@ export default {
         // Dispositivos del equipo (modo equipo en la app): la consulta se envía igual, pero no cuenta en métricas ni avisos
         if (body.team !== true) {
           await bump(env, `consulta:${body.to}`);
+          if (body.src === 'ads') await bump(env, paid ? 'anuncio_consulta_pagada' : 'anuncio_consulta');
           if (unlimited) await bump(env, 'consulta_ilimitada');
           await record(env, { e: `consulta:${body.to}`, p: await personTag(env, request, madridDay()) }, sendMail, ctx);
         }

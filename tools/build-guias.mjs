@@ -2,14 +2,9 @@
 // Uso: node tools/build-guias.mjs   · Las URL nuevas se añaden a sitemap.xml.
 import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { PREGNANCY_GUIDE, POSTPARTUM_GUIDE } from '../app/js/guide.js';
+import { SITE, PRO, esc, shell, face } from './web-shell.mjs';
 
 const UPDATED = '2026-10-31';
-const SITE = 'https://hera-gine.com';
-const PRO = {
-  gineco: { name: 'Gonzalo', role: 'ginecólogo', photo: 'gonzalo.jpg?v=2' },
-  matrona: { name: 'Marina', role: 'matrona', photo: 'marina.jpg?v=2' },
-  pediatra: { name: 'Lucía', role: 'pediatra', photo: 'lucia.jpg?v=3' },
-};
 // [pregunta en la app, slug, título para buscadores, profesional, grupo, resumen para las tarjetas]
 const PAGES = [
   ['¿Es normal manchar un poco al principio?', 'manchar-al-principio-del-embarazo', '¿Es normal manchar al principio del embarazo?', 'gineco', 'Embarazo', 'Cuándo puede ser normal un manchado leve y cuándo ir a urgencias.'],
@@ -29,7 +24,6 @@ const PAGES = [
   ['Llora mucho, ¿son cólicos?', 'bebe-llora-mucho-colicos', 'Mi bebé llora mucho, ¿son cólicos?', 'pediatra', 'Tu bebé', 'Cuándo suele mejorar el llanto y qué se considera cólico.'],
 ];
 
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const all = [...PREGNANCY_GUIDE, ...POSTPARTUM_GUIDE].flatMap((s) => s.items);
 const TINT = { Embarazo: '#DCEBE4', Posparto: '#ECE6F0', 'Tu bebé': '#F4E6E8' };
 const SUB = { Embarazo: 'De la primera falta a la bolsa del hospital.', Posparto: 'Tu recuperación después del parto.', 'Tu bebé': 'Fiebre, sueño, llanto y primeros días.' };
@@ -42,35 +36,6 @@ function answer(a) {
   parts[0] = m ? `<p class="lead">${esc(m[1])}</p><p>${esc(m[2])}</p>` : `<p class="lead">${esc(a[0])}</p>`;
   return parts.join('\n');
 }
-const BEACON = `<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "edc55b126e2943d8828e3241ae0c4efd"}'></script>`;
-const CSS = `@font-face{font-family:Newsreader;src:url('/app/fonts/newsreader.woff2') format('woff2');font-weight:200 800;font-display:swap}
-@font-face{font-family:Newsreader;font-style:italic;src:url('/app/fonts/newsreader-italic.woff2') format('woff2');font-weight:200 800;font-display:swap}
-@font-face{font-family:Inter;src:url('/app/fonts/inter.woff2') format('woff2');font-weight:100 900;font-display:swap}
-*{box-sizing:border-box;margin:0}body{background:#FBF7F1;color:#2E2630;font:16px/1.55 Inter,system-ui,sans-serif}a{color:inherit}
-.w{max-width:1120px;margin:0 auto;padding:0 28px}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:18px;padding-bottom:18px}.wm{font:400 30px/1 Newsreader,Georgia,serif;color:#3B2433;letter-spacing:-.02em;text-decoration:none}
-.top nav{display:flex;align-items:center;gap:18px;font-size:14px;color:#693D55}.top nav a{text-decoration:none}.top nav a:hover{text-decoration:underline}.top nav .pill{background:#693D55;color:#fff;border-radius:999px;padding:8px 15px;font-weight:600;white-space:nowrap}.top nav .pill:hover{background:#563146;text-decoration:none}
-h1,h2,h3{font-family:Newsreader,Georgia,serif;font-weight:400;letter-spacing:-.02em;line-height:1.08;color:#3B2433;text-wrap:balance}h1 em{font-weight:300;color:#693D55}.ey{font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#8E6178}
-.ih{padding-top:26px;padding-bottom:30px}.ih h1{font-size:clamp(38px,6vw,58px);margin:10px 0 12px;max-width:14em}.ih .sub{font-size:18px;color:#4C444C}.ih .sub a{color:#693D55}
-.grp{padding-bottom:26px}.grph{border-radius:12px;padding:20px 22px;margin-bottom:12px}.grph h2{font-size:30px;color:#693D55}.grph p{font-size:14.5px;color:#4C444C}
-.gcs{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}.gc{display:flex;flex-direction:column;gap:9px;background:#fff;border:1px solid #E6DFE2;border-radius:12px;padding:18px;text-decoration:none;transition:border-color .15s}.gc:hover{border-color:#8E6178}.gc h3{font-size:22px}.gc p{font-size:14px;color:#655B61;flex:1}.by{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#655B61}.by img,.who img{border-radius:50%;object-fit:cover}.by img{width:24px;height:24px}
-.band{padding:clamp(24px,5vw,48px);border-radius:12px;margin-bottom:30px}.band h1{font-size:clamp(38px,6vw,60px);margin:10px 0 12px;max-width:15em}.band .m{font-size:14px;color:#655B61}
-.art{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:44px;padding-bottom:34px;align-items:start}.body{font-size:17.5px;line-height:1.65;max-width:38em}.body p{margin-bottom:16px}.body .lead{font:400 25px/1.3 Newsreader,Georgia,serif;color:#3B2433;margin-bottom:20px}.body ul{list-style:none;padding:0;margin:0 0 20px;border-top:1px solid #E6DFE2}.body li{padding:12px 0;border-bottom:1px solid #E6DFE2}
-.ask{position:sticky;top:20px;background:#fff;border:1px solid #E6DFE2;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:12px;font-size:14.5px}.who{display:flex;gap:11px;align-items:center}.who img{width:52px;height:52px}.who b{display:block;font:400 22px/1.1 Newsreader,Georgia,serif}.who span{font-size:13px;color:#655B61}.btn{display:block;background:#693D55;color:#fff;text-align:center;font-weight:600;border-radius:6px;padding:12px;text-decoration:none}.btn:hover{background:#563146}.ask small{color:#655B61;font-size:12.5px}
-.note{font-size:14px;color:#655B61;margin-top:22px;padding-top:14px;border-top:1px solid #E6DFE2}.note b{color:#8F2F3F;font-weight:600}.more{padding-bottom:30px}.more h2{font-size:26px;margin-bottom:12px}
-.final{margin-bottom:28px;padding:28px;border-radius:12px;background:#E9C7B8 url('/portada/fluido/seda-melocoton.webp') center/cover}.fin{background:#fff;border-radius:12px;padding:22px;max-width:440px}.fin h2{font-size:27px;margin-bottom:6px}.fin p{font-size:14.5px;margin-bottom:12px}
-footer{padding-top:18px;padding-bottom:40px;font-size:14px;color:#655B61}footer a{color:#693D55}
-@media(max-width:760px){.w{padding:0 18px}.top{padding-top:18px;padding-bottom:18px}.art{grid-template-columns:1fr;gap:24px}.ask{position:static}.top nav a:not(.pill){display:none}.body{font-size:17px}}`;
-const shell = ({ title, desc, path, ld, body }) => `<!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${esc(title)}</title><meta name="description" content="${esc(desc)}"><link rel="canonical" href="${SITE}${path}">
-<meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:image" content="${SITE}/portada/compartir.jpg"><meta property="og:type" content="article"><meta property="og:locale" content="es_ES">
-<meta name="theme-color" content="#FAF8F5"><link rel="icon" type="image/svg+xml" href="/app/brand/favicon.svg"><link rel="apple-touch-icon" href="/app/icons/apple-touch-icon.png">
-<script type="application/ld+json">${JSON.stringify(ld)}</script><style>${CSS}</style></head><body>
-<header class="w top"><a class="wm" href="/">Hera</a><nav aria-label="Principal"><a href="/guias/">Guías</a><a href="/equipo.html">El equipo</a><a class="pill" href="/app/">Abrir Hera</a></nav></header><main>${body}</main>
-<footer class="w"><a href="/">Inicio</a> · <a href="/guias/">Guías</a> · <a href="/equipo.html">El equipo</a> · <a href="/privacy.html">Privacidad</a> · <a href="/support.html">Soporte</a></footer>${BEACON}</body></html>
-`;
-const face = (pro) => `<img src="/portada/equipo/${pro.photo}" alt="" width="52" height="52" loading="lazy">`;
-
 const pages = PAGES.map(([q, slug, title, pro, group, sum]) => {
   const item = all.find((i) => i.q === q);
   if (!item) throw new Error(`No está en la guía: ${q}`);

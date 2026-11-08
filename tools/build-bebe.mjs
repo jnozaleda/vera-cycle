@@ -4,7 +4,7 @@
 import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { postpartumFaqs } from '../app/js/today.js';
 import { MONTHS } from './data/bebe-meses.mjs';
-import { SITE, esc, shell, askBox } from './web-shell.mjs';
+import { SITE, esc, shell, askBox, stickyAsk } from './web-shell.mjs';
 
 const UPDATED = '2026-11-08';
 const TINT = ['#F4E6E8', '#ECE6F0', '#DCEBE4'];
@@ -49,7 +49,7 @@ for (const p of pages) {
 <section class="sec"><h2>Cuándo consultar</h2>${list(p.d.consulta)}</section>
 <p class="urg"><b>Ve a urgencias o llama al 112</b> si le cuesta respirar, está muy decaído, tiene manchas en la piel que no desaparecen al presionar o convulsiona. Esta información es general y no sustituye la valoración de su pediatra.</p></article>
 ${askBox(`¿Tienes una duda de tu bebé de ${label(p.m)}?`, ASK, '<a class="app" href="/app/">Sigue a tu bebé mes a mes en Hera →</a>')}</div>
-<nav class="pager" aria-label="Meses">${navLink(p.m - 1, 'prev')}${navLink(p.m + 1, 'next')}</nav><p class="all"><a href="/bebe/">Ver todos los meses</a></p></div>` }));
+<nav class="pager" aria-label="Meses">${navLink(p.m - 1, 'prev')}${navLink(p.m + 1, 'next')}</nav><p class="all"><a href="/bebe/">Ver todos los meses</a></p></div>${stickyAsk(['pediatra'], '¿Una duda de tu bebé?')}` }));
 }
 
 mkdirSync('bebe', { recursive: true });

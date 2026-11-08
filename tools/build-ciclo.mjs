@@ -2,7 +2,7 @@
 // Uso: node tools/build-ciclo.mjs · añade las URL a sitemap.xml. Textos BORRADOR en tools/data/ciclo-fases.mjs.
 import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { PHASE_PAGES, CYCLE_INTRO } from './data/ciclo-fases.mjs';
-import { SITE, esc, shell, askBox } from './web-shell.mjs';
+import { SITE, esc, shell, askBox, stickyAsk } from './web-shell.mjs';
 
 const UPDATED = '2026-11-08';
 const ASK = [['gineco', 'Regla, ciclo y anticoncepción'], ['matrona', 'Fertilidad y salud sexual']];
@@ -33,7 +33,7 @@ PHASE_PAGES.forEach((p, i) => {
 <section class="sec"><h2>Cuándo consultar</h2>${list(p.consulta)}</section>
 <p class="urg"><b>Ve a urgencias o llama al 112</b> si tienes un sangrado muy abundante con mareo, un dolor muy fuerte y repentino o fiebre con dolor de tripa. Esta información es general y no sustituye la valoración de un profesional.</p></article>
 ${askBox('¿Tienes una duda sobre tu ciclo?', ASK, '<a class="app" href="/app/">Sigue tu ciclo y tus fases en Hera →</a>')}</div>
-<nav class="pager" aria-label="Fases">${navLink(i - 1, 'prev')}${navLink(i + 1, 'next')}</nav><p class="all"><a href="/ciclo/">Ver las cuatro fases</a></p></div>` }));
+<nav class="pager" aria-label="Fases">${navLink(i - 1, 'prev')}${navLink(i + 1, 'next')}</nav><p class="all"><a href="/ciclo/">Ver las cuatro fases</a></p></div>${stickyAsk(['gineco'], '¿Una duda sobre tu ciclo?')}` }));
 });
 
 mkdirSync('ciclo', { recursive: true });

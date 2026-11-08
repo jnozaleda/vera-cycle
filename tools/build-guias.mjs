@@ -2,7 +2,7 @@
 // Uso: node tools/build-guias.mjs   · Las URL nuevas se añaden a sitemap.xml.
 import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { PREGNANCY_GUIDE, POSTPARTUM_GUIDE } from '../app/js/guide.js';
-import { SITE, PRO, esc, shell, face, askBox } from './web-shell.mjs';
+import { SITE, PRO, esc, shell, face, askBox, stickyAsk } from './web-shell.mjs';
 import { VISUAL, REVIEWED } from './data/guias-visual.mjs';
 
 const UPDATED = '2026-10-31';
@@ -77,9 +77,8 @@ const VCSS = `<style>.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap
 .ticks{display:flex;justify-content:space-between;font-size:12px;color:#655B61;margin-top:6px}.sec .cleg{font-size:13.5px;line-height:1.45;color:#655B61;margin-top:10px}
 .rng{display:flex;flex-direction:column;gap:12px}.rr span{display:block;font-size:14px;margin-bottom:5px}.rr div{position:relative;height:14px;background:#F1ECEE;border-radius:7px}.rr i{position:absolute;top:0;bottom:0;border-radius:7px;background:#8E6178}.rr em{position:absolute;top:-1px;font-style:normal;font-size:12.5px;font-weight:700;color:#3B2433;white-space:nowrap}
 .lnk{display:flex;flex-wrap:wrap;gap:8px}.lnk a{font-size:14px;font-weight:600;color:#693D55;text-decoration:none;border:1px solid #E2C9D2;background:#FBF4F6;border-radius:999px;padding:7px 13px}.lnk a:hover{border-color:#8E6178}
-.stick{display:none}
-@media(max-width:760px){.tiles{grid-template-columns:1fr 1fr}.tile b{font-size:22px}body{padding-bottom:76px}
-.stick{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:5;align-items:center;gap:10px;background:#fff;border-top:1px solid #E6DFE2;box-shadow:0 -6px 18px rgba(59,36,51,.08);padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));text-decoration:none}.stick img{width:36px;height:36px;border-radius:50%}.stick span{flex:1;font-size:13px;line-height:1.3;color:#4C444C}.stick span b{display:block;color:#3B2433;font-size:14px}.stick em{font-style:normal;background:#693D55;color:#fff;border-radius:999px;padding:9px 14px;font-weight:600;font-size:14px}}</style>`;
+
+@media(max-width:760px){.tiles{grid-template-columns:1fr 1fr}.tile b{font-size:22px}}</style>`;
 const LIGHTS = [['g', 'Es normal'], ['a', 'Consulta'], ['r', 'Urgencias']];
 function visual(p) {
   const v = VISUAL[p.slug] || {};
@@ -97,8 +96,7 @@ function visual(p) {
   const links = v.links ? `<section class="sec"><h2>Sigue leyendo</h2><div class="lnk">${v.links.map(([h, t]) => `<a href="${h}">${esc(t)} →</a>`).join('')}</div></section>` : '';
   const rk = REVIEWED[p.slug];
   const rev = rk ? `<p class="rev">${face(PRO[rk])}<span>Revisado por <b>${esc(PRO[rk].full || PRO[rk].name)}</b>, ${esc(PRO[rk].role)}</span></p>` : '';
-  const pr = PRO[p.proKey];
-  const stick = `<a class="stick" href="/#preguntar-${p.proKey}">${face(pr)}<span><b>¿Tu caso es distinto?</b>${esc(pr.name)} te responde en 48 h</span><em>Preguntar</em></a>`;
+  const stick = stickyAsk([p.proKey], '¿Tu caso es distinto?');
   return { tiles, sem, chart, links, rev, stick };
 }
 const card = (p) => `<a class="gc" href="/guias/${p.slug}/"><h3>${esc(p.title)}</h3><p>${esc(p.sum)}</p><span class="by">${face(p.pro)}<span>${p.pro.name} · ${p.pro.role}</span></span></a>`;

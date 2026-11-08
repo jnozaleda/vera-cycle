@@ -6,7 +6,7 @@ import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { babyCompare, babyWeek } from '../app/js/baby.js';
 import { pregnancyNormal, pregnancyFaqs } from '../app/js/today.js';
 import { PREGNANCY_TIMELINE, TRIMESTER_LABEL, TRIMESTER_TEXT } from '../app/js/pregnancy.js';
-import { SITE, esc, shell, askBox } from './web-shell.mjs';
+import { SITE, esc, shell, askBox, stickyAsk } from './web-shell.mjs';
 
 const UPDATED = '2026-11-07';
 const FIRST = 4;
@@ -65,7 +65,7 @@ ${todo}
 <section class="sec"><h2>Dudas frecuentes</h2>${faqs}</section>
 <p class="urg"><b>Ve a urgencias o llama al 112</b> si sangras, pierdes líquido, tienes un dolor fuerte o notas que el bebé se mueve menos. Esta información es general y no sustituye la valoración de tu matrona o tu médico.</p></article>
 ${askBox(`¿Tienes una duda de tu semana ${p.w}?`, [['gineco', 'Embarazo, pruebas y medicación'], ['matrona', 'Síntomas, cuidados y parto']], '<a class="app" href="/app/">Sigue tu embarazo semana a semana en Hera →</a>')}</div>
-<nav class="pager" aria-label="Semanas">${navLink(p.w - 1, 'prev')}${navLink(p.w + 1, 'next')}</nav><p class="all"><a href="/embarazo/">Ver todas las semanas</a></p></div>` }));
+<nav class="pager" aria-label="Semanas">${navLink(p.w - 1, 'prev')}${navLink(p.w + 1, 'next')}</nav><p class="all"><a href="/embarazo/">Ver todas las semanas</a></p></div>${stickyAsk(['gineco', 'matrona'], '¿Tienes una duda?')}` }));
 }
 mkdirSync('embarazo', { recursive: true });
 writeFileSync('embarazo/index.html', shell({ title: 'Embarazo semana a semana · Hera', desc: 'Cómo está tu bebé cada semana del embarazo, qué es normal notar, qué pruebas tocan y las dudas más frecuentes, de la semana 4 a la 40.', path: '/embarazo/',

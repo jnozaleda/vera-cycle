@@ -35,7 +35,8 @@ details p{padding:0 0 14px}details a{color:#693D55;font-weight:600;white-space:n
 .ask2{position:sticky;top:20px;background:#fff;border:1px solid #E6DFE2;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px;font-size:14.5px}.ask2 h2{font:400 23px/1.15 Newsreader,Georgia,serif;color:#3B2433}
 .pro{display:grid;grid-template-columns:48px 1fr;gap:4px 12px;align-items:center;padding-top:14px;border-top:1px solid #EFE8EB}.pro img{width:48px;height:48px;border-radius:50%;grid-row:span 2}.pro b{font-weight:600;font-size:15px}.pro span{font-size:13px;color:#655B61}.pro a{grid-column:1/-1;display:block;text-align:center;background:#693D55;color:#fff;border-radius:8px;padding:10px;font-weight:600;text-decoration:none;margin-top:6px}.pro a:hover{background:#563146}
 .ask2 small{color:#655B61;font-size:13px}.ask2 .app{color:#693D55;font-size:14px}
-@media(max-width:760px){.ask2{position:static}.sec{padding:18px}.w{padding:0 18px}.top{padding-top:18px;padding-bottom:18px}.art{grid-template-columns:1fr;gap:24px}.ask{position:static}.top nav a:not(.pill){display:none}.top{padding-bottom:10px}.mnav{display:flex;gap:8px;overflow-x:auto;padding-bottom:14px;scrollbar-width:none}.mnav::-webkit-scrollbar{display:none}.mnav a{flex:none;font-size:14px;font-weight:600;color:#693D55;text-decoration:none;background:#fff;border:1px solid #E6DFE2;border-radius:999px;padding:7px 13px}.mnav a[aria-current]{background:#F4E6E8;border-color:#E2C9D2}.body{font-size:17px}}`;
+.stick{display:none}
+@media(max-width:760px){body.has-stick{padding-bottom:76px}.stick{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:5;align-items:center;gap:10px;background:#fff;border-top:1px solid #E6DFE2;box-shadow:0 -6px 18px rgba(59,36,51,.08);padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));text-decoration:none}.stick img{width:36px;height:36px;border-radius:50%;border:2px solid #fff}.stick img+img{margin-left:-22px}.stick span{flex:1;font-size:13px;line-height:1.3;color:#4C444C}.stick span b{display:block;color:#3B2433;font-size:14px}.stick em{font-style:normal;background:#693D55;color:#fff;border-radius:999px;padding:9px 14px;font-weight:600;font-size:14px}.ask2{position:static}.sec{padding:18px}.w{padding:0 18px}.top{padding-top:18px;padding-bottom:18px}.art{grid-template-columns:1fr;gap:24px}.ask{position:static}.top nav a:not(.pill){display:none}.top{padding-bottom:10px}.mnav{display:flex;gap:8px;overflow-x:auto;padding-bottom:14px;scrollbar-width:none}.mnav::-webkit-scrollbar{display:none}.mnav a{flex:none;font-size:14px;font-weight:600;color:#693D55;text-decoration:none;background:#fff;border:1px solid #E6DFE2;border-radius:999px;padding:7px 13px}.mnav a[aria-current]{background:#F4E6E8;border-color:#E2C9D2}.body{font-size:17px}}`;
 export const shell = ({ title, desc, path, ld, body }) => `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title><meta name="description" content="${esc(desc)}"><link rel="canonical" href="${SITE}${path}">
@@ -51,3 +52,11 @@ export const face = (pro) => `<img src="/portada/equipo/${pro.photo}" alt="" wid
 
 /** Recuadro «¿Tienes una duda?» con varias profesionales: [clave, temas] */
 export const askBox = (title, list, extra = '') => `<aside class="ask2"><h2>${esc(title)}</h2>${list.map(([k, topics]) => { const pr = PRO[k]; return `<div class="pro">${face(pr)}<b>${pr.name} · ${pr.role}</b><span>${esc(topics)}</span><a href="/#preguntar-${k}">Preguntar a ${pr.name}</a></div>`; }).join('')}<small>Te responden por escrito en menos de 48 h. Tus dos primeras consultas son gratis, sin nombre ni registro.</small>${extra}</aside>`;
+
+/** Barra fija en el móvil para preguntar: una o dos profesionales (con dos, va al formulario sin elegir) */
+export const stickyAsk = (keys, title) => {
+  const pros = keys.map((k) => PRO[k]);
+  const who = pros.length === 1 ? `${pros[0].name} te responde en 48 h` : `${pros.map((x) => x.name).join(' y ')}, en 48 h`;
+  const href = keys.length === 1 ? `/#preguntar-${keys[0]}` : '/#ask';
+  return `<a class="stick" href="${href}">${pros.map((x) => face(x)).join('')}<span><b>${esc(title)}</b>${who}</span><em>Preguntar</em></a><script>document.body.classList.add('has-stick')</script>`;
+};

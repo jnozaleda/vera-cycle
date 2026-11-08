@@ -40,7 +40,7 @@ for (const p of pages) {
   writeFileSync(`bebe/${p.slug}/index.html`, shell({ title: `${p.title} · Hera`, desc: p.desc, path, ld, body: `${CSS_EXTRA}
 <div class="w"><div class="band" style="background:${tint(p.m)}"><p class="ey"><a href="/bebe/" style="text-decoration:none">Tu bebé</a> · ${STAGE(p.m)}</p><h1>Bebé de ${label(p.m)}</h1>
 <div class="wk"><div><b>${fmt(p.d.kg[0])} – ${fmt(p.d.kg[1])} kg</b><span>Peso medio (niñas – niños)</span></div><div><b>${fmt(p.d.cm[0])} – ${fmt(p.d.cm[1])} cm</b><span>Longitud media (niñas – niños)</span></div></div>
-<p class="m" style="margin-top:14px">Medianas de la OMS, orientativas: cada bebé sigue su propia curva · Actualizado el 8 nov 2026</p></div>
+<p class="m" style="margin-top:14px">Medianas de la OMS, orientativas: cada bebé sigue su propia curva</p></div>
 <div class="art"><article class="secs">
 <section class="sec"><h2>Qué hace a esta edad</h2>${list(p.d.hace)}<p style="margin-top:12px;font-size:14.5px;color:#655B61">Cada bebé tiene su ritmo: estas edades son orientativas.</p></section>
 <section class="sec"><h2>Comida y sueño</h2>${list(p.d.come)}</section>

@@ -23,7 +23,7 @@ PHASE_PAGES.forEach((p, i) => {
   writeFileSync(`ciclo/${p.slug}/index.html`, shell({ title: `${p.title} · Hera`, desc: `${p.lead}`.slice(0, 158).replace(/\s\S*$/, '') + '…', path, ld, body: `${CSS_EXTRA}
 <div class="w"><div class="band" style="background:${p.tint}"><p class="ey"><a href="/ciclo/" style="text-decoration:none">Ciclo menstrual</a> · Fase ${i + 1} de 4</p><h1>${esc(p.name)}</h1>
 <div class="wk"><div><b>${esc(p.days)}</b><span>En un ciclo de 28 días</span></div><div><b>${esc(p.length)}</b><span>Duración</span></div><div><b>${esc(p.hormone)}</b><span>Hormonas</span></div></div>
-<p class="m" style="margin-top:14px">Días orientativos: cada ciclo es distinto · Actualizado el 8 nov 2026</p></div>
+<p class="m" style="margin-top:14px">Días orientativos: cada ciclo es distinto</p></div>
 <div class="art"><article class="secs">
 <section class="sec"><h2>Qué es</h2><p class="big">${esc(p.lead)}</p></section>
 <section class="sec"><h2>Qué pasa en tu cuerpo</h2>${list(p.cuerpo)}</section>

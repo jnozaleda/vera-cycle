@@ -57,7 +57,7 @@ for (const p of weeks) {
   writeFileSync(`embarazo/${p.slug}/index.html`, shell({ title: `${p.title} · Hera`, desc: p.desc, path, ld, body: `${CSS_EXTRA}
 <div class="w"><div class="band" style="background:${TINT[p.t]}"><p class="ey"><a href="/embarazo/" style="text-decoration:none">Embarazo</a> · ${esc(TRIMESTER_LABEL[p.t])}</p><h1>Semana ${p.w} de embarazo</h1>
 <div class="wk"><div><b>${fmtNum(p.b.cm)} cm</b><span>${esc(p.b.measure)}</span></div><div><b>${size(p.b)}</b><span>Peso aproximado</span></div><div><b>${esc(p.compare[0].toUpperCase() + p.compare.slice(1))}</b><span>Tamaño comparable</span></div></div>
-<p class="m" style="margin-top:14px">Medidas medias orientativas · Actualizado el 7 nov 2026</p></div>
+<p class="m" style="margin-top:14px">Medidas medias orientativas</p></div>
 <div class="art"><article class="secs">
 <section class="sec"><h2>Tu bebé esta semana</h2><p class="big">${esc(clean(p.b.text))}</p></section>
 <section class="sec"><h2>Lo normal estas semanas</h2><ul>${p.normal.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>

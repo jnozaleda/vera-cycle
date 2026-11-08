@@ -76,11 +76,10 @@ for (const p of pages) {
     author: { '@type': 'Organization', name: 'Hera', url: `${SITE}/` }, publisher: { '@type': 'Organization', name: 'Hera', url: `${SITE}/` } };
   const ld = p.x.qa ? { '@context': 'https://schema.org', '@graph': [article, { '@type': 'FAQPage', mainEntity: p.x.qa.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }] }
     : { '@context': 'https://schema.org', ...article };
-  const fecha = new Date(`${p.updated}T12:00:00Z`).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
   const extra = p.x.qa ? `<section class="sec"><h2>${esc(p.x.h)}</h2>${p.x.qa.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')}</section>` : '';
   mkdirSync(`guias/${p.slug}`, { recursive: true });
   writeFileSync(`guias/${p.slug}/index.html`, shell({ title: `${p.title} · Hera`, desc: p.desc, path, ld, body: `
-<div class="w"><div class="band" style="background:${TINT[p.group]}"><p class="ey">${esc(p.group)}</p><h1>${esc(p.title)}</h1><p class="m">Equipo de Hera · Actualizado el ${fecha}</p></div>
+<div class="w"><div class="band" style="background:${TINT[p.group]}"><p class="ey">${esc(p.group)}</p><h1>${esc(p.title)}</h1><p class="m">Equipo de Hera</p></div>
 <div class="art"><article class="secs"><section class="sec"><h2>La respuesta</h2>${answer(p.a)}</section>${extra}
 <p class="urg"><b>Si es urgente, llama al 112 o ve a urgencias.</b> Esta información es general y no sustituye la valoración de un profesional.</p></article>
 ${askBox('¿Tu caso es distinto?', askFor(p))}</div>

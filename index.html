@@ -646,6 +646,29 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       hit(c ? `anuncio_visita:${c}` : 'anuncio_visita');
     }
   }
+  // Qué hacen al entrar (vera-backlog#80): hasta dónde bajan, qué secciones ven, dónde pulsan y cuánto se quedan.
+  // Cada evento se manda una sola vez por visita; nada de lo que escriben.
+  {
+    const once = new Set();
+    const hit1 = (e) => { if (!once.has(e)) { once.add(e); hit(e); } };
+    addEventListener('scroll', () => {
+      const h = document.documentElement;
+      const pct = (h.scrollTop + innerHeight) / h.scrollHeight * 100;
+      for (const s of [25, 50, 75, 100]) if (pct >= s - 2) hit1(`scroll:${s}`);
+    }, { passive: true });
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((es) => es.forEach((x) => { if (x.isIntersecting) { hit1(`seccion:${x.target.id.replace(/-/g, '_')}`); io.unobserve(x.target); } }), { threshold: 0.35 });
+      document.querySelectorAll('section[id]').forEach((s) => io.observe(s));
+    }
+    const LINKS = [[/equipo/, 'equipo'], [/#precio/, 'precio'], [/guias/, 'guias'], [/embarazo/, 'embarazo'], [/\/app\//, 'abrir_app'], [/privacy/, 'privacidad'], [/#instalar/, 'instalar'], [/#como/, 'como_funciona'], [/#preguntas/, 'faq'], [/#ask|#preguntar/, 'ir_a_preguntar']];
+    document.addEventListener('click', (ev) => {
+      const a = ev.target.closest?.('a[href]');
+      if (a) { const href = a.getAttribute('href') || ''; const m = LINKS.find(([re]) => re.test(href)); if (m) hit1(`clic:${m[1]}`); return; }
+      if (ev.target.closest?.('details summary')) hit1('clic:faq_abre');
+    }, true);
+    let secs = 0;
+    const tick = setInterval(() => { if (document.hidden) return; secs += 5; for (const t of [10, 30, 60, 180]) if (secs === t) hit1(`tiempo:${t}`); if (secs > 180) clearInterval(tick); }, 5000);
+  }
   const adSrc = () => { try { const a = JSON.parse(store.get(AD_KEY) || 'null'); return a && Date.now() - a.at < 30 * 86400000 ? { src: 'ads', ...(a.c ? { camp: a.c } : {}) } : {}; } catch { return {}; } };
   document.addEventListener('click', (ev) => { if (ev.target.closest?.('a[href^="mailto:"]')) hit('contacto'); }, true);
 

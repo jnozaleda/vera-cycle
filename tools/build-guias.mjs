@@ -24,6 +24,24 @@ const PAGES = [
   ['Llora mucho, ¿son cólicos?', 'bebe-llora-mucho-colicos', 'Mi bebé llora mucho, ¿son cólicos?', 'pediatra', 'Tu bebé', 'Cuándo suele mejorar el llanto y qué se considera cólico.'],
 ];
 
+// Solo en la web: ampliaciones por guía para responder a lo que se busca en Google (Search Console).
+// Publicadas antes de la revisión clínica a petición de Noza; las revisa Gonzalo (vera-backlog#76).
+const EXTRA = {
+  'jamon-y-embutidos-en-el-embarazo': {
+    updated: '2026-11-08',
+    title: 'Jamón y embutidos en el embarazo: fuet, chorizo, york y croquetas',
+    desc: 'Si no eres inmune a la toxoplasmosis, evita los embutidos curados crudos, como el jamón, el chorizo o el fuet. Los cocidos y los platos cocinados, como las croquetas, sí.',
+    h: 'Alimento por alimento',
+    qa: [
+      ['¿Puedo comer jamón serrano o ibérico?', 'Si eres inmune a la toxoplasmosis, sí. Si no lo eres, se recomienda evitarlo mientras esté crudo, igual que el resto de curados. Cocinado (en una sopa, un guiso o una pizza) se puede tomar.'],
+      ['¿Y chorizo, fuet, salchichón o lomo embuchado?', 'Son embutidos curados crudos, así que la regla es la misma: sin problema si eres inmune; si no lo eres, mejor evitarlos crudos. El chorizo cocinado, por ejemplo en unas lentejas o un cocido, sí se puede comer.'],
+      ['¿Puedo comer croquetas de jamón?', 'Sí. Al freírlas, el jamón del relleno se cocina, y el calor elimina el riesgo de toxoplasmosis. Que estén bien hechas y calientes también por dentro.'],
+      ['¿Y jamón de york, pavo o mortadela?', 'Sí, son embutidos cocidos, así que la toxoplasmosis no es un problema. Como cualquier fiambre que se guarda abierto en la nevera, pueden llevar listeria: mejor envases recién abiertos, guardados en frío y que te tomes en pocos días.'],
+      ['¿Sirve congelar el embutido? ¿Cuánto tiempo?', 'Congelar el embutido curado varios días a –18 °C o menos reduce el riesgo de toxoplasmosis, pero no lo elimina del todo, y tampoco elimina la listeria. Por eso, si no eres inmune, lo más seguro sigue siendo evitarlo crudo o tomarlo cocinado. Si quieres hacerlo, pregúntale a tu matrona cómo.'],
+      ['¿Cómo sé si soy inmune a la toxoplasmosis?', 'Te lo dice la analítica del primer trimestre: si los anticuerpos IgG salen positivos, ya la has pasado y eres inmune. Si salen negativos, no lo eres y suelen repetirla más adelante en el embarazo.'],
+    ],
+  },
+};
 const all = [...PREGNANCY_GUIDE, ...POSTPARTUM_GUIDE].flatMap((s) => s.items);
 const TINT = { Embarazo: '#DCEBE4', Posparto: '#ECE6F0', 'Tu bebé': '#F4E6E8' };
 const SUB = { Embarazo: 'De la primera falta a la bolsa del hospital.', Posparto: 'Tu recuperación después del parto.', 'Tu bebé': 'Fiebre, sueño, llanto y primeros días.' };
@@ -46,19 +64,24 @@ const askFor = (p) => Object.entries(TOPICS[p.group]).sort(([a], [b]) => (a === 
 const pages = PAGES.map(([q, slug, title, pro, group, sum]) => {
   const item = all.find((i) => i.q === q);
   if (!item) throw new Error(`No está en la guía: ${q}`);
-  return { slug, title, pro: PRO[pro], proKey: pro, group, sum, a: item.a, desc: plain(item.a).slice(0, 150).replace(/\s\S*$/, '') + '…' };
+  const x = EXTRA[slug] || {};
+  return { slug, title: x.title || title, pro: PRO[pro], proKey: pro, group, sum, a: item.a, x, updated: x.updated || UPDATED, desc: x.desc || plain(item.a).slice(0, 150).replace(/\s\S*$/, '') + '…' };
 });
 const card = (p) => `<a class="gc" href="/guias/${p.slug}/"><h3>${esc(p.title)}</h3><p>${esc(p.sum)}</p><span class="by">${face(p.pro)}<span>${p.pro.name} · ${p.pro.role}</span></span></a>`;
 
 for (const p of pages) {
   const path = `/guias/${p.slug}/`;
   const related = pages.filter((x) => x.group === p.group && x !== p).slice(0, 3);
-  const ld = { '@context': 'https://schema.org', '@type': 'Article', headline: p.title, inLanguage: 'es-ES', dateModified: UPDATED, mainEntityOfPage: SITE + path,
+  const article = { '@type': 'Article', headline: p.title, inLanguage: 'es-ES', dateModified: p.updated, mainEntityOfPage: SITE + path,
     author: { '@type': 'Organization', name: 'Hera', url: `${SITE}/` }, publisher: { '@type': 'Organization', name: 'Hera', url: `${SITE}/` } };
+  const ld = p.x.qa ? { '@context': 'https://schema.org', '@graph': [article, { '@type': 'FAQPage', mainEntity: p.x.qa.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }] }
+    : { '@context': 'https://schema.org', ...article };
+  const fecha = new Date(`${p.updated}T12:00:00Z`).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
+  const extra = p.x.qa ? `<section class="sec"><h2>${esc(p.x.h)}</h2>${p.x.qa.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')}</section>` : '';
   mkdirSync(`guias/${p.slug}`, { recursive: true });
   writeFileSync(`guias/${p.slug}/index.html`, shell({ title: `${p.title} · Hera`, desc: p.desc, path, ld, body: `
-<div class="w"><div class="band" style="background:${TINT[p.group]}"><p class="ey">${esc(p.group)}</p><h1>${esc(p.title)}</h1><p class="m">Equipo de Hera · Actualizado el 31 de octubre de 2026</p></div>
-<div class="art"><article class="secs"><section class="sec"><h2>La respuesta</h2>${answer(p.a)}</section>
+<div class="w"><div class="band" style="background:${TINT[p.group]}"><p class="ey">${esc(p.group)}</p><h1>${esc(p.title)}</h1><p class="m">Equipo de Hera · Actualizado el ${fecha}</p></div>
+<div class="art"><article class="secs"><section class="sec"><h2>La respuesta</h2>${answer(p.a)}</section>${extra}
 <p class="urg"><b>Si es urgente, llama al 112 o ve a urgencias.</b> Esta información es general y no sustituye la valoración de un profesional.</p></article>
 ${askBox('¿Tu caso es distinto?', askFor(p))}</div>
 <section class="more"><h2>También te puede interesar</h2><div class="gcs">${related.map(card).join('')}</div></section></div>` }));
@@ -72,6 +95,6 @@ ${groups.map((g) => `<section class="grp"><div class="grph" style="background:${
 <div class="final"><div class="fin"><h2>¿No encuentras tu duda?</h2><p>Ginecólogo, matrona y pediatra te responden por escrito en menos de 48 h.</p><a class="btn" href="/#ask">Preguntar gratis</a></div></div></div>` }));
 
 let sm = readFileSync('sitemap.xml', 'utf8').replace(/\s*<url><loc>[^<]*\/guias\/[^<]*<\/loc><lastmod>[^<]*<\/lastmod><\/url>/g, '');
-const urls = ['/guias/', ...pages.map((p) => `/guias/${p.slug}/`)].map((u) => `  <url><loc>${SITE}${u}</loc><lastmod>${UPDATED}</lastmod></url>`).join('\n');
+const urls = ['/guias/', ...pages.map((p) => `/guias/${p.slug}/`)].map((u) => `  <url><loc>${SITE}${u}</loc><lastmod>${(pages.find((p) => u === `/guias/${p.slug}/`) || {}).updated || UPDATED}</lastmod></url>`).join('\n');
 writeFileSync('sitemap.xml', sm.replace('</urlset>', `${urls}\n</urlset>`));
 console.log(`${pages.length} guías`);

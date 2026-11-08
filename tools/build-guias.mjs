@@ -3,6 +3,7 @@
 import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { PREGNANCY_GUIDE, POSTPARTUM_GUIDE } from '../app/js/guide.js';
 import { SITE, PRO, esc, shell, face, askBox } from './web-shell.mjs';
+import { VISUAL, REVIEWED } from './data/guias-visual.mjs';
 
 const UPDATED = '2026-10-31';
 // [pregunta en la app, slug, título para buscadores, profesional, grupo, resumen para las tarjetas]
@@ -67,6 +68,39 @@ const pages = PAGES.map(([q, slug, title, pro, group, sum]) => {
   const x = EXTRA[slug] || {};
   return { slug, title: x.title || title, pro: PRO[pro], proKey: pro, group, sum, a: item.a, x, updated: x.updated || UPDATED, desc: x.desc || plain(item.a).slice(0, 150).replace(/\s\S*$/, '') + '…' };
 });
+// Formato visual (tools/data/guias-visual.mjs): datos clave, semáforo, gráfico, enlaces y barra fija en el móvil
+const VCSS = `<style>.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}.tile{background:rgba(255,255,255,.75);border-radius:10px;padding:12px 14px}.tile b{display:block;font:400 25px/1.1 Newsreader,Georgia,serif;color:#3B2433}.tile span{display:block;font-size:13px;line-height:1.35;color:#655B61;margin-top:4px}
+.rev{display:flex;align-items:center;gap:9px;font-size:13.5px;color:#4C444C;margin-top:4px}.rev img{width:30px;height:30px;border-radius:50%}.rev b{color:#3B2433}
+.sem{display:flex;flex-direction:column;gap:8px}.lt{display:grid;grid-template-columns:8px 1fr;gap:12px;border-radius:10px;padding:12px 14px 12px 12px}.lt i{border-radius:4px}.lt b{display:block;font-weight:700;font-size:15px}.lt p{font-size:14.5px;line-height:1.45;margin:2px 0 0;color:#2E2630}
+.lt.g{background:#EAF3EE}.lt.g i{background:#3E8E63}.lt.g b{color:#2F6B4F}.lt.a{background:#FBF1E2}.lt.a i{background:#D69A2D}.lt.a b{color:#8A5A12}.lt.r{background:#FBEAEC}.lt.r i{background:#B8424F}.lt.r b{color:#8F2F3F}
+.track{display:flex;height:36px;border-radius:8px;overflow:hidden;font-size:12.5px;font-weight:700;color:#fff}.track div{display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.1;padding:0 4px;min-width:0}
+.ticks{display:flex;justify-content:space-between;font-size:12px;color:#655B61;margin-top:6px}.sec .cleg{font-size:13.5px;line-height:1.45;color:#655B61;margin-top:10px}
+.rng{display:flex;flex-direction:column;gap:12px}.rr span{display:block;font-size:14px;margin-bottom:5px}.rr div{position:relative;height:14px;background:#F1ECEE;border-radius:7px}.rr i{position:absolute;top:0;bottom:0;border-radius:7px;background:#8E6178}.rr em{position:absolute;top:-1px;font-style:normal;font-size:12.5px;font-weight:700;color:#3B2433;white-space:nowrap}
+.lnk{display:flex;flex-wrap:wrap;gap:8px}.lnk a{font-size:14px;font-weight:600;color:#693D55;text-decoration:none;border:1px solid #E2C9D2;background:#FBF4F6;border-radius:999px;padding:7px 13px}.lnk a:hover{border-color:#8E6178}
+.stick{display:none}
+@media(max-width:760px){.tiles{grid-template-columns:1fr 1fr}.tile b{font-size:22px}body{padding-bottom:76px}
+.stick{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:5;align-items:center;gap:10px;background:#fff;border-top:1px solid #E6DFE2;box-shadow:0 -6px 18px rgba(59,36,51,.08);padding:10px 14px calc(12px + env(safe-area-inset-bottom,0px));text-decoration:none}.stick img{width:36px;height:36px;border-radius:50%}.stick span{flex:1;font-size:13px;line-height:1.3;color:#4C444C}.stick span b{display:block;color:#3B2433;font-size:14px}.stick em{font-style:normal;background:#693D55;color:#fff;border-radius:999px;padding:9px 14px;font-weight:600;font-size:14px}}</style>`;
+const LIGHTS = [['g', 'Es normal'], ['a', 'Consulta'], ['r', 'Urgencias']];
+function visual(p) {
+  const v = VISUAL[p.slug] || {};
+  const nb = (t) => esc(t).replace(/(\d) (°C|kg|min|h)\b/g, '$1&nbsp;$2');
+  const tiles = v.tiles ? `<div class="tiles">${v.tiles.map(([b, t]) => `<div class="tile"><b>${nb(b)}</b><span>${esc(t)}</span></div>`).join('')}</div>` : '';
+  const sem = v.sem ? `<section class="sec"><h2>¿Qué hago ahora?</h2><div class="sem">${LIGHTS.filter(([k]) => v.sem[k]).map(([k]) => `<div class="lt ${k}"><i></i><div><b>${esc(v.sem[k][0])}</b><p>${nb(v.sem[k][1])}</p></div></div>`).join('')}</div></section>` : '';
+  let chart = '';
+  if (v.chart?.track) {
+    chart = `<section class="sec"><h2>${esc(v.chart.title)}</h2><div class="track">${v.chart.track.map(([t, w, c]) => `<div style="flex:${w};background:${c}">${esc(t)}</div>`).join('')}</div><div class="ticks">${v.chart.ticks.map((t) => `<span>${esc(t)}</span>`).join('')}</div><p class="cleg">${nb(v.chart.legend)}</p></section>`;
+  } else if (v.chart?.range) {
+    const { max, unit, rows } = v.chart.range;
+    const f = (n) => String(n).replace('.', ',');
+    chart = `<section class="sec"><h2>${esc(v.chart.title)}</h2><div class="rng">${rows.map(([l, lo, hi]) => `<div class="rr"><span>${esc(l)}</span><div><i style="left:${(lo / max) * 100}%;width:${((hi - lo) / max) * 100}%"></i></div><span style="margin:5px 0 0;font-size:13px;color:#655B61">${f(lo)}–${f(hi)}&nbsp;${unit}</span></div>`).join('')}</div><div class="ticks" style="margin-top:10px">${[0, 5, 10, 15, 20].filter((n) => n <= max).map((n) => `<span>${n}&nbsp;${unit}</span>`).join('')}</div><p class="cleg">${esc(v.chart.legend)}</p></section>`;
+  }
+  const links = v.links ? `<section class="sec"><h2>Sigue leyendo</h2><div class="lnk">${v.links.map(([h, t]) => `<a href="${h}">${esc(t)} →</a>`).join('')}</div></section>` : '';
+  const rk = REVIEWED[p.slug];
+  const rev = rk ? `<p class="rev">${face(PRO[rk])}<span>Revisado por <b>${esc(PRO[rk].full || PRO[rk].name)}</b>, ${esc(PRO[rk].role)}</span></p>` : '';
+  const pr = PRO[p.proKey];
+  const stick = `<a class="stick" href="/#preguntar-${p.proKey}">${face(pr)}<span><b>¿Tu caso es distinto?</b>${esc(pr.name)} te responde en 48 h</span><em>Preguntar</em></a>`;
+  return { tiles, sem, chart, links, rev, stick };
+}
 const card = (p) => `<a class="gc" href="/guias/${p.slug}/"><h3>${esc(p.title)}</h3><p>${esc(p.sum)}</p><span class="by">${face(p.pro)}<span>${p.pro.name} · ${p.pro.role}</span></span></a>`;
 
 for (const p of pages) {
@@ -77,13 +111,14 @@ for (const p of pages) {
   const ld = p.x.qa ? { '@context': 'https://schema.org', '@graph': [article, { '@type': 'FAQPage', mainEntity: p.x.qa.map(([q, a]) => ({ '@type': 'Question', name: q, acceptedAnswer: { '@type': 'Answer', text: a } })) }] }
     : { '@context': 'https://schema.org', ...article };
   const extra = p.x.qa ? `<section class="sec"><h2>${esc(p.x.h)}</h2>${p.x.qa.map(([q, a]) => `<details><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('')}</section>` : '';
+  const v = visual(p);
   mkdirSync(`guias/${p.slug}`, { recursive: true });
   writeFileSync(`guias/${p.slug}/index.html`, shell({ title: `${p.title} · Hera`, desc: p.desc, path, ld, body: `
-<div class="w"><div class="band" style="background:${TINT[p.group]}"><p class="ey">${esc(p.group)}</p><h1>${esc(p.title)}</h1><p class="m">Equipo de Hera</p></div>
-<div class="art"><article class="secs"><section class="sec"><h2>La respuesta</h2>${answer(p.a)}</section>${extra}
+${VCSS}<div class="w"><div class="band" style="background:${TINT[p.group]}"><p class="ey">${esc(p.group)}</p><h1>${esc(p.title)}</h1>${v.rev || '<p class="m">Equipo de Hera</p>'}${v.tiles}</div>
+<div class="art"><article class="secs">${v.sem}${v.chart}<section class="sec"><h2>La respuesta</h2>${answer(p.a)}</section>${extra}${v.links}
 <p class="urg"><b>Si es urgente, llama al 112 o ve a urgencias.</b> Esta información es general y no sustituye la valoración de un profesional.</p></article>
 ${askBox('¿Tu caso es distinto?', askFor(p))}</div>
-<section class="more"><h2>También te puede interesar</h2><div class="gcs">${related.map(card).join('')}</div></section></div>` }));
+<section class="more"><h2>También te puede interesar</h2><div class="gcs">${related.map(card).join('')}</div></section></div>${v.stick}` }));
 }
 const groups = Object.keys(TINT);
 mkdirSync('guias', { recursive: true });

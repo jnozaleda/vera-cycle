@@ -2,7 +2,7 @@
 // Uso: node tools/build-guias.mjs   · Las URL nuevas se añaden a sitemap.xml.
 import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { PREGNANCY_GUIDE, POSTPARTUM_GUIDE } from '../app/js/guide.js';
-import { SITE, PRO, esc, shell, face } from './web-shell.mjs';
+import { SITE, PRO, esc, shell, face, askBox } from './web-shell.mjs';
 
 const UPDATED = '2026-10-31';
 // [pregunta en la app, slug, título para buscadores, profesional, grupo, resumen para las tarjetas]
@@ -28,14 +28,21 @@ const all = [...PREGNANCY_GUIDE, ...POSTPARTUM_GUIDE].flatMap((s) => s.items);
 const TINT = { Embarazo: '#DCEBE4', Posparto: '#ECE6F0', 'Tu bebé': '#F4E6E8' };
 const SUB = { Embarazo: 'De la primera falta a la bolsa del hospital.', Posparto: 'Tu recuperación después del parto.', 'Tu bebé': 'Fiebre, sueño, llanto y primeros días.' };
 const plain = (a) => a.flat().join(' ');
-/** La primera frase se destaca; el resto del texto no cambia */
+/** La primera frase va destacada; el resto del texto no cambia */
 function answer(a) {
   const parts = a.map((x) => (Array.isArray(x) ? `<ul>${x.map((li) => `<li>${esc(li)}</li>`).join('')}</ul>` : `<p>${esc(x)}</p>`));
   if (typeof a[0] !== 'string') return parts.join('\n');
   const m = /^(.+?[.:?])\s+(.+)$/s.exec(a[0]);
-  parts[0] = m ? `<p class="lead">${esc(m[1])}</p><p>${esc(m[2])}</p>` : `<p class="lead">${esc(a[0])}</p>`;
+  parts[0] = m ? `<p class="big">${esc(m[1])}</p><p>${esc(m[2])}</p>` : `<p class="big">${esc(a[0])}</p>`;
   return parts.join('\n');
 }
+// Quién aparece en el recuadro para preguntar, según la etapa (la autora de la guía va primero)
+const TOPICS = {
+  Embarazo: { gineco: 'Embarazo, pruebas y medicación', matrona: 'Síntomas, cuidados y parto' },
+  Posparto: { matrona: 'Recuperación, puntos y lactancia', gineco: 'Revisión, regla y anticoncepción' },
+  'Tu bebé': { pediatra: 'Fiebre, sueño, piel y desarrollo', matrona: 'Lactancia y cuidados del recién nacido' },
+};
+const askFor = (p) => Object.entries(TOPICS[p.group]).sort(([a], [b]) => (a === p.proKey ? -1 : b === p.proKey ? 1 : 0));
 const pages = PAGES.map(([q, slug, title, pro, group, sum]) => {
   const item = all.find((i) => i.q === q);
   if (!item) throw new Error(`No está en la guía: ${q}`);
@@ -51,9 +58,9 @@ for (const p of pages) {
   mkdirSync(`guias/${p.slug}`, { recursive: true });
   writeFileSync(`guias/${p.slug}/index.html`, shell({ title: `${p.title} · Hera`, desc: p.desc, path, ld, body: `
 <div class="w"><div class="band" style="background:${TINT[p.group]}"><p class="ey">${esc(p.group)}</p><h1>${esc(p.title)}</h1><p class="m">Equipo de Hera · Actualizado el 31 de octubre de 2026</p></div>
-<div class="art"><article class="body">${answer(p.a)}
-<p class="note"><b>Si es urgente, llama al 112 o ve a urgencias.</b> Información general que no sustituye la valoración de un profesional.</p></article>
-<aside class="ask"><div class="who">${face(p.pro)}<div><b>${p.pro.name}</b><span>${p.pro.role[0].toUpperCase()}${p.pro.role.slice(1)}</span></div></div><p>¿Tu caso es distinto? Te responde por escrito en menos de 48 h.</p><a class="btn" href="/#preguntar-${p.proKey}">Preguntar a ${p.pro.name}</a><small>Tus dos primeras consultas son gratis. Privada, sin nombre ni registro.</small></aside></div>
+<div class="art"><article class="secs"><section class="sec"><h2>La respuesta</h2>${answer(p.a)}</section>
+<p class="urg"><b>Si es urgente, llama al 112 o ve a urgencias.</b> Esta información es general y no sustituye la valoración de un profesional.</p></article>
+${askBox('¿Tu caso es distinto?', askFor(p))}</div>
 <section class="more"><h2>También te puede interesar</h2><div class="gcs">${related.map(card).join('')}</div></section></div>` }));
 }
 const groups = Object.keys(TINT);

@@ -64,6 +64,7 @@ export const EVENTS = {
   respondida: ['Respondida una consulta por', true],
   gratuitas_agotadas: ['Intentó consultar con las gratuitas agotadas', true],
   anuncio_visita: ['Llegó desde un anuncio', false],
+  consulta_anuncio: ['La consulta vino de un anuncio', false],
   scroll: ['Bajó en la web hasta el', false],
   seccion: ['Vio la sección', false],
   clic: ['Pulsó en la web', false],
@@ -118,7 +119,7 @@ const madridTime = (ts) => new Intl.DateTimeFormat('es-ES', { timeZone: 'Europe/
 const madridDayTime = (ts) => new Intl.DateTimeFormat('es-ES', { timeZone: 'Europe/Madrid', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(ts));
 
 /** Apunta un evento y, si es importante, avisa al momento. send: función de respaldo para enviar con Resend. */
-export async function record(env, { e, d = '', p = '' }, send, ctx) {
+export async function record(env, { e, d = '', p = '', note = '' }, send, ctx) {
   const ts = Date.now();
   if (env.DB) {
     try { await env.DB.prepare('INSERT INTO activity (ts, e, d, p) VALUES (?1, ?2, ?3, ?4)').bind(ts, e, d || null, p || null).run(); }
@@ -129,7 +130,7 @@ export async function record(env, { e, d = '', p = '' }, send, ctx) {
   const k = `al:${p || '-'}:${e}`;
   if (p && env.KV) { if (await env.KV.get(k)) return; await env.KV.put(k, '1', { expirationTtl: 1800 }); }
   const who = p ? `Persona ${p}` : 'Hera';
-  const line = `${eventText(e)}`;
+  const line = `${eventText(e)}${note ? ` · ${note}` : ''}`;
   const text = `${line}\n\n${who}${d ? ` · ${deviceText(d)}` : ''} · ${madridDayTime(ts)}\n\nResumen de todo cada hora.${panelLink(env)}`;
   const job = notify(env, `Hera · ${line}`, text, send);
   if (ctx?.waitUntil) ctx.waitUntil(job); else await job;

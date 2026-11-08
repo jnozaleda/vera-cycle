@@ -229,7 +229,7 @@ export default {
         // Aviso al equipo: sin correo de la usuaria; enlace al pago en el panel de Stripe
         const dash = `https://dashboard.stripe.com/${s.livemode ? '' : 'test/'}${s.payment_intent ? `payments/${s.payment_intent}` : s.subscription ? `subscriptions/${typeof s.subscription === 'string' ? s.subscription : s.subscription.id}` : 'payments'}`;
         const hora = new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid', dateStyle: 'medium', timeStyle: 'short' });
-        await notify(env, `Hera: nuevo pago · ${PLANS[plan].label} (${PLANS[plan].eur} €)${s.livemode ? '' : ' · prueba'}`,
+        await notify(env, `Hera: nuevo pago · ${PLANS[plan].label} (${PLANS[plan].eur} €)${s.metadata?.src === 'ads' ? ' · vino de un anuncio' : ''}${s.livemode ? '' : ' · prueba'}`,
           `${PLANS[plan].label}: ${PLANS[plan].eur} €${s.livemode ? '' : ' (modo de prueba, sin dinero real)'}\n${hora}\n\nVer en Stripe: ${dash}`, sendMail);
       },
       cancelled: async () => { await bump(env, 'pago:baja_mensual'); },
@@ -405,7 +405,12 @@ export default {
           await bump(env, `consulta:${body.to}`);
           if (body.src === 'ads') await bump(env, paid ? 'anuncio_consulta_pagada' : 'anuncio_consulta');
           if (unlimited) await bump(env, 'consulta_ilimitada');
-          await record(env, { e: `consulta:${body.to}`, p: await personTag(env, request, madridDay()) }, sendMail, ctx);
+          // Si llegó desde un anuncio, el aviso lo dice (y queda en la actividad para el resumen y los recorridos)
+          const camp = /^[a-z0-9_]{1,24}$/.test(String(body.camp || '')) ? body.camp : '';
+          const fromAd = body.src === 'ads';
+          const tag = await personTag(env, request, madridDay());
+          await record(env, { e: `consulta:${body.to}`, p: tag, note: fromAd ? `vino de un anuncio${camp ? ` (${camp})` : ''}${paid ? ', consulta pagada' : ''}` : (paid ? 'consulta pagada' : '') }, sendMail, ctx);
+          if (fromAd) await record(env, { e: camp ? `consulta_anuncio:${camp}` : 'consulta_anuncio', p: tag }, sendMail, ctx);
         }
       }
       const remaining = Math.max(0, limit - n);

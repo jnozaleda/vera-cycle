@@ -64,7 +64,7 @@ const shell = ({ title, desc, path, ld, body }) => `<!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title><meta name="description" content="${esc(desc)}"><link rel="canonical" href="${SITE}${path}">
 <meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:image" content="${SITE}/portada/compartir.jpg"><meta property="og:type" content="article"><meta property="og:locale" content="es_ES">
-<meta name="theme-color" content="#FAF8F5"><link rel="icon" type="image/svg+xml" href="/app/brand/favicon.svg"><link rel="apple-touch-icon" href="/app/icons/apple-touch-icon.png">
+<meta name="theme-color" content="#FAF8F5"><link rel="icon" type="image/svg+xml" href="/app/brand/favicon.svg"><link rel="icon" type="image/png" sizes="96x96" href="/app/icons/favicon-96.png"><link rel="icon" href="/favicon.ico" sizes="48x48"><link rel="apple-touch-icon" href="/app/icons/apple-touch-icon.png">
 <script type="application/ld+json">${JSON.stringify(ld)}</script><style>${CSS}</style></head><body>
 <header class="w top"><a class="wm" href="/">Hera</a><nav aria-label="Principal"><a href="/guias/">Guías</a><a href="/equipo.html">El equipo</a><a class="pill" href="/app/">Abrir Hera</a></nav></header><main>${body}</main>
 <footer class="w"><a href="/">Inicio</a> · <a href="/guias/">Guías</a> · <a href="/equipo.html">El equipo</a> · <a href="/privacy.html">Privacidad</a> · <a href="/support.html">Soporte</a></footer>${BEACON}</body></html>

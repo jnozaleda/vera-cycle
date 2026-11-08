@@ -762,6 +762,34 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       setTimeout(() => box.scrollIntoView({ block: 'start' }), 50);
     }
   }
+  // Llega desde el anuncio de una profesional (utm_campaign): titular a juego y esa profesional ya elegida.
+  // Solo en esa visita; quien entra por otro sitio ve la portada de siempre.
+  {
+    const AD_PAGE = {
+      matrona: ['Pregunta a una matrona, <em>por escrito y sin cita</em>', 'Marina Fernández, matrona, lee tu duda y te responde por escrito en menos de 48 h. Embarazo, parto, posparto y lactancia. Tus 2 primeras consultas, gratis.',
+        'Marina, matrona', ['¿Es normal tener contracciones en la semana 34?', '¿Cómo sé si mi bebé se engancha bien al pecho?', 'Me molestan los puntos del parto, ¿es normal?', '¿Qué puedo tomar para el ardor en el embarazo?']],
+      gineco: ['Pregunta a un ginecólogo, <em>por escrito y sin cita</em>', 'El Dr. Gonzalo Nozaleda, ginecólogo, lee tu duda y te responde por escrito en menos de 48 h. Regla, anticoncepción, embarazo y menopausia. Tus 2 primeras consultas, gratis.',
+        'Gonzalo, ginecólogo', ['Se me ha retrasado la regla, ¿qué hago?', 'Tengo un sangrado entre reglas, ¿es normal?', '¿Qué anticonceptivo me conviene?', 'Tengo sofocos por la noche, ¿es normal?']],
+      pediatra: ['Pregunta a una pediatra, <em>por escrito y sin cita</em>', 'La Dra. Lucía Carrascón, pediatra, lee tu duda y te responde por escrito en menos de 48 h. Sueño, alimentación, piel o desarrollo del bebé. Tus 2 primeras consultas, gratis.',
+        'Lucía, pediatra', ['Mi bebé tiene fiebre, ¿qué hago?', '¿Cuándo empiezo con la alimentación complementaria?', 'Tiene granitos en la cara, ¿es normal?', 'Duerme muy poco por la noche, ¿es normal?']],
+    };
+    const camp = (new URLSearchParams(location.search).get('utm_campaign') || '').toLowerCase();
+    const page = AD_PAGE[camp];
+    if (page) {
+      const h1 = document.querySelector('.hero h1, h1');
+      const lead = document.querySelector('p.lead');
+      if (h1) h1.innerHTML = page[0];
+      if (lead) lead.textContent = page[1];
+      const who = document.querySelector('#ask-form .who');
+      if (who) who.innerHTML = `<span class="who-faces"><img src="portada/equipo/${PROS[camp].img}.jpg?v=3" alt="" width="30" height="30"></span><span>Te responde <a class="who-link" href="equipo.html"><b>${page[2]}</b></a></span>`;
+      const eg = $('ask-eg');
+      if (eg) { eg.textContent = ''; for (const q of page[3]) { const b = document.createElement('button'); b.type = 'button'; b.textContent = q; eg.append(b); } }
+      manual = true;
+      radios.forEach((r) => { r.checked = r.value === camp; });
+      refresh();
+      $('ask-hint').textContent = `Te responderá ${PROS[camp].name}. Puedes cambiarlo.`;
+    }
+  }
   // Cabecera en móvil: «Pregunta tu duda» solo cuando la caja ya no se ve
   if ('IntersectionObserver' in window) {
     new IntersectionObserver(([e]) => document.body.classList.toggle('past-ask', !e.isIntersecting && e.boundingClientRect.top < 0)).observe(box);

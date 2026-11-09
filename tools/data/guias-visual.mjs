@@ -33,7 +33,7 @@ export const VISUAL = {
     tiles: [['11,5–16 kg', 'Con un peso de partida normal'], ['Depende', 'Del peso con el que empiezas'], ['0,5–2 kg', 'Lo habitual en el primer trimestre'], ['Cada visita', 'Tu matrona te pesa']],
     sem: { g: ['Va bien', 'Ganas peso poco a poco, dentro de tu rango.'], a: ['Coméntalo', 'Si ganas o pierdes mucho de una visita a otra.'], r: ['Ve a urgencias', 'Si se te hinchan de golpe la cara y las manos, con dolor de cabeza o visión borrosa.'] },
     chart: { title: 'Cuánto ganar en todo el embarazo, según tu peso de partida', range: { max: 20, unit: 'kg', rows: [['Bajo peso (IMC < 18,5)', 12.5, 18], ['Peso normal (18,5–24,9)', 11.5, 16], ['Sobrepeso (25–29,9)', 7, 11.5], ['Obesidad (≥ 30)', 5, 9]] }, legend: 'Embarazo de un solo bebé. Rangos de referencia internacionales; tu matrona te dirá el tuyo.' },
-    links: [['/embarazo/semana-13/', 'Semana 13'], ['/embarazo/semana-20/', 'Semana 20'], ['/embarazo/semana-30/', 'Semana 30']],
+    links: [['/calculadoras/peso-en-el-embarazo/', 'Calcula tu rango de peso'], ['/embarazo/semana-13/', 'Semana 13'], ['/embarazo/semana-20/', 'Semana 20'], ['/embarazo/semana-30/', 'Semana 30']],
   },
   'test-de-o-sullivan': {
     tiles: [['Semanas 24–28', 'Cuándo se hace'], ['1 hora', 'Tras una bebida con azúcar'], ['Análisis de sangre', 'Una sola extracción'], ['No es diagnóstico', 'Si sale alto, se confirma']],

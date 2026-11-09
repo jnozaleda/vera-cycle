@@ -45,7 +45,7 @@ export const shell = ({ title, desc, path, ld, body }) => `<!doctype html>
 <script type="application/ld+json">${JSON.stringify(ld)}</script><style>${CSS}</style></head><body>
 <header class="w top"><a class="wm" href="/">Hera</a><nav aria-label="Principal"><a href="/ciclo/">Ciclo</a><a href="/embarazo/">Embarazo</a><a href="/bebe/">Tu bebé</a><a href="/guias/">Guías</a><a href="/equipo.html">El equipo</a><a class="pill" href="/app/">Abrir Hera</a></nav></header>
 <nav class="w mnav" aria-label="Secciones">${[['/ciclo/', 'Ciclo'], ['/embarazo/', 'Embarazo'], ['/bebe/', 'Bebé'], ['/guias/', 'Guías']].map(([h, l]) => `<a href="${h}"${path.startsWith(h) ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav><main>${body}</main>
-<footer class="w"><a href="/">Inicio</a> · <a href="/ciclo/">Fases del ciclo</a> · <a href="/embarazo/">Embarazo semana a semana</a> · <a href="/bebe/">Tu bebé mes a mes</a> · <a href="/guias/">Guías</a> · <a href="/equipo.html">El equipo</a> · <a href="/privacy.html">Privacidad</a> · <a href="/support.html">Soporte</a></footer>${BEACON}</body></html>
+<footer class="w"><a href="/">Inicio</a> · <a href="/ciclo/">Fases del ciclo</a> · <a href="/embarazo/">Embarazo semana a semana</a> · <a href="/bebe/">Tu bebé mes a mes</a> · <a href="/calculadoras/">Calculadoras</a> · <a href="/guias/">Guías</a> · <a href="/equipo.html">El equipo</a> · <a href="/privacy.html">Privacidad</a> · <a href="/support.html">Soporte</a></footer>${BEACON}</body></html>
 `;
 export const face = (pro) => `<img src="/portada/equipo/${pro.photo}" alt="" width="52" height="52" loading="lazy">`;
 

@@ -32,7 +32,7 @@ PHASE_PAGES.forEach((p, i) => {
 <section class="sec"><h2>Dudas frecuentes</h2>${faqs}</section>
 <section class="sec"><h2>Cuándo consultar</h2>${list(p.consulta)}</section>
 <p class="urg"><b>Ve a urgencias o llama al 112</b> si tienes un sangrado muy abundante con mareo, un dolor muy fuerte y repentino o fiebre con dolor de tripa. Esta información es general y no sustituye la valoración de un profesional.</p></article>
-${askBox('¿Tienes una duda sobre tu ciclo?', ASK, '<a class="app" href="/app/">Sigue tu ciclo y tus fases en Hera →</a>')}</div>
+${askBox('¿Tienes una duda sobre tu ciclo?', ASK, (p.slug === 'ovulacion' ? '<a class="app" href="/calculadoras/ovulacion/">Calcula tus días fértiles →</a>' : '') + '<a class="app" href="/app/">Sigue tu ciclo y tus fases en Hera →</a>')}</div>
 <nav class="pager" aria-label="Fases">${navLink(i - 1, 'prev')}${navLink(i + 1, 'next')}</nav><p class="all"><a href="/ciclo/">Ver las cuatro fases</a></p></div>${stickyAsk(['gineco'], '¿Una duda sobre tu ciclo?')}` }));
 });
 

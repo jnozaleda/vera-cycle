@@ -3103,9 +3103,17 @@ root.addEventListener('click', (e) => {
 // Clic en un enlace de correo de contacto
 document.addEventListener('click', (e) => { if (e.target.closest?.('a[href^="mailto:"]')) track('contacto'); }, true);
 // Instalación: Android avisa con «appinstalled»; en iPhone se detecta la primera vez que se abre desde el icono
-window.addEventListener('appinstalled', () => track('instalada'));
+// Si el móvil guarda la marca de un anuncio (30 días), se apunta también que la instalación vino de ahí
+// (exacto en Android, donde la app comparte la marca con el navegador) y, una vez al día, que volvió otro día.
+const installed = () => { track('instalada'); if (adSrc().src) track('instalada_anuncio'); };
+window.addEventListener('appinstalled', installed);
 try {
-  if (isStandalone() && !localStorage.getItem('hera-instalada')) { localStorage.setItem('hera-instalada', '1'); track('instalada'); }
+  if (isStandalone() && !localStorage.getItem('hera-instalada')) { localStorage.setItem('hera-instalada', '1'); installed(); }
+  const mark = JSON.parse(localStorage.getItem('hera-src') || 'null');
+  const today = new Date().toDateString();
+  if (adSrc().src && mark?.at && new Date(mark.at).toDateString() !== today && localStorage.getItem('hera-vuelta') !== today) {
+    localStorage.setItem('hera-vuelta', today); track('vuelta_anuncio');
+  }
 } catch { /* sin almacenamiento */ }
 
 // Teclado: Escape cierra el sheet; Enter/Espacio en el label de importar

@@ -65,6 +65,8 @@ export const EVENTS = {
   gratuitas_agotadas: ['Intentó consultar con las gratuitas agotadas', true],
   anuncio_visita: ['Llegó desde un anuncio', false],
   consulta_anuncio: ['La consulta vino de un anuncio', false],
+  instalada_anuncio: ['La instalación vino de un anuncio', false],
+  vuelta_anuncio: ['Volvió a la app otro día después de un anuncio', false],
   scroll: ['Bajó en la web hasta el', false],
   seccion: ['Vio la sección', false],
   clic: ['Pulsó en la web', false],

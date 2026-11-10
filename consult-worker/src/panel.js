@@ -10,6 +10,8 @@ const madrid = (ts, opts) => new Intl.DateTimeFormat('es-ES', { timeZone: 'Europ
 const dayISO = (ts) => madrid(ts, { year: 'numeric', month: '2-digit', day: '2-digit' }).split('/').reverse().join('-');
 const PROS = [['gineco', 'Gonzalo'], ['matrona', 'Marina'], ['pediatra', 'Lucía']];
 const STAGES = [['pregnancy', 'Embarazo'], ['postpartum', 'Posparto'], ['cycle', 'Ciclo'], ['menopause', 'Menopausia']];
+// El embudo de la app se mide paso a paso desde el 31 oct por la noche: antes de eso solo cuenta como «abrieron»
+const APP_FUNNEL_FROM = Date.parse('2026-11-01T00:00:00+01:00');
 const is = (e, names) => names.some((n) => e === n || e.startsWith(`${n}:`));
 const pct = (a, t) => (t ? `${Math.round((a * 100) / t)} %` : '—');
 // Marcas de anuncio: la visita desde el anuncio y lo que la app o el servicio apuntan después con la marca guardada (30 días)
@@ -34,7 +36,7 @@ export function dropoff(act, steps, ad = null) {
   const reached = new Map(); // persona-día → { paso más avanzado, última hora, dispositivo }
   for (const r of act) {
     if (!r.p) continue;
-    const i = steps.findIndex(([, ...ev]) => ev.includes(r.e));
+    const i = steps.findIndex(([, ...ev]) => is(r.e, ev));
     if (i < 0) continue;
     const k = `${dayISO(r.ts)}:${r.p}`;
     const c = reached.get(k);
@@ -143,7 +145,7 @@ export async function panel(env, url, openThreads) {
   const opFeed = opiniones.map((o) => `<li><time>${madrid(o.ts, { day: 'numeric', month: 'short' })}</time><span>«${esc(o.texto)}»</span><small>${esc((PROS.find(([k2]) => k2 === o.pro) || [, o.pro])[1])} · ${RATE[o.rating] || ''}${o.publicable ? ` · <b>se puede publicar como «${esc(o.nombre)}»</b>` : ' · no publicar'}</small></li>`).join('');
   const funnels = [
     ['En la web', dropoff(act, [['Empezaron a escribir', 'pregunta_portada', 'ejemplo_duda'], ['Llegaron al correo', 'correo_portada'], ['Pulsaron enviar', 'intento_portada'], ['Enviaron', 'enviada_portada']], AD)],
-    ['En la app', dropoff(act, [['Abrieron la consulta', 'consulta_abierta'], ['Empezaron a escribir', 'consulta_escribe'], ['Escribieron el correo', 'consulta_correo'], ['Pulsaron enviar', 'consulta_intento'], ['Enviaron', 'consulta_enviada']], AD)],
+    ['En la app', dropoff(act.filter((r) => r.ts >= APP_FUNNEL_FROM), [['Abrieron la consulta', 'consulta_abierta'], ['Empezaron a escribir', 'consulta_escribe', 'consulta_ejemplo'], ['Escribieron el correo', 'consulta_correo'], ['Pulsaron enviar', 'consulta_intento'], ['Enviaron', 'consulta_enviada']], AD)],
   ];
   // Quien llega por un anuncio: personas (por día) que hicieron cada cosa después, y sus recorridos
   // byKey va de lo más reciente a lo más antiguo (act viene ordenado así)
@@ -165,6 +167,16 @@ export async function panel(env, url, openThreads) {
   }).filter(([, np]) => np);
   const adInstal = adCount(['instalada', 'instalada_anuncio'], true);
   const adConsultas = g('anuncio_consulta') + g('anuncio_consulta_pagada');
+  const SRC = { cabecera: 'Botón «Pregúntanos» de arriba', barra: 'Barra de la etapa', tema: 'Enlace de un tema', dudas: 'Pestaña Dudas', ajustes: 'Ajustes', web: 'Desde la web', otro: 'Otro' };
+  const opens = {}; let closedFast = 0, closedSlow = 0, examples = 0;
+  for (const r of act) {
+    if (r.e.startsWith('consulta_abierta:')) { const k2 = r.e.slice(17); opens[k2] = (opens[k2] || 0) + 1; }
+    else if (r.e === 'consulta_cerrada:rapido') closedFast += 1;
+    else if (r.e === 'consulta_cerrada:sin_escribir') closedSlow += 1;
+    else if (r.e === 'consulta_ejemplo') examples += 1;
+  }
+  const opensCard = Object.keys(opens).length || closedFast || closedSlow ? `<h3 class="fh">Desde dónde abren la consulta en la app</h3>${bars(Object.entries(opens).sort((a, b) => b[1] - a[1]).map(([k2, x]) => [SRC[k2] || k2, x]))}
+<p class="mute" style="margin-top:6px">Cerraron sin escribir: ${closedFast} en menos de 5 s · ${closedSlow} después. Tocaron una duda de ejemplo: ${examples}.</p>` : '';
   const paren = (a) => ` <small class="adp${a ? '' : ' zero'}">(${a} anuncio)</small>`;
   const funnelCard = ([title, f]) => `<h3 class="fh">${title}</h3>${f.started ? `<p class="drop"><b>${f.dropped}</b> de ${f.started} se cayeron (${Math.round((f.dropped / f.started) * 100)} %) <small class="adp${f.startedAd ? '' : ' zero'}">${f.startedAd ? `· de las ${f.startedAd} de anuncio, se cayeron ${f.startedAd - f.doneAd}` : '· 0 de anuncio'}</small></p>
 <table><tr><th></th><th>Personas</th><th>Se caen aquí</th></tr>${f.rows.map((r, i) => `<tr><td>${esc(r.label)}</td><td>${r.n}${paren(r.ad)}</td><td>${i < f.rows.length - 1 ? `${r.lost}${paren(r.lostAd)}` : '–'}</td></tr>`).join('')}</table>` : '<p class="mute">Nada todavía.</p>'}`;
@@ -225,7 +237,7 @@ ${PROS.map(([k2, name]) => { const r = g(`respondida:${k2}`); const fp = (open.f
 </table>
 ${Object.values(open.fuera_plazo || {}).some(Boolean) ? `<p class="mute late" style="margin-top:8px">En rojo: con alguna consulta de más de 48 h sin responder (${PROS.filter(([k2]) => (open.fuera_plazo || {})[k2]).map(([k2, nm]) => `${nm} ${(open.fuera_plazo || {})[k2]}`).join(', ')}).</p>` : ''}
 <p class="mute" style="margin-top:8px">Respondidas en total: ${respondidas}${respondidas ? ` · tiempo medio ${Math.round(horas / respondidas)} h` : ''}. Gratuitas agotadas: ${g('gratuitas_agotadas')} · piden aviso de pago: ${g('aviso_pago')}.</p></div>
-<div class="card"><h2>¿Quién empieza a preguntar y se cae?</h2><p class="mute">Personas distintas por día; entre paréntesis, las que vinieron de un anuncio. Los pasos nuevos se miden desde el 31 de octubre.</p>${funnels.map(funnelCard).join('')}${lostFeed ? `<h3 class="fh">Últimas caídas</h3><ul class="feed">${lostFeed}</ul>` : ''}</div>
+<div class="card"><h2>¿Quién empieza a preguntar y se cae?</h2><p class="mute">Personas distintas por día; entre paréntesis, las que vinieron de un anuncio. En la app, los pasos se miden desde el 1 de noviembre.</p>${funnels.map(funnelCard).join('')}${opensCard}${lostFeed ? `<h3 class="fh">Últimas caídas</h3><ul class="feed">${lostFeed}</ul>` : ''}</div>
 <div class="card"><h2>Anuncios</h2>${AD.size || g('personas_anuncio') ? `${bars([['Personas que llegaron por un anuncio', adCount(['anuncio_visita'], true)], ['Empezaron a escribir una duda', did('pregunta_portada', 'ejemplo_duda')], ['Enviaron una consulta gratuita', g('anuncio_consulta')], ['Llegaron al límite de gratuitas', g('anuncio_limite')], ['Instalaron la app', adInstal], ['Volvieron a abrir la app otro día', adCount(['vuelta_anuncio'], true)], ['Pagaron (suelta, bono o ilimitado)', sum('anuncio_pago:')], ['Enviaron una consulta pagada', g('anuncio_consulta_pagada')]], true)}
 ${groups.length ? `<h3 class="fh">Por grupo de anuncio</h3><table><tr><th></th><th>Personas</th><th>Consult.</th><th>Instal.</th><th>Pagos</th></tr>${groups.map(([l, ...v]) => `<tr><td>${esc(l)}</td>${v.map((x) => `<td>${x}</td>`).join('')}</tr>`).join('')}</table>` : ''}
 <p class="mute" style="margin-top:8px">Ingresos de anuncios: ${g('anuncio_eur')} € (sin restar reembolsos). Coste por consulta = lo gastado en Google Ads ÷ ${adConsultas} · coste por pago = gasto ÷ ${sum('anuncio_pago:')}.</p>

@@ -1027,7 +1027,7 @@ function settingsSheet() {
         ${consultList()}
         <button class="link-danger row gap-6 center self-start" data-action="consults-clear">${icon('trash', 12)} Borrar este historial</button>`
         : `<p class="t-12 soft lh-3">Aún no has hecho ninguna consulta desde este dispositivo. Cuando hagas una, la verás aquí y sabrás si ya te han respondido.</p>
-        <button class="pill-outline row gap-6 center self-start" data-action="open-ask" data-ctx="">${icon('mail', 13)} Hacer una consulta</button>`}
+        <button class="pill-outline row gap-6 center self-start" data-action="open-ask" data-ctx="" data-src="ajustes">${icon('mail', 13)} Hacer una consulta</button>`}
       </div>` : ''}
       ${syncAvailable() ? syncSection() : ''}
       ${aboutSection()}
@@ -1225,7 +1225,7 @@ const consultPair = (size = 'sm') => `<span class="cav-pair">${consultAvatar(siz
 
 /** Enlace discreto de una línea: «¿Otra duda? Pregúntanos» */
 function askLink(lead, link, ctx = '') {
-  return `<button class="ask-link" data-action="open-ask" data-ctx="${attr(ctx)}">${consultPair('xs')}<span>${lead ? `${esc(lead)} ` : ''}<u>${esc(link)}</u></span></button>`;
+  return `<button class="ask-link" data-action="open-ask" data-ctx="${attr(ctx)}" data-src="tema">${consultPair('xs')}<span>${lead ? `${esc(lead)} ` : ''}<u>${esc(link)}</u></span></button>`;
 }
 
 /** Resumen de la situación de la usuaria para adjuntar a la pregunta */
@@ -1406,34 +1406,49 @@ function askSheet() {
   const paidBanner = !pd ? '' : pd.checking ? '<div class="pay-ok t-13">Comprobando el pago…</div>'
     : pd.error ? `<div class="pay-ok is-warn t-13 lh-4">No hemos podido confirmar el pago todavía. Si te han cobrado, envía la consulta en unos minutos o escríbenos a ${esc(CONTACT_EMAIL)}.</div>`
     : `<div class="pay-ok t-13 lh-4"><b>Pago hecho.</b> ${pd.unlimited ? 'Tienes el plan ilimitado: una consulta nueva al día.' : `Tienes ${pd.credits === 1 ? '1 consulta pagada' : `${pd.credits} consultas pagadas`}.`} ${a.text ? 'Tu pregunta está aquí: revísala y envíala.' : 'Escribe tu pregunta y envíala.'}${pd.unlimited && pd.portal ? ` <a href="${esc(pd.portal)}" target="_blank" rel="noopener">Gestionar suscripción</a>` : ''}</div>`;
+  const EG = {
+    cycle: ['Se me ha retrasado la regla, ¿qué hago?', 'Tengo mucho dolor con la regla, ¿es normal?', '¿Qué anticonceptivo me conviene?'],
+    pregnancy: ['¿Qué puedo tomar para el ardor?', 'Tengo un pequeño sangrado, ¿es normal?', '¿Puedo comer jamón?'],
+    postpartum: ['Me duele el pecho al dar de mamar', 'Mi bebé tiene fiebre, ¿qué hago?', '¿Cuándo vuelve la regla tras el parto?'],
+    menopause: ['Tengo sofocos por la noche, ¿es normal?', '¿Me conviene el tratamiento hormonal?', 'Tengo sequedad vaginal, ¿qué hago?'],
+  }[store.mode] || [];
+  const picksOpen = a.picksOpen || !to;
+  // «Gratis» mientras no sepamos que ya gastó las 2 (lo dice el servicio al enviar y se guarda en el móvil)
+  let freeOn = true; try { freeOn = localStorage.getItem('hera-free-left') !== '0' && !pd; } catch { /* sin almacenamiento */ }
   return sheetFrame('Consulta', `<div class="stack-14">
     ${paidBanner}
-    ${mine.length ? `<details class="my-consults" data-id="my-consults" ${ui.openDetails.has('my-consults') ? 'open' : ''}><summary>Tus consultas (${mine.length})</summary>${consultList(10)}</details>` : ''}
-    <div class="stack-8 ask-picks" role="radiogroup" aria-label="¿A quién quieres preguntar?">
-      ${askPickCard(CONSULTS.gineco, a, sugg)}${askPickCard(CONSULTS.matrona, a, sugg)}${askPickCard(CONSULTS.pediatra, a, sugg)}
-    </div>
-    <p class="t-12 soft lh-4" data-ask-hint>${esc(askHint(a, sugg))}</p>
-    <a class="link-deep t-12 self-start" href="../equipo.html" ${isStandalone() ? 'target="_blank" rel="noopener"' : ''}>¿Quiénes son? Conoce al equipo →</a>
-    <p class="t-12 c-rose lh-4" data-ask-urgent ${sugg.urgent ? '' : 'hidden'}>Si es algo urgente (sangrado abundante, pérdida de líquido, el bebé no se mueve, dolor muy fuerte), no esperes: llama al 112 o ve a urgencias.</p>
+    ${freeOn ? '<div class="ask-free"><span><b>Tus 2 primeras consultas son gratis.</b> Sin tarjeta y sin registro: solo tu correo para recibir la respuesta, en menos de 48 h.</span></div>' : ''}
     ${a.context ? `<div><button class="ctx-tag" data-action="ask-clear-ctx" aria-label="Quitar el tema">Sobre: ${esc(a.context)} ${icon('x', 10)}</button></div>` : ''}
-    <p class="ask-private">${icon('lock', 13)}<span><b>Privada, sin nombre ni registro.</b> No se publica en ningún sitio y ${to ? esc(to.short) : 'la profesional'} no ve tu correo: lo usamos para hacerte llegar su respuesta.</span></p>
-    <textarea class="field ask-text" data-model="ask.text" rows="4" maxlength="2000" placeholder="Cuéntanos tu duda con tus palabras. Por ejemplo: «Desde hace 3 días tengo acidez por la noche, ¿qué puedo hacer?»">${esc(a.text)}</textarea>
+    <textarea class="field ask-text" data-model="ask.text" rows="4" maxlength="2000" placeholder="Escribe tu duda con tus palabras…">${esc(a.text)}</textarea>
+    ${a.text ? '' : `<div class="ask-eg" aria-label="Dudas de ejemplo">${EG.map((t) => `<button class="ask-eg-b" data-action="ask-example">${esc(t)}</button>`).join('')}</div>`}
+    <p class="t-12 c-rose lh-4" data-ask-urgent ${sugg.urgent ? '' : 'hidden'}>Si es algo urgente (sangrado abundante, pérdida de líquido, el bebé no se mueve, dolor muy fuerte), no esperes: llama al 112 o ve a urgencias.</p>
+    ${picksOpen ? `<div class="stack-8 ask-picks" role="radiogroup" aria-label="¿A quién quieres preguntar?">
+      ${askPickCard(CONSULTS.gineco, a, sugg)}${askPickCard(CONSULTS.matrona, a, sugg)}${askPickCard(CONSULTS.pediatra, a, sugg)}
+    </div>` : askToLine(a, sugg)}
     ${details.length ? `<label class="ask-check"><input type="checkbox" data-ask-include ${a.include ? 'checked' : ''}>
       <span><span class="t-13">Incluir mi situación</span><span class="t-11 soft block lh-3">${details.map(esc).join(' · ')}</span></span></label>` : ''}
     ${consultFormOn() ? `<label class="stack-4"><span class="t-12 soft">Tu correo, para que te respondan</span>
       <input class="field" type="email" inputmode="email" autocomplete="email" data-model="ask.email" value="${attr(a.email)}" placeholder="nombre@correo.com"></label>
       <input class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" data-model="ask.website" value="">` : ''}
+    ${a.status === 'error' ? `<p class="t-12 c-rose">${esc(a.error || 'No se ha podido enviar. Inténtalo de nuevo.')}</p>` : ''}
+    <button class="btn-primary" data-action="${consultFormOn() ? 'ask-submit' : 'ask-send'}" data-v="email" data-ask-send ${freeOn ? 'data-free' : ''} ${to && a.status !== 'sending' ? '' : 'disabled'}>${a.status === 'sending' ? 'Enviando…' : to ? `Enviar${freeOn ? ' gratis' : ''} a ${esc(to.short)}` : 'Elige a quién preguntar'}</button>
+    <p class="ask-private">${icon('lock', 13)}<span><b>Privada, sin nombre ni registro.</b> No se publica en ningún sitio y ${to ? esc(to.short) : 'la profesional'} no ve tu correo: lo usamos para hacerte llegar su respuesta.</span></p>
     ${consultFormOn() && (CONSULT_ATTACH || isBeta()) ? `<div class="stack-6"><label class="pill-outline row gap-6 center self-start ask-add">${icon('plusCircle', 13)} Añadir foto o PDF<input type="file" hidden multiple accept="image/*,application/pdf" data-ask-files></label>
       ${(a.files || []).map((f, i) => `<div class="period-item"><span class="t-13 grow">${esc(f.filename)}</span><button class="icon-btn soft" data-action="ask-file-remove" data-i="${i}" aria-label="Quitar ${attr(f.filename)}">${icon('xCircle', 16)}</button></div>`).join('')}
-      ${a.fileError ? `<p class="t-12 c-rose">${esc(a.fileError)}</p>` : ''}
-      <p class="t-11 soft-70 lh-3">Hasta 3 archivos y 10 MB. ${esc(ATTACH_NOTE)} Hera no los guarda: solo llegan a la profesional.</p></div>` : ''}
+      ${a.fileError ? `<p class="t-12 c-rose">${esc(a.fileError)}</p>` : ''}</div>` : ''}
     ${consultFormOn() ? `<label class="ask-check"><input type="checkbox" data-ask-follow ${a.follow ? 'checked' : ''}><span class="t-13 lh-4">Quiero que Hera me haga seguimiento si la respuesta no me deja satisfecha.</span></label>` : ''}
-    ${a.status === 'error' ? `<p class="t-12 c-rose">${esc(a.error || 'No se ha podido enviar. Inténtalo de nuevo.')}</p>` : ''}
-    <button class="btn-primary" data-action="${consultFormOn() ? 'ask-submit' : 'ask-send'}" data-v="email" data-ask-send ${to && a.status !== 'sending' ? '' : 'disabled'}>${a.status === 'sending' ? 'Enviando…' : to ? `Enviar a ${esc(to.short)}` : 'Elige a quién preguntar'}</button>
-    <button class="link-soft self-center" data-action="ask-pay-preview">¿Prefieres un bono o el plan ilimitado? Ver planes</button>
-    ${to?.whatsapp ? `<button class="outline-sage" data-action="ask-send" data-v="whatsapp">Prefiero escribir por WhatsApp</button>` : ''}
+    <div class="ask-more t-12 soft lh-4">
+      <a class="link-deep" href="../equipo.html">Conoce al equipo</a> · <button class="inline-link" data-action="ask-pay-preview">Ver bono e ilimitado</button>${to?.whatsapp ? ' · <button class="inline-link" data-action="ask-send" data-v="whatsapp">Escribir por WhatsApp</button>' : ''}
+    </div>
+    ${mine.length ? `<details class="my-consults" data-id="my-consults" ${ui.openDetails.has('my-consults') ? 'open' : ''}><summary>Tus consultas (${mine.length})</summary>${consultList(10)}</details>` : ''}
     <p class="t-11 soft-70 lh-3">No es para urgencias: si algo no va bien, contacta con tu centro de salud o tu unidad de referencia.</p>
   </div>`);
+}
+
+/** Una línea con la profesional elegida (o sugerida) y «Cambiar» para ver las tres fichas */
+function askToLine(a, sugg) {
+  const to = CONSULTS[a.to];
+  return `<div class="ask-to" data-ask-to>${consultAvatar('sm', to.key)}<span class="grow t-13 lh-3">Te responderá <b class="w-500">${esc(to.short)}</b> · ${esc(to.role.toLowerCase())}${!a.manual && sugg.to === to.key ? `<span class="t-11 soft block">${a.text.trim() ? 'Sugerido por lo que escribes' : 'Sugerido para tu etapa'}</span>` : ''}</span><button class="link-deep t-12" data-action="ask-picks-open">Cambiar</button></div>`;
 }
 
 /** Mientras escribe, actualiza la sugerencia sin volver a pintar la hoja (para no perder el foco) */
@@ -1453,7 +1468,9 @@ function refreshAskSuggestion() {
     const hint = root.querySelector('[data-ask-hint]'); if (hint) hint.textContent = askHint(ui.ask, sugg);
     const urg = root.querySelector('[data-ask-urgent]'); if (urg) urg.hidden = !sugg.urgent;
     const send = root.querySelector('[data-ask-send]');
-    if (send) { const t = CONSULTS[ui.ask.to]; send.disabled = !t; send.textContent = t ? `Enviar a ${t.short}` : 'Elige a quién preguntar'; }
+    if (send) { const t = CONSULTS[ui.ask.to]; send.disabled = !t; send.textContent = t ? `Enviar${send.hasAttribute('data-free') ? ' gratis' : ''} a ${t.short}` : 'Elige a quién preguntar'; }
+    const line = root.querySelector('[data-ask-to]'); if (line && CONSULTS[ui.ask.to]) line.outerHTML = askToLine(ui.ask, sugg);
+    const eg = root.querySelector('.ask-eg'); if (eg) eg.hidden = !!ui.ask.text.trim();
   }, 250);
 }
 
@@ -1913,7 +1930,7 @@ function miniBar(mode, tab) {
   }
   return `<div class="mini-bar ${img}" aria-hidden="true">
     <span class="mini-label"><b>${esc(label[0])}</b>${label[1] ? `<small>${esc(label[1])}</small>` : ''}</span>
-    <button class="mini-ask" data-action="open-ask" data-ctx="" tabindex="-1">${consultPair('sm')}<span>Pregúntanos</span></button>
+    <button class="mini-ask" data-action="open-ask" data-ctx="" data-src="barra" tabindex="-1">${consultPair('sm')}<span>Pregúntanos</span></button>
   </div>`;
 }
 /** Muestra la barra cuando la cabecera ya no se ve */
@@ -1998,7 +2015,7 @@ function guideView() {
       }).join('')}</div>
     </section>`).join('')}
     <p class="guide-empty t-13 soft text-center" hidden>No hemos encontrado nada. Prueba con otra palabra o escríbenos.</p>
-    <p class="t-13 soft text-center">¿No encuentras tu duda? <button class="inline-link" data-action="open-ask" data-ctx="">Escríbenos</button></p>
+    <p class="t-13 soft text-center">¿No encuentras tu duda? <button class="inline-link" data-action="open-ask" data-ctx="" data-src="dudas">Escríbenos</button></p>
   </div>`;
 }
 
@@ -2500,7 +2517,7 @@ function mainView() {
     <header class="app-header">
       <div><h1 class="brand"><img src="brand/hera-logo-compact.svg" alt="Hera" width="113" height="34"></h1><div class="brand-tag">${MODE_TAG[mode]}</div></div>
       <div class="row gap-8 center">
-        <button class="ask-pill" data-action="open-ask" data-ctx="" aria-label="Pregunta a tu ginecólogo, a tu matrona o a tu pediatra" title="Pregunta a tu equipo">${consultPair('sm')}<span class="ask-label">Pregúntanos</span></button>
+        <button class="ask-pill" data-action="open-ask" data-ctx="" data-src="cabecera" aria-label="Pregunta a tu ginecólogo, a tu matrona o a tu pediatra" title="Pregunta a tu equipo">${consultPair('sm')}<span class="ask-label">Pregúntanos</span></button>
         ${(() => { const warn = sync.enabled && (sync.status === 'needs-auth' || sync.status === 'error');
           return `<button class="gear ${warn ? 'has-dot' : ''}" data-action="open-settings" aria-label="${warn ? 'Ajustes: la sincronización está en pausa' : 'Ajustes'}">${icon('gear', 16)}</button>`; })()}
       </div>
@@ -2597,6 +2614,10 @@ const actions = {
   'open-settings': openSettings,
   'close-sheet': () => {
     if (settingsDirty() && !confirm('Tienes cambios sin guardar. ¿Salir sin guardarlos?')) return;
+    if (ui.sheet === 'ask' && !ui.ask.result && !ui.ask.sent && !String(ui.ask.text || '').trim() && ui.askOpenedAt) {
+      track(Date.now() - ui.askOpenedAt < 5000 ? 'consulta_cerrada:rapido' : 'consulta_cerrada:sin_escribir');
+    }
+    ui.askOpenedAt = 0;
     ui.sheet = null; render();
   },
   'take-med': (el) => store.updateLog(todayISO(), (l) => { if (!l.meds.includes(el.dataset.id)) l.meds.push(el.dataset.id); }),
@@ -2783,7 +2804,8 @@ const actions = {
     store.updateLog(todayISO(), (l) => { l.weight = Math.round(w * 10) / 10; });
   },
   'open-ask': (el) => {
-    track('consulta_abierta');
+    track(`consulta_abierta:${/^[a-z]{1,12}$/.test(el.dataset.src || '') ? el.dataset.src : 'otro'}`);
+    ui.askOpenedAt = Date.now();
     const ctx = el.dataset.ctx || '';
     if (ui.ask.sent || ui.ask.result?.ok || ui.ask.context !== ctx) ui.ask = { ...ui.ask, context: ctx, include: true, text: ui.ask.sent || ui.ask.result?.ok ? '' : ui.ask.text, sent: null, to: null, manual: false, status: null, result: ui.ask.result?.limit && !ui.ask.result.early ? ui.ask.result : null };
     if (!ui.ask.manual) ui.ask.to = suggestContact({ text: ui.ask.text, context: ui.ask.context, mode: store.mode }).to;
@@ -2791,6 +2813,8 @@ const actions = {
     setTimeout(() => root.querySelector('.ask-text')?.focus(), 300);
   },
   'ask-clear-ctx': () => { ui.ask.context = ''; render(); },
+  'ask-picks-open': () => { ui.ask.picksOpen = true; render(); },
+  'ask-example': (el) => { track('consulta_ejemplo', true); ui.ask.text = el.textContent; if (!ui.ask.manual) ui.ask.to = suggestContact({ text: ui.ask.text, context: ui.ask.context, mode: store.mode }).to; render(); },
   'team-off': () => { setTeam(false); render(); },
   'consult-seen': (el) => { markSeen(el.dataset.v); render(); },
   'consults-clear': () => { if (!confirm('¿Borrar el historial de consultas de este dispositivo? Las respuestas siguen en tu correo.')) return; clearConsults(); render(); },
@@ -2817,6 +2841,7 @@ const actions = {
       if (j.error === 'bad_files' || j.error === 'too_large') throw new Error('Revisa los archivos: solo fotos o PDF, hasta 10 MB en total.');
       if (!res.ok && !j.limit) throw new Error('No se ha podido enviar. Inténtalo de nuevo en un rato.');
       a.status = null; a.result = j; a.sentTo = to.key;
+      try { if (j.limit) localStorage.setItem('hera-free-left', '0'); else if (j.ok && j.remaining != null) localStorage.setItem('hera-free-left', String(j.remaining)); } catch { /* sin almacenamiento */ }
       track(j.limit ? 'consulta_limite' : 'consulta_enviada');
       if (j.ok && j.id) addConsult({ id: j.id, to: to.key, text: a.text.trim() });
       if (j.ok) { a.text = ''; a.files = []; a.fileError = ''; a.paid = null; }
@@ -3303,8 +3328,8 @@ if (location.hash === '#preguntar') {
   history.replaceState(null, '', location.pathname + location.search);
   ui.ask = { ...ui.ask, context: '', text: draft, sent: null, result: null, status: null, manual: false };
   ui.ask.to = suggestContact({ text: draft, context: '', mode: store.mode }).to;
-  ui.sheet = 'ask'; ui.sheetAnim = true; render();
-  track('consulta_abierta');
+  ui.sheet = 'ask'; ui.sheetAnim = true; ui.askOpenedAt = Date.now(); render();
+  track('consulta_abierta:web');
 }
 // Pagos: ?pagos=1 activa la prueba en este dispositivo; ?pago=ok|no es la vuelta de Stripe
 {

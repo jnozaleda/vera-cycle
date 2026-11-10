@@ -32,6 +32,8 @@ export const EVENTS = {
   consulta_enviada: ['Envió una consulta desde la app', false],
   consulta_error: ['Falló el envío en la app', false],
   consulta_limite: ['Agotó las gratuitas en la app', false],
+  consulta_ejemplo: ['Tocó una duda de ejemplo en la app', false],
+  consulta_cerrada: ['Cerró la hoja de consulta', false],
   onboarding: ['Completó la bienvenida', true],
   demo: ['Entró con datos de ejemplo', true],
   fecha_parto: ['Añadió su fecha prevista de parto', true],
@@ -79,7 +81,7 @@ export const EVENTS = {
 
 const VALUE_LABEL = {
   pregnancy: 'embarazo', postpartum: 'posparto', cycle: 'ciclo', regular: 'regular', irregular: 'irregular',
-  parto: 'fecha de parto', peso: 'peso en el embarazo', ovulacion: 'ovulación', suelta: 'consulta suelta', bono: 'bono de 5', mensual: 'ilimitado mensual', gineco: 'Gonzalo', matrona: 'Marina', pediatra: 'Lucía', prueba: 'prueba',
+  parto: 'fecha de parto', peso: 'peso en el embarazo', ovulacion: 'ovulación', suelta: 'consulta suelta', bono: 'bono de 5', mensual: 'ilimitado mensual', gineco: 'Gonzalo', matrona: 'Marina', pediatra: 'Lucía', prueba: 'prueba', rapido: 'en menos de 5 s sin escribir', sin_escribir: 'sin escribir', cabecera: 'desde el botón de arriba', barra: 'desde la barra', tema: 'desde un tema', dudas: 'desde Dudas', ajustes: 'desde Ajustes', web: 'desde la web',
   today: 'Hoy', diary: 'Diario', care: 'Cuidados', guide: 'Dudas', trends: 'Patrones', baby: 'Tu bebé', tu: 'Tú', bebe: 'Tu bebé',
   sintoma: 'síntomas', animo: 'ánimo', regla: 'regla', dato: 'peso, sueño o temperatura', intimidad: 'relaciones', ovulacion: 'test de ovulación',
   estres: 'estrés', flujo: 'flujo',

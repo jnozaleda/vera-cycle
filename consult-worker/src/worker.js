@@ -160,15 +160,31 @@ async function sendMail(env, { to, replyTo, subject, html, text, bcc, from, refs
   if (env.DRY_RUN === '1') { console.log(`[ensayo] correo a ${to}: ${subject}`); return { id: null }; }
   // Resend pone su propio Message-ID; el real de cada correo enviado lo conocemos cuando nos responden (In-Reply-To)
   const headers = refs?.length ? { 'In-Reply-To': refs[refs.length - 1], References: refs.slice(-20).join(' ') } : undefined;
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from: from || env.FROM, to: [to], reply_to: replyTo, subject, html, text, ...(bcc ? { bcc: [bcc] } : {}),
-      ...(headers ? { headers } : {}), ...(attachments?.length ? { attachments } : {}) }),
-  });
-  if (!res.ok) { console.log(`resend ${res.status} ${await res.text()}`); return null; }
+  let res, detail = '';
+  try {
+    res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from: from || env.FROM, to: [to], reply_to: replyTo, subject, html, text, ...(bcc ? { bcc: [bcc] } : {}),
+        ...(headers ? { headers } : {}), ...(attachments?.length ? { attachments } : {}) }),
+    });
+    if (!res.ok) detail = `Resend respondió ${res.status}: ${(await res.text()).slice(0, 300)}`;
+  } catch (e) { detail = `No se pudo conectar con Resend: ${e.message}`; }
+  if (detail) { console.log(detail); await alertSendFailure(env, subject, detail); return null; }
   const j = await res.json().catch(() => ({}));
   return { id: j.id || null };
+}
+
+/** Aviso a Noza cuando falla un envío (como mucho uno cada 30 min). Va por Cloudflare (MAILER), no por Resend,
+ * para que llegue aunque Resend sea lo que falla. Sin direcciones de la usuaria: solo el asunto y el error. */
+async function alertSendFailure(env, subject, detail) {
+  try {
+    const slot = `alerta:envio:${Math.floor(Date.now() / 1800000)}`;
+    if (await env.KV.get(slot)) return;
+    await env.KV.put(slot, '1', { expirationTtl: 3600 });
+    const hora = new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid', dateStyle: 'medium', timeStyle: 'short' });
+    await notify(env, 'Hera: ha fallado un envío de correo', `Ha fallado el envío de un correo de Hera (${hora}).\n\nAsunto: ${subject || '—'}\n${detail}\n\nSi era una consulta, a la usuaria le salió un aviso de error para que lo intente de nuevo. Revisa Resend o avisa a Claude. No se envían más avisos de este tipo en los próximos 30 minutos.`);
+  } catch (e) { console.log(`alerta ${e.message}`); }
 }
 
 

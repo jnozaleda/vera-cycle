@@ -16,9 +16,10 @@ const metas = new Map();
 const KV = { async get(k, t) { const v = store.get(k); return v == null ? null : t === 'json' ? JSON.parse(v) : v; }, async put(k, v, o) { store.set(k, v); if (o?.metadata) metas.set(k, o.metadata); }, async delete(k) { store.delete(k); },
   async list({ prefix }) { return { keys: [...store.keys()].filter((k) => k.startsWith(prefix)).map((name) => ({ name, metadata: metas.get(name) })), list_complete: true }; } };
 const sent = [];
-const counts = new Map(); const visitors = new Set(); const activity = []; const opiniones = [];
+const saldo = new Map(); const counts = new Map(); const visitors = new Set(); const activity = []; const opiniones = [];
 const DB = { prepare(sql) { return { bind(...a) { return { async run() {
   if (sql.startsWith('INSERT INTO counts')) { const k = a[0] + '|' + a[1]; counts.set(k, (counts.get(k) || 0) + 1); return { meta: { changes: 1 } }; }
+  if (sql.startsWith('UPDATE saldo SET n = (CASE')) { saldo.set(a[0], (saldo.get(a[0]) || 0) + a[1]); return { meta: { changes: 1 } }; }
   if (sql.startsWith('INSERT INTO opiniones')) { opiniones.push({ ts: a[0], pro: a[1], rating: a[2], texto: a[3], nombre: a[4], publicable: a[5] }); return { meta: { changes: 1 } }; }
   if (sql.startsWith('INSERT INTO activity')) { activity.push({ ts: a[0], e: a[1], d: a[2], p: a[3] }); return { meta: { changes: 1 } }; }
   if (sql.startsWith('INSERT OR IGNORE')) { const k = a.join('|'); if (visitors.has(k)) return { meta: { changes: 0 } }; visitors.add(k); return { meta: { changes: 1 } }; }
@@ -213,5 +214,28 @@ assert.equal(validateAttachments([{ content: 'A'.repeat(Math.ceil((MAX_BYTES * 4
   assert.ok(!sent.some((m) => m.subject?.startsWith('¿Te ayudó')), 'baja respetada');
   const pg2 = await (await worker.fetch(new Request('https://w/panel?k=dk&d=30'), env)).text();
   assert.match(pg2, /Opiniones tras la consulta/); assert.match(pg2, /Laura G\./);
+
+  // MARK: invitaciones (vera-backlog#84)
+  const inv = (await call('/opinion', { t: r2.j.id, s: s2, r: 1 })).j.invite;
+  assert.match(inv, /^[a-hjkmnp-z2-9]{6}$/, 'quien valora «Sí, mucho» recibe su enlace');
+  assert.equal((await call('/opinion', { t: r2.j.id, s: s2, r: 1 })).j.invite, inv, 'siempre el mismo código');
+  assert.equal((await call('/opinion', { t: id, s, r: 1 })).j.invite, undefined, 'sin enlace si no le ayudó');
+  const own = await call('/ask', { email: 'contenta@example.com', to: 'matrona', text: 'Me invito a mí misma', ref: inv });
+  assert.equal((await loadThread(env, own.j.id)).rf, undefined, 'no vale invitarse a una misma');
+  const old = await call('/ask', { email: 'opina@example.com', to: 'matrona', text: 'Ya había preguntado', ref: inv });
+  assert.equal((await loadThread(env, old.j.id)).rf, undefined, 'solo correos que nunca han preguntado');
+  const fr = await call('/ask', { email: 'amiga@example.com', to: 'pediatra', text: 'Duda de la amiga', ref: inv });
+  let ft = await loadThread(env, fr.j.id); assert.equal(ft.rf, inv, 'consulta invitada');
+  assert.equal(cnt('consulta_invitada'), 1); assert.equal(saldo.size, 0, 'no se regala nada al enviar');
+  sent.length = 0;
+  await relayIncoming(env, ft, 'p', mime('lucia@x.com', await relayAddress(env, 'p', ft.id), 'Respuesta de Lucía'));
+  const hC = [...saldo.keys()][0];
+  assert.deepEqual([saldo.size, saldo.get(hC)], [1, 1], '1 consulta para quien invitó al responder');
+  const gift = sent.find((m) => m.subject === 'Tienes 1 consulta más en Hera');
+  assert.ok(gift && gift.to[0] === 'contenta@example.com' && !gift.html.includes('amiga'), 'aviso a quien invitó, sin decir quién');
+  await relayIncoming(env, await loadThread(env, ft.id), 'p', mime('lucia@x.com', await relayAddress(env, 'p', ft.id), 'Otra cosa'));
+  assert.equal(saldo.get(hC), 1, 'una sola vez por consulta'); assert.equal(cnt('consulta_regalada'), 1);
+  const pg3 = await (await worker.fetch(new Request('https://w/panel?k=dk&d=30'), env)).text();
+  assert.match(pg3, /Invitaciones/); assert.match(pg3, /Consultas regaladas/);
 }
 console.log('consultas: OK');

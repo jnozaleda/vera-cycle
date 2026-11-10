@@ -14,7 +14,12 @@ textarea,input[type=text]{font:inherit;width:100%;border:1px solid #E6DFE2;borde
 textarea:focus,input:focus{outline:none;border-color:#693D55;box-shadow:0 0 0 3px rgba(105,61,85,.15)}
 .ck{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.45;margin:14px 0}.ck input{width:18px;height:18px;margin-top:1px;accent-color:#693D55;flex:none}
 .field{margin-top:14px}button{font:inherit;font-weight:600;width:100%;background:#693D55;color:#fff;border:0;border-radius:6px;padding:13px;margin-top:8px;cursor:pointer}button:hover{background:#563146}button:disabled{opacity:.6}
-.fine{font-size:13px;color:#655B61;margin-top:12px}.err{color:#8F2F3F;font-size:14px;margin-top:10px}[hidden]{display:none!important}
+.fine{font-size:13px;color:#655B61;margin-top:12px}
+.inv{margin-top:26px;padding:18px 16px;background:#fff;border:1px solid #E6DFE2;border-radius:12px}.inv h2{font:400 22px/1.2 Newsreader,Georgia,serif;color:#3B2433;margin:0 0 6px;text-wrap:balance}
+.inv p.t{font-size:14.5px;line-height:1.5;color:#4C444C;margin:0 0 6px}.faces{display:flex;margin-bottom:10px}.faces img{width:34px;height:34px;border-radius:50%;object-fit:cover;border:2px solid #fff}.faces img+img{margin-left:-9px}
+.inv .b{display:flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;font-weight:600;border-radius:6px;padding:12px;margin-top:8px;font-size:15px}
+.inv .wa{background:#3F584B;color:#fff}.inv button.cp{background:#fff;color:#693D55;border:1.5px solid #D9CBD2}.inv button.cp:hover{background:#FBF7F1}
+.inv .code{text-align:center;font-size:13px;color:#655B61;margin:8px 0 0;font-variant-numeric:tabular-nums}.err{color:#8F2F3F;font-size:14px;margin-top:10px}[hidden]{display:none!important}
 </style></head><body><main>
 <a class="wm" href="/">Hera</a>
 <div id="loading"><p class="sub">Un momento…</p></div>
@@ -35,6 +40,15 @@ textarea:focus,input:focus{outline:none;border-color:#693D55;box-shadow:0 0 0 3p
   <p class="fine">Tu comentario se guarda sin tu correo.</p>
 </div>
 <div id="thanks" hidden><div class="ok">✓</div><h1>¡Recibido!</h1><p class="sub" id="thanksText">Gracias por tomarte un momento.</p><p class="fine"><a href="/" style="color:#693D55">Volver a Hera</a></p></div>
+<section class="inv" id="inv" hidden>
+  <div class="faces"><img src="/portada/equipo/gonzalo.jpg?v=2" alt="" width="34" height="34"><img src="/portada/equipo/marina.jpg?v=2" alt="" width="34" height="34"><img src="/portada/equipo/lucia.jpg?v=3" alt="" width="34" height="34"></div>
+  <h2>¿Conoces a alguien a quien le vendría bien?</h2>
+  <p class="t">Pásale tu enlace. Sus 2 primeras consultas son gratis, y cada vez que alguien pregunte con él y reciba su respuesta, <b>te regalamos 1 consulta</b>.</p>
+  <a class="b wa" id="inv-wa" href="#" target="_blank" rel="noopener"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5 5 16a8.5 8.5 0 1 1 3.2 3.1z"/></svg>Enviar por WhatsApp</a>
+  <button class="b cp" id="inv-cp" type="button"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 14a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 10a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg><span>Copiar enlace</span></button>
+  <p class="code" id="inv-url"></p>
+  <p class="fine">No sabremos a quién se lo envías. Esa persona no verá tu nombre ni tu consulta.</p>
+</section>
 </main>
 <script type="module">
 const API = 'https://hera-consultas.tempcheck-app.workers.dev';
@@ -43,12 +57,29 @@ const show = (id) => ['loading', 'bad', 'baja', 'form', 'thanks'].forEach((x) =>
 const qs = new URLSearchParams(location.search);
 const base = { t: qs.get('t') || '', s: qs.get('s') || '' };
 const post = async (path, body) => { const r = await fetch(API + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...base, ...body }) }); return { ok: r.ok, j: await r.json().catch(() => ({})) }; };
+const hit = (e) => fetch(API + '/hit', { method: 'POST', body: JSON.stringify({ e }), keepalive: true }).catch(() => {});
+// Invitación (vera-backlog#84): enlace personal; el texto no dice a quién preguntó ni de qué
+function showInvite(code) {
+  const url = `https://hera-gine.com/?r=${code}`;
+  const msg = `Te paso Hera: le pregunté una duda a una profesional y me respondió por escrito. Las 2 primeras consultas son gratis y no piden tarjeta. ${url}`;
+  $('inv-url').textContent = url.replace('https://', '');
+  $('inv-wa').href = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+  $('inv-wa').addEventListener('click', () => hit('invitacion_whatsapp'));
+  $('inv-cp').addEventListener('click', async () => {
+    hit('invitacion_copiar');
+    try { await navigator.clipboard.writeText(msg); } catch { const r = document.createRange(); r.selectNodeContents($('inv-url')); getSelection().removeAllRanges(); getSelection().addRange(r); }
+    $('inv-cp').querySelector('span').textContent = 'Copiado';
+  });
+  $('inv').hidden = false;
+  hit('invitacion_vista');
+}
 (async () => {
   try {
     if (qs.has('baja')) { const r = await post('/opinion/baja', {}); show(r.ok ? 'baja' : 'bad'); return; }
     const r = await post('/opinion', { r: Number(qs.get('r')) });
     if (!r.ok) { show('bad'); return; }
-    const { r: rating, pro, followAsked, followSent, done } = r.j;
+    const { r: rating, pro, followAsked, followSent, done, invite } = r.j;
+    if (invite && /^[a-z0-9]{6}$/.test(invite)) showInvite(invite);
     if (done) { $('thanksText').textContent = 'Ya nos dejaste tu opinión sobre esta consulta. ¡Gracias!'; show('thanks'); return; }
     $('lead').textContent = rating === 1 ? `Nos alegra que te ayudara. Se lo diremos a ${pro}.` : `Siento que no te ayudara del todo. Se lo diremos a ${pro}.`;
     $('pub').hidden = rating !== 1;

@@ -98,7 +98,7 @@ export async function spendCredit(env, h) {
 /** Ilimitado: apunta el día de la consulta nueva */
 export const markDay = (env, h, day) => env.DB.prepare('UPDATE saldo SET day = ?2 WHERE h = ?1').bind(h, day).run();
 
-async function addCredits(env, h, n) {
+export async function addCredits(env, h, n) {
   const now = new Date().toISOString();
   const until = new Date(Date.now() + CREDIT_DAYS * 86400000).toISOString();
   await ensure(env, h);

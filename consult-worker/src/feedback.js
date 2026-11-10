@@ -3,6 +3,7 @@
 // El seguimiento lo hace la profesional por el mismo hilo de Hera, así que no hace falta guardar el correo más de 30 días.
 import { loadThread, saveThread, relayAddress, openEmail } from './relay.js';
 import { notify } from './activity.js';
+import { inviteCode } from './invite.js';
 
 const PANEL = 'https://hera-consultas.tempcheck-app.workers.dev/panel';
 
@@ -100,7 +101,9 @@ export async function handleOpinion(env, path, body, { PROS, sendMail, bump }) {
       if (t.p !== 'prueba') await notify(env, `Hera · opinión: «${RATING[r]}» para ${pro?.short || t.p}`,
         `Nueva opinión sobre una consulta respondida por ${pro?.short || t.p}: «${RATING[r]}».${r > 1 ? (t.f ? '\nPidió seguimiento al preguntar: la profesional ya tiene el aviso.' : '\nTodavía no ha pedido seguimiento.') : ''}\n\nSi deja un comentario, te llegará en otro aviso. Panel: ${PANEL}`, sendMail);
     }
-    return [200, { ok: true, r: t.fr, done: !!t.fc, followSent: !!t.fs, ...info }];
+    // Enlace para invitar (invite.js): solo a quien la respuesta le ayudó mucho, y en consultas que guardan la huella
+    const invite = t.fr === 1 && t.h && t.p !== 'prueba' ? await inviteCode(env, t.h, t.u) : null;
+    return [200, { ok: true, r: t.fr, done: !!t.fc, followSent: !!t.fs, ...(invite ? { invite } : {}), ...info }];
   }
   if (path === '/opinion/comentario') {
     if (!t.fr) return [409, { error: 'no_rating' }];

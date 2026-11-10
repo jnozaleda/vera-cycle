@@ -399,7 +399,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         <button class="btn btn-p" type="submit" id="ask-send">Preguntar gratis</button>
         <ul class="perks" aria-label="Condiciones"><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin tarjeta de crédito</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin registro</li></ul>
         <button type="button" class="linkplans" id="ask-plans">¿Prefieres un bono o el plan ilimitado? Ver planes</button>
-        <p class="fine" id="ask-fine" hidden>No es para urgencias. <a href="privacy.html#consultas">Cómo tratamos tus datos</a>.</p>
+        <p class="fine" id="ask-fine" hidden>Te escribiremos una vez para saber si te ayudó. No es para urgencias. <a href="privacy.html#consultas">Cómo tratamos tus datos</a>.</p>
       </form>
       <div class="done" id="ask-done" hidden aria-live="polite"></div>
       </div>
@@ -654,6 +654,15 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       hit(c ? `anuncio_visita:${c}` : 'anuncio_visita');
     }
   }
+  // Invitaciones (vera-backlog#84): ?r=CÓDIGO queda 30 días en este dispositivo y viaja con la consulta.
+  // El servicio solo lo cuenta si este correo nunca ha preguntado. La franja de arriba lo dice.
+  const REF_KEY = 'hera-ref';
+  {
+    const r0 = (new URLSearchParams(location.search).get('r') || '').toLowerCase();
+    if (/^[a-z0-9]{6}$/.test(r0)) { store.set(REF_KEY, JSON.stringify({ c: r0, at: Date.now() })); hit('invitacion_visita'); }
+  }
+  const refSrc = () => { try { const r = JSON.parse(store.get(REF_KEY) || 'null'); return r && Date.now() - r.at < 30 * 86400000 ? { ref: r.c } : {}; } catch { return {}; } };
+  if (refSrc().ref) { const a = document.querySelector('.annc a'); if (a) a.innerHTML = 'Te han invitado a Hera · Tus 2 primeras consultas, gratis y sin tarjeta · <u>Pregunta ahora</u>'; }
   // Qué hacen al entrar (vera-backlog#80): hasta dónde bajan, qué secciones ven, dónde pulsan y cuánto se quedan.
   // Cada evento se manda una sola vez por visita; nada de lo que escriben.
   {
@@ -821,7 +830,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     lastEmail = email.value.trim(); store.set('hera-ask-email', lastEmail);
     try {
       const res = await fetch(`${API}/ask`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: lastEmail, to, text, context: '', situation: '', website: $('ask-hp').value, attachments: filesPayload(files), follow: $('ask-follow').checked, ...(isTeam() ? { team: true } : {}), ...adSrc() }) });
+        body: JSON.stringify({ email: lastEmail, to, text, context: '', situation: '', website: $('ask-hp').value, attachments: filesPayload(files), follow: $('ask-follow').checked, ...(isTeam() ? { team: true } : {}), ...adSrc(), ...refSrc() }) });
       const j = await res.json().catch(() => ({}));
       if (res.status === 429) throw new Error('Has enviado varias consultas seguidas. Espera unos minutos y vuelve a intentarlo.');
       if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');

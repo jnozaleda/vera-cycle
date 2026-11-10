@@ -1291,6 +1291,8 @@ const freeDots = (used, total) => `<span class="free-dots" aria-hidden="true">${
 // Pagos (vera-backlog#56). Mientras el servicio está en «test», solo se ofrecen en un dispositivo que abrió la app con ?pagos=1
 const PAY_TEST_KEY = 'hera-pagos-test';
 // Llegó desde un anuncio (lo marca la portada, 30 días): solo para contar consultas y pagos de anuncios
+// Invitación (vera-backlog#84): la web guarda ?r=CÓDIGO en hera-ref (30 días); viaja con la consulta
+const refSrc = () => { try { const r = JSON.parse(localStorage.getItem('hera-ref') || 'null'); return r && Date.now() - r.at < 30 * 86400000 ? { ref: r.c } : {}; } catch { return {}; } };
 const adSrc = () => { try { const a = JSON.parse(localStorage.getItem('hera-src') || 'null'); return a && Date.now() - a.at < 30 * 86400000 ? { src: 'ads', ...(a.c ? { camp: a.c } : {}) } : {}; } catch { return {}; } };
 const PAY_DRAFT_KEY = 'hera-pay-draft';
 const payTest = () => { try { return localStorage.getItem(PAY_TEST_KEY) === '1'; } catch { return false; } };
@@ -1432,7 +1434,7 @@ function askSheet() {
       <input class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" data-model="ask.website" value="">` : ''}
     ${a.status === 'error' ? `<p class="t-12 c-rose">${esc(a.error || 'No se ha podido enviar. Inténtalo de nuevo.')}</p>` : ''}
     <button class="btn-primary" data-action="${consultFormOn() ? 'ask-submit' : 'ask-send'}" data-v="email" data-ask-send ${freeOn ? 'data-free' : ''} ${to && a.status !== 'sending' ? '' : 'disabled'}>${a.status === 'sending' ? 'Enviando…' : to ? `Enviar${freeOn ? ' gratis' : ''} a ${esc(to.short)}` : 'Elige a quién preguntar'}</button>
-    <p class="ask-private">${icon('lock', 13)}<span><b>Privada, sin nombre ni registro.</b> No se publica en ningún sitio y ${to ? esc(to.short) : 'la profesional'} no ve tu correo: lo usamos para hacerte llegar su respuesta.</span></p>
+    <p class="ask-private">${icon('lock', 13)}<span><b>Privada, sin nombre ni registro.</b> No se publica en ningún sitio y ${to ? esc(to.short) : 'la profesional'} no ve tu correo: lo usamos para hacerte llegar su respuesta. Te escribiremos una vez para saber si te ayudó.</span></p>
     ${consultFormOn() && (CONSULT_ATTACH || isBeta()) ? `<div class="stack-6"><label class="pill-outline row gap-6 center self-start ask-add">${icon('plusCircle', 13)} Añadir foto o PDF<input type="file" hidden multiple accept="image/*,application/pdf" data-ask-files></label>
       ${(a.files || []).map((f, i) => `<div class="period-item"><span class="t-13 grow">${esc(f.filename)}</span><button class="icon-btn soft" data-action="ask-file-remove" data-i="${i}" aria-label="Quitar ${attr(f.filename)}">${icon('xCircle', 16)}</button></div>`).join('')}
       ${a.fileError ? `<p class="t-12 c-rose">${esc(a.fileError)}</p>` : ''}</div>` : ''}
@@ -2834,7 +2836,7 @@ const actions = {
       const meta = [];
       if (a.include) meta.push(...consultDetails());
       const res = await fetch(`${CONSULT_API}/ask`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: a.email.trim(), to: to.key, text: a.text.trim(), context: a.context, situation: meta.join('\n'), website: a.website || '', attachments: filesPayload(a.files || []), follow: !!a.follow, ...(isTeam() ? { team: true } : {}), ...(payTest() ? { payTest: true } : {}), ...adSrc() }) });
+        body: JSON.stringify({ email: a.email.trim(), to: to.key, text: a.text.trim(), context: a.context, situation: meta.join('\n'), website: a.website || '', attachments: filesPayload(a.files || []), follow: !!a.follow, ...(isTeam() ? { team: true } : {}), ...(payTest() ? { payTest: true } : {}), ...adSrc(), ...refSrc() }) });
       const j = await res.json().catch(() => ({}));
       if (res.status === 429) throw new Error('Has enviado varias consultas seguidas. Espera unos minutos y vuelve a intentarlo.');
       if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');

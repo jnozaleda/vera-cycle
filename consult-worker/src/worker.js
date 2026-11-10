@@ -30,6 +30,7 @@
 
 import { validateAttachments } from './attachments.js';
 import { sendFeedbackDue, handleOpinion, feedbackEmail, feedbackSig } from './feedback.js';
+import { inviteFor, rewardInvite } from './invite.js';
 import { panel } from './panel.js';
 import { isEvent, isDevice, record, personTag, hourlyDigest, notify } from './activity.js';
 import { PLANS, paymentsOn, createCheckout, sessionStatus, handleWebhook, getBalance, spendCredit, markDay } from './stripe.js';
@@ -429,6 +430,12 @@ export default {
           if (fromAd) await record(env, { e: camp ? `consulta_anuncio:${camp}` : 'consulta_anuncio', p: tag }, sendMail, ctx);
         }
       }
+      // Invitación (invite.js): solo si este correo nunca había preguntado y el enlace es de otra persona
+      const rf = !test && body.team !== true && relay && !rec.first && rec.n === 0 ? await inviteFor(env, String(body.ref || ''), h) : null;
+      if (rf) {
+        await bump(env, 'consulta_invitada');
+        await record(env, { e: 'consulta_invitada', p: await personTag(env, request, madridDay()) }, sendMail, ctx);
+      }
       const remaining = Math.max(0, limit - n);
       const paidLeft = remaining === 0 && !unlimited && creditsLeft >= 0 && (paid || credits > 0)
         ? (creditsLeft === 0 ? 'Era tu última consulta pagada' : `Te ${creditsLeft === 1 ? 'queda 1 consulta pagada' : `quedan ${creditsLeft} consultas pagadas`}`) : '';
@@ -437,7 +444,7 @@ export default {
       // Sin relay no hay hilo que seguir (ni recordatorios): no se guarda nada más
       if (relay) {
         await saveThread(env, { id, p: pro.key || body.to, u: await sealEmail(env, q.email), uh: (await hmac(env.HASH_SALT, norm)).slice(0, 24),
-          sp: pm.subject, su: cm.subject, rp: [], ru: [], c: Date.now(), a: 0, rem: false, n: 0, ...(body.follow === true ? { f: 1 } : {}) });
+          sp: pm.subject, su: cm.subject, rp: [], ru: [], c: Date.now(), a: 0, rem: false, n: 0, h, ...(rf ? { rf } : {}), ...(body.follow === true ? { f: 1 } : {}) });
       }
       return reply(200, { ok: true, remaining, freeLimit: limit, ...(unlimited ? { unlimited: true } : {}), ...(paid || credits > 0 ? { credits: creditsLeft } : {}), ...(relay ? { id } : {}), dryRun: env.DRY_RUN === '1' });
     }
@@ -509,6 +516,7 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
       await bump(env, `respondida:${t.p}`);
       await bump(env, `resp_horas:${t.p}`, madridDay(), Math.max(1, Math.round((t.a - t.c) / 3600000)));
       await record(env, { e: `respondida:${t.p}` }, sendMail);
+      if (t.rf) { await rewardInvite(env, t.rf, sendMail, bump); delete t.rf; }
     }
   }
   if (t.p !== 'prueba') await bump(env, toUser ? 'mensaje:profesional' : 'mensaje:usuaria');

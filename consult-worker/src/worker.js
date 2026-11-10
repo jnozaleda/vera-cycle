@@ -446,6 +446,8 @@ export default {
 
   /** Correo entrante (Email Routing, regla catch-all → este Worker) */
   async email(message, env) {
+    // Informes DMARC automáticos (rua=mailto:dmarc@ en el DNS): se aceptan y se cuentan; no hace falta leerlos
+    if (/^dmarc@/i.test(String(message.to || ''))) { await bump(env, 'dmarc_informe'); return; }
     const dest = await parseRelayAddress(env, message.to);
     if (!dest) {
       // Cualquier otra dirección sin regla propia (p. ej. consultas@): se reenvía a Noza para que no se pierda

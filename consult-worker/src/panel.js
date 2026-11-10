@@ -57,23 +57,26 @@ export async function panel(env, url, openThreads) {
   const days = [1, 7, 30].includes(Number(url.searchParams.get('d'))) ? Number(url.searchParams.get('d')) : 7;
   const now = Date.now();
   const from = dayISO(now - (days - 1) * 86400000);
-  const rows = (await env.DB.prepare('SELECT day, k, n FROM counts WHERE day >= ?1').bind(from).all()).results || [];
+  // La gráfica diaria necesita al menos 7 días; los totales solo cuentan el periodo elegido.
+  const rows = (await env.DB.prepare('SELECT day, k, n FROM counts WHERE day >= ?1').bind(dayISO(now - (Math.max(days, 7) - 1) * 86400000)).all()).results || [];
   const tot = {}; const byDay = {};
-  for (const r of rows) { tot[r.k] = (tot[r.k] || 0) + r.n; (byDay[r.day] ||= {})[r.k] = r.n; }
+  for (const r of rows) { if (r.day >= from) tot[r.k] = (tot[r.k] || 0) + r.n; (byDay[r.day] ||= {})[r.k] = r.n; }
   const g = (k) => tot[k] || 0;
   const sum = (prefix) => Object.entries(tot).filter(([k]) => k.startsWith(prefix)).reduce((a, [, n]) => a + n, 0);
-  const act = (await env.DB.prepare('SELECT ts, e, d, p FROM activity WHERE ts > ?1 ORDER BY ts DESC').bind(now - days * 86400000).all()).results || [];
+  // La gráfica enseña al menos 7 días, así que se lee la actividad de max(días, 7); el resto de tarjetas usa solo el periodo elegido.
+  const actAll = (await env.DB.prepare('SELECT ts, e, d, p FROM activity WHERE ts > ?1 ORDER BY ts DESC').bind(now - Math.max(days, 7) * 86400000).all()).results || [];
+  const act = actAll.filter((r) => r.ts > now - days * 86400000);
   const open = openThreads ? await openThreads(env) : { pendientes: {}, fuera_plazo: {} };
 
   // Persona-día (etiqueta anónima diaria) → sus eventos. «De anuncio» = persona-día con una marca de anuncio, sin la
   // revisión automática de Google (todo lo suyo viene de un navegador «otro»).
-  for (const r of act) r.k = r.p ? `${dayISO(r.ts)}:${r.p}` : '';
-  const byKey = new Map();
-  for (const r of act) if (r.k) (byKey.get(r.k) || byKey.set(r.k, []).get(r.k)).push(r);
-  const AD = new Set([...byKey].filter(([, v]) => {
-    const ds = v.filter((r) => r.d);
-    return v.some((r) => is(r.e, AD_MARK)) && !(ds.length && ds.every((r) => r.d === 'otro-web'));
-  }).map(([k2]) => k2));
+  for (const r of actAll) r.k = r.p ? `${dayISO(r.ts)}:${r.p}` : '';
+  const group = (list) => { const m = new Map(); for (const r of list) if (r.k) (m.get(r.k) || m.set(r.k, []).get(r.k)).push(r); return m; };
+  const isAd = ([, v]) => { const ds = v.filter((r) => r.d); return v.some((r) => is(r.e, AD_MARK)) && !(ds.length && ds.every((r) => r.d === 'otro-web')); };
+  const byKeyAll = group(actAll);
+  const AD_ALL = new Set([...byKeyAll].filter(isAd).map(([k2]) => k2));
+  const byKey = group(act);
+  const AD = new Set([...byKey].filter(isAd).map(([k2]) => k2));
   /** Cuántos eventos (o personas por día) de anuncio hay con estos nombres */
   const adCount = (names, persons = false) => {
     let c = 0; const ks = new Set();
@@ -94,8 +97,8 @@ export async function panel(env, url, openThreads) {
   const n = Math.max(days, 7);
   const slots = Array.from({ length: n }, (_, i) => now - (n - 1 - i) * 86400000);
   const adWeb = {}; const adApp = {};
-  for (const k2 of AD) {
-    const v = byKey.get(k2); const d = k2.slice(0, 10);
+  for (const k2 of AD_ALL) {
+    const v = byKeyAll.get(k2); const d = k2.slice(0, 10);
     if (v.some((r) => r.e === 'portada')) adWeb[d] = (adWeb[d] || 0) + 1;
     if (v.some((r) => r.e === 'apertura')) adApp[d] = (adApp[d] || 0) + 1;
   }

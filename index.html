@@ -314,6 +314,20 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   .askwrap .ask { margin-top: 0; border-color: transparent; }
   .stage .shot { width: 170px; }
 }
+
+/* Propuesta: formulario más compacto */
+.picks legend { font-size: 13px; margin-bottom: 6px; }
+.pick { padding: 8px 4px 7px; gap: 3px; }
+.pick img { width: 32px; height: 32px; }
+.pick b { font-size: 13px; }
+.pick small { font-size: 11px; }
+.hint { font-size: 12.5px; color: var(--muted); }
+.ask input[type=email] { padding: 9px 12px; }
+.file-add { font-size: 13px; padding: 6px 10px; }
+#ask-file-note { font-size: 11.5px; font-style: italic; line-height: 1.4; }
+.perks { list-style: none; margin: -4px 0 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; font-size: 12.5px; font-weight: 500; color: var(--plum); }
+.perks li { display: flex; align-items: center; gap: 4px; }
+.perks svg { flex: none; }
 </style>
 </head>
 <body>
@@ -361,7 +375,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
           <button type="button">Mi bebé tiene fiebre, ¿qué hago?</button>
           <button type="button">Tengo sofocos por la noche, ¿es normal?</button>
         </div>
-        <p class="priv"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span><b>Privada, sin tarjeta, sin nombre ni registro.</b> No se publica en ningún sitio y la profesional no ve tu correo: lo usamos para hacerte llegar su respuesta.</span></p>
+        <p class="priv"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span><b>Privada.</b> No se publica en ningún sitio y la profesional no ve tu correo: solo lo usamos para enviarte su respuesta.</span></p>
         <div class="more" id="ask-more" hidden>
           <fieldset class="picks">
             <legend>¿A quién se lo preguntas?</legend>
@@ -371,19 +385,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
           </fieldset>
           <p class="hint" id="ask-hint" aria-live="polite"></p>
           <p class="urgent" id="ask-urgent" hidden>Si es algo urgente (sangrado abundante, pérdida de líquido, el bebé no se mueve, dolor muy fuerte), no esperes: llama al 112 o ve a urgencias.</p>
-          <label class="fld"><span>Tu momento <i>(opcional, les da contexto)</i></span>
-            <select id="ask-moment">
-              <option value="">Prefiero no decirlo</option>
-              <option>Embarazada, primer trimestre (hasta la semana 13)</option>
-              <option>Embarazada, segundo trimestre (semanas 14 a 27)</option>
-              <option>Embarazada, tercer trimestre (desde la semana 28)</option>
-              <option>Posparto, bebé de menos de 3 meses</option>
-              <option>Bebé de 3 a 12 meses</option>
-              <option>Menopausia, o creo que se acerca</option>
-              <option>Busco embarazo u otra duda de salud</option>
-            </select></label>
-          <label class="fld"><span>Tu correo, para que te respondan</span>
-            <input id="ask-email" type="email" inputmode="email" autocomplete="email" placeholder="nombre@correo.com"></label>
+          <label class="fld"><span class="sr">Tu correo</span><input id="ask-email" type="email" inputmode="email" autocomplete="email" placeholder="Tu correo, para recibir la respuesta"></label>
           <div class="files" id="ask-files" hidden>
             <label class="file-add">Añadir foto o PDF<input id="ask-file" type="file" hidden multiple accept="image/*,application/pdf"></label>
             <ul id="ask-file-list"></ul>
@@ -395,8 +397,9 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
           <p class="err" id="ask-err" role="alert" hidden></p>
         </div>
         <button class="btn btn-p" type="submit" id="ask-send">Preguntar gratis</button>
+        <ul class="perks" aria-label="Condiciones"><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin tarjeta de crédito</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin registro</li></ul>
         <button type="button" class="linkplans" id="ask-plans">¿Prefieres un bono o el plan ilimitado? Ver planes</button>
-        <p class="fine" id="ask-fine" hidden>Gratis, sin tarjeta y sin registro. No es para urgencias. <a href="privacy.html#consultas">Cómo tratamos tus datos</a>.</p>
+        <p class="fine" id="ask-fine" hidden>No es para urgencias. <a href="privacy.html#consultas">Cómo tratamos tus datos</a>.</p>
       </form>
       <div class="done" id="ask-done" hidden aria-live="polite"></div>
       </div>
@@ -688,9 +691,9 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     radios.forEach((r) => r.closest('.pick').classList.toggle('sugg', !manual && r.value === s.to));
     if (!manual) radios.forEach((r) => { r.checked = r.value === s.to; });
     const to = chosen();
-    $('ask-hint').textContent = !manual && s.to && s.reason ? `Te sugerimos a ${PROS[s.to].name}: parece una duda sobre ${s.reason}. Puedes cambiarlo.` : (to ? '' : 'Elige a quién se lo preguntas.');
+    $('ask-hint').textContent = !manual && s.to && s.reason ? `Sugerido por tu duda sobre ${s.reason}. Puedes cambiarlo.` : '';
     $('ask-urgent').hidden = !s.urgent;
-    if (opened && !busy) send.textContent = to ? `Enviar a ${PROS[to].name}` : 'Elige a quién preguntar';
+    if (opened && !busy) send.textContent = to ? `Enviar${store.get('hera-free-left') === '0' ? '' : ' gratis'} a ${PROS[to].name}` : 'Elige a quién preguntar';
   }
   function open() {
     if (opened) return;
@@ -818,12 +821,13 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     lastEmail = email.value.trim(); store.set('hera-ask-email', lastEmail);
     try {
       const res = await fetch(`${API}/ask`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: lastEmail, to, text, context: '', situation: $('ask-moment').value, website: $('ask-hp').value, attachments: filesPayload(files), follow: $('ask-follow').checked, ...(isTeam() ? { team: true } : {}), ...adSrc() }) });
+        body: JSON.stringify({ email: lastEmail, to, text, context: '', situation: '', website: $('ask-hp').value, attachments: filesPayload(files), follow: $('ask-follow').checked, ...(isTeam() ? { team: true } : {}), ...adSrc() }) });
       const j = await res.json().catch(() => ({}));
       if (res.status === 429) throw new Error('Has enviado varias consultas seguidas. Espera unos minutos y vuelve a intentarlo.');
       if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');
       if (j.error === 'bad_files' || j.error === 'too_large') throw new Error('Revisa los archivos: solo fotos o PDF, hasta 10 MB en total.');
       if (!res.ok && !j.limit) throw new Error('No se ha podido enviar. Inténtalo de nuevo en un rato.');
+      if (j.limit) store.set('hera-free-left', '0'); else if (j.ok && j.remaining != null) store.set('hera-free-left', String(j.remaining));
       if (j.limit) { hit('limite_portada'); showLimit(j, { to, text, follow: $('ask-follow').checked }); } else { hit('enviada_portada'); if (j.id) addConsult({ id: j.id, to, text }); showDone(to, j); }
     } catch (e) { hit('error_portada'); showErr(e.message); }
     busy = false; send.disabled = false; refresh();

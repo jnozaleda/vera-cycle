@@ -219,6 +219,8 @@ assert.equal(validateAttachments([{ content: 'A'.repeat(Math.ceil((MAX_BYTES * 4
   const inv = (await call('/opinion', { t: r2.j.id, s: s2, r: 1 })).j.invite;
   assert.match(inv, /^[a-hjkmnp-z2-9]{6}$/, 'quien valora «Sí, mucho» recibe su enlace');
   assert.equal((await call('/opinion', { t: r2.j.id, s: s2, r: 1 })).j.invite, inv, 'siempre el mismo código');
+  { const t0 = await loadThread(env, r2.j.id); delete t0.h; await saveThread(env, t0); }
+  assert.equal((await call('/opinion', { t: r2.j.id, s: s2, r: 1 })).j.invite, inv, 'consultas antiguas: la huella se rehace con el correo cifrado');
   assert.equal((await call('/opinion', { t: id, s, r: 1 })).j.invite, undefined, 'sin enlace si no le ayudó');
   const own = await call('/ask', { email: 'contenta@example.com', to: 'matrona', text: 'Me invito a mí misma', ref: inv });
   assert.equal((await loadThread(env, own.j.id)).rf, undefined, 'no vale invitarse a una misma');

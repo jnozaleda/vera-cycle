@@ -79,7 +79,7 @@ async function threadFor(env, body) {
 }
 
 /** POST /opinion {t,s,r} · /opinion/comentario {t,s,text,name,publish,follow} · /opinion/baja {t,s} */
-export async function handleOpinion(env, path, body, { PROS, sendMail, bump }) {
+export async function handleOpinion(env, path, body, { PROS, sendMail, bump, hashEmail }) {
   const t = await threadFor(env, body);
   if (!t) return [404, { error: 'not_found' }];
   const pro = PROS[t.p] || null;
@@ -101,7 +101,9 @@ export async function handleOpinion(env, path, body, { PROS, sendMail, bump }) {
       if (t.p !== 'prueba') await notify(env, `Hera · opinión: «${RATING[r]}» para ${pro?.short || t.p}`,
         `Nueva opinión sobre una consulta respondida por ${pro?.short || t.p}: «${RATING[r]}».${r > 1 ? (t.f ? '\nPidió seguimiento al preguntar: la profesional ya tiene el aviso.' : '\nTodavía no ha pedido seguimiento.') : ''}\n\nSi deja un comentario, te llegará en otro aviso. Panel: ${PANEL}`, sendMail);
     }
-    // Enlace para invitar (invite.js): solo a quien la respuesta le ayudó mucho, y en consultas que guardan la huella
+    // Enlace para invitar (invite.js): solo a quien la respuesta le ayudó mucho
+    // Consultas de antes del 10 nov: sin huella guardada, se rehace con el correo cifrado del hilo
+    if (t.fr === 1 && !t.h && t.u && hashEmail) { try { t.h = await hashEmail(await openEmail(env, t.u)); if (t.h) await saveThread(env, t); } catch { /* sin huella */ } }
     const invite = t.fr === 1 && t.h && t.p !== 'prueba' ? await inviteCode(env, t.h, t.u) : null;
     return [200, { ok: true, r: t.fr, done: !!t.fc, followSent: !!t.fs, ...(invite ? { invite } : {}), ...info }];
   }

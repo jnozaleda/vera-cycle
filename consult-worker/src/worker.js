@@ -311,7 +311,7 @@ export default {
 
     if (url.pathname.startsWith('/opinion')) {
       if (!allowed.includes(origin)) return reply(403, { error: 'origin' });
-      const [status, out] = await handleOpinion(env, url.pathname, body, { PROS, sendMail, bump });
+      const [status, out] = await handleOpinion(env, url.pathname, body, { PROS, sendMail, bump, hashEmail: async (e) => { const n = normalizeEmail(e); return n ? hmac(env.HASH_SALT, n) : null; } });
       return reply(status, out);
     }
     // Prueba: manda ya el correo de opinión de una consulta de prueba (para verlo en el móvil)
@@ -438,7 +438,7 @@ export default {
       }
       const remaining = Math.max(0, limit - n);
       const paidLeft = remaining === 0 && !unlimited && creditsLeft >= 0 && (paid || credits > 0)
-        ? (creditsLeft === 0 ? 'Era tu última consulta pagada' : `Te ${creditsLeft === 1 ? 'queda 1 consulta pagada' : `quedan ${creditsLeft} consultas pagadas`}`) : '';
+        ? (creditsLeft === 0 ? 'Era la última consulta de tu saldo' : `Te ${creditsLeft === 1 ? 'queda 1 consulta' : `quedan ${creditsLeft} consultas`} en tu saldo`) : '';
       const cm = confirmEmail(pro, q, remaining, id, unlimited, subscriber ? 'Tienes el plan ilimitado: una consulta nueva al día' : paidLeft);
       const sentU = await sendMail(env, { to: q.email, replyTo: relay ? await relayAddress(env, 'u', id) : pro.email, ...cm, bcc });
       // Sin relay no hay hilo que seguir (ni recordatorios): no se guarda nada más

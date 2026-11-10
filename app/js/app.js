@@ -1384,7 +1384,7 @@ function askSheet() {
         <p class="t-13">Tu duda va camino de ${esc(who.short)}</p>
       </div>
       <p class="t-13 soft lh-4">${esc(who.short)} te responderá en menos de ${who.responseHours} h a <b class="w-500">${esc(a.email)}</b>. Te hemos mandado una copia.</p>
-      ${a.result.unlimited ? '<p class="t-12 soft">Tienes consultas ilimitadas</p>' : a.result.credits != null && rem === 0 ? `<p class="t-12 soft">${a.result.credits === 0 ? 'Era tu última consulta pagada' : `Te ${a.result.credits === 1 ? 'queda 1 consulta pagada' : `quedan ${a.result.credits} consultas pagadas`}`}</p>` : `${freeDots(total - rem, total)}
+      ${a.result.unlimited ? '<p class="t-12 soft">Tienes consultas ilimitadas</p>' : a.result.credits != null && rem === 0 ? `<p class="t-12 soft">${a.result.credits === 0 ? 'Era la última consulta de tu saldo' : `Te ${a.result.credits === 1 ? 'queda 1 consulta' : `quedan ${a.result.credits} consultas`} en tu saldo`}</p>` : `${freeDots(total - rem, total)}
       <p class="t-12 soft">${rem === 0 ? 'Era tu última consulta gratuita' : `Te ${rem === 1 ? 'queda 1 consulta gratuita' : `quedan ${rem} consultas gratuitas`}`}</p>`}
       ${a.result.dryRun ? '<p class="t-11 c-rose">Modo ensayo: no se ha enviado ningún correo.</p>' : ''}
       <button class="link-soft self-center" data-action="ask-reset">Escribir otra pregunta</button>

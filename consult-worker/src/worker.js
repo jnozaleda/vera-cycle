@@ -104,15 +104,27 @@ export function confirmEmail(pro, q, remaining, id = '', unlimited = false, left
 
 
 /** Mensaje reenviado por el hilo: del profesional a la usuaria o de la usuaria al profesional */
-export function relayEmail(pro, role, id, body, nAttach) {
+/** Pie de la primera respuesta (vera-backlog#85): «¿Te ha ayudado?» con tres botones a la página de opinión */
+export function rateBlock(pro, link) {
+  const b = (r, label, solid) => `<a href="${link(r)}" style="display:inline-block;text-align:center;text-decoration:none;font-weight:600;font-size:14px;border-radius:8px;padding:9px 14px;margin:0 6px 6px 0;border:1.5px solid #693D55;${solid ? 'background:#693D55;color:#ffffff' : 'background:#ffffff;color:#693D55'}">${label}</a>`;
+  return {
+    html: `<div style="margin:20px 0 0;padding:14px;border:1px solid #E6DFE2;border-radius:10px;background:#ffffff">
+<p style="font-family:Georgia,serif;font-size:17px;color:#3B2433;margin:0 0 10px">¿Te ha ayudado la respuesta de ${esc(pro.short)}?</p>
+${b(1, 'Sí, mucho', true)}${b(2, 'Más o menos')}${b(3, 'No')}
+<p style="font-size:12px;color:#8A8A8E;margin:4px 0 0">Un toque. Se lo diremos a ${esc(pro.short)}, sin tu correo.</p></div>`,
+    text: `¿Te ha ayudado la respuesta de ${pro.short}?\nSí, mucho: ${link(1)}\nMás o menos: ${link(2)}\nNo: ${link(3)}`,
+  };
+}
+
+export function relayEmail(pro, role, id, body, nAttach, rate = null) {
   const head = role === 'p' ? `<p style="font-size:13px;color:#655B61;margin-bottom:6px">${esc(pro.name)}, ${esc(pro.role)}, te responde:</p>`
     : `<p style="font-size:13px;color:#655B61;margin-bottom:6px">La usuaria de la consulta #${id.toUpperCase()} ha escrito:</p>`;
   const att = nAttach ? `<p style="font-size:13px;color:#655B61">${nAttach} ${nAttach === 1 ? 'archivo adjunto' : 'archivos adjuntos'}</p>` : '';
   const foot = role === 'p'
     ? 'Si necesitas aclarar algo, responde a este correo. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.'
     : `Responde a este correo para contestarle; le llegará desde ${pro.email}.`;
-  const html = shell(`${head}<div style="white-space:normal">${nl2br(body)}</div>${att}<p style="font-size:12px;color:#8A8A8E;margin-top:18px">${esc(foot)}</p>`);
-  const text = `${role === 'p' ? `${pro.name}, ${pro.role}, te responde:` : `La usuaria de la consulta #${id.toUpperCase()} ha escrito:`}\n\n${body}\n\n${nAttach ? `[${nAttach} adjunto(s)]\n\n` : ''}${foot}`;
+  const html = shell(`${head}<div style="white-space:normal">${nl2br(body)}</div>${att}${rate ? rate.html : ''}<p style="font-size:12px;color:#8A8A8E;margin-top:18px">${esc(foot)}</p>`);
+  const text = `${role === 'p' ? `${pro.name}, ${pro.role}, te responde:` : `La usuaria de la consulta #${id.toUpperCase()} ha escrito:`}\n\n${body}\n\n${nAttach ? `[${nAttach} adjunto(s)]\n\n` : ''}${rate ? `${rate.text}\n\n` : ''}${foot}`;
   return { html, text };
 }
 
@@ -491,7 +503,10 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
   }
   if (!msg.body && !msg.attachments.length) return { ok: false, why: 'empty' };
   const toUser = role === 'p';
-  const { html, text } = relayEmail(pro, role, t.id, msg.body || '(Sin texto: mira el archivo adjunto.)', msg.attachments.length);
+  // Primera respuesta de la profesional: «¿Te ha ayudado?» al pie (si aún no ha valorado)
+  let rate = null;
+  if (role === 'p' && !t.a && !t.fr) { const sig = await feedbackSig(env, t.id); rate = rateBlock(pro, (r) => `https://hera-gine.com/opinion/?t=${t.id}&s=${sig}&r=${r}`); }
+  const { html, text } = relayEmail(pro, role, t.id, msg.body || '(Sin texto: mira el archivo adjunto.)', msg.attachments.length, rate);
   const refsMine = toUser ? t.ru : t.rp;
   const sent = await sendMail(env, {
     to: toUser ? await openEmail(env, t.u) : pro.email,

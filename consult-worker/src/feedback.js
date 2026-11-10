@@ -1,4 +1,4 @@
-// Opinión tras la consulta (correo 24 h después de la primera respuesta) y seguimiento con permiso.
+// Opinión tras la consulta (botones al pie de la primera respuesta y, si no valora, correo 24 h después) y seguimiento con permiso.
 // Las valoraciones se cuentan por profesional; los comentarios se guardan sin el correo ni el número de consulta.
 // El seguimiento lo hace la profesional por el mismo hilo de Hera, así que no hace falta guardar el correo más de 30 días.
 import { loadThread, saveThread, relayAddress, openEmail } from './relay.js';
@@ -46,6 +46,8 @@ export async function sendFeedbackDue(env, sendMail, PROS, now = Date.now()) {
       if (!m.a || m.f || now - m.a < DAY) continue;
       const t = await loadThread(env, k.name.slice(2));
       if (!t || !t.a || t.fb) continue;
+      // Ya valoró desde la propia respuesta: no hace falta el correo
+      if (t.fr) { t.fb = now; await saveThread(env, t); continue; }
       const pro = PROS[t.p];
       t.fb = now;
       if (pro && !(await env.KV.get(`nf:${t.uh}`))) {

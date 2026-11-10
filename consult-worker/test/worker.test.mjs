@@ -89,6 +89,7 @@ const mime = (from, to, body, extra = '') => `From: ${from}\r\nTo: ${to}\r\nSubj
 let n0 = sent.length;
 let rr = await relayIncoming(env, t, 'p', mime('marina.personal@gmail.com', pAddr, 'Es normal al principio.\r\n\r\nEl lun, 13 oct 2026, Hera escribió:\r\n> Me duele'));
 assert.ok(rr.ok); const out = sent[n0];
+assert.match(out.html, /¿Te ha ayudado la respuesta de Marina\?/, 'valoración al pie de la primera respuesta'); assert.match(out.text, /opinion\/\?t=[a-z0-9]{8}&s=[a-f0-9]{16}&r=1/);
 assert.equal(out.to[0], 'Maria.Lopez@gmail.com'); assert.equal(out.from, 'Marina · Hera <marina@hera-gine.com>');
 assert.equal(out.reply_to, uAddr); assert.ok(out.text.includes('Es normal al principio.') && !out.text.includes('Me duele'), 'sin lo citado');
 assert.ok(!out.text.includes('marina.personal'), 'no se ve el correo personal');
@@ -239,5 +240,12 @@ assert.equal(validateAttachments([{ content: 'A'.repeat(Math.ceil((MAX_BYTES * 4
   assert.equal(saldo.get(hC), 1, 'una sola vez por consulta'); assert.equal(cnt('consulta_regalada'), 1);
   const pg3 = await (await worker.fetch(new Request('https://w/panel?k=dk&d=30'), env)).text();
   assert.match(pg3, /Invitaciones/); assert.match(pg3, /Consultas regaladas/);
+  // Quien ya valoró desde la respuesta no recibe el correo de las 24 h
+  ft = await loadThread(env, fr.j.id); const sf = await feedbackSig(env, ft.id);
+  assert.ok(!sent.filter((m) => m.subject?.startsWith('Re:')).at(-1).html.includes('¿Te ha ayudado'), 'solo en la primera respuesta');
+  await call('/opinion', { t: ft.id, s: sf, r: 2 });
+  ft = await loadThread(env, ft.id); ft.a = Date.now() - 25 * 3600000; await saveThread(env, ft);
+  sent.length = 0; await worker.scheduled({}, env);
+  assert.ok(!sent.some((m) => m.subject === '¿Te ayudó la respuesta de Lucía?'), 'ya valoró: sin correo de opinión');
 }
 console.log('consultas: OK');

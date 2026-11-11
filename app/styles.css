@@ -1103,3 +1103,5 @@ body[data-stage="menopause"] { --st-soft: #EFE6D8; }
 .ask-free{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;background:var(--st-soft);font-size:12.5px;line-height:1.4;color:var(--deep)}
 .ask-eg[hidden]{display:none}.ask-eg{display:flex;flex-wrap:wrap;gap:6px;margin-top:-4px}.ask-eg-b{font:inherit;font-size:12.5px;padding:6px 10px;border-radius:999px;border:1px solid var(--line, #E6DFE2);background:transparent;color:var(--deep);text-align:left;cursor:pointer}
 .ask-to{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;border:1px solid var(--line, #E6DFE2)}
+
+.ask-video{display:flex;gap:10px;align-items:center;padding:10px 12px;border-radius:12px;border:1px solid var(--line, #E6DFE2);background:var(--card, #fff);text-decoration:none;color:inherit}

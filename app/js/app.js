@@ -1320,6 +1320,7 @@ function askPayView(a) {
         <span class="t-15 w-600 c-deep nowrap">${busy === p.k ? 'Abriendo…' : p.price}</span></button>`).join('')}
     </div>
     ${a.buy?.error ? `<p class="t-12 c-rose">${esc(a.buy.error)}</p>` : ''}
+    ${askVideoCard(CONSULTS[a.to] || null)}
     <p class="t-12 soft lh-4">Pagas en Stripe con tarjeta, Apple Pay o Google Pay, a nombre de ${esc(a.email)}. Hera no ve tu tarjeta.</p>
     ${a.result.early ? '<button class="link-soft self-center" data-action="ask-pay-back">Volver a mi pregunta</button>' : ''}
     <p class="t-13 lh-4">Para seguir con una consulta anterior, responde al correo de la profesional: <b>no gasta consultas</b>.</p>
@@ -1439,6 +1440,7 @@ function askSheet() {
       ${(a.files || []).map((f, i) => `<div class="period-item"><span class="t-13 grow">${esc(f.filename)}</span><button class="icon-btn soft" data-action="ask-file-remove" data-i="${i}" aria-label="Quitar ${attr(f.filename)}">${icon('xCircle', 16)}</button></div>`).join('')}
       ${a.fileError ? `<p class="t-12 c-rose">${esc(a.fileError)}</p>` : ''}</div>` : ''}
     ${consultFormOn() ? `<label class="ask-check"><input type="checkbox" data-ask-follow ${a.follow ? 'checked' : ''}><span class="t-13 lh-4">Quiero que Hera me haga seguimiento si la respuesta no me deja satisfecha.</span></label>` : ''}
+    ${askVideoCard(to)}
     <div class="ask-more t-12 soft lh-4">
       <a class="link-deep" href="../equipo.html">Conoce al equipo</a> · <button class="inline-link" data-action="ask-pay-preview">Ver bono e ilimitado</button>${to?.whatsapp ? ' · <button class="inline-link" data-action="ask-send" data-v="whatsapp">Escribir por WhatsApp</button>' : ''}
     </div>
@@ -1448,6 +1450,11 @@ function askSheet() {
 }
 
 /** Una línea con la profesional elegida (o sugerida) y «Cambiar» para ver las tres fichas */
+/** Videollamada (vera-backlog#86): abre la página de la web con la ficha de esa profesional */
+function askVideoCard(to) {
+  const href = `../videollamada/?de=app${to ? `#reservar-${to.key}` : ''}`;
+  return `<a class="ask-video" data-ask-video href="${href}" ${isStandalone() ? 'target="_blank" rel="noopener"' : ''}>${to ? consultAvatar('sm', to.key) : icon('video', 18, 'c-deep')}<span class="grow t-13 lh-3"><b class="w-500 c-deep">¿Prefieres hablarlo cara a cara?</b><span class="t-12 soft block">Videollamada de 30 min${to ? ` con ${esc(to.short)}` : ''} · 55 €</span></span>${icon('right', 13, 'soft')}</a>`;
+}
 function askToLine(a, sugg) {
   const to = CONSULTS[a.to];
   return `<div class="ask-to" data-ask-to>${consultAvatar('sm', to.key)}<span class="grow t-13 lh-3">Te responderá <b class="w-500">${esc(to.short)}</b> · ${esc(to.role.toLowerCase())}${!a.manual && sugg.to === to.key ? `<span class="t-11 soft block">${a.text.trim() ? 'Sugerido por lo que escribes' : 'Sugerido para tu etapa'}</span>` : ''}</span><button class="link-deep t-12" data-action="ask-picks-open">Cambiar</button></div>`;
@@ -1472,6 +1479,7 @@ function refreshAskSuggestion() {
     const send = root.querySelector('[data-ask-send]');
     if (send) { const t = CONSULTS[ui.ask.to]; send.disabled = !t; send.textContent = t ? `Enviar${send.hasAttribute('data-free') ? ' gratis' : ''} a ${t.short}` : 'Elige a quién preguntar'; }
     const line = root.querySelector('[data-ask-to]'); if (line && CONSULTS[ui.ask.to]) line.outerHTML = askToLine(ui.ask, sugg);
+    const vid = root.querySelector('[data-ask-video]'); if (vid) vid.outerHTML = askVideoCard(CONSULTS[ui.ask.to] || null);
     const eg = root.querySelector('.ask-eg'); if (eg) eg.hidden = !!ui.ask.text.trim();
   }, 250);
 }
@@ -1897,6 +1905,7 @@ function aboutSection() {
     <div class="web-list">
       ${webLink('../?web=1', 'Web de Hera')}
       ${webLink('../equipo.html', 'Conoce al equipo')}
+      ${webLink('../videollamada/?de=app', 'Videollamada con el equipo')}
       ${webLink('../?web=1#precio', 'Precios')}
       ${webLink('../?web=1#instalar', 'Cómo instalarla')}
       ${webLink('../support.html', 'Soporte')}

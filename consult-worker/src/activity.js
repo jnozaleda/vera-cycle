@@ -89,7 +89,7 @@ export const EVENTS = {
 
 const VALUE_LABEL = {
   pregnancy: 'embarazo', postpartum: 'posparto', cycle: 'ciclo', regular: 'regular', irregular: 'irregular',
-  parto: 'fecha de parto', peso: 'peso en el embarazo', ovulacion: 'ovulación', suelta: 'consulta suelta', bono: 'bono de 5', mensual: 'ilimitado mensual', video: 'videollamada de 30 min', lactancia: 'asesoría de lactancia', gineco: 'Gonzalo', matrona: 'Marina', pediatra: 'Lucía', prueba: 'prueba', rapido: 'en menos de 5 s sin escribir', sin_escribir: 'sin escribir', cabecera: 'desde el botón de arriba', barra: 'desde la barra', tema: 'desde un tema', dudas: 'desde Dudas', ajustes: 'desde Ajustes', web: 'desde la web', respuesta: 'desde una respuesta',
+  parto: 'fecha de parto', peso: 'peso en el embarazo', ovulacion: 'ovulación', suelta: 'consulta suelta', bono: 'bono de 5', mensual: 'ilimitado mensual', video: 'videollamada de 30 min', lactancia: 'asesoría de lactancia', gineco: 'Gonzalo', matrona: 'Marina', pediatra: 'Lucía', prueba: 'prueba', rapido: 'en menos de 5 s sin escribir', sin_escribir: 'sin escribir', cabecera: 'desde el botón de arriba', barra: 'desde la barra', tema: 'desde un tema', dudas: 'desde Dudas', ajustes: 'desde Ajustes', web: 'desde la web', respuesta: 'desde una respuesta', app: 'desde la app',
   today: 'Hoy', diary: 'Diario', care: 'Cuidados', guide: 'Dudas', trends: 'Patrones', baby: 'Tu bebé', tu: 'Tú', bebe: 'Tu bebé',
   sintoma: 'síntomas', animo: 'ánimo', regla: 'regla', dato: 'peso, sueño o temperatura', intimidad: 'relaciones', ovulacion: 'test de ovulación',
   estres: 'estrés', flujo: 'flujo',

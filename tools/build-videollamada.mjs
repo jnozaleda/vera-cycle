@@ -107,7 +107,7 @@ const body = `${STYLE}<div class="w vc">
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const isEmail = (e) => /^[^\\s@<>()",;]+@[^\\s@<>()",;]+\\.[a-z]{2,24}$/i.test(e.trim());
   const q = new URLSearchParams(location.search);
-  hit(q.get('de') === 'respuesta' ? 'video_pagina:respuesta' : 'video_pagina');
+  hit(['respuesta', 'app'].includes(q.get('de')) ? 'video_pagina:' + q.get('de') : 'video_pagina');
   // Anuncios: misma marca de 30 días que la portada (sin cookies)
   const AD_KEY = 'hera-src';
   if (q.has('gclid') || /^(cpc|ppc|paid)$/i.test(q.get('utm_medium') || '')) {

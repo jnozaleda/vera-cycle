@@ -83,9 +83,8 @@ export const EVENTS = {
   pago_elegido: ['Eligió un plan de pago', true],
   pago_hecho: ['Volvió de pagar', true],
   video_pagina: ['Vio la página de videollamadas', false],
-  // Sin aviso inmediato: solo interesa el pago (llega aparte, «videollamada pagada»); salen en el resumen de cada hora
-  video_reserva: ['Pulsó reservar videollamada con', false],
-  video_pago: ['Fue a pagar la videollamada con', false],
+  video_reserva: ['Pulsó reservar videollamada con', true],
+  video_pago: ['Fue a pagar la videollamada con', true],
 };
 
 const VALUE_LABEL = {

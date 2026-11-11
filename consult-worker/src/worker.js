@@ -455,7 +455,8 @@ export default {
       const proReply = relay ? await relayAddress(env, 'p', id) : q.email;
       const sent = await sendMail(env, { to: pro.email, replyTo: proReply, ...pm, bcc: files.length ? undefined : bcc, attachments: files });
       if (!sent) return reply(502, { error: 'send' });
-      if (files.length && bcc) await sendMail(env, { to: bcc, replyTo: proReply, ...pm, subject: `[Copia sin adjuntos] ${pm.subject}` });
+      // COPY_ATTACH="1" (temporal, Noza 11 nov): la copia de control lleva también los adjuntos, para vigilar abusos
+      if (files.length && bcc) await sendMail(env, { to: bcc, replyTo: proReply, ...pm, subject: `[Copia ${env.COPY_ATTACH === '1' ? 'con' : 'sin'} adjuntos] ${pm.subject}`, ...(env.COPY_ATTACH === '1' ? { attachments: files } : {}) });
       const now = new Date().toISOString();
       // Primero se gastan las gratuitas y después las pagadas
       const paid = !test && !unlimited && rec.n >= limit;

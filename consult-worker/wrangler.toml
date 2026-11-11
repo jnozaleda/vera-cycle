@@ -14,6 +14,8 @@ RELAY = "1"
 ALERTS = "1"
 # Pagos (src/stripe.js): "off" | "test" (solo con ?pagos=1 en la app) | "on"
 PAYMENTS = "on"
+# Temporal (11 nov 2026): la copia de control a COPY_TO lleva también los adjuntos de las consultas. Quitar tras las pruebas.
+COPY_ATTACH = "1"
 STRIPE_PORTAL_URL = "https://billing.stripe.com/p/login/00w14gfOV6nU8rG7jc5ZC00"
 
 [[kv_namespaces]]

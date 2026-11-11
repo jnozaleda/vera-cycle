@@ -3,7 +3,8 @@
 //   node tools/stripe-setup.mjs
 //
 // Lee STRIPE_SECRET_KEY de .secrets.json (sk_test_… o sk_live_…) y crea:
-//   · los 3 precios, con lookup_key fijo (el Worker los busca por ese nombre): hera_suelta, hera_bono5, hera_mensual
+//   · los precios, con lookup_key fijo (el Worker los busca por ese nombre): hera_suelta, hera_bono5, hera_mensual,
+//     hera_video30, hera_lactancia90
 //   · el aviso de pago (webhook) hacia el Worker; su secreto se guarda en .secrets.json como STRIPE_WEBHOOK_SECRET
 //   · el portal de clientes (cancelar el ilimitado) con página de acceso por correo; imprime su URL para wrangler.toml
 //
@@ -35,6 +36,8 @@ const PRICES = [
   { lookup: 'hera_suelta', name: 'Consulta suelta', desc: 'Una consulta por escrito con una profesional de Hera.', amount: 900 },
   { lookup: 'hera_bono5', name: 'Bono de 5 consultas', desc: 'Cinco consultas por escrito. Válido 12 meses.', amount: 3500 },
   { lookup: 'hera_mensual', name: 'Hera ilimitado', desc: 'Consultas por escrito sin límite (hasta una nueva al día). Sin permanencia.', amount: 1500, monthly: true },
+  { lookup: 'hera_video30', name: 'Videollamada de 30 min', desc: 'Videollamada por Google Meet con el ginecólogo, la matrona o la pediatra de Hera.', amount: 5500 },
+  { lookup: 'hera_lactancia90', name: 'Asesoría de lactancia (1 h 30)', desc: 'Asesoría de lactancia por videollamada con Marina Fernández, matrona.', amount: 9900 },
 ];
 
 const mode = /^[sr]k_live_/.test(KEY) ? 'REAL' : 'prueba';

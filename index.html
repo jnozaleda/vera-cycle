@@ -266,6 +266,9 @@ section { padding: 64px 0; }
 .plan .k { font-size: 13px; font-weight: 600; color: var(--mauve); letter-spacing: .06em; text-transform: uppercase; }
 .plan .v { font-family: 'Newsreader', Georgia, serif; font-size: 32px; color: var(--plum); line-height: 1.1; }
 .plan p { margin: 0; color: var(--text); font-size: 15px; }
+.price-k { margin: 30px 0 -14px; font-size: 13px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--plum); }
+@media (min-width: 1000px) { .price.two { grid-template-columns: repeat(4, 1fr); } }
+.plan a.go { margin-top: auto; padding-top: 6px; color: var(--plum); font-weight: 600; font-size: 15px; }
 
 /* Instalar */
 .install { display: grid; gap: 16px; margin-top: 26px; }
@@ -562,6 +565,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     <p class="eyebrow">Precio</p>
     <h2>Empieza gratis</h2>
     <p class="sub">El contenido de cada semana es gratis siempre. Las consultas, las dos primeras también.</p>
+    <p class="price-k">Por escrito</p>
     <div class="price">
       <div class="plan main"><span class="k">Para empezar</span><span class="v">2 consultas gratis</span><p>A quien quieras de las tres, sin tarjeta ni registro.</p></div>
       <div class="plan"><span class="k">Consulta suelta</span><span class="v">9 €</span><p>Pagas solo cuando preguntas.</p></div>
@@ -569,6 +573,11 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <div class="plan"><span class="k">Ilimitado</span><span class="v">15 € <small>/ mes</small></span><p>Pregunta cuando lo necesites, sin permanencia. Uso razonable: hasta una consulta nueva al día.</p></div>
     </div>
     <p style="margin-top:14px"><a href="#ask" data-goplans style="color:var(--plum);font-weight:600">Comprar un bono o el ilimitado →</a></p>
+    <p class="price-k">Por videollamada</p>
+    <div class="price two">
+      <div class="plan"><span class="k">Videollamada</span><span class="v">55 € <small>· 30 min</small></span><p>Con Gonzalo, Marina o Lucía, por Google Meet, el día y la hora que te vengan bien.</p><a class="go" href="videollamada/">Reservar →</a></div>
+      <div class="plan"><span class="k">Asesoría de lactancia</span><span class="v">99 € <small>· 1 h 30</small></span><p>Con Marina, matrona y asesora de lactancia: agarre, dolor, crisis o sacaleches.</p><a class="go" href="videollamada/#lactancia">Reservar →</a></div>
+    </div>
   </div>
 </section>
 
@@ -581,7 +590,8 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <details><summary>¿Cuánto tardan en responder?</summary><p>Menos de 48 horas. La respuesta te llega a tu correo y, si te queda alguna duda, puedes contestar al mismo mensaje.</p></details>
       <details><summary>¿Y si es urgente?</summary><p>Hera no atiende urgencias. Si tienes un sangrado abundante, pérdida de líquido, fiebre alta, dolor intenso o notas que tu bebé se mueve menos, llama al 112 o acude a urgencias. En la app tienes una guía de cuándo ir.</p></details>
       <details><summary>¿Qué pasa con mis datos?</summary><p>Lo que apuntas en Hera se queda en tu móvil. Cuando haces una consulta, tu pregunta y tu correo van a la profesional que eliges para que pueda responderte; el texto de tu pregunta no se guarda en ningún servidor nuestro.</p></details>
-      <details><summary>¿Cuánto cuesta después de las consultas gratis?</summary><p>9 € por consulta suelta, 35 € el bono de 5 consultas o 15 € al mes para preguntar sin límite. Estamos preparando el pago en la web: si se te acaban las gratuitas antes, deja tu correo y te avisamos en cuanto esté.</p></details>
+      <details><summary>¿Cuánto cuesta después de las consultas gratis?</summary><p>9 € por consulta suelta, 35 € el bono de 5 consultas o 15 € al mes para preguntar sin límite. Pagas con tarjeta, Apple Pay o Google Pay en Stripe.</p></details>
+      <details><summary>¿Puedo hablar con ellas por videollamada?</summary><p>Sí. 30 minutos por Google Meet con Gonzalo, Marina o Lucía por 55 €, o una asesoría de lactancia de 1 h 30 con Marina por 99 €. Pagas, nos dices qué horarios te vienen bien y te proponemos hora en menos de 24 h laborables. <a href="videollamada/">Ver cómo funciona</a>.</p></details>
       <details><summary>¿Tengo que crear una cuenta o instalar algo?</summary><p>No hace falta cuenta. Hera funciona en el navegador de tu móvil y, si quieres, puedes añadirla a tu pantalla de inicio para abrirla como una app y recibir avisos cada semana. <a href="#instalar">Te explicamos cómo</a>.</p></details>
     </div>
   </div>
@@ -615,6 +625,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         <a href="bebe/">Tu bebé</a>
         <a href="guias/">Guías</a>
         <a href="calculadoras/">Calculadoras</a>
+        <a href="videollamada/">Videollamada</a>
         <a href="support.html">Soporte</a>
         <a href="privacy.html">Privacidad</a>
         <a href="mailto:contacto@hera-gine.com">contacto@hera-gine.com</a>

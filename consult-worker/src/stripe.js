@@ -1,4 +1,4 @@
-// Pagos con Stripe (vera-backlog#56): consulta suelta, bono de 5 e ilimitado mensual.
+// Pagos con Stripe (vera-backlog#56): consulta suelta, bono de 5, ilimitado mensual y videollamadas (#86).
 //
 // Flujo: la app pide POST /checkout {email, plan} → sesión de Stripe Checkout → la usuaria paga en Stripe →
 // Stripe avisa a POST /stripe/webhook (firmado) y la app, al volver, consulta GET /checkout/status?cs=… .
@@ -18,7 +18,11 @@ export const PLANS = {
   suelta: { lookup: 'hera_suelta', mode: 'payment', credits: 1, label: 'Consulta suelta', eur: 9 },
   bono: { lookup: 'hera_bono5', mode: 'payment', credits: 5, label: 'Bono de 5 consultas', eur: 35 },
   mensual: { lookup: 'hera_mensual', mode: 'subscription', credits: 0, label: 'Ilimitado mensual', eur: 15 },
+  // Videollamadas (vera-backlog#86): no suman consultas; el pago dispara el correo con los pasos para elegir hora
+  video: { lookup: 'hera_video30', mode: 'payment', credits: 0, label: 'Videollamada de 30 min', eur: 55, video: true },
+  lactancia: { lookup: 'hera_lactancia90', mode: 'payment', credits: 0, label: 'Asesoría de lactancia (1 h 30)', eur: 99, video: true },
 };
+export const VIDEO_PROS = ['gineco', 'matrona', 'pediatra'];
 
 const CREDIT_DAYS = 365;
 const SUB_GRACE_DAYS = 2;
@@ -49,12 +53,12 @@ async function priceId(env, lookup) {
 }
 
 /** Crea la sesión de pago y devuelve su URL */
-export async function createCheckout(env, { email, plan, h, origin, back, ad }) {
+export async function createCheckout(env, { email, plan, h, origin, back, ad, pro }) {
   const p = PLANS[plan];
   // Vuelve al mismo sitio desde el que se pagó (la web real, o localhost en pruebas)
   // back = 'web': desde la portada, vuelve a la portada (?web=1 evita que salte a la app instalada)
   const root = origin && origin !== 'https://hera-gine.com' ? origin : APP_URL.replace(/\/app\/$/, '');
-  const ret = back === 'web' ? `${root}/?web=1&` : `${root}/app/?`;
+  const ret = back === 'video' ? `${root}/videollamada/?` : back === 'web' ? `${root}/?web=1&` : `${root}/app/?`;
   const params = {
     mode: p.mode,
     'line_items[0][price]': await priceId(env, p.lookup),
@@ -66,6 +70,7 @@ export async function createCheckout(env, { email, plan, h, origin, back, ad }) 
     'metadata[h]': h,
     'metadata[plan]': plan,
     ...(ad ? { 'metadata[src]': 'ads' } : {}),
+    ...(pro ? { 'metadata[pro]': pro } : {}),
   };
   if (p.mode === 'subscription') { params['subscription_data[metadata][h]'] = h; params['subscription_data[metadata][plan]'] = plan; }
   const s = await api(env, 'POST', 'checkout/sessions', params);
@@ -118,7 +123,7 @@ export async function grantSession(env, s, hooks) {
   if (PLANS[plan].mode === 'subscription') {
     const sub = typeof s.subscription === 'string' ? await api(env, 'GET', `subscriptions/${s.subscription}`) : s.subscription;
     await setSubscription(env, h, sub);
-  } else {
+  } else if (PLANS[plan].credits) {
     await addCredits(env, h, PLANS[plan].credits);
   }
   await hooks?.paid?.(plan, s);
@@ -132,6 +137,7 @@ export async function sessionStatus(env, cs, hooks) {
   const g = await grantSession(env, s, hooks);
   if (!g) return { paid: false };
   const out = { paid: true, plan: g.plan, credits: (await getBalance(env, g.h)).credits };
+  if (PLANS[g.plan].video) { out.video = true; out.pro = s.metadata?.pro || ''; }
   if (PLANS[g.plan].mode === 'subscription') { out.unlimited = true; if (env.STRIPE_PORTAL_URL) out.portal = env.STRIPE_PORTAL_URL; }
   return out;
 }
@@ -170,10 +176,10 @@ export async function handleWebhook(env, request, hooks) {
       const cs = found.data?.[0];
       const plan = cs?.metadata?.plan;
       const h = cs?.metadata?.h;
-      if (PLANS[plan]?.credits && /^[a-f0-9]{64}$/.test(h || '')) {
+      if ((PLANS[plan]?.credits || PLANS[plan]?.video) && /^[a-f0-9]{64}$/.test(h || '')) {
         const r = await env.DB.prepare("UPDATE pagos SET plan = plan || ':devuelto' WHERE session = ?1 AND plan NOT LIKE '%:devuelto'").bind(cs.id).run();
         if (r.meta?.changes) {
-          await env.DB.prepare('UPDATE saldo SET n = MAX(0, n - ?2) WHERE h = ?1').bind(h, PLANS[plan].credits).run();
+          if (PLANS[plan].credits) await env.DB.prepare('UPDATE saldo SET n = MAX(0, n - ?2) WHERE h = ?1').bind(h, PLANS[plan].credits).run();
           await hooks?.refunded?.(plan, o);
         }
       }

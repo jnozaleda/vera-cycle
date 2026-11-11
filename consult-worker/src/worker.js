@@ -33,7 +33,7 @@ import { sendFeedbackDue, handleOpinion, feedbackEmail, feedbackSig } from './fe
 import { inviteFor, rewardInvite } from './invite.js';
 import { panel } from './panel.js';
 import { isEvent, isDevice, record, personTag, hourlyDigest, notify } from './activity.js';
-import { PLANS, paymentsOn, createCheckout, sessionStatus, handleWebhook, getBalance, spendCredit, markDay } from './stripe.js';
+import { PLANS, VIDEO_PROS, paymentsOn, createCheckout, sessionStatus, handleWebhook, getBalance, spendCredit, markDay } from './stripe.js';
 import { newThreadId, relayAddress, parseRelayAddress, sealEmail, openEmail, saveThread, loadThread, parseIncoming, isAutomatic } from './relay.js';
 
 export const PROS = {
@@ -102,6 +102,24 @@ export function confirmEmail(pro, q, remaining, id = '', unlimited = false, left
   return { subject, html, text };
 }
 
+
+/** Correo a quien paga una videollamada (vera-backlog#86): pago recibido y siguiente paso (responder con horarios) */
+export function videoPaidEmail(pro, plan) {
+  const what = plan.eur === 99 ? 'asesoría de lactancia de 1 h 30' : 'videollamada de 30 minutos';
+  const subject = `Tu ${plan.eur === 99 ? 'asesoría de lactancia' : 'videollamada'} con ${pro.short} · elige día y hora`;
+  const step = (n, t) => `<tr><td style="vertical-align:top;padding:6px 10px 6px 0"><span style="display:inline-block;width:24px;height:24px;border-radius:50%;background:#F4E6E8;color:#693D55;font-weight:600;font-size:13px;line-height:24px;text-align:center">${n}</span></td><td style="padding:6px 0;font-size:14px;color:#2E2630">${t}</td></tr>`;
+  const html = shell(`<p>Hola,</p>
+<p>Hemos recibido el pago de tu <b>${what}</b> con <b>${esc(pro.name)}, ${esc(pro.role)}</b> (${plan.eur} €).</p>
+<div style="background:#F4E6E8;border-radius:10px;padding:14px 16px;margin:14px 0">
+<p style="margin:0 0 6px;font-family:Georgia,serif;font-size:19px;color:#3B2433">Siguiente paso: responde a este correo</p>
+<p style="margin:0;font-size:14px">Dinos <b>3 franjas que te vengan bien</b> en los próximos días (por ejemplo: «martes por la tarde, jueves de 10 a 12, viernes a primera hora»). Si quieres, añade una línea sobre lo que quieres consultar.</p></div>
+<p style="margin:16px 0 4px;font-weight:600">Después</p>
+<table style="border-collapse:collapse">${step(1, 'En menos de 24 h laborables te proponemos día y hora.')}${step(2, 'Te enviamos el enlace de Google Meet.')}${step(3, 'A la hora acordada, entra en el enlace. En el ordenador se abre en el navegador; en el móvil, con la app de Google Meet.')}</table>
+<p style="font-size:13px;color:#655B61;margin-top:16px">Puedes cambiarla o cancelarla hasta 1 hora antes y te devolvemos el dinero entero. La llamada no se graba.</p>
+<p style="font-size:13px;color:#655B61">No es un servicio de urgencias. Si algo no va bien, llama al 112 o acude a tu centro de salud.</p>`);
+  const text = `Hola,\n\nHemos recibido el pago de tu ${what} con ${pro.name}, ${pro.role} (${plan.eur} €).\n\nSIGUIENTE PASO: responde a este correo con 3 franjas que te vengan bien en los próximos días (por ejemplo: «martes por la tarde, jueves de 10 a 12, viernes a primera hora»). Si quieres, añade una línea sobre lo que quieres consultar.\n\nDespués:\n1. En menos de 24 h laborables te proponemos día y hora.\n2. Te enviamos el enlace de Google Meet.\n3. A la hora acordada, entra en el enlace (en el ordenador, en el navegador; en el móvil, con la app de Google Meet).\n\nPuedes cambiarla o cancelarla hasta 1 hora antes y te devolvemos el dinero entero. La llamada no se graba.\nNo es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.`;
+  return { subject, html, text };
+}
 
 /** Mensaje reenviado por el hilo: del profesional a la usuaria o de la usuaria al profesional */
 /** Pie de la primera respuesta (vera-backlog#85): «¿Te ha ayudado?» con tres botones a la página de opinión */
@@ -254,6 +272,16 @@ export default {
     const payHooks = {
       paid: async (plan, s) => {
         await bump(env, `pago:${plan}`);
+        if (PLANS[plan].video) {
+          const pro = PROS[s.metadata?.pro] || PROS.matrona;
+          const to = s.customer_details?.email || s.customer_email;
+          if (to) await sendMail(env, { to, replyTo: 'contacto@hera-gine.com', ...videoPaidEmail(pro, PLANS[plan]) });
+          if (s.metadata?.src === 'ads') { await bump(env, `anuncio_pago:${plan}`); await bump(env, 'anuncio_eur', madridDay(), PLANS[plan].eur); }
+          const dash = `https://dashboard.stripe.com/${s.livemode ? '' : 'test/'}${s.payment_intent ? `payments/${s.payment_intent}` : 'payments'}`;
+          await notify(env, `Hera: videollamada pagada · ${pro.short} (${PLANS[plan].eur} €)${s.livemode ? '' : ' · prueba'}`,
+            `${PLANS[plan].label} con ${pro.name}: ${PLANS[plan].eur} €${s.livemode ? '' : ' (modo de prueba, sin dinero real)'}\n\nLe hemos enviado el correo con los pasos: responderá con 3 franjas a contacto@hera-gine.com.\nSiguiente: cuadrar la hora con ${pro.short} y proponérsela en menos de 24 h laborables; después, enviar el enlace de Google Meet.\nSi no responde, su correo está en el pago de Stripe.\n\nVer en Stripe: ${dash}`, sendMail);
+          return;
+        }
         if (s.metadata?.src === 'ads') { await bump(env, `anuncio_pago:${plan}`); await bump(env, 'anuncio_eur', madridDay(), PLANS[plan].eur); }
         // Aviso al equipo: sin correo de la usuaria; enlace al pago en el panel de Stripe
         const dash = `https://dashboard.stripe.com/${s.livemode ? '' : 'test/'}${s.payment_intent ? `payments/${s.payment_intent}` : s.subscription ? `subscriptions/${typeof s.subscription === 'string' ? s.subscription : s.subscription.id}` : 'payments'}`;
@@ -264,7 +292,7 @@ export default {
       cancelled: async () => { await bump(env, 'pago:baja_mensual'); },
       refunded: async (plan, charge) => {
         await bump(env, `pago:devuelto_${plan}`);
-        await notify(env, `Hera: reembolso · ${PLANS[plan].label} (${PLANS[plan].eur} €)`, `Reembolsado: ${PLANS[plan].label}. Se han quitado ${PLANS[plan].credits === 1 ? 'esa consulta' : `esas ${PLANS[plan].credits} consultas`} del saldo (si quedaban).\n\nVer en Stripe: https://dashboard.stripe.com/${charge.livemode ? '' : 'test/'}payments/${charge.payment_intent}`, sendMail);
+        await notify(env, `Hera: reembolso · ${PLANS[plan].label} (${PLANS[plan].eur} €)`, `Reembolsado: ${PLANS[plan].label}.${PLANS[plan].video ? '' : ` Se han quitado ${PLANS[plan].credits === 1 ? 'esa consulta' : `esas ${PLANS[plan].credits} consultas`} del saldo (si quedaban).`}\n\nVer en Stripe: https://dashboard.stripe.com/${charge.livemode ? '' : 'test/'}payments/${charge.payment_intent}`, sendMail);
       },
     };
     if (request.method === 'POST' && url.pathname === '/stripe/webhook') return new Response(null, { status: await handleWebhook(env, request, payHooks) });
@@ -350,9 +378,11 @@ export default {
       const norm = normalizeEmail(body.email);
       if (!norm) return reply(400, { error: 'bad_email' });
       if (!PLANS[body.plan]) return reply(400, { error: 'bad_plan' });
+      const vpro = body.plan === 'lactancia' ? 'matrona' : PLANS[body.plan].video ? body.pro : '';
+      if (PLANS[body.plan].video && !VIDEO_PROS.includes(vpro)) return reply(400, { error: 'bad_pro' });
       if (await rateLimited(env, request.headers.get('CF-Connecting-IP'))) return reply(429, { error: 'rate' });
       try {
-        const checkoutUrl = await createCheckout(env, { email: String(body.email).trim(), plan: body.plan, h: await hmac(env.HASH_SALT, norm), origin, back: body.back === 'web' ? 'web' : 'app', ad: body.src === 'ads' });
+        const checkoutUrl = await createCheckout(env, { email: String(body.email).trim(), plan: body.plan, h: await hmac(env.HASH_SALT, norm), origin, back: ['web', 'video'].includes(body.back) ? body.back : 'app', ad: body.src === 'ads', pro: vpro });
         await bump(env, `pago_inicio:${body.plan}`);
         return reply(200, { url: checkoutUrl });
       } catch (e) { console.log(e.message); return reply(502, { error: 'stripe' }); }

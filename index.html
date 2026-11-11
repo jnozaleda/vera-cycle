@@ -172,7 +172,7 @@ section { padding: 64px 0; }
 .done .small { font-size: 13.5px; color: var(--muted); }
 .done .btn { width: auto; margin-top: 6px; }
 .linkplans { display: block; margin: 10px auto 0; background: none; border: 0; color: var(--plum); font: 500 14px 'Inter', sans-serif; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 6px; }
-.linkvideo { text-align: center; margin-top: 0; }
+.linkvideo { text-align: center; }
 .done .linkbtn { background: none; border: 0; color: var(--plum); font: 600 14px 'Inter', sans-serif; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 6px; }
 .done label { display: flex; gap: 10px; text-align: left; font-size: 13px; color: var(--text); align-items: flex-start; }
 .done label input { margin-top: 3px; accent-color: var(--plum); }
@@ -397,8 +397,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         </div>
         <button class="btn btn-p" type="submit" id="ask-send">Preguntar gratis</button>
         <ul class="perks" aria-label="Condiciones"><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin tarjeta de crédito</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin registro</li></ul>
-        <button type="button" class="linkplans" id="ask-plans">¿Prefieres un bono o el plan ilimitado? Ver planes</button>
-        <a class="linkplans linkvideo" id="ask-video" href="videollamada/?de=web">¿Prefieres hablarlo cara a cara? Videollamada · 55 €</a>
+        <a class="linkplans linkvideo" id="ask-video" href="videollamada/?de=web">¿Prefieres hablarlo cara a cara? Videollamada</a>
         <p class="fine" id="ask-fine" hidden>Te escribiremos una vez para saber si te ayudó. No es para urgencias. <a href="privacy.html#consultas">Cómo tratamos tus datos</a>.</p>
       </form>
       <div class="done" id="ask-done" hidden aria-live="polite"></div>
@@ -712,7 +711,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     $('ask-urgent').hidden = !s.urgent;
     // Videollamada (vera-backlog#86): con la profesional elegida, si la hay
     $('ask-video').href = `videollamada/?de=web${to ? `#reservar-${to}` : ''}`;
-    $('ask-video').textContent = `¿Prefieres hablarlo cara a cara? Videollamada${to ? ` con ${PROS[to].name}` : ''} · 55 €`;
+    $('ask-video').textContent = `¿Prefieres hablarlo cara a cara? Videollamada${to ? ` con ${PROS[to].name}` : ''}`;
     if (opened && !busy) send.textContent = to ? `Enviar${store.get('hera-free-left') === '0' ? '' : ' gratis'} a ${PROS[to].name}` : 'Elige a quién preguntar';
   }
   function open() {
@@ -911,7 +910,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     hit('planes_abiertos');
     showPlans({ freeLimit: 2, early: true }, { to: chosen(), text: ta.value.trim(), follow: $('ask-follow').checked });
   }
-  $('ask-plans').addEventListener('click', openPlans);
+  $('ask-plans')?.addEventListener('click', openPlans);
   document.querySelectorAll('[data-goplans]').forEach((a) => a.addEventListener('click', (ev) => { ev.preventDefault(); goAsk(); if (isEmail(email.value)) openPlans(); else { open(); showErr('Escribe tu correo y toca «Ver planes»: el plan va a su nombre.'); } }));
   function showLimit(j, q = {}) {
     if (j.pay) { showPlans(j, q); return; }

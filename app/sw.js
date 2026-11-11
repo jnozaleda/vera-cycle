@@ -2,7 +2,7 @@
 // Service worker de Hera web: permite abrir la app sin conexión.
 // Estrategia "red primero": siempre intenta la versión más reciente y usa la caché si no hay red.
 
-const CACHE = 'vera-web-v113';
+const CACHE = 'vera-web-v114';
 const SHELL = [
   './',
   'index.html',
@@ -33,7 +33,7 @@ const SHELL = [
   'img/equipo/gonzalo.jpg',
   'img/equipo/marina.jpg',
   'img/equipo/lucia.jpg',
-  'img/fluido/via-lactea-atardecer.webp',
+  'img/fluido/seda-musgo.webp',
   'img/fluido/seda-rosa.webp',
   'img/fluido/seda-melocoton.webp',
   'fonts/inter.woff2',
@@ -85,7 +85,7 @@ self.addEventListener('push', (event) => {
   try { data = event.data ? event.data.json() : {}; } catch { /* mensaje vacío */ }
   // Imagen grande (Android): Vía Láctea para el bebé y el tercer trimestre, seda para el resto
   const wk = Number((/^Semana (\d+)/.exec(data.title || '') || [])[1]);
-  const image = /regla/i.test(data.title || '') ? 'img/fluido/seda-rosa.webp' : `img/fluido/${!wk || wk >= 28 ? 'via-lactea-atardecer' : wk >= 14 ? 'seda-melocoton' : 'seda-rosa'}.webp`;
+  const image = /regla/i.test(data.title || '') ? 'img/fluido/seda-rosa.webp' : `img/fluido/${!wk || wk >= 28 ? 'seda-musgo' : wk >= 14 ? 'seda-melocoton' : 'seda-rosa'}.webp`;
   event.waitUntil(self.registration.showNotification(data.title || 'Hera', {
     body: data.body || '',
     image,

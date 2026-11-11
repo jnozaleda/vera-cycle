@@ -1915,7 +1915,7 @@ function aboutSection() {
 }
 
 /** Imagen fluida de cada trimestre: seda rosa, seda melocotón y Vía Láctea (diseno/fluido/) */
-const flTrimester = (t) => (t <= 1 ? 'seda-rosa' : t === 2 ? 'seda-melocoton' : 'via-lactea-atardecer');
+const flTrimester = (t) => (t <= 1 ? 'seda-rosa' : t === 2 ? 'seda-melocoton' : 'seda-musgo');
 const flStrip = (img) => `<div class="fl-strip ${img}" aria-hidden="true"></div>`;
 /** Barra fina fija con «Pregúntanos» al bajar (en el ciclo, por todas las pestañas; en las etapas, por Hoy o Dudas): la etapa a la izquierda y la imagen de la tarjeta principal */
 function miniBar(mode, tab) {
@@ -1963,14 +1963,14 @@ const HITOS_KEY = 'hera-hitos-vistos';
 const hitosVistos = () => { try { return JSON.parse(localStorage.getItem(HITOS_KEY) || '[]'); } catch { return []; } };
 const PREG_HITOS = {
   14: ['seda-melocoton', 'Empiezas el segundo trimestre', 'Para muchas mujeres es la etapa más llevadera: suelen ceder las náuseas y el cansancio, y pronto empezarás a notar a tu bebé.'],
-  28: ['via-lactea-atardecer', 'Empiezas el tercer trimestre', 'La recta final. Tu bebé gana peso cada semana y es buen momento para pensar en la preparación al parto.'],
-  37: ['via-lactea-atardecer', 'Tu embarazo ya está a término', 'Desde esta semana tu bebé puede nacer cualquier día. Ten a mano la bolsa del hospital y el registro de contracciones.'],
+  28: ['seda-musgo', 'Empiezas el tercer trimestre', 'La recta final. Tu bebé gana peso cada semana y es buen momento para pensar en la preparación al parto.'],
+  37: ['seda-musgo', 'Tu embarazo ya está a término', 'Desde esta semana tu bebé puede nacer cualquier día. Ten a mano la bolsa del hospital y el registro de contracciones.'],
 };
 const PP_HITOS = {
-  0: ['via-lactea-atardecer', 'Tu bebé ya está aquí', 'Enhorabuena. Estos primeros días son de conoceros, descansar cuando puedas y pedir ayuda sin reparo.'],
+  0: ['seda-musgo', 'Tu bebé ya está aquí', 'Enhorabuena. Estos primeros días son de conoceros, descansar cuando puedas y pedir ayuda sin reparo.'],
   13: ['seda-rosa', 'Tres meses juntos', 'Muchos bebés empiezan ahora a sonreír más, a seguir con la mirada y a dormir algo más seguido.'],
   26: ['seda-melocoton', 'Medio año', 'Llega la alimentación complementaria y muchos bebés empiezan a sentarse con apoyo.'],
-  52: ['via-lactea-atardecer', 'Su primer año', 'Un año entero. Gracias por dejarnos acompañaros.'],
+  52: ['seda-musgo', 'Su primer año', 'Un año entero. Gracias por dejarnos acompañaros.'],
 };
 function hitoCard(kind, week) {
   const h = (kind === 'preg' ? PREG_HITOS : PP_HITOS)[week];
@@ -1990,7 +1990,7 @@ function hitoCard(kind, week) {
 const BABY_SECS = new Set(['rn', 'b0', 'bsl', 'bb', 'bsal', 'bdes', 'bfam']);
 const MOTHER_SECS = new Set(['pp', 'bal', 'ppc', 'emo']);
 function guideTile(id) {
-  const [img, ico] = BABY_SECS.has(id) ? ['via-lactea-atardecer', '<circle cx="12" cy="9" r="4"/><path d="M5 20c1.2-3.4 3.8-5 7-5s5.8 1.6 7 5"/>']
+  const [img, ico] = BABY_SECS.has(id) ? ['seda-musgo', '<circle cx="12" cy="9" r="4"/><path d="M5 20c1.2-3.4 3.8-5 7-5s5.8 1.6 7 5"/>']
     : MOTHER_SECS.has(id) ? [id === 'emo' ? 'seda-rosa' : 'seda-melocoton', '<path d="M12 20s-7-4.4-7-9.5A4 4 0 0 1 12 8a4 4 0 0 1 7 2.5C19 15.6 12 20 12 20Z"/>']
     : ['seda-rosa', '<circle cx="12" cy="13" r="6.5"/><path d="M9 6.8c.9-1.7 2.4-2.8 4.5-3"/>'];
   return `<span class="fl-tile ${img}" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${ico}</svg></span>`;

@@ -170,5 +170,7 @@ if __name__ == '__main__':
     tinta('tinta-calida', 900, 600, 3, warm)
     tinta('tinta-ciruela', 900, 600, 21, ciruela)
     tinta('tinta-salvia', 900, 600, 42, salvia)
-    seda('seda-rosa', 1600, 900, 5, [(0, C['plum']), (0.35, C['mauve']), (0.65, C['blush']), (1, C['rose'])])
+    # Estilo Vera (2026-11-11): rosa sin ciruela y seda verde musgo en lugar de la vía láctea
+    seda('seda-rosa', 1600, 900, 5, [(0, hexrgb('#B98287')), (0.35, hexrgb('#D7A7AB')), (0.65, hexrgb('#EDCFD2')), (1, hexrgb('#F8E8EA'))])
+    seda('seda-musgo', 1600, 900, 11, [(0, hexrgb('#2F3631')), (0.3, hexrgb('#45574C')), (0.6, hexrgb('#6F8577')), (0.85, hexrgb('#B9CCBF')), (1, hexrgb('#EEF3EE'))], angle=0.9, freq=5.0)
     seda('seda-melocoton', 1600, 900, 11, [(0, C['mauve']), (0.3, C['apricot']), (0.6, C['peach']), (0.85, C['rose']), (1, C['cream'])], angle=0.9, freq=5.0)

@@ -103,6 +103,18 @@ export function confirmEmail(pro, q, remaining, id = '', unlimited = false, left
 }
 
 
+const TEAM_FROM = 'Hera · Equipo <alertas@hera-gine.com>';
+/** Copia de control para el equipo (COPY_TO): correo propio con asunto «Consulta · …», el texto entero y, con COPY_ATTACH="1", los adjuntos */
+export function teamCopy({ subject, intro, body, extra = '', nFiles = 0, withFiles = false }) {
+  const files = nFiles ? `<p style="font-size:13px;color:#655B61">${nFiles} ${nFiles === 1 ? 'archivo adjunto' : 'archivos adjuntos'}${withFiles ? ': van en este correo.' : ' (solo los recibe la profesional).'}</p>` : '';
+  const foot = 'Copia de control para el equipo de Hera. No respondas a este correo: la conversación sigue entre la profesional y la usuaria.';
+  return {
+    subject,
+    html: shell(`<p>${intro}</p><div style="background:#F4E6E8;border-radius:10px;padding:14px;margin:12px 0">${nl2br(body)}</div>${extra}${files}<p style="font-size:12px;color:#8A8A8E">${foot}</p>`),
+    text: `${intro.replace(/<[^>]+>/g, '')}\n\n${body}\n\n${nFiles ? `[${nFiles} adjunto(s)${withFiles ? ' en este correo' : ''}]\n\n` : ''}${foot}`,
+  };
+}
+
 /** Correo a quien paga una videollamada (vera-backlog#86): pago recibido y siguiente paso (responder con horarios) */
 export function videoPaidEmail(pro, plan) {
   const what = plan.eur === 99 ? 'asesoría de lactancia de 1 h 30' : 'videollamada de 30 minutos';
@@ -220,7 +232,7 @@ async function alertSendFailure(env, subject, detail) {
     if (await env.KV.get(slot)) return;
     await env.KV.put(slot, '1', { expirationTtl: 3600 });
     const hora = new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid', dateStyle: 'medium', timeStyle: 'short' });
-    await notify(env, 'Hera: ha fallado un envío de correo', `Ha fallado el envío de un correo de Hera (${hora}).\n\nAsunto: ${subject || '—'}\n${detail}\n\nSi era una consulta, a la usuaria le salió un aviso de error para que lo intente de nuevo. Revisa Resend o avisa a Claude. No se envían más avisos de este tipo en los próximos 30 minutos.`);
+    await notify(env, 'Error · ha fallado un envío de correo', `Ha fallado el envío de un correo de Hera (${hora}).\n\nAsunto: ${subject || '—'}\n${detail}\n\nSi era una consulta, a la usuaria le salió un aviso de error para que lo intente de nuevo. Revisa Resend o avisa a Claude. No se envían más avisos de este tipo en los próximos 30 minutos.`);
   } catch (e) { console.log(`alerta ${e.message}`); }
 }
 
@@ -284,7 +296,7 @@ export default {
           if (to) await sendMail(env, { to, replyTo: 'contacto@hera-gine.com', ...videoPaidEmail(pro, PLANS[plan]) });
           if (s.metadata?.src === 'ads') { await bump(env, `anuncio_pago:${plan}`); await bump(env, 'anuncio_eur', madridDay(), PLANS[plan].eur); }
           const dash = `https://dashboard.stripe.com/${s.livemode ? '' : 'test/'}${s.payment_intent ? `payments/${s.payment_intent}` : 'payments'}`;
-          await notify(env, `Hera: videollamada pagada · ${pro.short} (${PLANS[plan].eur} €)${s.livemode ? '' : ' · prueba'}`,
+          await notify(env, `Pago · ${PLANS[plan].video && PLANS[plan].eur === 99 ? 'Asesoría de lactancia' : 'Videollamada'} con ${pro.short} · ${PLANS[plan].eur} €${s.metadata?.src === 'ads' ? ' · desde anuncio' : ''}${s.livemode ? '' : ' · prueba'}`,
             `${PLANS[plan].label} con ${pro.name}: ${PLANS[plan].eur} €${s.livemode ? '' : ' (modo de prueba, sin dinero real)'}\n\nLe hemos enviado el correo con los pasos: responderá con 3 franjas a contacto@hera-gine.com.\nSiguiente: cuadrar la hora con ${pro.short} y proponérsela en menos de 24 h laborables; después, enviar el enlace de Google Meet.\nSi no responde, su correo está en el pago de Stripe.\n\nVer en Stripe: ${dash}`, sendMail);
           return;
         }
@@ -292,13 +304,13 @@ export default {
         // Aviso al equipo: sin correo de la usuaria; enlace al pago en el panel de Stripe
         const dash = `https://dashboard.stripe.com/${s.livemode ? '' : 'test/'}${s.payment_intent ? `payments/${s.payment_intent}` : s.subscription ? `subscriptions/${typeof s.subscription === 'string' ? s.subscription : s.subscription.id}` : 'payments'}`;
         const hora = new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid', dateStyle: 'medium', timeStyle: 'short' });
-        await notify(env, `Hera: nuevo pago · ${PLANS[plan].label} (${PLANS[plan].eur} €)${s.metadata?.src === 'ads' ? ' · vino de un anuncio' : ''}${s.livemode ? '' : ' · prueba'}`,
+        await notify(env, `Pago · ${PLANS[plan].label} · ${PLANS[plan].eur} €${s.metadata?.src === 'ads' ? ' · desde anuncio' : ''}${s.livemode ? '' : ' · prueba'}`,
           `${PLANS[plan].label}: ${PLANS[plan].eur} €${s.livemode ? '' : ' (modo de prueba, sin dinero real)'}\n${hora}\n\nVer en Stripe: ${dash}`, sendMail);
       },
       cancelled: async () => { await bump(env, 'pago:baja_mensual'); },
       refunded: async (plan, charge) => {
         await bump(env, `pago:devuelto_${plan}`);
-        await notify(env, `Hera: reembolso · ${PLANS[plan].label} (${PLANS[plan].eur} €)`, `Reembolsado: ${PLANS[plan].label}.${PLANS[plan].video ? '' : ` Se han quitado ${PLANS[plan].credits === 1 ? 'esa consulta' : `esas ${PLANS[plan].credits} consultas`} del saldo (si quedaban).`}\n\nVer en Stripe: https://dashboard.stripe.com/${charge.livemode ? '' : 'test/'}payments/${charge.payment_intent}`, sendMail);
+        await notify(env, `Reembolso · ${PLANS[plan].label} · ${PLANS[plan].eur} €`, `Reembolsado: ${PLANS[plan].label}.${PLANS[plan].video ? '' : ` Se han quitado ${PLANS[plan].credits === 1 ? 'esa consulta' : `esas ${PLANS[plan].credits} consultas`} del saldo (si quedaban).`}\n\nVer en Stripe: https://dashboard.stripe.com/${charge.livemode ? '' : 'test/'}payments/${charge.payment_intent}`, sendMail);
       },
     };
     if (request.method === 'POST' && url.pathname === '/stripe/webhook') return new Response(null, { status: await handleWebhook(env, request, payHooks) });
@@ -453,10 +465,8 @@ export default {
       const pm = proEmail(pro, q, id, relay);
       // Con adjuntos, la copia de control va aparte y sin los archivos: solo los recibe la profesional
       const proReply = relay ? await relayAddress(env, 'p', id) : q.email;
-      const sent = await sendMail(env, { to: pro.email, replyTo: proReply, ...pm, bcc: files.length ? undefined : bcc, attachments: files });
+      const sent = await sendMail(env, { to: pro.email, replyTo: proReply, ...pm, attachments: files });
       if (!sent) return reply(502, { error: 'send' });
-      // COPY_ATTACH="1" (temporal, Noza 11 nov): la copia de control lleva también los adjuntos, para vigilar abusos
-      if (files.length && bcc) await sendMail(env, { to: bcc, replyTo: proReply, ...pm, subject: `[Copia ${env.COPY_ATTACH === '1' ? 'con' : 'sin'} adjuntos] ${pm.subject}`, ...(env.COPY_ATTACH === '1' ? { attachments: files } : {}) });
       const now = new Date().toISOString();
       // Primero se gastan las gratuitas y después las pagadas
       const paid = !test && !unlimited && rec.n >= limit;
@@ -485,11 +495,19 @@ export default {
         await bump(env, 'consulta_invitada');
         await record(env, { e: 'consulta_invitada', p: await personTag(env, request, madridDay()) }, sendMail, ctx);
       }
+      // Copia de control para el equipo: un solo correo por consulta, con el texto entero (y los adjuntos si COPY_ATTACH="1", temporal)
+      if (bcc && body.team !== true) {
+        const withFiles = env.COPY_ATTACH === '1' && files.length > 0;
+        const extra = `${q.context ? `<p style="font-size:13px;color:#655B61">Sobre: ${esc(q.context)}</p>` : ''}${q.situation ? `<p style="font-size:13px;color:#655B61">Situación: ${nl2br(q.situation)}</p>` : ''}`;
+        const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${id.toUpperCase()}${files.length ? ` · ${files.length} ${files.length === 1 ? 'adjunto' : 'adjuntos'}` : ''}${body.src === 'ads' ? ' · desde anuncio' : ''}${paid ? ' · pagada' : ''}`,
+          intro: `Nueva consulta para <b>${esc(pro.name)}</b>${body.src === 'ads' ? ' (llegó desde un anuncio)' : ''}.`, body: q.text, extra, nFiles: files.length, withFiles });
+        await sendMail(env, { to: bcc, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc, ...(withFiles ? { attachments: files } : {}) });
+      }
       const remaining = Math.max(0, limit - n);
       const paidLeft = remaining === 0 && !unlimited && creditsLeft >= 0 && (paid || credits > 0)
         ? (creditsLeft === 0 ? 'Era la última consulta de tu saldo' : `Te ${creditsLeft === 1 ? 'queda 1 consulta' : `quedan ${creditsLeft} consultas`} en tu saldo`) : '';
       const cm = confirmEmail(pro, q, remaining, id, unlimited, subscriber ? 'Tienes el plan ilimitado: una consulta nueva al día' : paidLeft);
-      const sentU = await sendMail(env, { to: q.email, replyTo: relay ? await relayAddress(env, 'u', id) : pro.email, ...cm, bcc });
+      const sentU = await sendMail(env, { to: q.email, replyTo: relay ? await relayAddress(env, 'u', id) : pro.email, ...cm });
       // Sin relay no hay hilo que seguir (ni recordatorios): no se guarda nada más
       if (relay) {
         await saveThread(env, { id, p: pro.key || body.to, u: await sealEmail(env, q.email), uh: (await hmac(env.HASH_SALT, norm)).slice(0, 24),
@@ -551,9 +569,15 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
     replyTo: await relayAddress(env, toUser ? 'u' : 'p', t.id),
     subject: `Re: ${toUser ? t.su : t.sp}`,
     refs: refsMine, html, text, attachments: msg.attachments,
-    bcc: t.p === 'prueba' ? undefined : env.COPY_TO || undefined,
   });
   if (!sent) return { ok: false, why: 'send' };
+  if (t.p !== 'prueba' && env.COPY_TO) {
+    const withFiles = env.COPY_ATTACH === '1' && msg.attachments.length > 0;
+    const tc = teamCopy({ subject: `Consulta · #${t.id.toUpperCase()} · ${toUser ? `${pro.short} respondió` : 'la usuaria escribió'}${msg.attachments.length ? ` · ${msg.attachments.length} ${msg.attachments.length === 1 ? 'adjunto' : 'adjuntos'}` : ''}`,
+      intro: toUser ? `<b>${esc(pro.name)}</b> ha respondido a la consulta #${t.id.toUpperCase()}:` : `La usuaria de la consulta #${t.id.toUpperCase()} ha escrito a <b>${esc(pro.short)}</b>:`,
+      body: msg.body || '(Sin texto: solo adjuntos.)', nFiles: msg.attachments.length, withFiles });
+    await sendMail(env, { to: env.COPY_TO, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc, ...(withFiles ? { attachments: msg.attachments } : {}) });
+  }
   // Encadenar el hilo de quien escribe: el correo al que responde (su Message-ID real) y su propio mensaje
   const mine = toUser ? t.rp : t.ru;
   for (const x of [msg.inReplyTo, msg.messageId]) {

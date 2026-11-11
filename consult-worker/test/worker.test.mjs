@@ -37,15 +37,17 @@ const q = { email: 'Maria.Lopez@gmail.com', to: 'matrona', text: 'Me duele al da
 
 let r = await call('/ask', q);
 assert.deepEqual([r.s, r.j.remaining], [200, 1]);
-assert.equal(sent.length, 2, 'correo al profesional y confirmación');
+assert.equal(sent.length, 3, 'correo al profesional, copia para el equipo y confirmación');
 assert.equal(sent[0].to[0], 'marina@hera-gine.com'); assert.match(sent[0].reply_to, /^hera-p-[a-z0-9]{8}-[a-f0-9]{10}@hera-gine\.com$/, 'el profesional responde a una dirección de Hera');
-assert.ok(!sent[0].html.includes('Maria.Lopez'), 'el profesional no ve el correo de la usuaria'); assert.match(sent[1].reply_to, /^hera-u-/);
-assert.equal(sent[1].to[0], 'Maria.Lopez@gmail.com');
-assert.deepEqual(sent[0].bcc, ['copia@example.com'], 'copia oculta de la consulta'); assert.deepEqual(sent[1].bcc, ['copia@example.com'], 'la confirmación también lleva copia');
+assert.ok(!sent[0].html.includes('Maria.Lopez'), 'el profesional no ve el correo de la usuaria'); assert.match(sent[2].reply_to, /^hera-u-/);
+assert.equal(sent[2].to[0], 'Maria.Lopez@gmail.com');
+assert.equal(sent[0].bcc, undefined); assert.equal(sent[2].bcc, undefined, 'sin copias ocultas');
+assert.equal(sent[1].to[0], 'copia@example.com'); assert.match(sent[1].subject, /^Consulta · Marina · #[A-Z0-9]{8}$/); assert.match(sent[1].text, /Me duele al dar el pecho/, 'la copia lleva el texto entero');
+assert.match(sent[1].from, /Hera · Equipo/); assert.ok(!sent[1].html.includes('Maria.Lopez'), 'la copia no lleva el correo de la usuaria');
 r = await call('/ask', { ...q, email: 'marialopez+otra@gmail.com', to: 'pediatra' });
 assert.equal(r.j.remaining, 0, 'cuenta en total y normaliza el correo');
 r = await call('/ask', q);
-assert.equal(r.j.limit, true); assert.equal(sent.length, 4, 'agotadas: no se envía nada');
+assert.equal(r.j.limit, true); assert.equal(sent.length, 6, 'agotadas: no se envía nada');
 assert.ok(![...store.values()].some((v) => v.includes('duele')), 'el texto no se guarda');
 assert.ok(![...store.values()].some((v) => v.includes('Maria.Lopez')), 'el correo de la usuaria se guarda cifrado en el hilo');
 assert.ok(![...store.keys()].some((k) => k.includes('maria')), 'el correo no se guarda en claro en el contador');
@@ -143,7 +145,8 @@ assert.equal(sent.length, n0 + 1, 'sin repetir el mismo aviso en 30 min');
 await call('/hit', { e: 'diario:sintoma', d: 'android-app' }, { 'CF-Connecting-IP': '8.8.8.8', 'User-Agent': 'z' });
 assert.equal(sent.length, n0 + 1, 'lo frecuente va al resumen');
 await KV.put('digest:last', String(Date.now() - 3600000));
-assert.ok(await hourlyDigest(env, async (e, m) => { sent.push({ ...m, to: [m.to] }); return { id: 'x' }; }) >= 3);
+assert.ok(await hourlyDigest(env, async (e, m) => { sent.push({ ...m, to: [m.to] }); return { id: 'x' }; }, true) >= 3);
+assert.match(sent.at(-1).subject, /^Actividad - Resumen · /);
 assert.match(sent.at(-1).text, /Apuntó en el diario: síntomas/); assert.match(sent.at(-1).text, /Android · app instalada/);
 env.ALERTS = '0';
 // panel privado
@@ -204,9 +207,9 @@ assert.equal(validateAttachments([{ content: 'A'.repeat(Math.ceil((MAX_BYTES * 4
   await call('/opinion', { t: r2.j.id, s: s2, r: 1 });
   await call('/opinion/comentario', { t: r2.j.id, s: s2, text: 'Me respondió rapidísimo', name: 'Laura G.', publish: true });
   const last = opiniones.at(-1); assert.deepEqual([last.publicable, last.nombre, last.pro], [1, 'Laura G.', 'matrona']);
-  const avisos = sent.filter((m) => /^Hera · (opinión|comentario)/.test(m.subject || ''));
-  assert.ok(avisos.some((m) => m.subject === 'Hera · opinión: «Sí, mucho» para Marina'), 'aviso de opinión al equipo');
-  assert.ok(avisos.some((m) => m.subject.startsWith('Hera · comentario') && m.text.includes('Laura G.')), 'aviso de comentario con el nombre');
+  const avisos = sent.filter((m) => /^Opinión · /.test(m.subject || ''));
+  assert.ok(avisos.some((m) => m.subject === 'Opinión · «Sí, mucho» para Marina'), 'aviso de opinión al equipo');
+  assert.ok(avisos.some((m) => m.subject.startsWith('Opinión · comentario') && m.text.includes('Laura G.')), 'aviso de comentario con el nombre');
   assert.ok(avisos.every((m) => m.to[0] === 'copia@example.com' && !m.text.includes('contenta@')), 'al equipo y sin el correo de la usuaria');
   assert.ok(!JSON.stringify(opiniones).includes('@'), 'las opiniones no llevan correos');
   await call('/opinion/baja', { t: r2.j.id, s: s2 });

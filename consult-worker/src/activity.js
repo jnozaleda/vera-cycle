@@ -62,7 +62,7 @@ export const EVENTS = {
   pestana: ['Fue a la pestaña', false],
   vista: ['Cambió de vista', false],
   // Solo del servicio
-  consulta: ['Envió una consulta a', true],
+  consulta: ['Envió una consulta a', false], // el equipo ya recibe la copia «Consulta · …» con el texto entero
   respondida: ['Respondida una consulta por', true],
   gratuitas_agotadas: ['Intentó consultar con las gratuitas agotadas', true],
   anuncio_visita: ['Llegó desde un anuncio', false],
@@ -105,7 +105,7 @@ export const isDevice = (d) => /^(ios|android|mac|windows|linux|otro)-(app|web)$
 export function eventText(e) {
   const [name, val] = String(e).split(':');
   const label = EVENTS[name]?.[0] || e;
-  return val ? `${label}${name === 'consulta' || name === 'respondida' || name === 'etapa' || name === 'pestana' ? ' ' : ': '}${VALUE_LABEL[val] || val}` : label;
+  return val ? `${label}${['consulta', 'respondida', 'etapa', 'pestana', 'video_reserva', 'video_pago'].includes(name) ? ' ' : ': '}${VALUE_LABEL[val] || val}` : label;
 }
 export function deviceText(d) {
   if (!d) return '';
@@ -144,15 +144,16 @@ export async function record(env, { e, d = '', p = '', note = '' }, send, ctx) {
   if (p && env.KV) { if (await env.KV.get(k)) return; await env.KV.put(k, '1', { expirationTtl: 1800 }); }
   const who = p ? `Persona ${p}` : 'Hera';
   const line = `${eventText(e)}${note ? ` · ${note}` : ''}`;
-  const text = `${line}\n\n${who}${d ? ` · ${deviceText(d)}` : ''} · ${madridDayTime(ts)}\n\nResumen de todo cada hora.${panelLink(env)}`;
-  const job = notify(env, `Hera · ${line}`, text, send);
+  const text = `${line}\n\n${who}${d ? ` · ${deviceText(d)}` : ''} · ${madridDayTime(ts)}\n\nResumen de todo cada 3 horas.${panelLink(env)}`;
+  const job = notify(env, `Actividad · ${line}`, text, send);
   if (ctx?.waitUntil) ctx.waitUntil(job); else await job;
 }
 
-/** Resumen de la última hora (cron): todo lo que ha pasado, agrupado por persona */
-export async function hourlyDigest(env, send) {
+/** Resumen cada 3 horas (el cron corre cada hora; solo envía a las 0, 3, 6… de Madrid): todo, agrupado por persona */
+export async function hourlyDigest(env, send, force = false) {
   if (env.ALERTS !== '1' || !env.DB || !(env.ALERT_TO || env.COPY_TO)) return 0;
   const now = Date.now();
+  if (!force && Number(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Madrid', hour: '2-digit', hourCycle: 'h23' }).format(new Date(now))) % 3 !== 0) return 0;
   const since = Number((await env.KV.get('digest:last')) || now - 3600000);
   const { results = [] } = await env.DB.prepare('SELECT ts, e, d, p FROM activity WHERE ts > ?1 AND ts <= ?2 ORDER BY ts').bind(since, now).all();
   await env.KV.put('digest:last', String(now));
@@ -166,7 +167,7 @@ export async function hourlyDigest(env, send) {
   }
   const people = [...groups.keys()].filter((k) => k !== 'Hera').length;
   const parts = [...groups.entries()].map(([k, g]) => `${k === 'Hera' ? 'Servicio' : `Persona ${k}`}${g.d ? ` · ${deviceText(g.d)}` : ''}\n${g.rows.map((r) => `  ${madridTime(r.ts)}  ${eventText(r.e)}`).join('\n')}`);
-  const subject = `Hera · última hora: ${results.length} ${results.length === 1 ? 'acción' : 'acciones'} de ${people} ${people === 1 ? 'persona' : 'personas'}`;
+  const subject = `Actividad - Resumen · ${madridTime(since)}–${madridTime(now)} · ${results.length} ${results.length === 1 ? 'acción' : 'acciones'} de ${people} ${people === 1 ? 'persona' : 'personas'}`;
   const text = `${subject}\n${madridDayTime(since)} – ${madridTime(now)}\n\n${parts.join('\n\n')}\n\n«Persona XXXX» es una etiqueta anónima que cambia cada día. ${panelLink(env)}`;
   await notify(env, subject, text, send);
   return results.length;
@@ -183,7 +184,7 @@ export async function notify(env, subject, text, send) {
     try {
       const { EmailMessage } = await import('cloudflare:email');
       const raw = [
-        'From: Hera · Actividad <alertas@hera-gine.com>', `To: <${to}>`, `Subject: =?UTF-8?B?${b64(subject)}?=`,
+        'From: =?UTF-8?B?' + b64('Hera · Equipo') + '?= <alertas@hera-gine.com>', `To: <${to}>`, `Subject: =?UTF-8?B?${b64(subject)}?=`,
         `Message-ID: <${crypto.randomUUID()}@hera-gine.com>`, `Date: ${new Date().toUTCString()}`, 'MIME-Version: 1.0',
         'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', b64(text).replace(/(.{76})/g, '$1\r\n'),
       ].join('\r\n');
@@ -192,5 +193,5 @@ export async function notify(env, subject, text, send) {
     } catch (err) { console.log(`mailer ${err.message}`); }
   }
   if (!send) return false;
-  return !!(await send(env, { to, subject, text, html: `<pre style="font:14px/1.5 -apple-system,Segoe UI,sans-serif;white-space:pre-wrap">${text.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))}</pre>`, from: 'Hera · Actividad <alertas@hera-gine.com>' }));
+  return !!(await send(env, { to, subject, text, html: `<pre style="font:14px/1.5 -apple-system,Segoe UI,sans-serif;white-space:pre-wrap">${text.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]))}</pre>`, from: 'Hera · Equipo <alertas@hera-gine.com>' }));
 }

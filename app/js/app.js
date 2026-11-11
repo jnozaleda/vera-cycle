@@ -1321,7 +1321,7 @@ function askPayView(a) {
     </div>
     ${a.buy?.error ? `<p class="t-12 c-rose">${esc(a.buy.error)}</p>` : ''}
     ${askVideoCard(CONSULTS[a.to] || null)}
-    <p class="t-12 soft lh-4">Pagas en Stripe con tarjeta, Apple Pay o Google Pay, a nombre de ${esc(a.email)}. Hera no ve tu tarjeta.</p>
+    <p class="t-12 soft lh-4">Pagas con tarjeta, Apple Pay o Google Pay, a nombre de ${esc(a.email)}. Hera no ve tu tarjeta.</p>
     ${a.result.early ? '<button class="link-soft self-center" data-action="ask-pay-back">Volver a mi pregunta</button>' : ''}
     <p class="t-13 lh-4">Para seguir con una consulta anterior, responde al correo de la profesional: <b>no gasta consultas</b>.</p>
     <p class="t-11 soft-70 lh-3">Si es urgente, no esperes: llama al 112 o acude a tu centro de salud.</p>

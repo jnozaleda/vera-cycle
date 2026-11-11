@@ -70,7 +70,7 @@ const body = `${STYLE}<div class="w vc">
 <h2>Cómo funciona</h2>
 <p class="vc-sub">Cinco pasos. Hera coordina la agenda contigo y con la profesional por correo.</p>
 <ol class="vc-steps">
-  <li><div><b>Elige con quién y paga</b><span>Con tarjeta, Apple Pay o Google Pay, en la página segura de Stripe. Hera no ve tu tarjeta.</span></div></li>
+  <li><div><b>Elige con quién y paga</b><span>Con tarjeta, Apple Pay o Google Pay, en una página de pago segura. Hera no ve tu tarjeta.</span></div></li>
   <li><div><b>Te llega el correo de pago completado</b><span>Respóndelo con 3 franjas que te vengan bien (por ejemplo: «martes por la tarde, jueves de 10 a 12…») y, si quieres, una línea sobre tu duda.</span></div></li>
   <li><div><b>Te proponemos día y hora</b><span>Lo cuadramos con la profesional y te escribimos en menos de 24 h laborables.</span></div></li>
   <li><div><b>Recibes el enlace de Google Meet</b><span>En el ordenador se abre en el navegador. En el móvil, con la app de Google Meet.</span></div></li>
@@ -96,7 +96,7 @@ const body = `${STYLE}<div class="w vc">
   <label>Tu correo, para enviarte los pasos<input type="email" name="email" inputmode="email" autocomplete="email" placeholder="nombre@correo.com" required></label>
   <button class="vc-btn" type="submit"></button>
   <p class="vc-err" hidden></p>
-  <small>Pagas en Stripe. Después te llega un correo: respóndelo con 3 franjas que te vengan bien y te proponemos hora en menos de 24 h laborables. Cancelación gratis hasta 1 hora antes.</small>
+  <small>Después del pago te llega un correo: respóndelo con 3 franjas que te vengan bien y te proponemos hora en menos de 24 h laborables. Cancelación gratis hasta 1 hora antes.</small>
 </form></template>
 <script type="module">
   import { device, isTeam } from '/app/js/track.js';
@@ -125,7 +125,7 @@ const body = `${STYLE}<div class="w vc">
     const form = document.getElementById('vc-form-t').content.firstElementChild.cloneNode(true);
     const { plan, pro, eur, who } = btn.dataset;
     const send = form.querySelector('button');
-    send.textContent = 'Pagar ' + eur + ' € con Stripe';
+    send.textContent = 'Pagar ' + eur + ' €';
     const email = form.querySelector('input');
     email.value = store.get('hera-ask-email');
     btn.hidden = true; btn.after(form); open = { form, btn };
@@ -137,7 +137,7 @@ const body = `${STYLE}<div class="w vc">
       err.hidden = true;
       if (!isEmail(email.value)) { err.textContent = 'Revisa tu correo: ahí te enviamos los pasos.'; err.hidden = false; return; }
       store.set('hera-ask-email', email.value.trim());
-      send.disabled = true; send.textContent = 'Abriendo Stripe…';
+      send.disabled = true; send.textContent = 'Abriendo el pago…';
       hit('video_pago:' + pro);
       try {
         const r = await fetch(API + '/checkout', { method: 'POST', body: JSON.stringify({ email: email.value.trim(), plan, pro, back: 'video', ...(fromAd() ? { src: 'ads' } : {}) }) });
@@ -145,7 +145,7 @@ const body = `${STYLE}<div class="w vc">
         if (!j.url) throw new Error();
         location.href = j.url;
       } catch {
-        send.disabled = false; send.textContent = 'Pagar ' + eur + ' € con Stripe';
+        send.disabled = false; send.textContent = 'Pagar ' + eur + ' €';
         err.textContent = 'No hemos podido abrir el pago. Inténtalo en un momento o escríbenos a contacto@hera-gine.com.'; err.hidden = false;
       }
     });

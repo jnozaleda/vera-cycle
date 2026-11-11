@@ -16,6 +16,8 @@ ALERTS = "1"
 PAYMENTS = "on"
 # Temporal (11 nov 2026): la copia de control a COPY_TO lleva también los adjuntos de las consultas. Quitar tras las pruebas.
 COPY_ATTACH = "1"
+# Temporal (11 nov 2026): la copia de control dice el correo de la usuaria. Quitar tras las pruebas.
+COPY_EMAIL = "1"
 STRIPE_PORTAL_URL = "https://billing.stripe.com/p/login/00w14gfOV6nU8rG7jc5ZC00"
 
 [[kv_namespaces]]

@@ -498,7 +498,9 @@ export default {
       // Copia de control para el equipo: un solo correo por consulta, con el texto entero (y los adjuntos si COPY_ATTACH="1", temporal)
       if (bcc && body.team !== true) {
         const withFiles = env.COPY_ATTACH === '1' && files.length > 0;
-        const extra = `${q.context ? `<p style="font-size:13px;color:#655B61">Sobre: ${esc(q.context)}</p>` : ''}${q.situation ? `<p style="font-size:13px;color:#655B61">Situación: ${nl2br(q.situation)}</p>` : ''}`;
+        // COPY_EMAIL="1" (temporal, Noza 11 nov): la copia dice el correo de la usuaria, por si hay problemas
+        const who = env.COPY_EMAIL === '1' ? `<p style="font-size:13px;color:#655B61">Correo de la usuaria: <b>${esc(q.email)}</b></p>` : '';
+        const extra = `${who}${q.context ? `<p style="font-size:13px;color:#655B61">Sobre: ${esc(q.context)}</p>` : ''}${q.situation ? `<p style="font-size:13px;color:#655B61">Situación: ${nl2br(q.situation)}</p>` : ''}`;
         const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${id.toUpperCase()}${files.length ? ` · ${files.length} ${files.length === 1 ? 'adjunto' : 'adjuntos'}` : ''}${body.src === 'ads' ? ' · desde anuncio' : ''}${paid ? ' · pagada' : ''}`,
           intro: `Nueva consulta para <b>${esc(pro.name)}</b>${body.src === 'ads' ? ' (llegó desde un anuncio)' : ''}.`, body: q.text, extra, nFiles: files.length, withFiles });
         await sendMail(env, { to: bcc, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc, ...(withFiles ? { attachments: files } : {}) });
@@ -575,7 +577,8 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
     const withFiles = env.COPY_ATTACH === '1' && msg.attachments.length > 0;
     const tc = teamCopy({ subject: `Consulta · #${t.id.toUpperCase()} · ${toUser ? `${pro.short} respondió` : 'la usuaria escribió'}${msg.attachments.length ? ` · ${msg.attachments.length} ${msg.attachments.length === 1 ? 'adjunto' : 'adjuntos'}` : ''}`,
       intro: toUser ? `<b>${esc(pro.name)}</b> ha respondido a la consulta #${t.id.toUpperCase()}:` : `La usuaria de la consulta #${t.id.toUpperCase()} ha escrito a <b>${esc(pro.short)}</b>:`,
-      body: msg.body || '(Sin texto: solo adjuntos.)', nFiles: msg.attachments.length, withFiles });
+      body: msg.body || '(Sin texto: solo adjuntos.)', nFiles: msg.attachments.length, withFiles,
+      extra: env.COPY_EMAIL === '1' ? `<p style="font-size:13px;color:#655B61">Correo de la usuaria: <b>${esc(await openEmail(env, t.u))}</b></p>` : '' });
     await sendMail(env, { to: env.COPY_TO, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc, ...(withFiles ? { attachments: msg.attachments } : {}) });
   }
   // Encadenar el hilo de quien escribe: el correo al que responde (su Message-ID real) y su propio mensaje

@@ -291,7 +291,7 @@ section { padding: 64px 0; }
 /* Cierre y pie */
 .final { padding: 64px 0; }
 .band { border-radius: 12px; overflow: hidden; padding: 40px 24px; display: grid; gap: 28px; align-items: center; color: #fff;
-  background: linear-gradient(90deg, rgba(40,48,43,.72), rgba(40,48,43,.4) 55%, transparent 80%), url('portada/fluido/seda-musgo.webp') center / cover, var(--plum-d); }
+  background: linear-gradient(90deg, rgba(40,48,43,.8), rgba(40,48,43,.5) 55%, transparent 80%), url('portada/fluido/seda-musgo.webp') center / cover, var(--plum-d); }
 @media (min-width: 860px) { .band { grid-template-columns: 1.2fr .8fr; padding: 56px 48px; } }
 .band .kk { margin: 0 0 8px; font-size: 14px; color: rgba(255,255,255,.82); }
 .band h2 { color: #fff; margin: 0 0 12px; }
@@ -299,7 +299,8 @@ section { padding: 64px 0; }
 .btn-w { background: #fff; color: var(--ink); }
 .btn-w:hover { background: var(--rose); }
 .band .pic { aspect-ratio: 1; border-radius: 12px; background: url('portada/fluido/seda-musgo.webp') 30% 55% / 300%; }
-@media (max-width: 859px) { .band .pic { display: none; } }
+@media (max-width: 859px) { .band .pic { display: none; }
+  .band { background: linear-gradient(180deg, rgba(40,48,43,.82), rgba(40,48,43,.7)), url('portada/fluido/seda-musgo.webp') 80% 50% / cover, var(--plum-d); } }
 .final .warn { font-size: 13.5px; color: var(--muted); margin: 16px 0 0; text-align: center; }
 footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
 .foot { display: flex; flex-wrap: wrap; gap: 16px 32px; align-items: center; justify-content: space-between; }

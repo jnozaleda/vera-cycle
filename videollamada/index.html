@@ -131,10 +131,10 @@ details p{padding:0 0 14px}details a{color:#693D55;font-weight:600;white-space:n
   const store = { get: (k) => { try { return localStorage.getItem(k) || ''; } catch { return ''; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const isEmail = (e) => /^[^\s@<>()",;]+@[^\s@<>()",;]+\.[a-z]{2,24}$/i.test(e.trim());
-  hit('video_pagina');
+  const q = new URLSearchParams(location.search);
+  hit(q.get('de') === 'respuesta' ? 'video_pagina:respuesta' : 'video_pagina');
   // Anuncios: misma marca de 30 días que la portada (sin cookies)
   const AD_KEY = 'hera-src';
-  const q = new URLSearchParams(location.search);
   if (q.has('gclid') || /^(cpc|ppc|paid)$/i.test(q.get('utm_medium') || '')) {
     const c = (q.get('utm_campaign') || '').toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 24);
     store.set(AD_KEY, JSON.stringify({ c, at: Date.now() }));

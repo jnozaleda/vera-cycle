@@ -141,8 +141,14 @@ export function relayEmail(pro, role, id, body, nAttach, rate = null) {
   const foot = role === 'p'
     ? 'Si necesitas aclarar algo, responde a este correo. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.'
     : `Responde a este correo para contestarle; le llegará desde ${pro.email}.`;
-  const html = shell(`${head}<div style="white-space:normal">${nl2br(body)}</div>${att}${rate ? rate.html : ''}<p style="font-size:12px;color:#8A8A8E;margin-top:18px">${esc(foot)}</p>`);
-  const text = `${role === 'p' ? `${pro.name}, ${pro.role}, te responde:` : `La usuaria de la consulta #${id.toUpperCase()} ha escrito:`}\n\n${body}\n\n${nAttach ? `[${nAttach} adjunto(s)]\n\n` : ''}${rate ? `${rate.text}\n\n` : ''}${foot}`;
+  // Debajo de cada respuesta de la profesional: la videollamada con ella (vera-backlog#86)
+  const vlink = `https://hera-gine.com/videollamada/?de=respuesta#reservar-${pro.key}`;
+  const video = role === 'p' && pro.key ? {
+    html: `<div style="margin:16px 0 0;padding:12px 14px;border:1px solid #E6DFE2;border-radius:10px;background:#ffffff;font-size:14px">¿Prefieres hablarlo cara a cara? <a href="${vlink}" style="color:#693D55;font-weight:600">Videollamada de 30 min con ${esc(pro.short)} · 55 €</a></div>`,
+    text: `¿Prefieres hablarlo cara a cara? Videollamada de 30 min con ${pro.short} (55 €): ${vlink}`,
+  } : null;
+  const html = shell(`${head}<div style="white-space:normal">${nl2br(body)}</div>${att}${rate ? rate.html : ''}${video ? video.html : ''}<p style="font-size:12px;color:#8A8A8E;margin-top:18px">${esc(foot)}</p>`);
+  const text = `${role === 'p' ? `${pro.name}, ${pro.role}, te responde:` : `La usuaria de la consulta #${id.toUpperCase()} ha escrito:`}\n\n${body}\n\n${nAttach ? `[${nAttach} adjunto(s)]\n\n` : ''}${rate ? `${rate.text}\n\n` : ''}${video ? `${video.text}\n\n` : ''}${foot}`;
   return { html, text };
 }
 

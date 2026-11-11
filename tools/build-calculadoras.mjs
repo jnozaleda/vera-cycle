@@ -5,17 +5,17 @@ import { SITE, esc, shell, askBox, stickyAsk } from './web-shell.mjs';
 
 const UPDATED = '2026-11-09';
 const API = 'https://hera-consultas.tempcheck-app.workers.dev';
-const CSS = `<style>.calc{display:flex;flex-direction:column;gap:14px}.calc label{display:flex;flex-direction:column;gap:6px;font-size:14.5px;font-weight:600;color:#3B2433}
-.calc input[type=date],.calc input[type=number]{font:16px Inter,system-ui,sans-serif;padding:12px 14px;border:1px solid #D9CFD4;border-radius:10px;background:#fff;color:#2E2630;width:100%}
-.calc .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.calc .ck{flex-direction:row;align-items:center;gap:10px;font-weight:500}.calc .ck input{width:18px;height:18px;accent-color:#693D55}
-.calc button{font:600 16px Inter,system-ui,sans-serif;background:#693D55;color:#fff;border:0;border-radius:10px;padding:14px;cursor:pointer}.calc button:hover{background:#563146}
-.calc .hint{font-size:13px;color:#655B61;font-weight:400}.err{color:#8F2F3F;font-size:14px}
-.res{display:none}.res.on{display:flex;flex-direction:column;gap:14px}.big3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.big3 div{background:#F4E6E8;border-radius:10px;padding:12px 14px}.big3 b{display:block;font:400 25px/1.1 Newsreader,Georgia,serif;color:#3B2433}.big3 span{display:block;font-size:13px;color:#655B61;margin-top:4px}
-.go{display:block;text-align:center;background:#693D55;color:#fff;border-radius:10px;padding:13px;font-weight:600;text-decoration:none}.go.alt{background:#fff;color:#693D55;border:1.5px solid #693D55}
-.days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.days div{border-radius:7px;padding:6px 2px;text-align:center;font-size:12px;line-height:1.2;background:#F4F0F2;color:#655B61}.days b{display:block;font-size:14px;color:#2E2630}
-.days .p{background:#F1D3D8}.days .f{background:#DCEBE4}.days .o{background:#3E8E63;color:#fff}.days .o b{color:#fff}.days .t{outline:2px solid #693D55}
-.leg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:#4C444C}.leg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
-.cards3{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;padding-bottom:28px}.cc{display:flex;flex-direction:column;gap:6px;border-radius:12px;padding:20px;text-decoration:none}.cc b{font:400 26px/1.1 Newsreader,Georgia,serif;color:#3B2433}.cc p{font-size:14.5px;color:#4C444C}
+const CSS = `<style>.calc{display:flex;flex-direction:column;gap:14px}.calc label{display:flex;flex-direction:column;gap:6px;font-size:14.5px;font-weight:600;color:#45574C}
+.calc input[type=date],.calc input[type=number]{font:16px Inter,system-ui,sans-serif;padding:12px 14px;border:1px solid #D6D2C6;border-radius:10px;background:#fff;color:#2F3631;width:100%}
+.calc .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.calc .ck{flex-direction:row;align-items:center;gap:10px;font-weight:500}.calc .ck input{width:18px;height:18px;accent-color:#45574C}
+.calc button{font:600 16px Inter,system-ui,sans-serif;background:#45574C;color:#fff;border:0;border-radius:10px;padding:14px;cursor:pointer}.calc button:hover{background:#384A3F}
+.calc .hint{font-size:13px;color:#6E6C67;font-weight:400}.err{color:#8C1D18;font-size:14px}
+.res{display:none}.res.on{display:flex;flex-direction:column;gap:14px}.big3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.big3 div{background:#F6E0E2;border-radius:10px;padding:12px 14px}.big3 b{display:block;font:400 25px/1.1 Newsreader,Georgia,serif;color:#45574C}.big3 span{display:block;font-size:13px;color:#6E6C67;margin-top:4px}
+.go{display:block;text-align:center;background:#45574C;color:#fff;border-radius:10px;padding:13px;font-weight:600;text-decoration:none}.go.alt{background:#fff;color:#45574C;border:1.5px solid #45574C}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.days div{border-radius:7px;padding:6px 2px;text-align:center;font-size:12px;line-height:1.2;background:#F1EFE9;color:#6E6C67}.days b{display:block;font-size:14px;color:#2F3631}
+.days .p{background:#F1D3D8}.days .f{background:#DCEBE4}.days .o{background:#3E8E63;color:#fff}.days .o b{color:#fff}.days .t{outline:2px solid #45574C}
+.leg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:#4F4E49}.leg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.cards3{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;padding-bottom:28px}.cc{display:flex;flex-direction:column;gap:6px;border-radius:12px;padding:20px;text-decoration:none}.cc b{font:400 26px/1.1 Newsreader,Georgia,serif;color:#45574C}.cc p{font-size:14.5px;color:#4F4E49}
 @media(max-width:760px){.big3{grid-template-columns:1fr 1fr}.big3 b{font-size:22px}}</style>`;
 const list = (items) => `<ul>${items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
 const faqs = (qa) => qa.map(([q, a], i) => `<details${i === 0 ? ' open' : ''}><summary>${esc(q)}</summary><p>${esc(a)}</p></details>`).join('');
@@ -65,7 +65,7 @@ $('res').classList.add('on');hit('calculadora:peso');$('res').scrollIntoView({be
     qa: [['¿Es malo ganar más peso del recomendado?', 'Ganar mucho más aumenta el riesgo de diabetes del embarazo, tensión alta o un bebé muy grande. Ganar mucho menos también tiene riesgos. Si te sales del rango, coméntalo con tu matrona.'], ['¿Tengo que comer por dos?', 'No. En el primer trimestre no hace falta comer más; en el segundo y el tercero, solo un poco más, unas 300 a 450 kilocalorías al día.'], ['¿Y si he perdido peso por las náuseas?', 'Al principio es frecuente y suele recuperarse. Consulta si vomitas casi todo o sigues perdiendo peso.']],
   },
   {
-    slug: 'ovulacion', name: 'Ovulación', tint: '#ECE6F0', pro: ['gineco'], ask: [['gineco', 'Regla, ciclo y anticoncepción'], ['matrona', 'Fertilidad y salud sexual']], stick: '¿Una duda sobre tu ciclo?',
+    slug: 'ovulacion', name: 'Ovulación', tint: '#E4E2F4', pro: ['gineco'], ask: [['gineco', 'Regla, ciclo y anticoncepción'], ['matrona', 'Fertilidad y salud sexual']], stick: '¿Una duda sobre tu ciclo?',
     title: 'Calculadora de ovulación y días fértiles', h1: '¿Cuándo ovulo?',
     desc: 'Calcula tus días fértiles, tu día de ovulación aproximado y tu próxima regla a partir de tu última regla y la duración de tu ciclo. Gratis y sin enviar tus datos.',
     lead: 'Con el primer día de tu última regla y la duración de tu ciclo te marcamos tus días fértiles, la ovulación aproximada y la próxima regla.',
@@ -73,7 +73,7 @@ $('res').classList.add('on');hit('calculadora:peso');$('res').scrollIntoView({be
 <label>Duración de tu ciclo (días)<input type="number" id="c" min="21" max="45" value="28" inputmode="numeric"><span class="hint">Del primer día de una regla al día antes de la siguiente. Si no lo sabes, deja 28.</span></label>`,
     result: `<div class="big3"><div><b id="r1"></b><span>Días fértiles</span></div><div><b id="r2"></b><span>Ovulación aproximada</span></div><div><b id="r3"></b><span>Próxima regla</span></div></div>
 <div class="days" id="cal"></div><div class="leg"><span><i style="background:#F1D3D8"></i>Regla</span><span><i style="background:#DCEBE4"></i>Días fértiles</span><span><i style="background:#3E8E63"></i>Ovulación</span></div>
-<p class="err" style="color:#4C444C"><b>No sirve como método anticonceptivo.</b> Es una estimación: la ovulación puede adelantarse o retrasarse en cualquier ciclo.</p><a class="go" href="/ciclo/ovulacion/">Cómo saber cuándo ovulas</a><a class="go alt" href="/app/">Sigue tu ciclo en Hera</a>`,
+<p class="err" style="color:#4F4E49"><b>No sirve como método anticonceptivo.</b> Es una estimación: la ovulación puede adelantarse o retrasarse en cualquier ciclo.</p><a class="go" href="/ciclo/ovulacion/">Cómo saber cuándo ovulas</a><a class="go alt" href="/app/">Sigue tu ciclo en Hera</a>`,
     js: `$('btn').onclick=()=>{const f=dn($('f').value),c=Math.min(45,Math.max(21,+$('c').value||28));$('e').textContent='';
 if(f==null){$('e').textContent='Elige la fecha de tu última regla.';return}const t=today();if(f>t){$('e').textContent='La fecha no puede ser futura.';return}
 let s=f;while(s+c<=t-1)s+=c;const ov=s+c-14,fs=ov-5,nx=s+c;const sh={day:'numeric',month:'short'};
@@ -93,7 +93,7 @@ for (const c of CALCS) {
   ] };
   mkdirSync(`calculadoras/${c.slug}`, { recursive: true });
   writeFileSync(`calculadoras/${c.slug}/index.html`, shell({ title: `${c.title} · Hera`, desc: c.desc, path, ld, body: `${CSS}
-<div class="w"><div class="band" style="background:${c.tint}"><p class="ey"><a href="/calculadoras/" style="text-decoration:none">Calculadoras</a> · Gratis y sin registro</p><h1>${esc(c.h1)}</h1><p class="m" style="font-size:16px;color:#4C444C;max-width:36em">${esc(c.lead)}</p></div>
+<div class="w"><div class="band" style="background:${c.tint}"><p class="ey"><a href="/calculadoras/" style="text-decoration:none">Calculadoras</a> · Gratis y sin registro</p><h1>${esc(c.h1)}</h1><p class="m" style="font-size:16px;color:#4F4E49;max-width:36em">${esc(c.lead)}</p></div>
 <div class="art"><article class="secs">
 <section class="sec"><h2>Tus datos</h2><div class="calc">${c.form}<p class="err" id="e" role="alert"></p><button type="button" id="btn">Calcular</button><span class="hint">El cálculo se hace en tu móvil: no guardamos ni enviamos tus datos.</span></div></section>
 <section class="sec res" id="res" aria-live="polite"><h2>Tu resultado</h2>${c.result}</section>
@@ -101,7 +101,7 @@ for (const c of CALCS) {
 <section class="sec"><h2>Dudas frecuentes</h2>${faqs(c.qa)}</section>
 <p class="urg"><b>Es una orientación.</b> No sustituye la valoración de tu matrona o tu médico. Si algo no va bien, llama al 112 o acude a urgencias.</p></article>
 ${askBox('¿Tu caso es distinto?', c.ask)}</div>
-<p class="all" style="text-align:center;padding:22px 0 30px"><a href="/calculadoras/" style="color:#693D55;font-weight:600">Ver las tres calculadoras</a></p></div>${stickyAsk(c.pro, c.stick)}
+<p class="all" style="text-align:center;padding:22px 0 30px"><a href="/calculadoras/" style="color:#45574C;font-weight:600">Ver las tres calculadoras</a></p></div>${stickyAsk(c.pro, c.stick)}
 <script type="module">${JS_BASE}${c.js}</script>` }));
 }
 

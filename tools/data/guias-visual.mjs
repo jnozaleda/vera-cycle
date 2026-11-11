@@ -2,7 +2,7 @@
 // Sale del texto de cada guía (app/js/guide.js); la forma es nueva y está PENDIENTE DE REVISIÓN CLÍNICA.
 // tiles: [cifra, explicación] · sem: { g|a|r: [título, texto] } · chart: track (barra por tramos) o range (rangos) · links: [url, texto]
 
-const R = '#B8424F', A = '#D69A2D', G = '#3E8E63', P = '#8E6178', L = '#C9AEBB';
+const R = '#B3261E', A = '#D69A2D', G = '#3E8E63', P = '#8A7045', L = '#D2C3A6';
 
 // Quien ha revisado cada guía: solo se muestra «Revisado por» cuando esté de verdad. Ej.: 'bebe-con-fiebre-que-hago': 'pediatra'
 export const REVIEWED = {};
@@ -16,7 +16,7 @@ export const VISUAL = {
   'nauseas-en-el-embarazo': {
     tiles: [['Muy frecuentes', 'Sobre todo al principio'], ['Semana 12–16', 'Cuando suelen mejorar'], ['Poco y a menudo', 'Lo que más ayuda'], ['Si vomitas todo', 'Consulta: hay tratamiento']],
     sem: { g: ['Es lo habitual', 'Náuseas o algún vómito, pero comes, bebes y no pierdes peso.'], a: ['Consulta', 'Si vomitas casi todo lo que comes o bebes, o pierdes peso.'], r: ['Ve a urgencias', 'Si no retienes ni el agua, orinas muy poco o te mareas al ponerte de pie.'] },
-    chart: { title: 'Cuándo suelen aparecer', track: [['Más frecuentes', 12, P], ['Van mejorando', 4, L], ['Poco habituales', 24, '#E6DFE2']], ticks: ['Semana 0', '12', '16', '40'], legend: 'Orientativo: en algunas mujeres duran más.' },
+    chart: { title: 'Cuándo suelen aparecer', track: [['Más frecuentes', 12, P], ['Van mejorando', 4, L], ['Poco habituales', 24, '#E5E1D8']], ticks: ['Semana 0', '12', '16', '40'], legend: 'Orientativo: en algunas mujeres duran más.' },
     links: [['/embarazo/semana-6/', 'Semana 6'], ['/embarazo/semana-9/', 'Semana 9'], ['/embarazo/semana-12/', 'Semana 12']],
   },
   'alimentos-a-evitar-en-el-embarazo': {
@@ -38,7 +38,7 @@ export const VISUAL = {
   'test-de-o-sullivan': {
     tiles: [['Semanas 24–28', 'Cuándo se hace'], ['1 hora', 'Tras una bebida con azúcar'], ['Análisis de sangre', 'Una sola extracción'], ['No es diagnóstico', 'Si sale alto, se confirma']],
     sem: { g: ['Resultado normal', 'No hace falta nada más.'], a: ['Sale alterado', 'Te harán una prueba más larga para confirmarlo o descartarlo. La mayoría no tienen diabetes.'], r: ['Consulta pronto', 'Si tienes mucha sed, orinas mucho o te encuentras mal: no esperes a la prueba.'] },
-    chart: { title: 'Cuándo toca', track: [['', 24, '#E6DFE2'], ['24–28', 4, P], ['', 12, '#E6DFE2']], ticks: ['Semana 0', '24', '28', '40'], legend: 'Si tienes factores de riesgo, también puede hacerse en el primer trimestre.' },
+    chart: { title: 'Cuándo toca', track: [['', 24, '#E5E1D8'], ['24–28', 4, P], ['', 12, '#E5E1D8']], ticks: ['Semana 0', '24', '28', '40'], legend: 'Si tienes factores de riesgo, también puede hacerse en el primer trimestre.' },
     links: [['/embarazo/semana-24/', 'Semana 24'], ['/embarazo/semana-26/', 'Semana 26'], ['/embarazo/semana-28/', 'Semana 28']],
   },
   'contracciones-de-braxton-hicks': {

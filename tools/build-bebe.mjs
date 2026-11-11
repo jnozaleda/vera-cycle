@@ -7,7 +7,7 @@ import { MONTHS } from './data/bebe-meses.mjs';
 import { SITE, esc, shell, askBox, stickyAsk } from './web-shell.mjs';
 
 const UPDATED = '2026-11-08';
-const TINT = ['#F4E6E8', '#ECE6F0', '#DCEBE4'];
+const TINT = ['#F6E0E2', '#E4E2F4', '#DCEBE4'];
 const tint = (m) => TINT[m <= 3 ? 0 : m <= 6 ? 1 : 2];
 const STAGE = (m) => (m <= 3 ? 'Primeros meses' : m <= 6 ? 'De 4 a 6 meses' : 'De 7 a 12 meses');
 const fmt = (n) => n.toFixed(1).replace('.', ',');
@@ -23,10 +23,10 @@ const pages = Object.entries(MONTHS).map(([k, d]) => {
     desc: `Bebé de ${label(m)}: ${d.hace[0].toLowerCase()} Peso y longitud orientativos, comida y sueño, vacunas y revisiones y cuándo consultar.`.slice(0, 158).replace(/\s\S*$/, '') + '…' };
 });
 
-const CSS_EXTRA = `<style>.wk{display:flex;flex-wrap:wrap;gap:12px 32px;margin:18px 0 0}.wk b{display:block;font:400 30px/1.1 Newsreader,Georgia,serif;color:#3B2433}.wk span{color:#655B61;font-size:13px}
-.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:22px 0 10px}.pg{display:flex;flex-direction:column;gap:2px;background:#fff;border:1px solid #E6DFE2;border-radius:12px;padding:14px 16px;text-decoration:none}.pg:hover{border-color:#8E6178}.pg span{font-size:13px;color:#655B61}.pg b{font:400 22px/1.15 Newsreader,Georgia,serif;color:#3B2433}.pg.next{text-align:right;grid-column:2}
-.all{text-align:center;padding-bottom:30px}.all a{color:#693D55;font-weight:600}
-.wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.wgrid a{display:block;background:#fff;border:1px solid #E6DFE2;border-radius:12px;padding:14px;text-decoration:none}.wgrid a:hover{border-color:#8E6178}.wgrid b{display:block;font:400 22px/1.1 Newsreader,Georgia,serif;color:#3B2433}.wgrid span{font-size:13px;color:#655B61}
+const CSS_EXTRA = `<style>.wk{display:flex;flex-wrap:wrap;gap:12px 32px;margin:18px 0 0}.wk b{display:block;font:400 30px/1.1 Newsreader,Georgia,serif;color:#45574C}.wk span{color:#6E6C67;font-size:13px}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:22px 0 10px}.pg{display:flex;flex-direction:column;gap:2px;background:#fff;border:1px solid #E5E1D8;border-radius:12px;padding:14px 16px;text-decoration:none}.pg:hover{border-color:#8A7045}.pg span{font-size:13px;color:#6E6C67}.pg b{font:400 22px/1.15 Newsreader,Georgia,serif;color:#45574C}.pg.next{text-align:right;grid-column:2}
+.all{text-align:center;padding-bottom:30px}.all a{color:#45574C;font-weight:600}
+.wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.wgrid a{display:block;background:#fff;border:1px solid #E5E1D8;border-radius:12px;padding:14px;text-decoration:none}.wgrid a:hover{border-color:#8A7045}.wgrid b{display:block;font:400 22px/1.1 Newsreader,Georgia,serif;color:#45574C}.wgrid span{font-size:13px;color:#6E6C67}
 @media(max-width:760px){.wk b{font-size:26px}}</style>`;
 const navLink = (m, dir) => (MONTHS[m] ? `<a class="pg ${dir}" href="/bebe/mes-${m}/"><span>${dir === 'prev' ? '← Anterior' : 'Siguiente →'}</span><b>${label(m)[0].toUpperCase()}${label(m).slice(1)}</b></a>` : '<span></span>');
 const list = (items) => `<ul>${items.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`;
@@ -42,7 +42,7 @@ for (const p of pages) {
 <div class="wk"><div><b>${fmt(p.d.kg[0])} – ${fmt(p.d.kg[1])} kg</b><span>Peso medio (niñas – niños)</span></div><div><b>${fmt(p.d.cm[0])} – ${fmt(p.d.cm[1])} cm</b><span>Longitud media (niñas – niños)</span></div></div>
 <p class="m" style="margin-top:14px">Medianas de la OMS, orientativas: cada bebé sigue su propia curva</p></div>
 <div class="art"><article class="secs">
-<section class="sec"><h2>Qué hace a esta edad</h2>${list(p.d.hace)}<p style="margin-top:12px;font-size:14.5px;color:#655B61">Cada bebé tiene su ritmo: estas edades son orientativas.</p></section>
+<section class="sec"><h2>Qué hace a esta edad</h2>${list(p.d.hace)}<p style="margin-top:12px;font-size:14.5px;color:#6E6C67">Cada bebé tiene su ritmo: estas edades son orientativas.</p></section>
 <section class="sec"><h2>Comida y sueño</h2>${list(p.d.come)}</section>
 <section class="sec tint" style="background:${tint(p.m)}"><h2>Lo que toca</h2><ul>${p.d.toca.map(([t, x]) => `<li><b>${esc(t)}.</b> ${esc(x)}</li>`).join('')}</ul></section>
 <section class="sec"><h2>Dudas frecuentes</h2>${faqs}</section>

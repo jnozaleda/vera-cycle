@@ -11,7 +11,7 @@ import { SITE, esc, shell, askBox, stickyAsk } from './web-shell.mjs';
 const UPDATED = '2026-11-07';
 const FIRST = 4;
 const LAST = 40;
-const TINT = { 1: '#DCEBE4', 2: '#F4E6E8', 3: '#ECE6F0' };
+const TINT = { 1: '#DCEBE4', 2: '#F6E0E2', 3: '#E4E2F4' };
 const trimester = (w) => (w <= 13 ? 1 : w <= 27 ? 2 : 3);
 // Pendiente de confirmar con Gonzalo si hay que ir en ayunas (vera-backlog#76): no se repite en estas páginas
 const clean = (t) => t.replace(/\s*Hay que ir en ayunas\./g, '');
@@ -41,10 +41,10 @@ for (let w = FIRST; w <= LAST; w++) {
 
 const navLink = (w, dir) => (w >= FIRST && w <= LAST ? `<a class="pg ${dir}" href="/embarazo/semana-${w}/"><span>${dir === 'prev' ? '← Anterior' : 'Siguiente →'}</span><b>Semana ${w}</b></a>` : '<span></span>');
 // Cuerpo en Inter con etiquetas pequeñas; la serif solo en el título y las cifras del recuadro
-const CSS_EXTRA = `<style>.wk{display:flex;flex-wrap:wrap;gap:12px 32px;margin:18px 0 0}.wk b{display:block;font:400 30px/1.1 Newsreader,Georgia,serif;color:#3B2433}.wk span{color:#655B61;font-size:13px}
-.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:22px 0 10px}.pg{display:flex;flex-direction:column;gap:2px;background:#fff;border:1px solid #E6DFE2;border-radius:12px;padding:14px 16px;text-decoration:none}.pg:hover{border-color:#8E6178}.pg span{font-size:13px;color:#655B61}.pg b{font:400 22px/1.15 Newsreader,Georgia,serif;color:#3B2433}.pg.next{text-align:right;grid-column:2}
-.all{text-align:center;padding-bottom:30px}.all a{color:#693D55;font-weight:600}
-.wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.wgrid a{display:block;background:#fff;border:1px solid #E6DFE2;border-radius:12px;padding:14px;text-decoration:none}.wgrid a:hover{border-color:#8E6178}.wgrid b{display:block;font:400 22px/1.1 Newsreader,Georgia,serif;color:#3B2433}.wgrid span{font-size:13px;color:#655B61}
+const CSS_EXTRA = `<style>.wk{display:flex;flex-wrap:wrap;gap:12px 32px;margin:18px 0 0}.wk b{display:block;font:400 30px/1.1 Newsreader,Georgia,serif;color:#45574C}.wk span{color:#6E6C67;font-size:13px}
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:22px 0 10px}.pg{display:flex;flex-direction:column;gap:2px;background:#fff;border:1px solid #E5E1D8;border-radius:12px;padding:14px 16px;text-decoration:none}.pg:hover{border-color:#8A7045}.pg span{font-size:13px;color:#6E6C67}.pg b{font:400 22px/1.15 Newsreader,Georgia,serif;color:#45574C}.pg.next{text-align:right;grid-column:2}
+.all{text-align:center;padding-bottom:30px}.all a{color:#45574C;font-weight:600}
+.wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.wgrid a{display:block;background:#fff;border:1px solid #E5E1D8;border-radius:12px;padding:14px;text-decoration:none}.wgrid a:hover{border-color:#8A7045}.wgrid b{display:block;font:400 22px/1.1 Newsreader,Georgia,serif;color:#45574C}.wgrid span{font-size:13px;color:#6E6C67}
 @media(max-width:760px){.wk b{font-size:26px}}</style>`;
 
 for (const p of weeks) {
@@ -72,7 +72,7 @@ writeFileSync('embarazo/index.html', shell({ title: 'Embarazo semana a semana ·
   ld: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Embarazo semana a semana', inLanguage: 'es-ES', url: `${SITE}/embarazo/` }, body: `${CSS_EXTRA}
 <div class="w"><div class="ih"><p class="ey">Embarazo</p><h1>Tu embarazo, <em>semana a semana</em></h1><p class="sub">Cómo está tu bebé, qué es normal notar y qué pruebas tocan. Y si tienes una duda, <a href="/#preguntar-matrona">pregunta a Gonzalo o a Marina</a>.</p></div>
 ${[1, 2, 3].map((t) => `<section class="grp"><div class="grph" style="background:${TINT[t]}"><h2>${TRIMESTER_LABEL[t]}</h2><p>${esc(TRIMESTER_TEXT[t])}</p></div><div class="wgrid">${weeks.filter((p) => p.t === t).map((p) => `<a href="/embarazo/${p.slug}/"><b>Semana ${p.w}</b><span>${fmtNum(p.b.cm)} cm · ${size(p.b)}</span></a>`).join('')}</div></section>`).join('\n')}
-<section class="sec" style="margin-bottom:28px"><h2>Calculadoras</h2><p><a href="/calculadoras/fecha-de-parto/" style="color:#693D55;font-weight:600">Calcula tu fecha de parto y tu semana →</a></p><p style="margin-top:10px"><a href="/calculadoras/peso-en-el-embarazo/" style="color:#693D55;font-weight:600">¿Cuánto peso me toca ganar? →</a></p></section>
+<section class="sec" style="margin-bottom:28px"><h2>Calculadoras</h2><p><a href="/calculadoras/fecha-de-parto/" style="color:#45574C;font-weight:600">Calcula tu fecha de parto y tu semana →</a></p><p style="margin-top:10px"><a href="/calculadoras/peso-en-el-embarazo/" style="color:#45574C;font-weight:600">¿Cuánto peso me toca ganar? →</a></p></section>
 <div class="final"><div class="fin"><h2>¿Tienes una duda de tu embarazo?</h2><p>Ginecólogo y matrona te responden por escrito en menos de 48 h.</p><a class="btn" href="/#ask">Preguntar gratis</a></div></div></div>` }));
 
 let sm = readFileSync('sitemap.xml', 'utf8').replace(/\s*<url><loc>[^<]*\/embarazo\/[^<]*<\/loc><lastmod>[^<]*<\/lastmod><\/url>/g, '');

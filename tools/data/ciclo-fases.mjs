@@ -4,7 +4,7 @@
 export const PHASE_PAGES = [
   {
     slug: 'fase-menstrual', name: 'Fase menstrual', title: 'Fase menstrual: qué pasa en tu cuerpo durante la regla',
-    tint: '#F4E6E8', days: 'Días 1 a 5', hormone: 'Estrógenos y progesterona bajos', length: 'De 2 a 7 días',
+    tint: '#F6E0E2', days: 'Días 1 a 5', hormone: 'Estrógenos y progesterona bajos', length: 'De 2 a 7 días',
     lead: 'El primer día de regla es el día 1 del ciclo. Como no ha habido embarazo, bajan los niveles de hormonas y el útero desprende la capa que había preparado.',
     cuerpo: ['La capa interna del útero (endometrio) se desprende y sale como sangrado.', 'Unas sustancias llamadas prostaglandinas hacen que el útero se contraiga: de ahí los dolores tipo cólico.', 'A la vez, en el ovario empiezan a madurar los folículos del ciclo siguiente.'],
     notas: ['Sangrado de 2 a 7 días, más abundante los primeros.', 'Dolor en la parte baja de la tripa o en la zona lumbar.', 'Cansancio, hinchazón o cambios en el tránsito intestinal.'],
@@ -30,7 +30,7 @@ export const PHASE_PAGES = [
   },
   {
     slug: 'ovulacion', name: 'Ovulación', title: 'Ovulación y días fértiles: cómo saber cuándo ovulas',
-    tint: '#ECE6F0', days: 'Hacia el día 14', hormone: 'Pico de LH', length: '12 a 24 horas',
+    tint: '#E4E2F4', days: 'Hacia el día 14', hormone: 'Pico de LH', length: '12 a 24 horas',
     lead: 'Es el momento en que el ovario libera el óvulo. Ocurre unos 14 días antes de la siguiente regla, que no siempre es el día 14 del ciclo.',
     cuerpo: ['Una subida brusca de la hormona LH provoca la ovulación entre 24 y 36 horas después.', 'El óvulo puede ser fecundado durante unas 12 a 24 horas.', 'Como los espermatozoides viven hasta 5 días, los días fértiles son unos 6: los 5 anteriores a la ovulación y el propio día.'],
     notas: ['Flujo transparente y elástico, como la clara de huevo.', 'A veces, un dolor leve en un lado de la tripa durante unas horas.', 'Más deseo sexual en algunas mujeres.'],

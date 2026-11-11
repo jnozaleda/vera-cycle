@@ -2562,7 +2562,7 @@ function render() {
   const stageNow = store.needsOnboarding ? (ui.ob.stageChosen ? ui.ob.flow : 'pregnancy') : store.mode;
   document.body.dataset.stage = stageNow;
   const tc = document.querySelector('meta[name=theme-color]');
-  if (tc) tc.content = '#FAF8F5';
+  if (tc) tc.content = '#FAF9F4';
   // Conserva el scroll interno del sheet al re-renderizar
   const sheetBody = root.querySelector('.sheet-body');
   const sheetScroll = sheetBody ? sheetBody.scrollTop : 0;

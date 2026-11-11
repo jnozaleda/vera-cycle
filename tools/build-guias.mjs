@@ -44,7 +44,7 @@ const EXTRA = {
   },
 };
 const all = [...PREGNANCY_GUIDE, ...POSTPARTUM_GUIDE].flatMap((s) => s.items);
-const TINT = { Embarazo: '#DCEBE4', Posparto: '#ECE6F0', 'Tu bebé': '#F4E6E8' };
+const TINT = { Embarazo: '#DCEBE4', Posparto: '#E4E2F4', 'Tu bebé': '#F6E0E2' };
 const SUB = { Embarazo: 'De la primera falta a la bolsa del hospital.', Posparto: 'Tu recuperación después del parto.', 'Tu bebé': 'Fiebre, sueño, llanto y primeros días.' };
 const plain = (a) => a.flat().join(' ');
 /** La primera frase va destacada; el resto del texto no cambia */
@@ -69,14 +69,14 @@ const pages = PAGES.map(([q, slug, title, pro, group, sum]) => {
   return { slug, title: x.title || title, pro: PRO[pro], proKey: pro, group, sum, a: item.a, x, updated: x.updated || UPDATED, desc: x.desc || plain(item.a).slice(0, 150).replace(/\s\S*$/, '') + '…' };
 });
 // Formato visual (tools/data/guias-visual.mjs): datos clave, semáforo, gráfico, enlaces y barra fija en el móvil
-const VCSS = `<style>.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}.tile{background:rgba(255,255,255,.75);border-radius:10px;padding:12px 14px}.tile b{display:block;font:400 25px/1.1 Newsreader,Georgia,serif;color:#3B2433}.tile span{display:block;font-size:13px;line-height:1.35;color:#655B61;margin-top:4px}
-.rev{display:flex;align-items:center;gap:9px;font-size:13.5px;color:#4C444C;margin-top:4px}.rev img{width:30px;height:30px;border-radius:50%}.rev b{color:#3B2433}
-.sem{display:flex;flex-direction:column;gap:8px}.lt{display:grid;grid-template-columns:8px 1fr;gap:12px;border-radius:10px;padding:12px 14px 12px 12px}.lt i{border-radius:4px}.lt b{display:block;font-weight:700;font-size:15px}.lt p{font-size:14.5px;line-height:1.45;margin:2px 0 0;color:#2E2630}
-.lt.g{background:#EAF3EE}.lt.g i{background:#3E8E63}.lt.g b{color:#2F6B4F}.lt.a{background:#FBF1E2}.lt.a i{background:#D69A2D}.lt.a b{color:#8A5A12}.lt.r{background:#FBEAEC}.lt.r i{background:#B8424F}.lt.r b{color:#8F2F3F}
+const VCSS = `<style>.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}.tile{background:rgba(255,255,255,.75);border-radius:10px;padding:12px 14px}.tile b{display:block;font:400 25px/1.1 Newsreader,Georgia,serif;color:#45574C}.tile span{display:block;font-size:13px;line-height:1.35;color:#6E6C67;margin-top:4px}
+.rev{display:flex;align-items:center;gap:9px;font-size:13.5px;color:#4F4E49;margin-top:4px}.rev img{width:30px;height:30px;border-radius:50%}.rev b{color:#45574C}
+.sem{display:flex;flex-direction:column;gap:8px}.lt{display:grid;grid-template-columns:8px 1fr;gap:12px;border-radius:10px;padding:12px 14px 12px 12px}.lt i{border-radius:4px}.lt b{display:block;font-weight:700;font-size:15px}.lt p{font-size:14.5px;line-height:1.45;margin:2px 0 0;color:#2F3631}
+.lt.g{background:#EAF3EE}.lt.g i{background:#3E8E63}.lt.g b{color:#2F6B4F}.lt.a{background:#FBF1E2}.lt.a i{background:#D69A2D}.lt.a b{color:#8A5A12}.lt.r{background:#FCEAE6}.lt.r i{background:#B3261E}.lt.r b{color:#8C1D18}
 .track{display:flex;height:36px;border-radius:8px;overflow:hidden;font-size:12.5px;font-weight:700;color:#fff}.track div{display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.1;padding:0 4px;min-width:0}
-.ticks{display:flex;justify-content:space-between;font-size:12px;color:#655B61;margin-top:6px}.sec .cleg{font-size:13.5px;line-height:1.45;color:#655B61;margin-top:10px}
-.rng{display:flex;flex-direction:column;gap:12px}.rr span{display:block;font-size:14px;margin-bottom:5px}.rr div{position:relative;height:14px;background:#F1ECEE;border-radius:7px}.rr i{position:absolute;top:0;bottom:0;border-radius:7px;background:#8E6178}.rr em{position:absolute;top:-1px;font-style:normal;font-size:12.5px;font-weight:700;color:#3B2433;white-space:nowrap}
-.lnk{display:flex;flex-wrap:wrap;gap:8px}.lnk a{font-size:14px;font-weight:600;color:#693D55;text-decoration:none;border:1px solid #E2C9D2;background:#FBF4F6;border-radius:999px;padding:7px 13px}.lnk a:hover{border-color:#8E6178}
+.ticks{display:flex;justify-content:space-between;font-size:12px;color:#6E6C67;margin-top:6px}.sec .cleg{font-size:13.5px;line-height:1.45;color:#6E6C67;margin-top:10px}
+.rng{display:flex;flex-direction:column;gap:12px}.rr span{display:block;font-size:14px;margin-bottom:5px}.rr div{position:relative;height:14px;background:#EFECE4;border-radius:7px}.rr i{position:absolute;top:0;bottom:0;border-radius:7px;background:#8A7045}.rr em{position:absolute;top:-1px;font-style:normal;font-size:12.5px;font-weight:700;color:#45574C;white-space:nowrap}
+.lnk{display:flex;flex-wrap:wrap;gap:8px}.lnk a{font-size:14px;font-weight:600;color:#45574C;text-decoration:none;border:1px solid #D9D3C3;background:#F3F1EA;border-radius:999px;padding:7px 13px}.lnk a:hover{border-color:#8A7045}
 
 @media(max-width:760px){.tiles{grid-template-columns:1fr 1fr}.tile b{font-size:22px}}</style>`;
 const LIGHTS = [['g', 'Es normal'], ['a', 'Consulta'], ['r', 'Urgencias']];
@@ -91,7 +91,7 @@ function visual(p) {
   } else if (v.chart?.range) {
     const { max, unit, rows } = v.chart.range;
     const f = (n) => String(n).replace('.', ',');
-    chart = `<section class="sec"><h2>${esc(v.chart.title)}</h2><div class="rng">${rows.map(([l, lo, hi]) => `<div class="rr"><span>${esc(l)}</span><div><i style="left:${(lo / max) * 100}%;width:${((hi - lo) / max) * 100}%"></i></div><span style="margin:5px 0 0;font-size:13px;color:#655B61">${f(lo)}–${f(hi)}&nbsp;${unit}</span></div>`).join('')}</div><div class="ticks" style="margin-top:10px">${[0, 5, 10, 15, 20].filter((n) => n <= max).map((n) => `<span>${n}&nbsp;${unit}</span>`).join('')}</div><p class="cleg">${esc(v.chart.legend)}</p></section>`;
+    chart = `<section class="sec"><h2>${esc(v.chart.title)}</h2><div class="rng">${rows.map(([l, lo, hi]) => `<div class="rr"><span>${esc(l)}</span><div><i style="left:${(lo / max) * 100}%;width:${((hi - lo) / max) * 100}%"></i></div><span style="margin:5px 0 0;font-size:13px;color:#6E6C67">${f(lo)}–${f(hi)}&nbsp;${unit}</span></div>`).join('')}</div><div class="ticks" style="margin-top:10px">${[0, 5, 10, 15, 20].filter((n) => n <= max).map((n) => `<span>${n}&nbsp;${unit}</span>`).join('')}</div><p class="cleg">${esc(v.chart.legend)}</p></section>`;
   }
   const links = v.links ? `<section class="sec"><h2>Sigue leyendo</h2><div class="lnk">${v.links.map(([h, t]) => `<a href="${h}">${esc(t)} →</a>`).join('')}</div></section>` : '';
   const rk = REVIEWED[p.slug];

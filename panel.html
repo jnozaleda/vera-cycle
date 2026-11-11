@@ -7,7 +7,7 @@
 <title>Panel · Hera</title>
 <link rel="icon" href="app/icons/favicon-32.png">
 <style>
-  :root { --plum: #6B3D57; --plum-soft: #F3EAF0; --ink: #2C2C2A; --soft: #6E6A66; --line: #E7E0E4; --bg: #FBF9F7; --ok: #3F584B; }
+  :root { --plum: #45574C; --plum-soft: #EEF1EC; --ink: #2F3631; --soft: #6E6A66; --line: #E5E1D8; --bg: #FAF9F4; --ok: #3F584B; }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 -apple-system, "Segoe UI", Inter, Helvetica, Arial, sans-serif; }
   main { max-width: 880px; margin: 0 auto; padding: 24px 16px 48px; }
@@ -37,7 +37,7 @@
   .login { max-width: 360px; margin: 12vh auto; }
   .login input { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 12px; margin: 10px 0; background: #fff; }
   .login button, .primary { width: 100%; padding: 12px; border: 0; border-radius: 12px; background: var(--plum); color: #fff; font-weight: 600; cursor: pointer; }
-  .err { color: #A3324A; font-size: 13px; }
+  .err { color: #B3261E; font-size: 13px; }
   .note { font-size: 12px; color: var(--soft); }
   .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
   .linkish { background: none; border: 0; color: var(--soft); text-decoration: underline; cursor: pointer; font-size: 12px; padding: 0; }
@@ -114,7 +114,7 @@ function render(data) {
       const op = data.open || { pendientes: {}, fuera_plazo: {} };
       return `<table style="width:100%;font-size:14px;border-collapse:collapse"><tr style="text-align:left;color:var(--muted)"><th></th><th>Respondidas</th><th>Tiempo medio</th><th>Pendientes ahora</th></tr>${who.map(([k, n]) => {
         const r = g(`respondida:${k}`), hrs = g(`resp_horas:${k}`), fp = op.fuera_plazo[k] || 0;
-        return `<tr><td>${n}</td><td>${r}</td><td>${r ? `${Math.round(hrs / r)} h` : '—'}</td><td>${op.pendientes[k] || 0}${fp ? ` <span style="color:#9A4A5E">(${fp} &gt; 48 h)</span>` : ''}</td></tr>`;
+        return `<tr><td>${n}</td><td>${r}</td><td>${r ? `${Math.round(hrs / r)} h` : '—'}</td><td>${op.pendientes[k] || 0}${fp ? ` <span style="color:#B3261E">(${fp} &gt; 48 h)</span>` : ''}</td></tr>`;
       }).join('')}</table>`; })()}
       <p class="note">Mensajes en los hilos: ${g('mensaje:profesional')} de profesionales y ${g('mensaje:usuaria')} de usuarias · recordatorios de 40 h: ${g('recordatorio:gineco') + g('recordatorio:matrona') + g('recordatorio:pediatra')}.</p></div>
     <div class="card"><h2>Desde la portada</h2>${bars([['Visitas', g('portada')], ['Empiezan a escribir', g('pregunta_portada')], ['Envían la consulta', g('enviada_portada')], ['Pulsan «Abre Hera»', g('abrir_portada')]])}</div>

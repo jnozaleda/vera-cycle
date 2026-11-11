@@ -193,10 +193,10 @@ export async function panel(env, url, openThreads) {
   const k = encodeURIComponent(url.searchParams.get('k') || '');
   const tab = (d, label) => `<a class="${d === days ? 'on' : ''}" href="?k=${k}&d=${d}">${label}</a>`;
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#FAF8F5"><title>Hera · Panel</title>
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#FAF9F4"><title>Hera · Panel</title>
 <style>
-:root{--bg:#FAF8F5;--card:#fff;--ink:#2E2630;--mute:#6E6268;--line:#E6DFE2;--bar:#F4E6E8;--plum:#693D55;--web:#C9B2BE;--ad:#D9739F;--adbar:#E9C9D8}
-@media (prefers-color-scheme:dark){:root{--bg:#1C1018;--card:#2A1823;--ink:#F3ECEF;--mute:#B9A9B1;--line:#3B2632;--bar:#3E2534;--plum:#E2B6CB;--web:#7C5A6C;--ad:#E68BB3;--adbar:#5A3348}}
+:root{--bg:#FAF9F4;--card:#fff;--ink:#2F3631;--mute:#6E6C67;--line:#E5E1D8;--bar:#EFECE4;--plum:#45574C;--web:#B8C4BC;--ad:#BCA172;--adbar:#EFE4CC}
+@media (prefers-color-scheme:dark){:root{--bg:#161B18;--card:#1F2622;--ink:#F0F1EC;--mute:#ABB2AC;--line:#2E3832;--bar:#2A332D;--plum:#A9C2B2;--web:#55695C;--ad:#D4B97F;--adbar:#4A4330}}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 .w{max-width:640px;margin:0 auto;padding:18px 16px 40px}
 h1{font:500 28px/1.1 Georgia,serif;color:var(--plum);margin:4px 0 2px}h2{font-size:15px;font-weight:650;color:var(--plum);margin:0 0 10px}
@@ -218,7 +218,7 @@ ul{list-style:none;margin:0;padding:0}
 table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}th{text-align:left;font-weight:500;color:var(--mute);font-size:12.5px;padding:4px 0}td{padding:6px 0;border-top:1px solid var(--line)}td+td,th+th{text-align:right;padding-left:8px}
 .feed li{padding:9px 0;border-bottom:1px solid var(--line);display:grid;grid-template-columns:auto 1fr;column-gap:10px}
 .feed time{font-size:12px;color:var(--mute);grid-row:span 2;min-width:92px}.feed small{color:var(--mute);font-size:12px}
-.late{color:#B4475E}
+.late{color:#B3261E}
 </style></head><body><div class="w">
 <p class="mute">HERA · sin el equipo (modo equipo)</p><h1>Panel</h1>
 <p class="mute">Actualizado ${madrid(now, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} (hora de Madrid). Datos anónimos, sin cookies.</p>

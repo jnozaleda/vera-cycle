@@ -31,15 +31,15 @@ export async function inviteFor(env, code, askerH) {
 }
 
 export function rewardEmail(n) {
-  const html = `<div style="background:#FBF7F1;padding:24px 16px;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#2E2630">
+  const html = `<div style="background:#FAF9F4;padding:24px 16px;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#2F3631">
 <div style="max-width:460px;margin:0 auto">
-<div style="font-family:Georgia,serif;font-size:28px;color:#3B2433;margin-bottom:18px">Hera</div>
+<div style="font-family:Georgia,serif;font-size:28px;color:#45574C;margin-bottom:18px">Hera</div>
 <p style="font-size:15px;line-height:1.5;margin:0 0 12px">Hola,</p>
 <p style="font-size:15px;line-height:1.5;margin:0 0 16px">Alguien a quien le pasaste tu enlace ha preguntado en Hera y ya tiene su respuesta. Gracias por recomendarnos.</p>
-<p style="font-family:Georgia,serif;font-size:21px;color:#3B2433;margin:0 0 12px">Te regalamos 1 consulta</p>
+<p style="font-family:Georgia,serif;font-size:21px;color:#45574C;margin:0 0 12px">Te regalamos 1 consulta</p>
 <p style="font-size:15px;line-height:1.5;margin:0 0 16px">La próxima vez que preguntes con este correo, no gastarás tus consultas ni tendrás que pagar.${n > 1 ? ` Llevas <b>${n} consultas regaladas</b>.` : ''}</p>
-<a href="https://hera-gine.com/#ask" style="display:block;text-align:center;text-decoration:none;font-weight:600;font-size:15px;border-radius:8px;padding:12px;background:#693D55;color:#ffffff">Hacer una consulta</a>
-<p style="font-size:12px;color:#8A8A8E;line-height:1.5;border-top:1px solid #E6DFE2;padding-top:10px;margin:18px 0 0">No sabemos ni te diremos quién ha sido. Puedes seguir compartiendo tu enlace: cada persona nueva que pregunte con él te da otra consulta.</p>
+<a href="https://hera-gine.com/#ask" style="display:block;text-align:center;text-decoration:none;font-weight:600;font-size:15px;border-radius:8px;padding:12px;background:#45574C;color:#ffffff">Hacer una consulta</a>
+<p style="font-size:12px;color:#8A8A8E;line-height:1.5;border-top:1px solid #E5E1D8;padding-top:10px;margin:18px 0 0">No sabemos ni te diremos quién ha sido. Puedes seguir compartiendo tu enlace: cada persona nueva que pregunte con él te da otra consulta.</p>
 </div></div>`;
   const text = `Hola,\n\nAlguien a quien le pasaste tu enlace ha preguntado en Hera y ya tiene su respuesta. Gracias por recomendarnos.\n\nTe regalamos 1 consulta: la próxima vez que preguntes con este correo, no gastarás tus consultas ni tendrás que pagar.${n > 1 ? ` Llevas ${n} consultas regaladas.` : ''}\n\nHacer una consulta: https://hera-gine.com/#ask\n\nNo sabemos ni te diremos quién ha sido.`;
   return { subject: 'Tienes 1 consulta más en Hera', html, text };

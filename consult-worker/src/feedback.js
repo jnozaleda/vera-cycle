@@ -21,16 +21,16 @@ export const feedbackSig = async (env, id) => (await hex(env.HASH_SALT, `opinion
 /** Correo de opinión, con el estilo de la marca y tres botones de un toque */
 export function feedbackEmail(pro, id, sig) {
   const link = (q) => `${SITE}/opinion/?t=${id}&s=${sig}&${q}`;
-  const btn = (r, solid) => `<a href="${link(`r=${r}`)}" style="display:block;text-align:center;text-decoration:none;font-weight:600;font-size:15px;border-radius:8px;padding:12px;margin:0 0 8px;border:1.5px solid #693D55;${solid ? 'background:#693D55;color:#ffffff' : 'background:#ffffff;color:#693D55'}">${RATING[r]}</a>`;
-  const html = `<div style="background:#FBF7F1;padding:24px 16px;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#2E2630">
+  const btn = (r, solid) => `<a href="${link(`r=${r}`)}" style="display:block;text-align:center;text-decoration:none;font-weight:600;font-size:15px;border-radius:8px;padding:12px;margin:0 0 8px;border:1.5px solid #45574C;${solid ? 'background:#45574C;color:#ffffff' : 'background:#ffffff;color:#45574C'}">${RATING[r]}</a>`;
+  const html = `<div style="background:#FAF9F4;padding:24px 16px;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#2F3631">
 <div style="max-width:460px;margin:0 auto">
-<div style="font-family:Georgia,serif;font-size:28px;color:#3B2433;margin-bottom:18px">Hera</div>
+<div style="font-family:Georgia,serif;font-size:28px;color:#45574C;margin-bottom:18px">Hera</div>
 <p style="font-size:15px;line-height:1.5;margin:0 0 12px">Hola,</p>
 <p style="font-size:15px;line-height:1.5;margin:0 0 16px">Ayer <b>${esc(pro.short)}</b>, ${esc(pro.role)} de Hera, respondió a tu consulta. Nos ayudaría mucho saber si te sirvió: es un toque.</p>
-<p style="font-family:Georgia,serif;font-size:21px;color:#3B2433;margin:0 0 12px">¿Te ayudó su respuesta?</p>
+<p style="font-family:Georgia,serif;font-size:21px;color:#45574C;margin:0 0 12px">¿Te ayudó su respuesta?</p>
 ${btn(1, true)}${btn(2)}${btn(3)}
-<p style="font-size:13px;color:#655B61;line-height:1.5;margin:14px 0">¿Te ha surgido otra duda sobre lo mismo? Responde al correo de ${esc(pro.short)}: no gasta consultas.</p>
-<p style="font-size:12px;color:#8A8A8E;line-height:1.5;border-top:1px solid #E6DFE2;padding-top:10px;margin:16px 0 0">Consulta #${id.toUpperCase()}. No es un servicio de urgencias: si algo no va bien, llama al 112.<br>Solo te escribimos una vez por consulta. <a href="${link('baja=1')}" style="color:#8A8A8E">No quiero recibir más correos como este</a>.</p>
+<p style="font-size:13px;color:#6E6C67;line-height:1.5;margin:14px 0">¿Te ha surgido otra duda sobre lo mismo? Responde al correo de ${esc(pro.short)}: no gasta consultas.</p>
+<p style="font-size:12px;color:#8A8A8E;line-height:1.5;border-top:1px solid #E5E1D8;padding-top:10px;margin:16px 0 0">Consulta #${id.toUpperCase()}. No es un servicio de urgencias: si algo no va bien, llama al 112.<br>Solo te escribimos una vez por consulta. <a href="${link('baja=1')}" style="color:#8A8A8E">No quiero recibir más correos como este</a>.</p>
 </div></div>`;
   const text = `Hola,\n\nAyer ${pro.short}, ${pro.role} de Hera, respondió a tu consulta. ¿Te ayudó su respuesta?\n\n${[1, 2, 3].map((r) => `${RATING[r]}: ${link(`r=${r}`)}`).join('\n')}\n\n¿Otra duda sobre lo mismo? Responde al correo de ${pro.short}: no gasta consultas.\n\nNo quiero recibir más correos como este: ${link('baja=1')}`;
   return { subject: `¿Te ayudó la respuesta de ${pro.short}?`, html, text };
@@ -64,9 +64,9 @@ export async function sendFeedbackDue(env, sendMail, PROS, now = Date.now()) {
 /** Aviso a la profesional por el hilo: la usuaria no quedó satisfecha y quiere seguimiento */
 async function askFollowUp(env, t, pro, sendMail) {
   const r = RATING[t.fr] || '';
-  const html = `<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#2E2630;max-width:520px">
+  const html = `<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#2F3631;max-width:520px">
 <p>La usuaria de la consulta <b>#${t.id.toUpperCase()}</b> dice que tu respuesta le ayudó «${esc(r.toLowerCase())}» y ha pedido seguimiento.</p>
-${t.ft ? `<div style="background:#F4E6E8;border-radius:10px;padding:12px;margin:10px 0">«${esc(t.ft)}»</div>` : ''}
+${t.ft ? `<div style="background:#F6E0E2;border-radius:10px;padding:12px;margin:10px 0">«${esc(t.ft)}»</div>` : ''}
 <p><b>Responde a este correo</b> para escribirle: le llegará por Hera, sin que veáis vuestros correos.</p></div>`;
   const text = `La usuaria de la consulta #${t.id.toUpperCase()} dice que tu respuesta le ayudó «${r.toLowerCase()}» y ha pedido seguimiento.${t.ft ? `\n\n«${t.ft}»` : ''}\n\nResponde a este correo para escribirle: le llegará por Hera.`;
   const sent = await sendMail(env, { to: pro.email, replyTo: await relayAddress(env, 'p', t.id), subject: `Seguimiento · Re: ${t.sp}`, refs: t.rp, html, text });

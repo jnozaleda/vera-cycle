@@ -68,21 +68,21 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 const nl2br = (s) => esc(s).replace(/\n/g, '<br>');
 
 function shell(inner) {
-  return `<div style="background:#FBF7F1;padding:24px 16px;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#2E2630;font-size:15px;line-height:1.55">
+  return `<div style="background:#FAF9F4;padding:24px 16px;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;color:#2F3631;font-size:15px;line-height:1.55">
 <div style="max-width:520px;margin:0 auto">
-<div style="font-family:Georgia,serif;font-size:28px;color:#3B2433;margin-bottom:18px">Hera</div>${inner}
-<p style="font-size:12px;color:#8A8A8E;margin-top:24px;border-top:1px solid #E6DFE2;padding-top:12px">Hera · Salud de la mujer, con profesionales · <a href="https://hera-gine.com" style="color:#693D55">hera-gine.com</a></p></div></div>`;
+<div style="font-family:Georgia,serif;font-size:28px;color:#45574C;margin-bottom:18px">Hera</div>${inner}
+<p style="font-size:12px;color:#8A8A8E;margin-top:24px;border-top:1px solid #E5E1D8;padding-top:12px">Hera · Salud de la mujer, con profesionales · <a href="https://hera-gine.com" style="color:#45574C">hera-gine.com</a></p></div></div>`;
 }
 
 export function proEmail(pro, q, id = '', relay = true) {
   const subject = `Consulta Hera${id ? ` #${id.toUpperCase()}` : ''}${q.context ? ` · ${q.context}` : ''}`;
   const html = shell(`<p>Nueva consulta para <b>${esc(pro.name)}</b>.</p>
-<div style="background:#F4E6E8;border-radius:10px;padding:14px;margin:12px 0">${nl2br(q.text)}</div>
-${q.context ? `<p style="font-size:13px;color:#655B61">Sobre: ${esc(q.context)}</p>` : ''}
-${q.situation ? `<p style="font-size:13px;color:#655B61">Situación: ${nl2br(q.situation)}</p>` : ''}
-${q.files ? `<p style="font-size:13px;color:#655B61">Incluye ${q.files} ${q.files === 1 ? 'archivo adjunto' : 'archivos adjuntos'}. Hera no los guarda: solo están en este correo.</p>` : ''}
-${relay ? `<p style="font-size:13px;color:#655B61"><b>Para contestar, responde a este correo</b> desde el móvil o el ordenador. Tu respuesta le llegará a la usuaria desde ${esc(pro.email)}: tu correo personal no se muestra. Si ella vuelve a escribir, te llegará en esta misma conversación. Plazo comprometido: 48 h.</p>`
-    : `<p style="font-size:13px;color:#655B61">Responde a este correo para contestar directamente a la usuaria (${esc(q.email)}). Plazo comprometido: 48 h.</p>`}`);
+<div style="background:#F6E0E2;border-radius:10px;padding:14px;margin:12px 0">${nl2br(q.text)}</div>
+${q.context ? `<p style="font-size:13px;color:#6E6C67">Sobre: ${esc(q.context)}</p>` : ''}
+${q.situation ? `<p style="font-size:13px;color:#6E6C67">Situación: ${nl2br(q.situation)}</p>` : ''}
+${q.files ? `<p style="font-size:13px;color:#6E6C67">Incluye ${q.files} ${q.files === 1 ? 'archivo adjunto' : 'archivos adjuntos'}. Hera no los guarda: solo están en este correo.</p>` : ''}
+${relay ? `<p style="font-size:13px;color:#6E6C67"><b>Para contestar, responde a este correo</b> desde el móvil o el ordenador. Tu respuesta le llegará a la usuaria desde ${esc(pro.email)}: tu correo personal no se muestra. Si ella vuelve a escribir, te llegará en esta misma conversación. Plazo comprometido: 48 h.</p>`
+    : `<p style="font-size:13px;color:#6E6C67">Responde a este correo para contestar directamente a la usuaria (${esc(q.email)}). Plazo comprometido: 48 h.</p>`}`);
   const text = `Nueva consulta para ${pro.name}\n\n${q.text}\n\n${q.context ? `Sobre: ${q.context}\n` : ''}${q.situation ? `Situación: ${q.situation}\n` : ''}\n${relay ? `Para contestar, responde a este correo: tu respuesta le llegará a la usuaria desde ${pro.email}, sin mostrar tu correo personal. Plazo: 48 h.` : `Responde a este correo para contestar a la usuaria (${q.email}).`}`;
   return { subject, html, text };
 }
@@ -93,10 +93,10 @@ export function confirmEmail(pro, q, remaining, id = '', unlimited = false, left
   const subject = `Tu consulta a ${pro.short} · Hera${id ? ` #${id.toUpperCase()}` : ''}`;
   const html = shell(`<p>Hola,</p>
 <p>Tu consulta ha llegado a <b>${esc(pro.name)}, ${esc(pro.role)}</b>. Te responderá en esta misma conversación en menos de 48 h.</p>
-<div style="background:#F4E6E8;border-radius:10px;padding:12px;margin:12px 0;font-size:14px;color:#2E2630">«${esc(excerpt)}»${q.context ? `<br><span style="color:#655B61">Sobre: ${esc(q.context)}</span>` : ''}</div>
-<p><span style="display:inline-block;background:#ffffff;color:#693D55;border:1.5px solid #693D55;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600">${left}</span></p>
-<p style="font-size:13px;color:#655B61">¿Quieres añadir algo o enviar una foto? Responde a este correo y le llegará a ${esc(pro.short)}.</p>
-<p style="font-size:13px;color:#655B61">No es un servicio de urgencias. Si algo no va bien, llama al 112 o acude a tu centro de salud.</p>
+<div style="background:#F6E0E2;border-radius:10px;padding:12px;margin:12px 0;font-size:14px;color:#2F3631">«${esc(excerpt)}»${q.context ? `<br><span style="color:#6E6C67">Sobre: ${esc(q.context)}</span>` : ''}</div>
+<p><span style="display:inline-block;background:#ffffff;color:#45574C;border:1.5px solid #45574C;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600">${left}</span></p>
+<p style="font-size:13px;color:#6E6C67">¿Quieres añadir algo o enviar una foto? Responde a este correo y le llegará a ${esc(pro.short)}.</p>
+<p style="font-size:13px;color:#6E6C67">No es un servicio de urgencias. Si algo no va bien, llama al 112 o acude a tu centro de salud.</p>
 <p style="font-size:12px;color:#8A8A8E">¿No has escrito tú esta consulta? Escríbenos a contacto@hera-gine.com y la borramos.</p>`);
   const text = `Tu consulta ha llegado a ${pro.name}, ${pro.role}. Te responderá en esta misma conversación en menos de 48 h.\n\n«${excerpt}»\n\n${left}.\n\n¿Quieres añadir algo o enviar una foto? Responde a este correo y le llegará a ${pro.short}.\n\nNo es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.\n¿No has escrito tú esta consulta? Escríbenos a contacto@hera-gine.com y la borramos.`;
   return { subject, html, text };
@@ -106,11 +106,11 @@ export function confirmEmail(pro, q, remaining, id = '', unlimited = false, left
 const TEAM_FROM = 'Hera · Equipo <alertas@hera-gine.com>';
 /** Copia de control para el equipo (COPY_TO): correo propio con asunto «Consulta · …», el texto entero y, con COPY_ATTACH="1", los adjuntos */
 export function teamCopy({ subject, intro, body, extra = '', nFiles = 0, withFiles = false }) {
-  const files = nFiles ? `<p style="font-size:13px;color:#655B61">${nFiles} ${nFiles === 1 ? 'archivo adjunto' : 'archivos adjuntos'}${withFiles ? ': van en este correo.' : ' (solo los recibe la profesional).'}</p>` : '';
+  const files = nFiles ? `<p style="font-size:13px;color:#6E6C67">${nFiles} ${nFiles === 1 ? 'archivo adjunto' : 'archivos adjuntos'}${withFiles ? ': van en este correo.' : ' (solo los recibe la profesional).'}</p>` : '';
   const foot = 'Copia de control para el equipo de Hera. No respondas a este correo: la conversación sigue entre la profesional y la usuaria.';
   return {
     subject,
-    html: shell(`<p>${intro}</p><div style="background:#F4E6E8;border-radius:10px;padding:14px;margin:12px 0">${nl2br(body)}</div>${extra}${files}<p style="font-size:12px;color:#8A8A8E">${foot}</p>`),
+    html: shell(`<p>${intro}</p><div style="background:#F6E0E2;border-radius:10px;padding:14px;margin:12px 0">${nl2br(body)}</div>${extra}${files}<p style="font-size:12px;color:#8A8A8E">${foot}</p>`),
     text: `${intro.replace(/<[^>]+>/g, '')}\n\n${body}\n\n${nFiles ? `[${nFiles} adjunto(s)${withFiles ? ' en este correo' : ''}]\n\n` : ''}${foot}`,
   };
 }
@@ -119,16 +119,16 @@ export function teamCopy({ subject, intro, body, extra = '', nFiles = 0, withFil
 export function videoPaidEmail(pro, plan) {
   const what = plan.eur === 99 ? 'asesoría de lactancia de 1 h 30' : 'videollamada de 30 minutos';
   const subject = `Tu ${plan.eur === 99 ? 'asesoría de lactancia' : 'videollamada'} con ${pro.short} · elige día y hora`;
-  const step = (n, t) => `<tr><td style="vertical-align:top;padding:6px 10px 6px 0"><span style="display:inline-block;width:24px;height:24px;border-radius:50%;background:#F4E6E8;color:#693D55;font-weight:600;font-size:13px;line-height:24px;text-align:center">${n}</span></td><td style="padding:6px 0;font-size:14px;color:#2E2630">${t}</td></tr>`;
+  const step = (n, t) => `<tr><td style="vertical-align:top;padding:6px 10px 6px 0"><span style="display:inline-block;width:24px;height:24px;border-radius:50%;background:#F6E0E2;color:#45574C;font-weight:600;font-size:13px;line-height:24px;text-align:center">${n}</span></td><td style="padding:6px 0;font-size:14px;color:#2F3631">${t}</td></tr>`;
   const html = shell(`<p>Hola,</p>
 <p>Hemos recibido el pago de tu <b>${what}</b> con <b>${esc(pro.name)}, ${esc(pro.role)}</b> (${plan.eur} €).</p>
-<div style="background:#F4E6E8;border-radius:10px;padding:14px 16px;margin:14px 0">
-<p style="margin:0 0 6px;font-family:Georgia,serif;font-size:19px;color:#3B2433">Siguiente paso: responde a este correo</p>
+<div style="background:#F6E0E2;border-radius:10px;padding:14px 16px;margin:14px 0">
+<p style="margin:0 0 6px;font-family:Georgia,serif;font-size:19px;color:#45574C">Siguiente paso: responde a este correo</p>
 <p style="margin:0;font-size:14px">Dinos <b>3 franjas que te vengan bien</b> en los próximos días (por ejemplo: «martes por la tarde, jueves de 10 a 12, viernes a primera hora»). Si quieres, añade una línea sobre lo que quieres consultar.</p></div>
 <p style="margin:16px 0 4px;font-weight:600">Después</p>
 <table style="border-collapse:collapse">${step(1, 'En menos de 24 h laborables te proponemos día y hora.')}${step(2, 'Te enviamos el enlace de Google Meet.')}${step(3, 'A la hora acordada, entra en el enlace. En el ordenador se abre en el navegador; en el móvil, con la app de Google Meet.')}</table>
-<p style="font-size:13px;color:#655B61;margin-top:16px">Puedes cambiarla o cancelarla hasta 1 hora antes y te devolvemos el dinero entero. La llamada no se graba.</p>
-<p style="font-size:13px;color:#655B61">No es un servicio de urgencias. Si algo no va bien, llama al 112 o acude a tu centro de salud.</p>`);
+<p style="font-size:13px;color:#6E6C67;margin-top:16px">Puedes cambiarla o cancelarla hasta 1 hora antes y te devolvemos el dinero entero. La llamada no se graba.</p>
+<p style="font-size:13px;color:#6E6C67">No es un servicio de urgencias. Si algo no va bien, llama al 112 o acude a tu centro de salud.</p>`);
   const text = `Hola,\n\nHemos recibido el pago de tu ${what} con ${pro.name}, ${pro.role} (${plan.eur} €).\n\nSIGUIENTE PASO: responde a este correo con 3 franjas que te vengan bien en los próximos días (por ejemplo: «martes por la tarde, jueves de 10 a 12, viernes a primera hora»). Si quieres, añade una línea sobre lo que quieres consultar.\n\nDespués:\n1. En menos de 24 h laborables te proponemos día y hora.\n2. Te enviamos el enlace de Google Meet.\n3. A la hora acordada, entra en el enlace (en el ordenador, en el navegador; en el móvil, con la app de Google Meet).\n\nPuedes cambiarla o cancelarla hasta 1 hora antes y te devolvemos el dinero entero. La llamada no se graba.\nNo es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.`;
   return { subject, html, text };
 }
@@ -136,10 +136,10 @@ export function videoPaidEmail(pro, plan) {
 /** Mensaje reenviado por el hilo: del profesional a la usuaria o de la usuaria al profesional */
 /** Pie de la primera respuesta (vera-backlog#85): «¿Te ha ayudado?» con tres botones a la página de opinión */
 export function rateBlock(pro, link) {
-  const b = (r, label, solid) => `<a href="${link(r)}" style="display:inline-block;text-align:center;text-decoration:none;font-weight:600;font-size:14px;border-radius:8px;padding:9px 14px;margin:0 6px 6px 0;border:1.5px solid #693D55;${solid ? 'background:#693D55;color:#ffffff' : 'background:#ffffff;color:#693D55'}">${label}</a>`;
+  const b = (r, label, solid) => `<a href="${link(r)}" style="display:inline-block;text-align:center;text-decoration:none;font-weight:600;font-size:14px;border-radius:8px;padding:9px 14px;margin:0 6px 6px 0;border:1.5px solid #45574C;${solid ? 'background:#45574C;color:#ffffff' : 'background:#ffffff;color:#45574C'}">${label}</a>`;
   return {
-    html: `<div style="margin:20px 0 0;padding:14px;border:1px solid #E6DFE2;border-radius:10px;background:#ffffff">
-<p style="font-family:Georgia,serif;font-size:17px;color:#3B2433;margin:0 0 10px">¿Te ha ayudado la respuesta de ${esc(pro.short)}?</p>
+    html: `<div style="margin:20px 0 0;padding:14px;border:1px solid #E5E1D8;border-radius:10px;background:#ffffff">
+<p style="font-family:Georgia,serif;font-size:17px;color:#45574C;margin:0 0 10px">¿Te ha ayudado la respuesta de ${esc(pro.short)}?</p>
 ${b(1, 'Sí, mucho', true)}${b(2, 'Más o menos')}${b(3, 'No')}
 <p style="font-size:12px;color:#8A8A8E;margin:4px 0 0">Un toque. Se lo diremos a ${esc(pro.short)}, sin tu correo.</p></div>`,
     text: `¿Te ha ayudado la respuesta de ${pro.short}?\nSí, mucho: ${link(1)}\nMás o menos: ${link(2)}\nNo: ${link(3)}`,
@@ -147,16 +147,16 @@ ${b(1, 'Sí, mucho', true)}${b(2, 'Más o menos')}${b(3, 'No')}
 }
 
 export function relayEmail(pro, role, id, body, nAttach, rate = null) {
-  const head = role === 'p' ? `<p style="font-size:13px;color:#655B61;margin-bottom:6px">${esc(pro.name)}, ${esc(pro.role)}, te responde:</p>`
-    : `<p style="font-size:13px;color:#655B61;margin-bottom:6px">La usuaria de la consulta #${id.toUpperCase()} ha escrito:</p>`;
-  const att = nAttach ? `<p style="font-size:13px;color:#655B61">${nAttach} ${nAttach === 1 ? 'archivo adjunto' : 'archivos adjuntos'}</p>` : '';
+  const head = role === 'p' ? `<p style="font-size:13px;color:#6E6C67;margin-bottom:6px">${esc(pro.name)}, ${esc(pro.role)}, te responde:</p>`
+    : `<p style="font-size:13px;color:#6E6C67;margin-bottom:6px">La usuaria de la consulta #${id.toUpperCase()} ha escrito:</p>`;
+  const att = nAttach ? `<p style="font-size:13px;color:#6E6C67">${nAttach} ${nAttach === 1 ? 'archivo adjunto' : 'archivos adjuntos'}</p>` : '';
   const foot = role === 'p'
     ? 'Si necesitas aclarar algo, responde a este correo. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.'
     : `Responde a este correo para contestarle; le llegará desde ${pro.email}.`;
   // Debajo de cada respuesta de la profesional: la videollamada con ella (vera-backlog#86)
   const vlink = `https://hera-gine.com/videollamada/?de=respuesta#reservar-${pro.key}`;
   const video = role === 'p' && pro.key ? {
-    html: `<div style="margin:16px 0 0;padding:12px 14px;border:1px solid #E6DFE2;border-radius:10px;background:#ffffff;font-size:14px">¿Prefieres hablarlo cara a cara? <a href="${vlink}" style="color:#693D55;font-weight:600">Videollamada de 30 min con ${esc(pro.short)} · 55 €</a></div>`,
+    html: `<div style="margin:16px 0 0;padding:12px 14px;border:1px solid #E5E1D8;border-radius:10px;background:#ffffff;font-size:14px">¿Prefieres hablarlo cara a cara? <a href="${vlink}" style="color:#45574C;font-weight:600">Videollamada de 30 min con ${esc(pro.short)} · 55 €</a></div>`,
     text: `¿Prefieres hablarlo cara a cara? Videollamada de 30 min con ${pro.short} (55 €): ${vlink}`,
   } : null;
   const html = shell(`${head}<div style="white-space:normal">${nl2br(body)}</div>${att}${rate ? rate.html : ''}${video ? video.html : ''}<p style="font-size:12px;color:#8A8A8E;margin-top:18px">${esc(foot)}</p>`);
@@ -499,8 +499,8 @@ export default {
       if (bcc && body.team !== true) {
         const withFiles = env.COPY_ATTACH === '1' && files.length > 0;
         // COPY_EMAIL="1" (temporal, Noza 11 nov): la copia dice el correo de la usuaria, por si hay problemas
-        const who = env.COPY_EMAIL === '1' ? `<p style="font-size:13px;color:#655B61">Correo de la usuaria: <b>${esc(q.email)}</b></p>` : '';
-        const extra = `${who}${q.context ? `<p style="font-size:13px;color:#655B61">Sobre: ${esc(q.context)}</p>` : ''}${q.situation ? `<p style="font-size:13px;color:#655B61">Situación: ${nl2br(q.situation)}</p>` : ''}`;
+        const who = env.COPY_EMAIL === '1' ? `<p style="font-size:13px;color:#6E6C67">Correo de la usuaria: <b>${esc(q.email)}</b></p>` : '';
+        const extra = `${who}${q.context ? `<p style="font-size:13px;color:#6E6C67">Sobre: ${esc(q.context)}</p>` : ''}${q.situation ? `<p style="font-size:13px;color:#6E6C67">Situación: ${nl2br(q.situation)}</p>` : ''}`;
         const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${id.toUpperCase()}${files.length ? ` · ${files.length} ${files.length === 1 ? 'adjunto' : 'adjuntos'}` : ''}${body.src === 'ads' ? ' · desde anuncio' : ''}${paid ? ' · pagada' : ''}`,
           intro: `Nueva consulta para <b>${esc(pro.name)}</b>${body.src === 'ads' ? ' (llegó desde un anuncio)' : ''}.`, body: q.text, extra, nFiles: files.length, withFiles });
         await sendMail(env, { to: bcc, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc, ...(withFiles ? { attachments: files } : {}) });
@@ -578,7 +578,7 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
     const tc = teamCopy({ subject: `Consulta · #${t.id.toUpperCase()} · ${toUser ? `${pro.short} respondió` : 'la usuaria escribió'}${msg.attachments.length ? ` · ${msg.attachments.length} ${msg.attachments.length === 1 ? 'adjunto' : 'adjuntos'}` : ''}`,
       intro: toUser ? `<b>${esc(pro.name)}</b> ha respondido a la consulta #${t.id.toUpperCase()}:` : `La usuaria de la consulta #${t.id.toUpperCase()} ha escrito a <b>${esc(pro.short)}</b>:`,
       body: msg.body || '(Sin texto: solo adjuntos.)', nFiles: msg.attachments.length, withFiles,
-      extra: env.COPY_EMAIL === '1' ? `<p style="font-size:13px;color:#655B61">Correo de la usuaria: <b>${esc(await openEmail(env, t.u))}</b></p>` : '' });
+      extra: env.COPY_EMAIL === '1' ? `<p style="font-size:13px;color:#6E6C67">Correo de la usuaria: <b>${esc(await openEmail(env, t.u))}</b></p>` : '' });
     await sendMail(env, { to: env.COPY_TO, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc, ...(withFiles ? { attachments: msg.attachments } : {}) });
   }
   // Encadenar el hilo de quien escribe: el correo al que responde (su Message-ID real) y su propio mensaje

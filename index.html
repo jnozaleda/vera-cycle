@@ -397,6 +397,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         </div>
         <button class="btn btn-p" type="submit" id="ask-send">Preguntar gratis</button>
         <ul class="perks" aria-label="Condiciones"><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin tarjeta de crédito</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin registro</li></ul>
+        <button type="button" class="linkplans" id="ask-plans" hidden>Ver planes</button>
         <a class="linkplans linkvideo" id="ask-video" href="videollamada/?de=web">¿Prefieres hablarlo cara a cara? Videollamada</a>
         <p class="fine" id="ask-fine" hidden>Te escribiremos una vez para saber si te ayudó. No es para urgencias. <a href="privacy.html#consultas">Cómo tratamos tus datos</a>.</p>
       </form>
@@ -910,8 +911,8 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     hit('planes_abiertos');
     showPlans({ freeLimit: 2, early: true }, { to: chosen(), text: ta.value.trim(), follow: $('ask-follow').checked });
   }
-  $('ask-plans')?.addEventListener('click', openPlans);
-  document.querySelectorAll('[data-goplans]').forEach((a) => a.addEventListener('click', (ev) => { ev.preventDefault(); goAsk(); if (isEmail(email.value)) openPlans(); else { open(); showErr('Escribe tu correo y toca «Ver planes»: el plan va a su nombre.'); } }));
+  $('ask-plans').addEventListener('click', openPlans);
+  document.querySelectorAll('[data-goplans]').forEach((a) => a.addEventListener('click', (ev) => { ev.preventDefault(); goAsk(); if (isEmail(email.value)) openPlans(); else { open(); $('ask-plans').hidden = false; showErr('Escribe tu correo y toca «Ver planes»: el plan va a su nombre.'); } }));
   function showLimit(j, q = {}) {
     if (j.pay) { showPlans(j, q); return; }
     swap(`<h3>Has usado tus ${j.freeLimit || 2} consultas gratuitas</h3>

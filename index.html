@@ -332,6 +332,17 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
 .perks { list-style: none; margin: -4px 0 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; font-size: 12.5px; font-weight: 500; color: var(--plum); }
 .perks li { display: flex; align-items: center; gap: 4px; }
 .perks svg { flex: none; }
+
+/* Franja de la app bajo la caja de la duda (no se enseña a quien llega por un anuncio) */
+.appstrip { display: flex; gap: 14px; align-items: center; margin-top: 16px; max-width: 560px; padding: 14px 16px; background: #fff; border: 1px solid var(--line); border-radius: 12px; text-decoration: none; color: var(--text); }
+.appstrip:hover { border-color: var(--plum); }
+.appstrip-shots { display: flex; flex: none; }
+.appstrip-shots img { width: 34px; height: auto; border-radius: 6px; border: 2px solid var(--ink); background: var(--ink); }
+.appstrip-shots img + img { margin-left: -12px; }
+.appstrip-shots img:nth-child(2) { transform: translateY(-4px); position: relative; z-index: 1; }
+.appstrip-txt { display: grid; gap: 3px; font-size: 13.5px; line-height: 1.45; min-width: 0; }
+.appstrip-txt b { font-size: 15px; color: var(--ink); }
+.appstrip-txt em { font-style: normal; font-weight: 600; color: var(--plum); }
 </style>
 </head>
 <body>
@@ -345,10 +356,10 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <a href="guias/">Guías</a>
       <a href="videollamada/">Videollamada</a>
       <a href="#precio">Precios</a>
-      <a href="app/" data-cta="abrir_portada">Abrir Hera</a>
+      <a href="app/" data-cta="abrir_portada">Abrir la app</a>
     </nav>
     <div class="top-cta">
-      <a class="btn btn-pill btn-sm" href="app/" data-cta="abrir_portada" id="top-open">Abrir Hera</a>
+      <a class="btn btn-pill btn-sm" href="app/" data-cta="abrir_portada" id="top-open">Abrir la app</a>
       <a class="btn btn-p btn-sm" href="#ask" data-goask id="top-ask">Pregunta tu duda</a>
     </div>
   </div>
@@ -404,6 +415,10 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <div class="done" id="ask-done" hidden aria-live="polite"></div>
       </div>
       </div>
+      <a class="appstrip" id="app-strip" href="app/" data-cta="clic:abrir_franja">
+        <span class="appstrip-shots" aria-hidden="true"><img src="portada/etapa-regla.jpg" alt="" width="560" height="1213" loading="lazy"><img src="portada/etapa-embarazo.jpg" alt="" width="560" height="1213" loading="lazy"><img src="portada/etapa-posparto.jpg" alt="" width="560" height="1213" loading="lazy"></span>
+        <span class="appstrip-txt"><b>Y gratis, la app de Hera</b><span>Tu regla, tu embarazo semana a semana, el posparto y tu bebé. Sin cuenta. Desde la app también puedes preguntarles.</span><em>Abrir la app →</em></span>
+      </a>
       <div class="facts" aria-label="Hera en cifras">
         <div><b>48 h</b><span>como máximo</span></div>
         <div><b>Por escrito</b><span>para releerla</span></div>
@@ -657,6 +672,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   {
     const q0 = new URLSearchParams(location.search);
     if (q0.has('gclid') || /^(cpc|ppc|paid)$/i.test(q0.get('utm_medium') || '')) {
+      $('app-strip').hidden = true;
       const c = (q0.get('utm_campaign') || '').toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 24);
       store.set(AD_KEY, JSON.stringify({ c, at: Date.now() }));
       hit(c ? `anuncio_visita:${c}` : 'anuncio_visita');

@@ -68,6 +68,8 @@ export async function createCheckout(env, { email, plan, h, origin, back, ad, pr
     success_url: `${ret}pago=ok&cs={CHECKOUT_SESSION_ID}`,
     cancel_url: `${ret}pago=no`,
     'metadata[h]': h,
+    // Videollamadas: el pago caduca a las 2 h; entonces Stripe avisa (checkout.session.expired) y va un único correo
+    ...(p.video ? { expires_at: String(Math.floor(Date.now() / 1000) + 2 * 3600) } : {}),
     'metadata[plan]': plan,
     ...(ad ? { 'metadata[src]': 'ads' } : {}),
     ...(pro ? { 'metadata[pro]': pro } : {}),
@@ -169,6 +171,13 @@ export async function handleWebhook(env, request, hooks) {
       if (subId) {
         const sub = await api(env, 'GET', `subscriptions/${subId}`);
         if (/^[a-f0-9]{64}$/.test(sub.metadata?.h || '') && sub.status === 'active') await setSubscription(env, sub.metadata.h, sub);
+      }
+    } else if (ev.type === 'checkout.session.expired') {
+      // Videollamada a medias (vera-backlog#86): un único correo por persona, plan y profesional (30 días)
+      const plan = o.metadata?.plan; const h = o.metadata?.h;
+      if (PLANS[plan]?.video && /^[a-f0-9]{64}$/.test(h || '') && (o.customer_details?.email || o.customer_email)) {
+        const key = `medias:${h.slice(0, 24)}:${plan}:${o.metadata?.pro || ''}`;
+        if (!(await env.KV.get(key))) { await env.KV.put(key, '1', { expirationTtl: 30 * 86400 }); await hooks?.abandoned?.(plan, o); }
       }
     } else if (ev.type === 'charge.refunded' && o.refunded && o.payment_intent) {
       // Reembolso completo de una suelta o un bono: se quitan esas consultas del saldo (una sola vez)

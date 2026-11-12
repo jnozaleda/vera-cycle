@@ -95,7 +95,7 @@ const body = `${STYLE}<div class="w vc">
   <label>Tu correo, para enviarte los pasos<input type="email" name="email" inputmode="email" autocomplete="email" placeholder="nombre@correo.com" required></label>
   <button class="vc-btn" type="submit"></button>
   <p class="vc-err" hidden></p>
-  <small>Después del pago te llega un correo: respóndelo con 3 franjas que te vengan bien y te proponemos hora en menos de 24 h laborables. Cancelación gratis hasta 1 hora antes.</small>
+  <small>Después del pago te llega un correo: respóndelo con 3 franjas que te vengan bien y te proponemos hora en menos de 24 h laborables. Cancelación gratis hasta 1 hora antes. Si no terminas el pago, te escribiremos una sola vez por si te quedó alguna duda.</small>
 </form></template>
 <script type="module">
   import { device, isTeam } from '/app/js/track.js';
@@ -107,7 +107,7 @@ const body = `${STYLE}<div class="w vc">
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const isEmail = (e) => /^[^\\s@<>()",;]+@[^\\s@<>()",;]+\\.[a-z]{2,24}$/i.test(e.trim());
   const q = new URLSearchParams(location.search);
-  hit(['respuesta', 'app', 'web'].includes(q.get('de')) ? 'video_pagina:' + q.get('de') : 'video_pagina');
+  hit(['respuesta', 'app', 'web', 'medias'].includes(q.get('de')) ? 'video_pagina:' + q.get('de') : 'video_pagina');
   // Anuncios: misma marca de 30 días que la portada (sin cookies)
   const AD_KEY = 'hera-src';
   if (q.has('gclid') || /^(cpc|ppc|paid)$/i.test(q.get('utm_medium') || '')) {

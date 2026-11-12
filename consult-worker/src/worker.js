@@ -133,6 +133,22 @@ export function videoPaidEmail(pro, plan) {
   return { subject, html, text };
 }
 
+/** Único correo a quien deja a medias el pago de una videollamada (vera-backlog#86). Avisado junto al botón de pagar. */
+export function videoAbandonedEmail(pro, plan) {
+  const lact = plan.eur === 99;
+  const what = lact ? 'asesoría de lactancia' : 'videollamada';
+  const link = `https://hera-gine.com/videollamada/?de=medias${lact ? '#lactancia' : `#reservar-${pro.key}`}`;
+  const free = `https://hera-gine.com/#preguntar-${pro.key}`;
+  const subject = `Tu ${what} con ${pro.short} se quedó a medias`;
+  const html = shell(`<p>Hola,</p><p>Empezaste a reservar una <b>${what} con ${esc(pro.name)}, ${esc(pro.role)}</b>, pero el pago no se llegó a completar.</p>
+<p style="margin:18px 0"><a href="${link}" style="display:inline-block;background:#45574C;color:#ffffff;text-decoration:none;font-weight:600;border-radius:8px;padding:12px 20px">Terminar la reserva</a></p>
+<p>¿Te quedó alguna duda antes de pagar? <b>Responde a este correo</b> y te contestamos.</p>
+<p>Si prefieres empezar por escrito, <a href="${free}" style="color:#45574C;font-weight:600">pregúntaselo gratis a ${esc(pro.short)}</a>: tus 2 primeras consultas no cuestan nada.</p>
+<p style="font-size:13px;color:#6E6C67">No te volveremos a escribir sobre esta reserva.</p>`);
+  const text = `Hola,\n\nEmpezaste a reservar una ${what} con ${pro.name}, ${pro.role}, pero el pago no se llegó a completar.\n\nTerminar la reserva: ${link}\n\n¿Te quedó alguna duda antes de pagar? Responde a este correo y te contestamos.\nSi prefieres empezar por escrito, pregúntaselo gratis a ${pro.short}: ${free}\n\nNo te volveremos a escribir sobre esta reserva.`;
+  return { subject, html, text };
+}
+
 /** Mensaje reenviado por el hilo: del profesional a la usuaria o de la usuaria al profesional */
 /** Pie de la primera respuesta (vera-backlog#85): «¿Te ha ayudado?» con tres botones a la página de opinión */
 export function rateBlock(pro, link) {
@@ -308,6 +324,13 @@ export default {
           `${PLANS[plan].label}: ${PLANS[plan].eur} €${s.livemode ? '' : ' (modo de prueba, sin dinero real)'}\n${hora}\n\nVer en Stripe: ${dash}`, sendMail);
       },
       cancelled: async () => { await bump(env, 'pago:baja_mensual'); },
+      abandoned: async (plan, s) => {
+        const pro = PROS[s.metadata?.pro] || PROS.matrona;
+        const to = s.customer_details?.email || s.customer_email;
+        const ok = await sendMail(env, { to, from: 'Hera <consultas@hera-gine.com>', replyTo: 'contacto@hera-gine.com', ...videoAbandonedEmail(pro, PLANS[plan]) });
+        await bump(env, `pago_medias:${plan}`);
+        await notify(env, `Actividad · Pago a medias · ${PLANS[plan].label} con ${pro.short}`, `Alguien empezó a pagar ${PLANS[plan].label} con ${pro.name} (${PLANS[plan].eur} €) y no terminó.\n${ok ? 'Le hemos enviado el único correo de recordatorio.' : 'No se pudo enviar el correo de recordatorio.'}${s.livemode ? '' : '\n(modo de prueba)'}`, sendMail);
+      },
       refunded: async (plan, charge) => {
         await bump(env, `pago:devuelto_${plan}`);
         await notify(env, `Reembolso · ${PLANS[plan].label} · ${PLANS[plan].eur} €`, `Reembolsado: ${PLANS[plan].label}.${PLANS[plan].video ? '' : ` Se han quitado ${PLANS[plan].credits === 1 ? 'esa consulta' : `esas ${PLANS[plan].credits} consultas`} del saldo (si quedaban).`}\n\nVer en Stripe: https://dashboard.stripe.com/${charge.livemode ? '' : 'test/'}payments/${charge.payment_intent}`, sendMail);

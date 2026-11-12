@@ -1,5 +1,6 @@
-// Guías de dudas del bebé solo para la web (12 nov 2026): las búsquedas del grupo de anuncios «Pediatra · dudas del bebé».
-// Publicadas ANTES de la revisión clínica a petición de Noza; las revisa Lucía (pediatra). Mientras tanto firman «Equipo de Hera».
+// Guías solo para la web (12 nov 2026): dudas del bebé (grupo de anuncios «Pediatra · dudas del bebé») y de lactancia
+// (búsquedas del grupo Matrona). Publicadas ANTES de la revisión clínica a petición de Noza; las revisan Lucía (bebé) y
+// Marina (lactancia). Mientras tanto firman «Equipo de Hera».
 // Cada guía: page = [pregunta, slug, título, profesional, grupo, resumen] · a = respuesta (como en app/js/guide.js) · x = ampliación
 // (preguntas frecuentes) · v = formato visual (como en guias-visual.mjs).
 
@@ -124,6 +125,46 @@ export const BABY_WEB = [
       tiles: [['Si gana peso', 'Suele comer lo que necesita'], ['Hacia el año', 'Come menos: crece más despacio'], ['Sin forzar', 'Ofrece, no obligues'], ['Pañales mojados', 'La mejor señal de que bebe bastante']],
       sem: { g: ['Es normal', 'Come poco unos días, pero gana peso, moja pañales y está activo.'], a: ['Consulta', 'Pierde peso o no gana, vomita a menudo, tiene fiebre, o es menor de 6 meses y rechaza el pecho o el biberón.'], r: ['Ve a urgencias', 'Moja muchos menos pañales, tiene la boca seca, llora sin lágrimas o está muy dormido.'] },
       links: [['/guias/alimentacion-complementaria/', 'Alimentación complementaria'], ['/bebe/mes-9/', 'Bebé de 9 meses'], ['/bebe/mes-12/', 'Bebé de 12 meses'], ['/guias/denticion-bebe-sintomas/', 'Dentición']],
+    },
+  },
+  {
+    page: ['Crisis de lactancia: ¿qué son y cuánto duran?', 'crisis-de-lactancia', 'Crisis de lactancia: qué son, cuándo llegan y cuánto duran', 'matrona', 'Posparto', 'Por qué de repente pide el pecho todo el rato y qué hacer.'],
+    a: [
+      'Las crisis de lactancia son normales: unos días en los que el bebé pide el pecho mucho más, está inquieto, se suelta y vuelve a cogerlo, y parece que no se queda satisfecho. No significa que tengas poca leche: al mamar más, tu cuerpo ajusta la producción a lo que necesita.',
+      'Suelen describirse hacia los 15–20 días, las 6–7 semanas y los 3 meses, aunque cada bebé tiene su ritmo. Las primeras duran unos días; la de los 3 meses puede alargarse varias semanas, porque el bebé mama más rápido, se distrae con todo y el pecho se nota más blando.',
+      ['Ofrece el pecho a demanda, sin horarios: es lo que hace que la producción se ajuste.', 'Busca sitios tranquilos para las tomas si se distrae, y prueba a darle el pecho medio dormido.', 'Descansa cuando él descanse y pide ayuda en casa con lo demás.', 'No hace falta darle biberones de fórmula «por si acaso»: si te preocupa, consúltalo antes.'],
+      'Consulta con tu matrona o tu pediatra si no gana peso, moja menos pañales de lo habitual, tienes dolor o grietas en el pezón, o el pecho está rojo, duro y con fiebre.',
+    ],
+    x: { updated: '2026-11-12', desc: 'Las crisis de lactancia son días en los que el bebé pide el pecho mucho más. Suelen llegar hacia los 15–20 días, las 6–7 semanas y los 3 meses. Qué hacer y cuándo consultar.', h: 'Más dudas frecuentes', qa: [
+      ['¿Cuánto dura la crisis de los 15 días?', 'Suele durar unos 2 a 7 días. Si el bebé moja pañales y gana peso, es normal aunque pida muchísimo.'],
+      ['¿Y la crisis de los 3 meses?', 'Es la más larga y la que más dudas da: puede durar varias semanas. El bebé mama en pocos minutos y se distrae, y el pecho se nota blando. No es que tengas menos leche: tu cuerpo ya se ha ajustado.'],
+      ['¿Cómo sé si se queda con hambre de verdad?', 'Las mejores señales son que moja unos 5 o 6 pañales al día, hace caca con regularidad las primeras semanas y gana peso en las revisiones.'],
+      ['¿Me tengo que sacar leche para tener más?', 'No suele hacer falta: ofrecer el pecho a menudo es lo que más ayuda. Si tu matrona lo ve necesario, te dirá cómo.'],
+    ] },
+    v: {
+      tiles: [['15–20 días', 'La primera, lo habitual'], ['6–7 semanas', 'La segunda'], ['3 meses', 'La más larga'], ['A demanda', 'Lo que más ayuda']],
+      sem: { g: ['Es normal', 'Pide mucho más unos días, pero moja pañales y gana peso.'], a: ['Consulta', 'No gana peso, moja menos pañales, te duele el pecho o tienes grietas, o el pecho está rojo y con fiebre.'], r: ['Ve a urgencias', 'El bebé está muy dormido y no se despierta para comer, o tiene fiebre con menos de 3 meses.'] },
+      chart: { title: 'Cuándo suelen llegar', track: [['15–20 días', 2, P], ['', 3, L], ['6–7 sem.', 2, P], ['', 4, L], ['3 meses', 3, P]], ticks: ['Nacer', '3 semanas', '7 semanas', '3 meses'], legend: 'Orientativo: cada bebé tiene su ritmo.' },
+      links: [['/videollamada/#lactancia', 'Asesoría de lactancia con Marina'], ['/guias/subida-de-la-leche/', 'La subida de la leche'], ['/bebe/mes-1/', 'Bebé de 1 mes'], ['/bebe/mes-3/', 'Bebé de 3 meses']],
+    },
+  },
+  {
+    page: ['¿Cuándo sube la leche después del parto?', 'subida-de-la-leche', 'Subida de la leche: cuándo llega después del parto y cómo aliviarla', 'matrona', 'Posparto', 'Cuánto tarda, cómo se nota y qué hacer si el pecho se pone muy duro.'],
+    a: [
+      'La leche suele subir entre el segundo y el cuarto día después del parto. Antes, el bebé toma calostro: poca cantidad, pero justo lo que necesita esos primeros días. Tras una cesárea o en el primer bebé puede tardar algo más.',
+      'Lo notarás porque el pecho está más lleno, pesado y caliente, y la leche se vuelve más blanca y abundante. Es normal que el bebé pierda algo de peso los primeros días (hasta un 7–10 %) y que lo recupere hacia las 2 semanas.',
+      ['Dale el pecho a menudo, unas 8 a 12 veces al día: es lo que más ayuda a que suba y a que no se ingurgite.', 'Si el pecho está tan duro que le cuesta engancharse, sácate un poco de leche a mano antes de la toma para ablandar la areola.', 'Entre tomas, el frío (una compresa fría envuelta en un paño) alivia la hinchazón.'],
+      'Consulta con tu matrona si a los 5 días no ha subido, si el bebé pierde más del 10 % de su peso, moja pocos pañales o está muy amarillo, o si tienes una zona del pecho roja, dura y dolorosa, sobre todo con fiebre.',
+    ],
+    x: { updated: '2026-11-12', desc: 'La leche suele subir entre el segundo y el cuarto día después del parto. Cómo se nota, cómo aliviar el pecho duro y cuándo consultar con tu matrona.', h: 'Más dudas frecuentes', qa: [
+      ['¿Cuánto tarda en subir la leche tras una cesárea?', 'Puede tardar uno o dos días más. Ponerlo al pecho pronto y a menudo ayuda; si a los 5 días no ha subido, coméntalo con tu matrona.'],
+      ['¿Cuántos pañales debe mojar?', 'A partir del quinto día, unos 5 o 6 pañales mojados al día y varias cacas, que pasan de negras a amarillas.'],
+      ['¿Es normal que me duela?', 'Es normal notar el pecho tenso y algo molesto los días de la subida. El dolor fuerte en el pezón o las grietas no lo son: suelen indicar que el agarre se puede mejorar.'],
+    ] },
+    v: {
+      tiles: [['Día 2–4', 'Cuando suele subir'], ['8–12 tomas', 'Al día, lo que más ayuda'], ['Hasta 7–10 %', 'Peso que puede perder al principio'], ['~2 semanas', 'Cuando recupera su peso']],
+      sem: { g: ['Es normal', 'Pecho lleno y caliente entre los días 2 y 4; el bebé moja pañales.'], a: ['Consulta', 'No ha subido al quinto día, pierde más del 10 % de peso, moja pocos pañales o tienes una zona roja y dura.'], r: ['Ve a urgencias', 'El bebé está muy dormido, no come, tiene la boca seca o está muy amarillo y decaído.'] },
+      links: [['/videollamada/#lactancia', 'Asesoría de lactancia con Marina'], ['/guias/crisis-de-lactancia/', 'Crisis de lactancia'], ['/guias/cuanto-dura-el-sangrado-despues-del-parto/', 'Sangrado después del parto'], ['/bebe/mes-1/', 'Bebé de 1 mes']],
     },
   },
 ];

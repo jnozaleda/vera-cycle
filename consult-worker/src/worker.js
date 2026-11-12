@@ -384,11 +384,12 @@ export default {
       if (!isEvent(e)) return reply(400, { error: 'bad_event' });
       await bump(env, e);
       // Actividad en tiempo real para el equipo (activity.js): evento, dispositivo y etiqueta anónima del día
-      await record(env, { e, d: isDevice(body.d) ? body.d : '', p: await personTag(env, request, madridDay()) }, sendMail, ctx);
+      const p = await personTag(env, request, madridDay(), body.p);
+      await record(env, { e, d: isDevice(body.d) ? body.d : '', p }, sendMail, ctx);
       if (e === 'apertura') await countPerson(env, request, 'app');
       if (e === 'portada') await countPerson(env, request, 'portada');
       if (e.startsWith('anuncio_visita')) await countPerson(env, request, 'anuncio');
-      return reply(200, { ok: true });
+      return reply(200, { ok: true, p });
     }
 
     if (url.pathname === '/checkout') {
@@ -451,7 +452,7 @@ export default {
         if (body.team !== true) {
           if (body.src === 'ads') await bump(env, 'anuncio_limite');
           await bump(env, 'gratuitas_agotadas');
-          await record(env, { e: 'gratuitas_agotadas', p: await personTag(env, request, madridDay()) }, sendMail, ctx);
+          await record(env, { e: 'gratuitas_agotadas', p: await personTag(env, request, madridDay(), body.p) }, sendMail, ctx);
         }
         return reply(200, { limit: true, used: rec.n, freeLimit: limit, ...(pay ? { pay: true } : {}) });
       }
@@ -484,7 +485,7 @@ export default {
           // Si llegó desde un anuncio, el aviso lo dice (y queda en la actividad para el resumen y los recorridos)
           const camp = /^[a-z0-9_]{1,24}$/.test(String(body.camp || '')) ? body.camp : '';
           const fromAd = body.src === 'ads';
-          const tag = await personTag(env, request, madridDay());
+          const tag = await personTag(env, request, madridDay(), body.p);
           await record(env, { e: `consulta:${body.to}`, p: tag, note: fromAd ? `vino de un anuncio${camp ? ` (${camp})` : ''}${paid ? ', consulta pagada' : ''}` : (paid ? 'consulta pagada' : '') }, sendMail, ctx);
           if (fromAd) await record(env, { e: camp ? `consulta_anuncio:${camp}` : 'consulta_anuncio', p: tag }, sendMail, ctx);
         }
@@ -493,7 +494,7 @@ export default {
       const rf = !test && body.team !== true && relay && !rec.first && rec.n === 0 ? await inviteFor(env, String(body.ref || ''), h) : null;
       if (rf) {
         await bump(env, 'consulta_invitada');
-        await record(env, { e: 'consulta_invitada', p: await personTag(env, request, madridDay()) }, sendMail, ctx);
+        await record(env, { e: 'consulta_invitada', p: await personTag(env, request, madridDay(), body.p) }, sendMail, ctx);
       }
       // Copia de control para el equipo: un solo correo por consulta, con el texto entero (y los adjuntos si COPY_ATTACH="1", temporal)
       if (bcc && body.team !== true) {

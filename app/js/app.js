@@ -28,7 +28,7 @@ import { addFiles, filesPayload, ATTACH_NOTE } from './attach.js';
 import { CONSULT_ATTACH, PREGNANCY_BETA_ONLY, MENOPAUSE_BETA_ONLY, CONSULT, CONSULTS, TAGLINE, CONSULT_API, CONSULT_FORM } from './config.js';
 import { suggestContact } from './contacts.js';
 import { listConsults, addConsult, markSeen, clearConsults, consultState, unseenAnswer, refreshConsults } from './consults.js';
-import { track, isTeam, setTeam } from './track.js';
+import { track, isTeam, setTeam, visitTag } from './track.js';
 import { isBeta } from './beta.js';
 import { pushState, enablePush, disablePush, syncPush, testPush } from './push.js';
 import { sync, syncAvailable, onSyncChange, initSync, connect, reauthorize, disconnect, deleteRemote, syncNow, loadGis } from './sync.js';
@@ -2845,7 +2845,7 @@ const actions = {
       const meta = [];
       if (a.include) meta.push(...consultDetails());
       const res = await fetch(`${CONSULT_API}/ask`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: a.email.trim(), to: to.key, text: a.text.trim(), context: a.context, situation: meta.join('\n'), website: a.website || '', attachments: filesPayload(a.files || []), follow: !!a.follow, ...(isTeam() ? { team: true } : {}), ...(payTest() ? { payTest: true } : {}), ...adSrc(), ...refSrc() }) });
+        body: JSON.stringify({ email: a.email.trim(), to: to.key, text: a.text.trim(), context: a.context, situation: meta.join('\n'), website: a.website || '', p: visitTag(), attachments: filesPayload(a.files || []), follow: !!a.follow, ...(isTeam() ? { team: true } : {}), ...(payTest() ? { payTest: true } : {}), ...adSrc(), ...refSrc() }) });
       const j = await res.json().catch(() => ({}));
       if (res.status === 429) throw new Error('Has enviado varias consultas seguidas. Espera unos minutos y vuelve a intentarlo.');
       if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');

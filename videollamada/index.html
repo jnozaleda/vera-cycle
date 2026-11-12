@@ -57,6 +57,8 @@ details p{padding:0 0 14px}details a{color:#45574C;font-weight:600;white-space:n
 .vc-steps b{display:block;font-size:15.5px}.vc-steps span{font-size:14.5px;color:#4F4E49}
 .vc-faq{max-width:640px;margin-top:10px}.vc-faq div{border-top:1px solid #E5E1D8;padding:14px 0}.vc-faq b{display:block;font-size:15.5px;margin-bottom:3px}.vc-faq p{font-size:14.5px;color:#4F4E49}
 .vc-alt{background:#DCEBE4;border-radius:12px;padding:22px 20px;margin:48px 0 0;display:grid;gap:8px}.vc-alt h3{font-size:24px;color:#2D4A3A}.vc-alt p{color:#35473C;font-size:15px}.vc-alt a{color:#2D4A3A;font-weight:600}
+.vc-free{background:#DCEBE4;border-radius:12px;padding:18px 20px;margin-top:16px;display:grid;gap:8px;color:#2D4A3A}.vc-free b{font:400 23px/1.2 Newsreader,Georgia,serif;color:#2D4A3A}.vc-free p{font-size:15px;max-width:40em}
+.vc-free-l{display:flex;flex-wrap:wrap;gap:8px}.vc-free-l a{font-size:14.5px;font-weight:600;color:#2D4A3A;text-decoration:none;background:#fff;border:1px solid #BFD3C7;border-radius:999px;padding:8px 14px}.vc-free-l a:hover{border-color:#2D4A3A}
 .vc-urg{font-size:13.5px;color:#B3261E;margin:18px 0 26px;max-width:640px}
 </style><div class="w vc">
 <section class="vc-hero">
@@ -91,6 +93,8 @@ details p{padding:0 0 14px}details a{color:#45574C;font-weight:600;white-space:n
     <button type="button" class="vc-btn" data-plan="video" data-pro="pediatra" data-eur="55" data-who="Lucía">Reservar con Lucía</button>
   </div>
 </article></div>
+<div class="vc-free" id="gratis"><b>¿No sabes si necesitas una videollamada?</b><p>Pregúntalo gratis por escrito: te responde en menos de 48 h y te dice si te conviene hablarlo cara a cara. Tus 2 primeras consultas son gratis, sin tarjeta.</p>
+  <div class="vc-free-l"><a href="/#preguntar-gineco">Preguntar a Gonzalo</a><a href="/#preguntar-matrona">Preguntar a Marina</a><a href="/#preguntar-pediatra">Preguntar a Lucía</a></div></div>
 
 <h2>Cómo funciona</h2>
 <p class="vc-sub">Cinco pasos. Hera coordina la agenda contigo y con la profesional por correo.</p>
@@ -110,11 +114,6 @@ details p{padding:0 0 14px}details a{color:#45574C;font-weight:600;white-space:n
   <div><b>¿Para qué no sirve?</b><p>No es para urgencias ni sustituye una exploración en persona. Si la profesional cree que necesitas que te vean, te lo dirá.</p></div>
 </div>
 
-<div class="vc-alt">
-  <h3>¿Te basta con una respuesta por escrito?</h3>
-  <p>Escribe tu duda y la profesional te responde en menos de 48 h. Tus 2 primeras consultas son gratis, sin tarjeta.</p>
-  <p><a href="/#ask">Preguntar gratis por escrito</a></p>
-</div>
 <p class="vc-urg">No es para urgencias. Si hay sangrado abundante, pérdida de líquido, el bebé no se mueve, dolor muy fuerte o fiebre alta en un bebé pequeño, llama al 112 o ve a urgencias.</p>
 </div>
 <template id="vc-form-t"><form class="vc-form" novalidate>
@@ -127,7 +126,8 @@ details p{padding:0 0 14px}details a{color:#45574C;font-weight:600;white-space:n
   import { device, isTeam } from '/app/js/track.js';
   const API = 'https://hera-consultas.tempcheck-app.workers.dev';
   const local = ['localhost', '127.0.0.1'].includes(location.hostname);
-  const hit = (e) => { if (local || isTeam()) return; fetch(API + '/hit', { method: 'POST', body: JSON.stringify({ e, d: device() }), keepalive: true }).catch(() => {}); };
+  let ptag = '';
+  const hit = (e) => { if (local || isTeam()) return; fetch(API + '/hit', { method: 'POST', body: JSON.stringify({ e, d: device(), p: ptag }), keepalive: true }).then((r) => r.json()).then((j) => { if (/^[0-9A-F]{4}$/.test(j?.p || '')) ptag = j.p; }).catch(() => {}); };
   const store = { get: (k) => { try { return localStorage.getItem(k) || ''; } catch { return ''; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const isEmail = (e) => /^[^\s@<>()",;]+@[^\s@<>()",;]+\.[a-z]{2,24}$/i.test(e.trim());
@@ -187,7 +187,7 @@ details p{padding:0 0 14px}details a{color:#45574C;font-weight:600;white-space:n
   const pago = q.get('pago');
   if (pago) {
     history.replaceState(null, '', location.pathname);
-    if (pago === 'no') say('<b>No se ha hecho ningún pago</b>Puedes volver a intentarlo cuando quieras.');
+    if (pago === 'no') say('<b>No se ha hecho ningún pago</b>Puedes volver a intentarlo cuando quieras. ¿Prefieres preguntarlo antes por escrito? <a href="#gratis" style="color:#2D4A3A;font-weight:600">Es gratis</a>.');
     else {
       say('<b>Comprobando el pago…</b>');
       fetch(API + '/checkout/status?cs=' + encodeURIComponent(q.get('cs') || '')).then((r) => r.json()).then((j) => {

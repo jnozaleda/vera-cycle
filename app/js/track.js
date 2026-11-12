@@ -1,6 +1,6 @@
 // track.js
 // Medición de uso anónima (vera-backlog#6): envía el nombre de un evento y el tipo de dispositivo
-// («ios-app», «android-web»…) al servicio de Hera. Sin cookies ni identificadores, nunca el contenido
+// («ios-app», «android-web»…) al servicio de Hera. Sin cookies ni identificadores guardados, nunca el contenido
 // (se envía «apuntó síntomas», no cuáles). No cuenta en local salvo con ?track.
 
 import { CONSULT_API } from './config.js';
@@ -12,6 +12,11 @@ const TEAM_KEY = 'hera-equipo';
 export function isTeam() { try { return localStorage.getItem(TEAM_KEY) === '1'; } catch { return false; } }
 export function setTeam(on) { try { if (on) localStorage.setItem(TEAM_KEY, '1'); else localStorage.removeItem(TEAM_KEY); } catch { /* sin almacenamiento */ } }
 const sent = new Set();
+// Etiqueta anónima del día que devuelve el servicio: solo en memoria, mientras la app está abierta (nunca se guarda)
+let tag = { p: '', day: '' };
+const today = () => new Date().toDateString();
+/** Para añadir a los envíos al servicio (consultas incluidas) */
+export const visitTag = () => (tag.day === today() ? tag.p : '');
 const recent = new Map();
 
 /** «ios-app», «android-web», «mac-web»… */
@@ -31,6 +36,7 @@ export function track(e, once = false) {
   if (!once && Date.now() - last < 60000) return;
   recent.set(e, Date.now());
   try {
-    fetch(`${CONSULT_API}/hit`, { method: 'POST', body: JSON.stringify({ e, d: device() }), keepalive: true, mode: 'cors' }).catch(() => {});
+    fetch(`${CONSULT_API}/hit`, { method: 'POST', body: JSON.stringify({ e, d: device(), p: visitTag() }), keepalive: true, mode: 'cors' })
+      .then((r) => r.json()).then((j) => { if (/^[0-9A-F]{4}$/.test(j?.p || '')) tag = { p: j.p, day: today() }; }).catch(() => {});
   } catch { /* sin conexión: no pasa nada */ }
 }

@@ -120,7 +120,10 @@ async function hmacHex(secret, text) {
   return [...new Uint8Array(sig)].map((x) => x.toString(16).padStart(2, '0')).join('');
 }
 /** Etiqueta de persona del día (cambia cada día; no permite saber quién es) */
-export async function personTag(env, request, day) {
+/** given: la etiqueta que la página recibió en su primer envío y reenvía mientras sigue abierta (vera-backlog: Android
+ *  cambia entre IPv4 e IPv6 y, si no, una misma visita salía como dos personas). Solo se acepta con el formato de siempre. */
+export async function personTag(env, request, day, given = '') {
+  if (/^[0-9A-F]{4}$/.test(String(given || ''))) return given;
   if (!request) return '';
   const ip = request.headers.get('CF-Connecting-IP') || '';
   const ua = request.headers.get('User-Agent') || '';

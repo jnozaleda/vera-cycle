@@ -16,7 +16,7 @@ const is = (e, names) => names.some((n) => e === n || e.startsWith(`${n}:`));
 const pct = (a, t) => (t ? `${Math.round((a * 100) / t)} %` : '—');
 // Marcas de anuncio: la visita desde el anuncio y lo que la app o el servicio apuntan después con la marca guardada (30 días)
 const AD_MARK = ['anuncio_visita', 'consulta_anuncio', 'instalada_anuncio', 'vuelta_anuncio'];
-const AD_GROUPS = [['matrona', 'Matrona'], ['gineco', 'Ginecólogo'], ['pediatra', 'Pediatra'], ['', 'Sin grupo (enlace de sitio u otro)']];
+const AD_GROUPS = [['matrona', 'Matrona'], ['gineco', 'Ginecólogo'], ['pediatra', 'Pediatra'], ['lactancia', 'Lactancia'], ['gineco_latam', 'Ginecólogo · México y Argentina'], ['pediatra_latam', 'Pediatra · México y Argentina'], ['', 'Sin grupo (enlace de sitio u otro)']];
 const PATH = (e) => {
   const [n, v = ''] = e.split(':');
   if (n === 'anuncio_visita') return `anuncio${v ? ` ${v}` : ''}`;

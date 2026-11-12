@@ -53,6 +53,25 @@ export function dropoff(act, steps, ad = null) {
   return { rows, started, done, dropped: started - done, lost, startedAd: rows[0].ad, doneAd: rows[rows.length - 1].ad };
 }
 
+/** Páginas más vistas de hera-gine.com según Cloudflare Web Analytics (sin cookies). Necesita el secreto CF_ANALYTICS_TOKEN. */
+async function topPages(env, days) {
+  if (!env.CF_ANALYTICS_TOKEN || !env.CF_ACCOUNT_ID) return { error: 'Falta la clave de Cloudflare (CF_ANALYTICS_TOKEN).' };
+  const to = new Date(); const from = new Date(to.getTime() - days * 86400000);
+  const query = `query($acc: string!, $from: Time!, $to: Time!) { viewer { accounts(filter: { accountTag: $acc }) {
+    rumPageloadEventsAdaptiveGroups(limit: 25, orderBy: [count_DESC], filter: { datetime_geq: $from, datetime_leq: $to, requestHost: "hera-gine.com" }) { count dimensions { requestPath } } } } }`;
+  try {
+    const r = await fetch('https://api.cloudflare.com/client/v4/graphql', { method: 'POST', headers: { Authorization: `Bearer ${env.CF_ANALYTICS_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, variables: { acc: env.CF_ACCOUNT_ID, from: from.toISOString(), to: to.toISOString() } }) });
+    const j = await r.json();
+    if (j.errors?.length) return { error: j.errors.map((e) => e.message).join(' · ').slice(0, 300) };
+    const rows = j.data?.viewer?.accounts?.[0]?.rumPageloadEventsAdaptiveGroups || [];
+    // Une «/guias/x» y «/guias/x/» y quita /index.html
+    const m = new Map();
+    for (const x of rows) { const pth = (x.dimensions.requestPath || '/').replace(/index\.html$/, '').replace(/(.)\/$/, '$1'); m.set(pth, (m.get(pth) || 0) + x.count); }
+    return { rows: [...m].sort((a, b) => b[1] - a[1]).slice(0, 20) };
+  } catch (e) { return { error: e.message }; }
+}
+
 export async function panel(env, url, openThreads) {
   const days = [1, 7, 30].includes(Number(url.searchParams.get('d'))) ? Number(url.searchParams.get('d')) : 7;
   const now = Date.now();
@@ -67,6 +86,7 @@ export async function panel(env, url, openThreads) {
   const actAll = (await env.DB.prepare('SELECT ts, e, d, p FROM activity WHERE ts > ?1 ORDER BY ts DESC').bind(now - Math.max(days, 7) * 86400000).all()).results || [];
   const act = actAll.filter((r) => r.ts > now - days * 86400000);
   const open = openThreads ? await openThreads(env) : { pendientes: {}, fuera_plazo: {} };
+  const pages = await topPages(env, days);
 
   // Persona-día (etiqueta anónima diaria) → sus eventos. «De anuncio» = persona-día con una marca de anuncio, sin la
   // revisión automática de Google (todo lo suyo viene de un navegador «otro»).
@@ -247,11 +267,12 @@ ${groups.length ? `<h3 class="fh">Por grupo de anuncio</h3><table><tr><th></th><
 <p class="mute" style="margin-top:6px">Instalaciones: en Android, exacto (la app ve la marca del anuncio); en iPhone, aproximado (mismo móvil y misma conexión el mismo día). Sin la revisión automática de Google.</p>` : '<p class="mute">Nadie ha llegado todavía desde un anuncio. Se cuenta quien entra con gclid o utm_medium=cpc.</p>'}</div>
 <div class="card"><h2>Qué hacen quienes llegan por un anuncio</h2>${adPeople.length ? `${bars(adSteps)}${adTrips ? `<h3 class="fh">Últimos recorridos</h3><ul class="feed">${adTrips}</ul>` : ''}` : '<p class="mute">Nada todavía.</p>'}<p class="mute" style="margin-top:8px">Medido desde el 8 de noviembre (desplazamiento, secciones, enlaces y tiempo).</p></div>
 <div class="card"><h2>Invitaciones</h2>${g('invitacion_vista') || g('invitacion_visita') || g('consulta_invitada') ? bars([['Vieron su enlace para invitar', g('invitacion_vista')], ['Lo compartieron por WhatsApp', g('invitacion_whatsapp')], ['Lo copiaron', g('invitacion_copiar')], ['Visitas con un enlace de invitación', g('invitacion_visita')], ['Primeras consultas con invitación', g('consulta_invitada')], ['Consultas regaladas (ya respondidas)', g('consulta_regalada')]], true) : '<p class="mute">Nada todavía. El enlace sale al valorar «Sí, mucho» en el correo de opinión.</p>'}<p class="mute" style="margin-top:8px">Cada consulta regalada es tiempo de la profesional: se regala cuando responde a alguien nuevo que llegó con un enlace.</p></div>
-<div class="card"><h2>De la web a la consulta</h2>${bars([withAd('Visitaron la web', g('personas_portada'), ['portada'], true), withAd('Tocaron una duda de ejemplo', g('ejemplo_duda'), ['ejemplo_duda']), withAd('Empezaron a escribir una duda', g('pregunta_portada'), ['pregunta_portada']), withAd('Cambiaron de profesional', g('elige_pro'), ['elige_pro']), withAd('Llegaron al campo de correo', g('correo_portada'), ['correo_portada']), withAd('Enviaron la consulta desde la web', g('enviada_portada'), ['enviada_portada']), withAd('Pulsaron «Abrir Hera»', g('abrir_portada'), ['abrir_portada'])])}</div>
+<div class="card"><h2>De la web a la consulta</h2>${bars([withAd('Visitaron la web', g('personas_portada'), ['portada'], true), withAd('Tocaron una duda de ejemplo', g('ejemplo_duda'), ['ejemplo_duda']), withAd('Empezaron a escribir una duda', g('pregunta_portada'), ['pregunta_portada']), withAd('Cambiaron de profesional', g('elige_pro'), ['elige_pro']), withAd('Llegaron al campo de correo', g('correo_portada'), ['correo_portada']), withAd('Enviaron la consulta desde la web', g('enviada_portada'), ['enviada_portada']), withAd('Pulsaron «Abrir la app» (arriba)', g('abrir_portada'), ['abrir_portada']), withAd('Pulsaron la franja de la app', g('clic:abrir_franja'), ['clic:abrir_franja'])])}</div>
 <div class="card"><h2>En la app</h2>${bars([withAd('Abrieron la app', g('apertura'), ['apertura']), withAd('Completaron la bienvenida', sum('onboarding:'), ['onboarding']), withAd('Añadieron fecha de parto', g('fecha_parto'), ['fecha_parto']), withAd('Añadieron fecha de nacimiento', g('fecha_nacimiento'), ['fecha_nacimiento']), withAd('Activaron el aviso semanal', g('push_on'), ['push_on']), withAd('Conectaron Google Drive', g('sync_on'), ['sync_on']), withAd('Pulsaron «Contacto»', g('contacto'), ['contacto'])])}</div>
 <div class="card"><h2>Etapa al empezar</h2>${bars(STAGES.map(([k2, l]) => withAd(l, g(`onboarding:${k2}`), [`onboarding:${k2}`])))}</div>
 <div class="card"><h2>Qué apuntan en el diario</h2>${bars(DIARY.map(([k2, l]) => withAd(l, g(`diario:${k2}`), [`diario:${k2}`])))}</div>
 <div class="card"><h2>Pestañas visitadas</h2>${bars(TABS.map(([k2, l]) => withAd(l, g(`pestana:${k2}`), [`pestana:${k2}`])))}</div>
+<div class="card"><h2>Páginas más visitadas</h2>${pages.error ? `<p class="mute">${esc(pages.error)}</p>` : pages.rows.length ? bars(pages.rows.map(([pth, n]) => [pth, n])) : '<p class="mute">Nada todavía.</p>'}<p class="mute" style="margin-top:8px">Visitas a cada página según Cloudflare Web Analytics, sin cookies. Incluye al equipo y no separa anuncios.</p></div>
 <div class="card"><h2>Dispositivos</h2>${bars(devices)}</div>
 <div class="card"><h2>Actividad reciente</h2><ul class="feed">${feed || '<li><span class="mute">Nada todavía.</span></li>'}</ul></div>
 <div class="card"><h2>Opiniones tras la consulta</h2>${opRows ? `<table><tr><th></th><th>Sí, mucho</th><th>Más o menos</th><th>No</th></tr>${opRows}</table>` : '<p class="mute">Nada todavía.</p>'}${opFeed ? `<h3 class="fh">Comentarios</h3><ul class="feed">${opFeed}</ul>` : ''}</div>

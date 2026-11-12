@@ -18,6 +18,8 @@ PAYMENTS = "on"
 COPY_ATTACH = "1"
 # Temporal (11 nov 2026): la copia de control dice el correo de la usuaria. Quitar tras las pruebas.
 COPY_EMAIL = "1"
+# Cuenta de Cloudflare (para las páginas más visitadas del panel; la clave va en el secreto CF_ANALYTICS_TOKEN)
+CF_ACCOUNT_ID = "e16a6457f5d0978599ce1b9ad1966e63"
 STRIPE_PORTAL_URL = "https://billing.stripe.com/p/login/00w14gfOV6nU8rG7jc5ZC00"
 
 [[kv_namespaces]]

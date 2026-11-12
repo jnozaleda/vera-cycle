@@ -120,7 +120,8 @@ const body = `${STYLE}<div class="w vc">
   const note = document.getElementById('vc-note');
   const say = (html) => { note.innerHTML = html; note.hidden = false; };
   let open = null;
-  function openForm(btn) {
+  // auto: se abre solo por el enlace (#lactancia, #reservar-…); entonces no cuenta como «pulsó reservar»
+  function openForm(btn, auto = false) {
     if (open) { open.form.remove(); open.btn.hidden = false; }
     const form = document.getElementById('vc-form-t').content.firstElementChild.cloneNode(true);
     const { plan, pro, eur, who } = btn.dataset;
@@ -129,7 +130,7 @@ const body = `${STYLE}<div class="w vc">
     const email = form.querySelector('input');
     email.value = store.get('hera-ask-email');
     btn.hidden = true; btn.after(form); open = { form, btn };
-    hit('video_reserva:' + pro);
+    if (!auto) hit('video_reserva:' + pro);
     setTimeout(() => email.focus({ preventScroll: true }), 50);
     form.addEventListener('submit', async (ev) => {
       ev.preventDefault();
@@ -155,7 +156,7 @@ const body = `${STYLE}<div class="w vc">
   const m = /^#(reservar-(gineco|matrona|pediatra)|lactancia)$/.exec(location.hash);
   if (m) {
     const b = m[1] === 'lactancia' ? document.querySelector('[data-plan=lactancia]') : document.querySelector('[data-plan=video][data-pro=' + m[2] + ']');
-    if (b) { b.closest('.vc-card').scrollIntoView({ block: 'start' }); openForm(b); }
+    if (b) { b.closest('.vc-card').scrollIntoView({ block: 'start' }); openForm(b, true); }
   }
   // Vuelta de Stripe
   const pago = q.get('pago');

@@ -657,7 +657,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   import { addFiles, filesPayload, ATTACH_NOTE } from './app/js/attach.js';
   import { CONSULT_ATTACH } from './app/js/config.js';
   import { isBeta } from './app/js/beta.js';
-  import { device, isTeam } from './app/js/track.js';
+  import { device, isTeam, setTeam } from './app/js/track.js';
   const API = 'https://hera-consultas.tempcheck-app.workers.dev';
   const PROS = { gineco: { name: 'Gonzalo', img: 'gonzalo' }, matrona: { name: 'Marina', img: 'marina' }, pediatra: { name: 'Lucía', img: 'lucia' } };
   const local = ['localhost', '127.0.0.1'].includes(location.hostname);
@@ -666,6 +666,15 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const isEmail = (e) => /^[^\s@<>()",;]+@[^\s@<>()",;]+\.[a-z]{2,24}$/i.test(e.trim());
+  // Modo equipo desde la web: hera-gine.com/#equipo (o #equipo-off para quitarlo). Vale para la web y la app de este navegador.
+  if (/^#equipo(-off)?$/.test(location.hash)) {
+    const on = location.hash === '#equipo';
+    setTeam(on); history.replaceState(null, '', location.pathname + location.search);
+    const n = document.createElement('div');
+    n.textContent = on ? 'Modo equipo activado: lo que hagas en este navegador ya no cuenta en las métricas ni en los avisos.' : 'Modo equipo desactivado en este navegador.';
+    n.style.cssText = 'position:fixed;left:12px;right:12px;bottom:12px;z-index:50;background:#2F3631;color:#fff;font:14px/1.4 Inter,sans-serif;padding:12px 14px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.2)';
+    document.body.append(n); setTimeout(() => n.remove(), 6000);
+  }
   hit('portada');
   // Anuncios (vera-backlog#56): quien llega con gclid o utm_medium=cpc queda marcado 30 días en este dispositivo
   // (localStorage, sin cookies). Solo se usa para contar consultas y pagos que vienen de anuncios.

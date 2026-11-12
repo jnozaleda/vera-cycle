@@ -310,13 +310,13 @@ export default {
           const pro = PROS[s.metadata?.pro] || PROS.matrona;
           const to = s.customer_details?.email || s.customer_email;
           if (to) await sendMail(env, { to, replyTo: 'contacto@hera-gine.com', ...videoPaidEmail(pro, PLANS[plan]) });
-          if (s.metadata?.src === 'ads') { await bump(env, `anuncio_pago:${plan}`); await bump(env, 'anuncio_eur', madridDay(), PLANS[plan].eur); }
+          if (s.metadata?.src === 'ads') { const ak = /_latam$/.test(String(s.metadata?.camp || '')) ? 'latam' : 'anuncio'; await bump(env, `${ak}_pago:${plan}`); await bump(env, `${ak}_eur`, madridDay(), PLANS[plan].eur); }
           const dash = `https://dashboard.stripe.com/${s.livemode ? '' : 'test/'}${s.payment_intent ? `payments/${s.payment_intent}` : 'payments'}`;
           await notify(env, `Pago · ${PLANS[plan].video && PLANS[plan].eur === 99 ? 'Asesoría de lactancia' : 'Videollamada'} con ${pro.short} · ${PLANS[plan].eur} €${s.metadata?.src === 'ads' ? ' · desde anuncio' : ''}${s.livemode ? '' : ' · prueba'}`,
             `${PLANS[plan].label} con ${pro.name}: ${PLANS[plan].eur} €${s.livemode ? '' : ' (modo de prueba, sin dinero real)'}\n\nLe hemos enviado el correo con los pasos: responderá con 3 franjas a contacto@hera-gine.com.\nSiguiente: cuadrar la hora con ${pro.short} y proponérsela en menos de 24 h laborables; después, enviar el enlace de Google Meet.\nSi no responde, su correo está en el pago de Stripe.\n\nVer en Stripe: ${dash}`, sendMail);
           return;
         }
-        if (s.metadata?.src === 'ads') { await bump(env, `anuncio_pago:${plan}`); await bump(env, 'anuncio_eur', madridDay(), PLANS[plan].eur); }
+        if (s.metadata?.src === 'ads') { const ak = /_latam$/.test(String(s.metadata?.camp || '')) ? 'latam' : 'anuncio'; await bump(env, `${ak}_pago:${plan}`); await bump(env, `${ak}_eur`, madridDay(), PLANS[plan].eur); }
         // Aviso al equipo: sin correo de la usuaria; enlace al pago en el panel de Stripe
         const dash = `https://dashboard.stripe.com/${s.livemode ? '' : 'test/'}${s.payment_intent ? `payments/${s.payment_intent}` : s.subscription ? `subscriptions/${typeof s.subscription === 'string' ? s.subscription : s.subscription.id}` : 'payments'}`;
         const hora = new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid', dateStyle: 'medium', timeStyle: 'short' });
@@ -411,7 +411,7 @@ export default {
       await record(env, { e, d: isDevice(body.d) ? body.d : '', p }, sendMail, ctx);
       if (e === 'apertura') await countPerson(env, request, 'app');
       if (e === 'portada') await countPerson(env, request, 'portada');
-      if (e.startsWith('anuncio_visita')) await countPerson(env, request, 'anuncio');
+      if (e.startsWith('anuncio_visita')) await countPerson(env, request, /_latam$/.test(e) ? 'latam' : 'anuncio');
       return reply(200, { ok: true, p });
     }
 
@@ -424,7 +424,7 @@ export default {
       if (PLANS[body.plan].video && !VIDEO_PROS.includes(vpro)) return reply(400, { error: 'bad_pro' });
       if (await rateLimited(env, request.headers.get('CF-Connecting-IP'))) return reply(429, { error: 'rate' });
       try {
-        const checkoutUrl = await createCheckout(env, { email: String(body.email).trim(), plan: body.plan, h: await hmac(env.HASH_SALT, norm), origin, back: ['web', 'video'].includes(body.back) ? body.back : 'app', ad: body.src === 'ads', pro: vpro });
+        const checkoutUrl = await createCheckout(env, { email: String(body.email).trim(), plan: body.plan, h: await hmac(env.HASH_SALT, norm), origin, back: ['web', 'video'].includes(body.back) ? body.back : 'app', ad: body.src === 'ads', pro: vpro, camp: /^[a-z0-9_]{1,24}$/.test(String(body.camp || '')) ? body.camp : '' });
         await bump(env, `pago_inicio:${body.plan}`);
         return reply(200, { url: checkoutUrl });
       } catch (e) { console.log(e.message); return reply(502, { error: 'stripe' }); }
@@ -473,7 +473,7 @@ export default {
       const credits = unlimited ? 0 : bal.credits;
       if (!test && !unlimited && rec.n >= limit && credits <= 0) {
         if (body.team !== true) {
-          if (body.src === 'ads') await bump(env, 'anuncio_limite');
+          if (body.src === 'ads') await bump(env, /_latam$/.test(String(body.camp || '')) ? 'latam_limite' : 'anuncio_limite');
           await bump(env, 'gratuitas_agotadas');
           await record(env, { e: 'gratuitas_agotadas', p: await personTag(env, request, madridDay(), body.p) }, sendMail, ctx);
         }
@@ -503,7 +503,7 @@ export default {
         // Dispositivos del equipo (modo equipo en la app): la consulta se envía igual, pero no cuenta en métricas ni avisos
         if (body.team !== true) {
           await bump(env, `consulta:${body.to}`);
-          if (body.src === 'ads') await bump(env, paid ? 'anuncio_consulta_pagada' : 'anuncio_consulta');
+          if (body.src === 'ads') { const ak = /_latam$/.test(String(body.camp || '')) ? 'latam' : 'anuncio'; await bump(env, paid ? `${ak}_consulta_pagada` : `${ak}_consulta`); }
           if (unlimited) await bump(env, 'consulta_ilimitada');
           // Si llegó desde un anuncio, el aviso lo dice (y queda en la actividad para el resumen y los recorridos)
           const camp = /^[a-z0-9_]{1,24}$/.test(String(body.camp || '')) ? body.camp : '';
@@ -525,7 +525,7 @@ export default {
         // COPY_EMAIL="1" (temporal, Noza 11 nov): la copia dice el correo de la usuaria, por si hay problemas
         const who = env.COPY_EMAIL === '1' ? `<p style="font-size:13px;color:#6E6C67">Correo de la usuaria: <b>${esc(q.email)}</b></p>` : '';
         const extra = `${who}${q.context ? `<p style="font-size:13px;color:#6E6C67">Sobre: ${esc(q.context)}</p>` : ''}${q.situation ? `<p style="font-size:13px;color:#6E6C67">Situación: ${nl2br(q.situation)}</p>` : ''}`;
-        const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${id.toUpperCase()}${files.length ? ` · ${files.length} ${files.length === 1 ? 'adjunto' : 'adjuntos'}` : ''}${body.src === 'ads' ? ' · desde anuncio' : ''}${paid ? ' · pagada' : ''}`,
+        const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${id.toUpperCase()}${files.length ? ` · ${files.length} ${files.length === 1 ? 'adjunto' : 'adjuntos'}` : ''}${body.src === 'ads' ? (/_latam$/.test(String(body.camp || '')) ? ' · desde anuncio (México y Argentina)' : ' · desde anuncio') : ''}${paid ? ' · pagada' : ''}`,
           intro: `Nueva consulta para <b>${esc(pro.name)}</b>${body.src === 'ads' ? ' (llegó desde un anuncio)' : ''}.`, body: q.text, extra, nFiles: files.length, withFiles });
         await sendMail(env, { to: bcc, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc, ...(withFiles ? { attachments: files } : {}) });
       }

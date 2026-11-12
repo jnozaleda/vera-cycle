@@ -53,7 +53,7 @@ async function priceId(env, lookup) {
 }
 
 /** Crea la sesión de pago y devuelve su URL */
-export async function createCheckout(env, { email, plan, h, origin, back, ad, pro }) {
+export async function createCheckout(env, { email, plan, h, origin, back, ad, pro, camp }) {
   const p = PLANS[plan];
   // Vuelve al mismo sitio desde el que se pagó (la web real, o localhost en pruebas)
   // back = 'web': desde la portada, vuelve a la portada (?web=1 evita que salte a la app instalada)
@@ -73,6 +73,7 @@ export async function createCheckout(env, { email, plan, h, origin, back, ad, pr
     'metadata[plan]': plan,
     ...(ad ? { 'metadata[src]': 'ads' } : {}),
     ...(pro ? { 'metadata[pro]': pro } : {}),
+    ...(ad && camp ? { 'metadata[camp]': camp } : {}),
   };
   if (p.mode === 'subscription') { params['subscription_data[metadata][h]'] = h; params['subscription_data[metadata][plan]'] = plan; }
   const s = await api(env, 'POST', 'checkout/sessions', params);

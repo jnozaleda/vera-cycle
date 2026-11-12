@@ -93,10 +93,14 @@ export async function panel(env, url, openThreads) {
   for (const r of actAll) r.k = r.p ? `${dayISO(r.ts)}:${r.p}` : '';
   const group = (list) => { const m = new Map(); for (const r of list) if (r.k) (m.get(r.k) || m.set(r.k, []).get(r.k)).push(r); return m; };
   const isAd = ([, v]) => { const ds = v.filter((r) => r.d); return v.some((r) => is(r.e, AD_MARK)) && !(ds.length && ds.every((r) => r.d === 'otro-web')); };
+  // Prueba en México y Argentina (campañas …_latam): va aparte; «de anuncio» en el resto del panel es solo España
+  const campOfV = (v) => { for (const r of v) { const m = /^(?:anuncio_visita|consulta_anuncio):([a-z0-9_]+)$/.exec(r.e); if (m) return m[1]; } return ''; };
+  const isLatam = ([, v]) => /_latam$/.test(campOfV(v));
   const byKeyAll = group(actAll);
-  const AD_ALL = new Set([...byKeyAll].filter(isAd).map(([k2]) => k2));
+  const AD_ALL = new Set([...byKeyAll].filter((x) => isAd(x) && !isLatam(x)).map(([k2]) => k2));
   const byKey = group(act);
-  const AD = new Set([...byKey].filter(isAd).map(([k2]) => k2));
+  const AD = new Set([...byKey].filter((x) => isAd(x) && !isLatam(x)).map(([k2]) => k2));
+  const LATAM = new Set([...byKey].filter((x) => isAd(x) && isLatam(x)).map(([k2]) => k2));
   /** Cuántos eventos (o personas por día) de anuncio hay con estos nombres */
   const adCount = (names, persons = false) => {
     let c = 0; const ks = new Set();
@@ -183,9 +187,9 @@ export async function panel(env, url, openThreads) {
     return `<li><time>${madrid(seq[0].ts, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</time><span>${esc(seq.map((r) => PATH(r.e)).filter((e, i, a) => a.indexOf(e) === i).join(' → '))}</span><small>Persona ${esc(seq[0].p)}${dv ? ` · ${esc(deviceText(dv))}` : ''}</small></li>`;
   }).join('');
   // Anuncios por grupo (la campaña llega en la marca del anuncio)
-  const campOf = (v) => { for (const r of v) { const m = /^(?:anuncio_visita|consulta_anuncio):([a-z0-9_]+)$/.exec(r.e); if (m) return m[1]; } return ''; };
+  const campOf = campOfV;
   const groups = AD_GROUPS.map(([c, label]) => {
-    const vs = [...AD].map((k2) => byKey.get(k2)).filter((v) => { const cc = campOf(v); return c ? cc === c : !AD_GROUPS.some(([g2]) => g2 && g2 === cc); });
+    const vs = [...AD, ...LATAM].map((k2) => byKey.get(k2)).filter((v) => { const cc = campOf(v); return c ? cc === c : !AD_GROUPS.some(([g2]) => g2 && g2 === cc); });
     return [label, vs.length, vs.reduce((acc, v) => acc + v.filter((r) => is(r.e, ['consulta'])).length, 0), vs.filter((v) => v.some((r) => is(r.e, ['instalada', 'instalada_anuncio']))).length, vs.filter((v) => v.some((r) => is(r.e, ['pago_hecho']))).length];
   }).filter(([, np]) => np);
   const adInstal = adCount(['instalada', 'instalada_anuncio'], true);
@@ -265,6 +269,8 @@ ${Object.values(open.fuera_plazo || {}).some(Boolean) ? `<p class="mute late" st
 ${groups.length ? `<h3 class="fh">Por grupo de anuncio</h3><table><tr><th></th><th>Personas</th><th>Consult.</th><th>Instal.</th><th>Pagos</th></tr>${groups.map(([l, ...v]) => `<tr><td>${esc(l)}</td>${v.map((x) => `<td>${x}</td>`).join('')}</tr>`).join('')}</table>` : ''}
 <p class="mute" style="margin-top:8px">Ingresos de anuncios: ${g('anuncio_eur')} € (sin restar reembolsos). Coste por consulta = lo gastado en Google Ads ÷ ${adConsultas} · coste por pago = gasto ÷ ${sum('anuncio_pago:')}.</p>
 <p class="mute" style="margin-top:6px">Instalaciones: en Android, exacto (la app ve la marca del anuncio); en iPhone, aproximado (mismo móvil y misma conexión el mismo día). Sin la revisión automática de Google.</p>` : '<p class="mute">Nadie ha llegado todavía desde un anuncio. Se cuenta quien entra con gclid o utm_medium=cpc.</p>'}</div>
+${(() => { const lp = [...LATAM].map((k2) => byKey.get(k2)); const ld = (...es) => lp.filter((v) => v.some((r) => is(r.e, es))).length;
+  return lp.length || g('personas_latam') ? `<div class="card"><h2>Prueba México y Argentina</h2>${bars([['Personas que llegaron por un anuncio', lp.length], ['Empezaron a escribir una duda', ld('pregunta_portada', 'ejemplo_duda')], ['Enviaron una consulta gratuita', g('latam_consulta')], ['Llegaron al límite de gratuitas', g('latam_limite')], ['Pagaron', sum('latam_pago:')], ['Enviaron una consulta pagada', g('latam_consulta_pagada')]], true)}<p class="mute" style="margin-top:8px">Solo campañas «…_latam». Ingresos: ${g('latam_eur')} €. Coste por consulta = gasto de la campaña LatAm ÷ ${g('latam_consulta') + g('latam_consulta_pagada')}. El resto de «de anuncio» del panel es solo España.</p></div>` : ''; })()}
 <div class="card"><h2>Qué hacen quienes llegan por un anuncio</h2>${adPeople.length ? `${bars(adSteps)}${adTrips ? `<h3 class="fh">Últimos recorridos</h3><ul class="feed">${adTrips}</ul>` : ''}` : '<p class="mute">Nada todavía.</p>'}<p class="mute" style="margin-top:8px">Medido desde el 8 de noviembre (desplazamiento, secciones, enlaces y tiempo).</p></div>
 <div class="card"><h2>Invitaciones</h2>${g('invitacion_vista') || g('invitacion_visita') || g('consulta_invitada') ? bars([['Vieron su enlace para invitar', g('invitacion_vista')], ['Lo compartieron por WhatsApp', g('invitacion_whatsapp')], ['Lo copiaron', g('invitacion_copiar')], ['Visitas con un enlace de invitación', g('invitacion_visita')], ['Primeras consultas con invitación', g('consulta_invitada')], ['Consultas regaladas (ya respondidas)', g('consulta_regalada')]], true) : '<p class="mute">Nada todavía. El enlace sale al valorar «Sí, mucho» en el correo de opinión.</p>'}<p class="mute" style="margin-top:8px">Cada consulta regalada es tiempo de la profesional: se regala cuando responde a alguien nuevo que llegó con un enlace.</p></div>
 <div class="card"><h2>De la web a la consulta</h2>${bars([withAd('Visitaron la web', g('personas_portada'), ['portada'], true), withAd('Tocaron una duda de ejemplo', g('ejemplo_duda'), ['ejemplo_duda']), withAd('Empezaron a escribir una duda', g('pregunta_portada'), ['pregunta_portada']), withAd('Cambiaron de profesional', g('elige_pro'), ['elige_pro']), withAd('Llegaron al campo de correo', g('correo_portada'), ['correo_portada']), withAd('Enviaron la consulta desde la web', g('enviada_portada'), ['enviada_portada']), withAd('Pulsaron «Abrir la app» (arriba)', g('abrir_portada'), ['abrir_portada']), withAd('Pulsaron la franja de la app', g('clic:abrir_franja'), ['clic:abrir_franja'])])}</div>

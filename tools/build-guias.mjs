@@ -4,6 +4,7 @@ import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { PREGNANCY_GUIDE, POSTPARTUM_GUIDE } from '../app/js/guide.js';
 import { SITE, PRO, esc, shell, face, askBox, stickyAsk } from './web-shell.mjs';
 import { VISUAL, REVIEWED } from './data/guias-visual.mjs';
+import { BABY_WEB } from './data/guias-bebe.mjs';
 
 const UPDATED = '2026-10-31';
 // [pregunta en la app, slug, título para buscadores, profesional, grupo, resumen para las tarjetas]
@@ -43,9 +44,11 @@ const EXTRA = {
     ],
   },
 };
-const all = [...PREGNANCY_GUIDE, ...POSTPARTUM_GUIDE].flatMap((s) => s.items);
+// Guías solo de la web (tools/data/guias-bebe.mjs): su texto, su ampliación y su formato visual van juntos
+for (const g of BABY_WEB) { PAGES.push(g.page); if (g.x) EXTRA[g.page[1]] = g.x; if (g.v) VISUAL[g.page[1]] = g.v; }
+const all = [...PREGNANCY_GUIDE, ...POSTPARTUM_GUIDE].flatMap((s) => s.items).concat(BABY_WEB.map((g) => ({ q: g.page[0], a: g.a })));
 const TINT = { Embarazo: '#DCEBE4', Posparto: '#E4E2F4', 'Tu bebé': '#F6E0E2' };
-const SUB = { Embarazo: 'De la primera falta a la bolsa del hospital.', Posparto: 'Tu recuperación después del parto.', 'Tu bebé': 'Fiebre, sueño, llanto y primeros días.' };
+const SUB = { Embarazo: 'De la primera falta a la bolsa del hospital.', Posparto: 'Tu recuperación después del parto.', 'Tu bebé': 'Fiebre, sueño, piel, comida y primeros meses.' };
 const plain = (a) => a.flat().join(' ');
 /** La primera frase va destacada; el resto del texto no cambia */
 function answer(a) {

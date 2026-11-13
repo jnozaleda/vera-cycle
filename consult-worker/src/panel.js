@@ -68,9 +68,23 @@ async function topPages(env, days) {
     // Une «/guias/x» y «/guias/x/» y quita /index.html
     const m = new Map();
     for (const x of rows) { const pth = (x.dimensions.requestPath || '/').replace(/index\.html$/, '').replace(/(.)\/$/, '$1'); m.set(pth, (m.get(pth) || 0) + x.count); }
-    return { rows: [...m].sort((a, b) => b[1] - a[1]).slice(0, 20) };
+    // Países: visitas a la web y a la app (/app) por país
+    const q2 = `query($acc: string!, $from: Time!, $to: Time!) { viewer { accounts(filter: { accountTag: $acc }) {
+      rumPageloadEventsAdaptiveGroups(limit: 2000, filter: { datetime_geq: $from, datetime_leq: $to, requestHost: "hera-gine.com" }) { count dimensions { countryName requestPath } } } } }`;
+    const r2 = await fetch('https://api.cloudflare.com/client/v4/graphql', { method: 'POST', headers: { Authorization: `Bearer ${env.CF_ANALYTICS_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: q2, variables: { acc: env.CF_ACCOUNT_ID, from: from.toISOString(), to: to.toISOString() } }) });
+    const j2 = await r2.json();
+    const c = new Map();
+    for (const x of j2.data?.viewer?.accounts?.[0]?.rumPageloadEventsAdaptiveGroups || []) {
+      const k = x.dimensions.countryName || '?'; const o = c.get(k) || { web: 0, app: 0 };
+      if (/^\/app(\/|$)/.test(x.dimensions.requestPath || '')) o.app += x.count; else o.web += x.count;
+      c.set(k, o);
+    }
+    const countries = [...c].sort((a, b) => (b[1].web + b[1].app) - (a[1].web + a[1].app)).slice(0, 12);
+    return { rows: [...m].sort((a, b) => b[1] - a[1]).slice(0, 20), countries, countryError: j2.errors?.length ? j2.errors[0].message : '' };
   } catch (e) { return { error: e.message }; }
 }
+const COUNTRY = { ES: 'España', MX: 'México', AR: 'Argentina', CO: 'Colombia', CL: 'Chile', PE: 'Perú', US: 'Estados Unidos', FR: 'Francia', DE: 'Alemania', GB: 'Reino Unido', PT: 'Portugal', IT: 'Italia', NL: 'Países Bajos', IE: 'Irlanda', VE: 'Venezuela', EC: 'Ecuador', UY: 'Uruguay', BR: 'Brasil' };
 
 export async function panel(env, url, openThreads) {
   const days = [1, 7, 30].includes(Number(url.searchParams.get('d'))) ? Number(url.searchParams.get('d')) : 7;
@@ -264,7 +278,7 @@ ${PROS.map(([k2, name]) => { const r = g(`respondida:${k2}`); const fp = (open.f
 </table>
 ${Object.values(open.fuera_plazo || {}).some(Boolean) ? `<p class="mute late" style="margin-top:8px">En rojo: con alguna consulta de más de 48 h sin responder (${PROS.filter(([k2]) => (open.fuera_plazo || {})[k2]).map(([k2, nm]) => `${nm} ${(open.fuera_plazo || {})[k2]}`).join(', ')}).</p>` : ''}
 <p class="mute" style="margin-top:8px">Respondidas en total: ${respondidas}${respondidas ? ` · tiempo medio ${Math.round(horas / respondidas)} h` : ''}. Gratuitas agotadas: ${g('gratuitas_agotadas')} · piden aviso de pago: ${g('aviso_pago')}.</p></div>
-<div class="card"><h2>¿Quién empieza a preguntar y se cae?</h2><p class="mute">Personas distintas por día; entre paréntesis, las que vinieron de un anuncio. En la app, los pasos se miden desde el 1 de noviembre.</p>${funnels.map(funnelCard).join('')}${opensCard}${lostFeed ? `<h3 class="fh">Últimas caídas</h3><ul class="feed">${lostFeed}</ul>` : ''}</div>
+<div class="card"><h2>¿Quién empieza a preguntar y se cae?</h2><p class="mute">Personas distintas por día; entre paréntesis, las que vinieron de un anuncio. En la app, los pasos se miden desde el 1 de noviembre.</p>${funnels.map(funnelCard).join('')}${(() => { const why = [['Sin correo', g('clic:fallo_sin_correo')], ['Correo mal escrito', g('clic:fallo_correo_mal')], ['Duda demasiado corta', g('clic:fallo_texto_corto')], ['Sin elegir profesional', g('clic:fallo_sin_profesional')], ['Error al enviar (servicio o conexión)', g('error_portada')], ['Agotó las gratuitas', g('limite_portada')]]; return why.some(([, n]) => n) ? `<h3 class="fh">En la web, por qué no se envió al pulsar</h3>${bars(why)}` : ''; })()}${opensCard}${lostFeed ? `<h3 class="fh">Últimas caídas</h3><ul class="feed">${lostFeed}</ul>` : ''}</div>
 <div class="card"><h2>Anuncios</h2>${AD.size || g('personas_anuncio') ? `${bars([['Personas que llegaron por un anuncio', adCount(['anuncio_visita'], true)], ['Empezaron a escribir una duda', did('pregunta_portada', 'ejemplo_duda')], ['Enviaron una consulta gratuita', g('anuncio_consulta')], ['Llegaron al límite de gratuitas', g('anuncio_limite')], ['Instalaron la app', adInstal], ['Volvieron a abrir la app otro día', adCount(['vuelta_anuncio'], true)], ['Pagaron (suelta, bono o ilimitado)', sum('anuncio_pago:')], ['Enviaron una consulta pagada', g('anuncio_consulta_pagada')]], true)}
 ${groups.length ? `<h3 class="fh">Por grupo de anuncio</h3><table><tr><th></th><th>Personas</th><th>Consult.</th><th>Instal.</th><th>Pagos</th></tr>${groups.map(([l, ...v]) => `<tr><td>${esc(l)}</td>${v.map((x) => `<td>${x}</td>`).join('')}</tr>`).join('')}</table>` : ''}
 <p class="mute" style="margin-top:8px">Ingresos de anuncios: ${g('anuncio_eur')} € (sin restar reembolsos). Coste por consulta = lo gastado en Google Ads ÷ ${adConsultas} · coste por pago = gasto ÷ ${sum('anuncio_pago:')}.</p>
@@ -279,6 +293,7 @@ ${(() => { const lp = [...LATAM].map((k2) => byKey.get(k2)); const ld = (...es) 
 <div class="card"><h2>Qué apuntan en el diario</h2>${bars(DIARY.map(([k2, l]) => withAd(l, g(`diario:${k2}`), [`diario:${k2}`])))}</div>
 <div class="card"><h2>Pestañas visitadas</h2>${bars(TABS.map(([k2, l]) => withAd(l, g(`pestana:${k2}`), [`pestana:${k2}`])))}</div>
 <div class="card"><h2>Páginas más visitadas</h2>${pages.error ? `<p class="mute">${esc(pages.error)}</p>` : pages.rows.length ? bars(pages.rows.map(([pth, n]) => [pth, n])) : '<p class="mute">Nada todavía.</p>'}<p class="mute" style="margin-top:8px">Visitas a cada página según Cloudflare Web Analytics, sin cookies. Incluye al equipo y no separa anuncios.</p></div>
+<div class="card"><h2>Visitas por país</h2>${pages.error || !pages.countries ? `<p class="mute">${esc(pages.error || pages.countryError || 'Sin datos.')}</p>` : pages.countries.length ? `<table><tr><th></th><th>Web</th><th>App</th></tr>${pages.countries.map(([k, o]) => `<tr><td>${esc(COUNTRY[k] || k)}</td><td>${o.web}</td><td>${o.app}</td></tr>`).join('')}</table>` : '<p class="mute">Nada todavía.</p>'}<p class="mute" style="margin-top:8px">Páginas vistas según Cloudflare Web Analytics (sin cookies). «App» es /app, en el navegador o instalada. Incluye al equipo.</p></div>
 <div class="card"><h2>Dispositivos</h2>${bars(devices)}</div>
 <div class="card"><h2>Actividad reciente</h2><ul class="feed">${feed || '<li><span class="mute">Nada todavía.</span></li>'}</ul></div>
 <div class="card"><h2>Opiniones tras la consulta</h2>${opRows ? `<table><tr><th></th><th>Sí, mucho</th><th>Más o menos</th><th>No</th></tr>${opRows}</table>` : '<p class="mute">Nada todavía.</p>'}${opFeed ? `<h3 class="fh">Comentarios</h3><ul class="feed">${opFeed}</ul>` : ''}</div>

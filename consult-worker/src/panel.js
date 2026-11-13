@@ -99,7 +99,8 @@ export async function panel(env, url, openThreads) {
   const sum = (prefix) => Object.entries(tot).filter(([k]) => k.startsWith(prefix)).reduce((a, [, n]) => a + n, 0);
   // La gráfica enseña al menos 7 días, así que se lee la actividad de max(días, 7); el resto de tarjetas usa solo el periodo elegido.
   const actAll = (await env.DB.prepare('SELECT ts, e, d, p FROM activity WHERE ts > ?1 ORDER BY ts DESC').bind(now - Math.max(days, 7) * 86400000).all()).results || [];
-  const act = actAll.filter((r) => r.ts > now - days * 86400000);
+  // Mismos días de calendario (Madrid) que los contadores: «Hoy» es desde las 00:00, no las últimas 24 h
+  const act = actAll.filter((r) => dayISO(r.ts) >= from);
   const open = openThreads ? await openThreads(env) : { pendientes: {}, fuera_plazo: {} };
   const pages = await topPages(env, days);
 

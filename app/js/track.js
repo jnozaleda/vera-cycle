@@ -14,6 +14,7 @@ export function setTeam(on) { try { if (on) localStorage.setItem(TEAM_KEY, '1');
 const sent = new Set();
 // Etiqueta anónima del día que devuelve el servicio: solo en memoria, mientras la app está abierta (nunca se guarda)
 let tag = { p: '', day: '' };
+let line = null;
 const today = () => new Date().toDateString();
 /** Para añadir a los envíos al servicio (consultas incluidas) */
 export const visitTag = () => (tag.day === today() ? tag.p : '');
@@ -36,7 +37,9 @@ export function track(e, once = false) {
   if (!once && Date.now() - last < 60000) return;
   recent.set(e, Date.now());
   try {
-    fetch(`${CONSULT_API}/hit`, { method: 'POST', body: JSON.stringify({ e, d: device(), p: visitTag() }), keepalive: true, mode: 'cors' })
+    const send = () => fetch(`${CONSULT_API}/hit`, { method: 'POST', body: JSON.stringify({ e, d: device(), p: visitTag() }), keepalive: true, mode: 'cors' })
       .then((r) => r.json()).then((j) => { if (/^[0-9A-F]{4}$/.test(j?.p || '')) tag = { p: j.p, day: today() }; }).catch(() => {});
+    // Hasta tener la etiqueta del día, en fila: así todos los envíos de la visita la llevan
+    line = !visitTag() && line ? line.then(send) : send();
   } catch { /* sin conexión: no pasa nada */ }
 }

@@ -101,8 +101,12 @@ const body = `${STYLE}<div class="w vc">
   import { device, isTeam } from '/app/js/track.js';
   const API = 'https://hera-consultas.tempcheck-app.workers.dev';
   const local = ['localhost', '127.0.0.1'].includes(location.hostname);
-  let ptag = '';
-  const hit = (e) => { if (local || isTeam()) return; fetch(API + '/hit', { method: 'POST', body: JSON.stringify({ e, d: device(), p: ptag }), keepalive: true }).then((r) => r.json()).then((j) => { if (/^[0-9A-F]{4}$/.test(j?.p || '')) ptag = j.p; }).catch(() => {}); };
+  let ptag = ''; let line = null;
+  const hit = (e) => {
+    if (local || isTeam()) return;
+    const send = () => fetch(API + '/hit', { method: 'POST', body: JSON.stringify({ e, d: device(), p: ptag }), keepalive: true }).then((r) => r.json()).then((j) => { if (/^[0-9A-F]{4}$/.test(j?.p || '')) ptag = j.p; }).catch(() => {});
+    line = !ptag && line ? line.then(send) : send();
+  };
   const store = { get: (k) => { try { return localStorage.getItem(k) || ''; } catch { return ''; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} } };
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
   const isEmail = (e) => /^[^\\s@<>()",;]+@[^\\s@<>()",;]+\\.[a-z]{2,24}$/i.test(e.trim());

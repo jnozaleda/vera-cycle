@@ -2837,7 +2837,6 @@ const actions = {
     // Sin profesional elegida, la consulta va a Gonzalo
     const to = CONSULTS[a.to] || CONSULTS.gineco;
     if (a.status === 'sending') return;
-    if (!a.text.trim()) { root.querySelector('.ask-text')?.focus(); return; }
     if (!isEmail(a.email)) { a.status = 'error'; a.error = 'Escribe tu correo para que te puedan responder.'; render(); root.querySelector('[data-model="ask.email"]')?.focus(); return; }
     a.status = 'sending'; a.error = ''; render();
     track('consulta_intento');

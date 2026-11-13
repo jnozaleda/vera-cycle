@@ -450,8 +450,9 @@ export default {
       const pro = PROS[body.to] || (body.to === 'prueba' && env.ADMIN_TOKEN && request.headers.get('Authorization') === `Bearer ${env.ADMIN_TOKEN}` && env.COPY_TO
         ? { name: 'Prueba de Hera', short: 'Prueba', role: 'prueba', email: env.COPY_TO, key: 'prueba' } : null);
       if (!pro) return reply(400, { error: 'bad_to' });
-      const text = String(body.text || '').trim();
-      if (text.length < 1 || text.length > 2000) return reply(400, { error: 'bad_text' });
+      // Se puede enviar sin escribir nada: la profesional responde preguntando qué necesita
+      const text = String(body.text || '').trim() || 'Hola, me gustaría hacer una consulta.';
+      if (text.length > 2000) return reply(400, { error: 'bad_text' });
       const { files, error: fileError } = validateAttachments(body.attachments);
       if (fileError) return reply(fileError === 'too_large' ? 413 : 400, { error: fileError });
       const q = { files: files.length, email: String(body.email).trim(), text, context: String(body.context || '').slice(0, 120), situation: String(body.situation || '').slice(0, 500) };

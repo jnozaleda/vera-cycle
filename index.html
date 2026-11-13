@@ -865,7 +865,6 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     const text = ta.value.trim();
     open();
     hit('intento_portada');
-    if (!text) { hit('clic:fallo_texto_corto'); showErr('Escribe tu duda para poder enviarla.'); ta.focus(); return; }
     // Sin profesional elegida, la consulta va a Gonzalo
     const to = chosen() || 'gineco';
     if (!isEmail(email.value)) { hit(email.value.trim() ? 'clic:fallo_correo_mal' : 'clic:fallo_sin_correo'); showErr('Escribe tu correo para que te puedan responder.'); email.focus(); return; }

@@ -123,6 +123,10 @@ export async function panel(env, url, openThreads) {
     for (const r of act) if (r.k && AD.has(r.k) && is(r.e, names)) { c += 1; ks.add(r.k); }
     return persons ? ks.size : c;
   };
+  /** Lo mismo para la prueba de Latinoamérica (va aparte del resto del panel) */
+  const latCount = (names) => act.filter((r) => r.k && LATAM.has(r.k) && is(r.e, names)).length;
+  /** Celda «De anuncio»: España + Latinoamérica, y cuántas de Latinoamérica */
+  const adCell = (names) => { const es = adCount(names), la = latCount(names); return `${es + la}${la ? ` <small class="mute">(${la} Latinoamérica)</small>` : ''}`; };
   const adNote = (a, x) => (a === undefined ? '' : `<small class="adn${a ? '' : ' zero'}">${a ? `${a} de anuncio · ${pct(a, x)}` : '0 de anuncio'}</small>`);
   /** pairs: [texto, total, parte de anuncio (opcional)]; all: también las filas a 0 */
   const bars = (pairs, all = false) => {
@@ -276,7 +280,7 @@ table{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:
 <p class="mute" id="dayinfo" style="margin-top:6px">Toca o pasa el ratón por un día para ver sus cifras.</p></div>
 <div class="card"><h2>Consultas</h2>
 <table><tr><th></th><th>Enviadas</th><th class="ad">De anuncio</th><th>Resp.</th><th>Media</th><th>Pend.</th></tr>
-${PROS.map(([k2, name]) => { const r = g(`respondida:${k2}`); const fp = (open.fuera_plazo || {})[k2] || 0; return `<tr><td>${name}</td><td>${g(`consulta:${k2}`)}</td><td class="ad">${adCount([`consulta:${k2}`])}</td><td>${r}</td><td>${r ? `${Math.round(g(`resp_horas:${k2}`) / r)} h` : '—'}</td><td${fp ? ' class="late"' : ''}>${(open.pendientes || {})[k2] || 0}</td></tr>`; }).join('')}
+${PROS.map(([k2, name]) => { const r = g(`respondida:${k2}`); const fp = (open.fuera_plazo || {})[k2] || 0; return `<tr><td>${name}</td><td>${g(`consulta:${k2}`)}</td><td class="ad">${adCell([`consulta:${k2}`])}</td><td>${r}</td><td>${r ? `${Math.round(g(`resp_horas:${k2}`) / r)} h` : '—'}</td><td${fp ? ' class="late"' : ''}>${(open.pendientes || {})[k2] || 0}</td></tr>`; }).join('')}
 </table>
 ${Object.values(open.fuera_plazo || {}).some(Boolean) ? `<p class="mute late" style="margin-top:8px">En rojo: con alguna consulta de más de 48 h sin responder (${PROS.filter(([k2]) => (open.fuera_plazo || {})[k2]).map(([k2, nm]) => `${nm} ${(open.fuera_plazo || {})[k2]}`).join(', ')}).</p>` : ''}
 <p class="mute" style="margin-top:8px">Respondidas en total: ${respondidas}${respondidas ? ` · tiempo medio ${Math.round(horas / respondidas)} h` : ''}. Gratuitas agotadas: ${g('gratuitas_agotadas')} · guardadas pendientes de pago: ${g('consulta_guardada')} (pagadas después: ${g('guardada_pagada')}, recordatorios: ${g('guardada_recordatorio')}) · piden aviso de pago: ${g('aviso_pago')}.</p></div>

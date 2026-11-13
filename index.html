@@ -93,6 +93,45 @@ section { padding: 64px 0; }
 .ask form > label { font-size: 14px; font-weight: 600; color: var(--plum); }
 .ask textarea, .ask input[type=email], .ask select { width: 100%; border: 1px solid var(--line); border-radius: 6px; padding: 12px 14px; font: 400 16px/1.5 'Inter', sans-serif; color: var(--ink); background: var(--ivory); }
 .ask textarea { min-height: 76px; resize: vertical; }
+/* Consulta en formato chat (vera-backlog#91): por encima del formulario, que sigue enviando. ?caja=clasica lo quita. */
+.ask.chat-on #ask-form { display: none; }
+.cx { display: grid; gap: 10px; }
+.cx-h { display: flex; align-items: center; gap: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.cx-f { display: flex; gap: 6px; flex: none; }
+.cx-f button { display: flex; flex-direction: column; align-items: center; gap: 2px; font: 500 11px/1.2 'Inter', sans-serif; color: #8A8A85; opacity: .55; background: none; border: 0; padding: 0; cursor: pointer; }
+.cx-f img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid transparent; }
+.cx-f button.on { opacity: 1; color: var(--plum); font-weight: 600; }
+.cx-f button.on img { border-color: var(--plum); }
+.cx-f button:focus-visible { outline: 2px solid var(--plum); outline-offset: 2px; border-radius: 6px; }
+.cx-s { margin: 0; font-size: 12.5px; color: #6E6C67; line-height: 1.35; }
+.cx-s b { color: var(--ink); font-weight: 600; }
+.cx-log { display: grid; gap: 10px; }
+.cx-row { display: flex; gap: 8px; align-items: flex-end; }
+.cx-row.r { justify-content: flex-end; }
+.cx-av { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; flex: none; }
+.cx-av.h { display: flex; align-items: center; justify-content: center; background: #E8EEE9; color: var(--plum); }
+.cx-cap { margin: 0 0 3px 4px; font-size: 11px; color: #8A8A85; }
+.cx-b { border-radius: 16px; padding: 9px 12px; font-size: 15px; line-height: 1.45; max-width: min(100%, 360px); overflow-wrap: anywhere; }
+.cx-b.p { background: var(--ivory); border: 1px solid var(--line); border-bottom-left-radius: 5px; }
+.cx-b.h { background: #E8EEE9; border-bottom-left-radius: 5px; }
+.cx-b.h small { display: block; color: #6E6C67; font-size: 12.5px; margin-top: 3px; }
+.cx-b.h a { color: var(--plum); font-weight: 600; }
+.cx-b.err { background: #FCEAE6; color: #8C1D18; }
+.cx-b.me { background: var(--plum); color: #fff; border-bottom-right-radius: 5px; white-space: pre-wrap; }
+.cx-b.file { background: #fff; color: var(--plum); border: 1px solid var(--plum); font-size: 13.5px; }
+.cx-urg { margin: 0; background: #FCEAE6; border-left: 3px solid #B3261E; border-radius: 8px; padding: 8px 10px; font-size: 13px; color: #4F4E49; }
+.cx-eg { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.cx-eg button { border: 1px solid var(--plum); color: var(--plum); border-radius: 999px; padding: 6px 11px; font: 400 13.5px/1.3 'Inter', sans-serif; background: #fff; cursor: pointer; text-align: left; }
+.cx-bar { display: flex; align-items: flex-end; gap: 8px; }
+.cx-clip { color: #6E6C67; background: none; border: 0; padding: 8px 2px; cursor: pointer; display: flex; }
+.cx-in { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 22px; padding: 10px 14px; font: 400 16px/1.4 'Inter', sans-serif; color: var(--ink); background: var(--ivory); resize: none; max-height: 160px; }
+.cx-in:focus { outline: none; border-color: var(--plum); box-shadow: 0 0 0 3px rgba(69,87,76,.18); }
+.cx-go { width: 40px; height: 40px; border-radius: 50%; background: var(--plum); color: #fff; border: 0; display: flex; align-items: center; justify-content: center; flex: none; cursor: pointer; }
+.cx-go[disabled] { background: #C9CFC9; cursor: default; }
+.cx-foot { margin: 0; font-size: 12px; color: var(--plum); font-weight: 600; text-align: center; }
+.cx-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 14px; font-size: 13px; }
+.cx-links a, .cx-links button { color: var(--plum); text-decoration: underline; background: none; border: 0; padding: 0; font: inherit; cursor: pointer; }
+.cx .done { text-align: left; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .who { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--text); }
 .who b { color: var(--ink); font-weight: 600; }
@@ -742,6 +781,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   const box = $('ask'), form = $('ask-form'), ta = $('duda'), more = $('ask-more'), send = $('ask-send'), err = $('ask-err'), done = $('ask-done'), email = $('ask-email');
   const radios = [...form.querySelectorAll('input[name=to]')];
   let manual = false, opened = false, busy = false, lastEmail = '';
+  let chat = null; // consulta en formato chat (abajo); null = caja clásica
   email.value = store.get('hera-ask-email');
 
   const chosen = () => radios.find((r) => r.checked)?.value || '';
@@ -756,6 +796,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     $('ask-video').href = `videollamada/?de=web${to ? `#reservar-${to}` : ''}`;
     $('ask-video').textContent = `¿Prefieres hablarlo cara a cara? Videollamada${to ? ` con ${PROS[to].name}` : ''}`;
     if (opened && !busy) send.textContent = `Enviar${store.get('hera-free-left') === '0' ? '' : ' gratis'}${to ? ` a ${PROS[to].name}` : ''}`;
+    chat?.sync();
   }
   function open() {
     if (opened) return;
@@ -784,6 +825,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         li.append(name, x); list.append(li);
       });
       $('ask-file-err').textContent = error; $('ask-file-err').hidden = !error;
+      chat?.files(files, error);
     };
     $('ask-file').addEventListener('change', async (ev) => {
       const r = await addFiles(files, [...ev.target.files]);
@@ -794,9 +836,9 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   function goAsk(to) {
     box.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
     if (to) { open(); manual = true; radios.forEach((r) => { r.checked = r.value === to; }); refresh(); }
-    setTimeout(() => ta.focus({ preventScroll: true }), 350);
+    setTimeout(() => (chat ? chat.focus() : ta.focus({ preventScroll: true })), 350);
   }
-  const showErr = (m) => { err.textContent = m; err.hidden = !m; };
+  const showErr = (m) => { err.textContent = m; err.hidden = !m; if (m) chat?.error(m); };
 
   ta.addEventListener('input', () => { if (ta.value.trim()) open(); refresh(); });
   // Desde la página del equipo: #preguntar-matrona abre la caja con esa profesional elegida
@@ -807,6 +849,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     const qs = new URLSearchParams(location.search);
     const pago = qs.get('pago');
     if (pago) {
+      try { sessionStorage.setItem('hera-caja', 'clasica'); } catch { /* sin almacenamiento */ }
       history.replaceState(null, '', location.pathname + '?web=1');
       let d = null;
       try { d = JSON.parse(store.get('hera-pay-draft') || 'null'); localStorage.removeItem('hera-pay-draft'); } catch { /* sin almacenamiento */ }
@@ -902,8 +945,9 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     busy = false; send.disabled = false; refresh();
   });
 
-  function swap(html) { form.hidden = true; done.innerHTML = html; done.hidden = false; box.scrollIntoView({ block: 'nearest' }); }
+  function swap(html) { form.hidden = true; done.innerHTML = html; done.hidden = false; if (chat) chat.panel(); else box.scrollIntoView({ block: 'nearest' }); }
   function showDone(to, j) {
+    if (chat) { chat.sent(to, j); return; }
     const total = j.freeLimit || 2, rem = j.remaining ?? 0, p = PROS[to];
     swap(`<img src="portada/equipo/${p.img}.jpg?v=3" alt="" width="64" height="64">
       <h3>Consulta enviada</h3>
@@ -963,7 +1007,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     showPlans({ freeLimit: 2, early: true }, { to: chosen(), text: ta.value.trim(), follow: $('ask-follow').checked });
   }
   $('ask-plans').addEventListener('click', openPlans);
-  document.querySelectorAll('[data-goplans]').forEach((a) => a.addEventListener('click', (ev) => { ev.preventDefault(); goAsk(); if (isEmail(email.value)) openPlans(); else { open(); $('ask-plans').hidden = false; showErr('Escribe tu correo y toca «Ver planes»: el plan va a su nombre.'); } }));
+  document.querySelectorAll('[data-goplans]').forEach((a) => a.addEventListener('click', (ev) => { ev.preventDefault(); chat?.off(); goAsk(); if (isEmail(email.value)) openPlans(); else { open(); $('ask-plans').hidden = false; showErr('Escribe tu correo y toca «Ver planes»: el plan va a su nombre.'); } }));
   function showLimit(j, q = {}) {
     if (j.pay) { showPlans(j, q); return; }
     swap(`<h3>Has usado tus ${j.freeLimit || 2} consultas gratuitas</h3>
@@ -984,6 +1028,151 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         $('notify').innerHTML = `<p><b>Hecho:</b> te avisaremos en ${esc(lastEmail)} cuando estén disponibles.</p>`;
       } catch { e.textContent = 'No se ha podido guardar. Inténtalo de nuevo.'; e.hidden = false; }
     });
+  }
+  // ── Consulta en formato chat (vera-backlog#91) ──
+  // Solo cambia la forma: rellena la duda, el correo y la profesional del formulario de siempre y lo envía con él.
+  // Nada de «en línea» ni «escribiendo…»: el saludo es un mensaje de bienvenida y lo automático firma como Hera.
+  // ?caja=clasica (o volver de un pago) enseña la caja de antes en esta sesión.
+  {
+    const qs0 = new URLSearchParams(location.search);
+    let classic = false;
+    try { if (qs0.get('caja') === 'clasica') sessionStorage.setItem('hera-caja', 'clasica'); if (qs0.get('caja') === 'chat') sessionStorage.removeItem('hera-caja'); classic = sessionStorage.getItem('hera-caja') === 'clasica'; } catch { /* sin almacenamiento */ }
+    if (!classic) chat = makeChat();
+  }
+  function makeChat() {
+    const ROLE = { gineco: 'ginecólogo', matrona: 'matrona', pediatra: 'pediatra' };
+    const TOPICS = { gineco: 'regla, anticoncepción, embarazo o menopausia', matrona: 'embarazo, parto, posparto o lactancia', pediatra: 'sueño, alimentación, piel o desarrollo de tu bebé' };
+    const IMG = { gineco: 'gonzalo.jpg?v=2', matrona: 'marina.jpg?v=2', pediatra: 'lucia.jpg?v=3' };
+    const LEAF = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 19c8 0 14-6 14-14C11 5 5 11 5 19z"/><path d="M5 19l7-7"/></svg>';
+    const CLIP = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 11.5 12.5 20a5 5 0 0 1-7-7L14 4.5a3.5 3.5 0 0 1 5 5L10.5 18a2 2 0 0 1-3-3L15 7.5"/></svg>';
+    const ARROW = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>';
+    const examples = [...$('ask-eg').querySelectorAll('button')].map((b) => b.textContent).slice(0, 3);
+    const canAttach = !$('ask-files').hidden;
+    const el = document.createElement('div');
+    el.className = 'cx';
+    el.innerHTML = `<div class="cx-h"><div class="cx-f" role="radiogroup" aria-label="¿A quién se lo preguntas?">${Object.keys(PROS).map((k) => `<button type="button" role="radio" data-pro="${k}"><img src="portada/equipo/${IMG[k]}" alt="" width="36" height="36">${PROS[k].name}</button>`).join('')}</div><p class="cx-s" id="cx-s"></p></div>
+      <div class="cx-log" id="cx-log" aria-live="polite"></div>
+      <div class="cx-eg" id="cx-eg" aria-label="Dudas de ejemplo">${examples.map((t) => `<button type="button">${esc(t)}</button>`).join('')}</div>
+      <div class="cx-bar" id="cx-bar">${canAttach ? `<button type="button" class="cx-clip" id="cx-clip" aria-label="Añadir foto o PDF">${CLIP}</button>` : ''}<textarea class="cx-in" id="cx-in" rows="1" maxlength="2000" placeholder="Escribe tu duda…" aria-label="Tu duda"></textarea><button type="button" class="cx-go" id="cx-go" aria-label="Enviar" disabled>${ARROW}</button></div>
+      <p class="cx-foot" id="cx-foot">Privada · Tus 2 primeras consultas, gratis · Sin tarjeta · Sin registro</p>
+      <div class="cx-links" id="cx-links"><a id="cx-video" href="videollamada/?de=web">¿Prefieres hablarlo cara a cara? Videollamada</a></div>`;
+    box.classList.add('chat-on');
+    box.insertBefore(el, form);
+    const log = $('cx-log'), inp = $('cx-in'), go = $('cx-go'), eg = $('cx-eg');
+    let step = 'duda', shown = '', said = false;
+    hit('clic:caja_chat');
+    const pro = () => chosen() || 'gineco';
+    const add = (html) => { const d = document.createElement('div'); d.innerHTML = html; const n = d.firstElementChild; log.append(n); return n; };
+    const hera = (html, cls = 'h') => add(`<div class="cx-row"><span class="cx-av h">${LEAF}</span><div><p class="cx-cap">Hera</p><div class="cx-b ${cls}">${html}</div></div></div>`);
+    const me = (text, cls = 'me') => add(`<div class="cx-row r"><div class="cx-b ${cls}">${esc(text)}</div></div>`);
+    const greet = () => {
+      const k = pro();
+      const g = log.querySelector('[data-greet]');
+      const html = `<div class="cx-row" data-greet><img class="cx-av" src="portada/equipo/${IMG[k]}" alt="" width="26" height="26"><div><p class="cx-cap">Mensaje de bienvenida de ${PROS[k].name}</p><div class="cx-b p">Hola, soy ${PROS[k].name}, ${ROLE[k]}. Cuéntame tu duda con calma: ${TOPICS[k]}. La leo yo y te respondo por escrito.</div></div></div>`;
+      if (g) g.outerHTML = html; else add(html);
+    };
+    function sync() {
+      const k = pro();
+      el.querySelectorAll('[data-pro]').forEach((b) => { const on = b.dataset.pro === k; b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false'); });
+      $('cx-s').innerHTML = `<b>${PROS[k].name}, ${ROLE[k]}</b><br>lee tu duda y te responde por correo en menos de 48 h`;
+      $('cx-video').href = `videollamada/?de=web#reservar-${k}`;
+      $('cx-video').textContent = `¿Prefieres hablarlo cara a cara? Videollamada con ${PROS[k].name}`;
+      if (!said && shown !== k) { greet(); shown = k; }
+      if (step === 'correo') ask();
+    }
+    // Paso del correo: Hera lo pide (o confirma el que ya usó en este dispositivo)
+    let askEl = null;
+    function ask() {
+      const k = pro();
+      const html = email.value ? `¿Te enviamos la respuesta de ${PROS[k].name} a este correo?<small>Puedes cambiarlo. Solo lo usamos para responderte.</small>` : `Gracias. ¿A qué correo te enviamos la respuesta de ${PROS[k].name}?<small>Solo para responderte. No te daremos de alta en nada.</small>`;
+      if (askEl) askEl.querySelector('.cx-b').innerHTML = html; else askEl = hera(html);
+    }
+    function setInput(kind) {
+      const n = document.createElement(kind === 'email' ? 'input' : 'textarea');
+      n.className = 'cx-in'; n.id = 'cx-in';
+      if (kind === 'email') { n.type = 'email'; n.inputMode = 'email'; n.autocomplete = 'email'; n.enterKeyHint = 'send'; n.placeholder = 'tu@correo.com'; n.setAttribute('aria-label', 'Tu correo'); n.value = email.value; }
+      else { n.rows = 1; n.maxLength = 2000; n.placeholder = 'Escribe tu duda…'; n.setAttribute('aria-label', 'Tu duda'); }
+      inp.replaceWith(n); bind(n);
+    }
+    let cur = inp;
+    function bind(n) {
+      cur = n;
+      const upd = () => { go.disabled = !(step === 'correo' ? n.value.trim() : n.value.trim()) || busy; if (n.tagName === 'TEXTAREA') { n.style.height = 'auto'; n.style.height = `${Math.min(n.scrollHeight + 2, 160)}px`; } };
+      n.addEventListener('input', () => { if (step === 'duda' && n.value.trim()) open(); upd(); });
+      n.addEventListener('focus', () => { if (step === 'correo') hit('correo_portada'); }, { once: step === 'correo' });
+      n.addEventListener('keydown', (ev) => { if (ev.key === 'Enter' && (step === 'correo' || (!ev.shiftKey && matchMedia('(pointer: fine)').matches))) { ev.preventDefault(); if (!go.disabled) next(); } });
+      upd();
+    }
+    bind(inp);
+    function next() {
+      const v = cur.value.trim();
+      if (step === 'duda') {
+        if (!v) return;
+        me(v); said = true; eg.hidden = true;
+        const wasShown = shown;
+        ta.value = v; open(); refresh(); hit('clic:chat_duda');
+        const k = pro();
+        step = 'correo'; setInput('email');
+        setTimeout(() => {
+          if (k !== wasShown) hera(`Por lo que cuentas, te responderá mejor <b>${PROS[k].name}, ${ROLE[k]}</b>. Puedes cambiarlo tocando otra cara arriba.`);
+          if (suggestContact({ text: v, mode: 'pregnancy' }).urgent) add(`<p class="cx-urg"><b>Si es urgente, no esperes:</b> ${EMERG} o ve a urgencias.</p>`);
+          ask(); cur.focus({ preventScroll: true });
+        }, 350);
+        return;
+      }
+      if (step === 'correo') {
+        if (!isEmail(v)) { hit(v ? 'clic:fallo_correo_mal' : 'clic:fallo_sin_correo'); hera('Ese correo no parece completo. Revísalo, por ejemplo: nombre@gmail.com', 'err'); return; }
+        email.value = v; me(v);
+        step = 'enviando'; go.disabled = true; cur.disabled = true;
+        const wait = hera('Enviando…');
+        form.requestSubmit();
+        // El formulario avisa con sent(), panel() (planes) o error()
+        const t = setInterval(() => { if (!busy) { clearInterval(t); wait.remove(); if (step === 'enviando') { step = 'correo'; cur.disabled = false; go.disabled = false; } } }, 150);
+      }
+    }
+    go.addEventListener('click', next);
+    eg.addEventListener('click', (ev) => { const b = ev.target.closest('button'); if (!b) return; hit('ejemplo_duda'); cur.value = b.textContent; next(); });
+    el.querySelector('.cx-f').addEventListener('click', (ev) => {
+      const b = ev.target.closest('[data-pro]'); if (!b || b.dataset.pro === pro()) return;
+      manual = true; radios.forEach((r) => { r.checked = r.value === b.dataset.pro; }); hit('elige_pro'); refresh();
+      if (said && step !== 'hecho') hera(`Hecho: te responderá <b>${PROS[b.dataset.pro].name}</b>.`);
+    });
+    $('cx-clip')?.addEventListener('click', () => $('ask-file').click());
+    let nFiles = 0;
+    function files(list, error) {
+      if (list.length > nFiles) list.slice(nFiles).forEach((f) => me(`Archivo: ${f.filename}`, 'file'));
+      nFiles = list.length;
+      if (error) hera(esc(error), 'err');
+    }
+    function sent(to, j) {
+      step = 'hecho';
+      const rem = j.remaining ?? 0;
+      hera(`<b>Enviada a ${PROS[to].name}.</b> Te responderá a <b>${esc(lastEmail)}</b> en menos de 48 h. Mira también en promociones o spam.${j.unlimited ? '' : ` ${rem === 0 ? 'Era tu última consulta gratis.' : `Te ${rem === 1 ? 'queda <b>1 consulta gratis</b>' : `quedan <b>${rem} consultas gratis</b>`}.`}`}${j.dryRun ? '<small>Modo ensayo: no se ha enviado ningún correo.</small>' : ''}`);
+      add(`<p class="cx-urg">No es para urgencias: si algo no va bien, ${EMERG} o acude a tu centro de salud.</p>`);
+      $('cx-bar').hidden = true; $('cx-foot').hidden = true;
+      $('cx-links').innerHTML = `<button type="button" id="cx-again">Hacer otra pregunta</button><a href="videollamada/?de=web#reservar-${to}">Videollamada con ${PROS[to].name}</a><a href="app/" id="cx-app">Abre la app de Hera, es gratis</a>`;
+      $('cx-app').addEventListener('click', () => hit('abrir_portada'));
+      $('cx-again').addEventListener('click', reset);
+    }
+    function reset() {
+      log.textContent = ''; askEl = null; said = false; shown = ''; step = 'duda'; nFiles = 0;
+      ta.value = ''; manual = false; done.hidden = true;
+      $('cx-bar').hidden = false; $('cx-foot').hidden = false; eg.hidden = false;
+      $('cx-links').innerHTML = '<a id="cx-video" href="videollamada/?de=web">¿Prefieres hablarlo cara a cara? Videollamada</a>';
+      setInput('duda'); go.disabled = true; refresh(); cur.focus();
+    }
+    // Planes o aviso (sin consultas gratis): el panel de siempre, dentro del chat
+    function panel() {
+      step = 'hecho';
+      if (log.contains(done)) return;
+      const row = hera(''); row.querySelector('.cx-b').replaceWith(done); done.classList.add('cx-b', 'h');
+      $('cx-bar').hidden = true; $('cx-foot').hidden = true;
+      row.scrollIntoView({ block: 'nearest' });
+    }
+    function error(m) { if (step === 'enviando') { step = 'correo'; cur.disabled = false; go.disabled = false; } hera(esc(m), 'err'); }
+    function off() { box.classList.remove('chat-on'); el.remove(); chat = null; try { sessionStorage.setItem('hera-caja', 'clasica'); } catch { /* sin almacenamiento */ } }
+    sync();
+    return { sync, files, sent, panel, error, off, focus: () => cur.focus({ preventScroll: true }) };
   }
 </script>
 <!-- Cloudflare Web Analytics (sin cookies) --><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "edc55b126e2943d8828e3241ae0c4efd"}'></script><!-- End Cloudflare Web Analytics -->

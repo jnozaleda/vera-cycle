@@ -149,6 +149,61 @@ export function videoAbandonedEmail(pro, plan) {
   return { subject, html, text };
 }
 
+// MARK: - Consulta guardada hasta que se paga (vera-backlog: «pendiente de pago»)
+// Sin gratuitas ni saldo, la consulta se guarda cifrada (KV hold:ID, 7 días) y NO llega a la profesional.
+// Al pagar (metadata hold), se envía sola reproduciendo /ask; a las 3 h, un único recordatorio.
+const WORKER_URL = 'https://hera-consultas.tempcheck-app.workers.dev';
+const HOLD_DAYS = 7;
+const holdSig = async (env, id) => (await hmac(env.HASH_SALT, `hold:${id}`)).slice(0, 16);
+const holdLinks = async (env, id) => { const s = await holdSig(env, id); return Object.fromEntries(['suelta', 'bono', 'mensual'].map((p) => [p, `${WORKER_URL}/pagar?c=${id}&s=${s}&plan=${p}`])); };
+
+export function holdEmail(pro, text, links, reminder = false) {
+  const excerpt = text.length > 220 ? `${text.slice(0, 220).trim()}…` : text;
+  const btn = `<p style="margin:16px 0"><a href="${links.suelta}" style="display:inline-block;background:#45574C;color:#ffffff;text-decoration:none;font-weight:600;border-radius:8px;padding:12px 20px">Pagar 9 € y enviarla</a></p>`;
+  const quote = `<div style="background:#F6E0E2;border-radius:10px;padding:12px;margin:12px 0;font-size:14px">«${esc(excerpt)}»</div>`;
+  const subject = reminder ? `¿Seguimos con tu consulta a ${pro.short}?` : `Tu consulta a ${pro.short} está guardada · falta el pago`;
+  const html = reminder
+    ? shell(`<p>Hola,</p><p>Tu consulta para ${esc(pro.short)} sigue guardada y esperando el pago:</p>${quote}${btn}<p style="font-size:14px">¿Te quedó alguna duda antes de pagar? Responde a este correo y te contestamos.</p><p style="font-size:13px;color:#6E6C67">Es el único recordatorio. Si no pagas, la borramos en ${HOLD_DAYS} días.</p>`)
+    : shell(`<p>Hola,</p><p>Ya has usado tus consultas gratis, así que hemos <b>guardado tu consulta</b> para ${esc(pro.name)}, ${esc(pro.role)}:</p>${quote}<p>Para que le llegue, solo falta el pago. En cuanto pagues, se la enviamos y te responde en menos de 48 h; no tienes que volver a escribirla.</p>${btn}<p style="font-size:14px">¿Vas a preguntar más veces? <a href="${links.bono}" style="color:#45574C;font-weight:600">Bono de 5 consultas por 35 €</a> o <a href="${links.mensual}" style="color:#45574C;font-weight:600">ilimitado por 15 € al mes</a>.</p><p style="font-size:13px;color:#6E6C67">Si no pagas en ${HOLD_DAYS} días, borramos tu consulta. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.</p>`);
+  const text2 = reminder
+    ? `Hola,\n\nTu consulta para ${pro.short} sigue guardada y esperando el pago:\n\n«${excerpt}»\n\nPagar 9 € y enviarla: ${links.suelta}\n\n¿Te quedó alguna duda antes de pagar? Responde a este correo.\nEs el único recordatorio. Si no pagas, la borramos en ${HOLD_DAYS} días.`
+    : `Hola,\n\nYa has usado tus consultas gratis, así que hemos guardado tu consulta para ${pro.name}, ${pro.role}:\n\n«${excerpt}»\n\nPara que le llegue, solo falta el pago. En cuanto pagues, se la enviamos; no tienes que volver a escribirla.\n\nPagar 9 € y enviarla: ${links.suelta}\nBono de 5 por 35 €: ${links.bono}\nIlimitado por 15 € al mes: ${links.mensual}\n\nSi no pagas en ${HOLD_DAYS} días, borramos tu consulta. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.`;
+  return { subject, html, text: text2 };
+}
+
+/** Envía una consulta guardada cuando ya está pagada: reproduce /ask con lo guardado (una sola vez) */
+async function deliverHold(env, id, ctx) {
+  const raw = await env.KV.get(`hold:${id}`, 'json');
+  if (!raw) return false;
+  await env.KV.delete(`hold:${id}`);
+  const held = JSON.parse(await openEmail(env, raw.x));
+  const res = await handler.fetch(new Request(`${WORKER_URL}/ask`, { method: 'POST', headers: { Origin: 'https://hera-gine.com', 'Content-Type': 'application/json' }, body: JSON.stringify({ ...held, held: true }) }), env, ctx);
+  const j = await res.json().catch(() => ({}));
+  if (j.ok) await bump(env, 'guardada_pagada');
+  else console.log(`hold ${id}: no se pudo enviar ${JSON.stringify(j)}`);
+  return !!j.ok;
+}
+
+/** Cron: un único recordatorio a las 3 h a quien aún no ha pagado su consulta guardada */
+export async function remindHolds(env) {
+  let cursor;
+  do {
+    const page = await env.KV.list({ prefix: 'hold:', cursor });
+    for (const k of page.keys) {
+      const raw = await env.KV.get(k.name, 'json');
+      if (!raw || raw.rem || Date.now() - raw.at < 3 * 3600000) continue;
+      const id = k.name.slice(5);
+      const held = JSON.parse(await openEmail(env, raw.x));
+      const pro = PROS[held.to] || PROS.gineco;
+      await sendMail(env, { to: held.email, replyTo: 'contacto@hera-gine.com', ...holdEmail(pro, held.text, await holdLinks(env, id), true) });
+      const left = Math.max(60, Math.floor((raw.at + HOLD_DAYS * 86400000 - Date.now()) / 1000));
+      await env.KV.put(k.name, JSON.stringify({ ...raw, rem: 1 }), { expirationTtl: left });
+      await bump(env, 'guardada_recordatorio');
+    }
+    cursor = page.list_complete ? null : page.cursor;
+  } while (cursor);
+}
+
 /** Mensaje reenviado por el hilo: del profesional a la usuaria o de la usuaria al profesional */
 /** Pie de la primera respuesta (vera-backlog#85): «¿Te ha ayudado?» con tres botones a la página de opinión */
 export function rateBlock(pro, link) {
@@ -263,7 +318,7 @@ async function rateLimited(env, ip) {
   return false;
 }
 
-export default {
+const handler = {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const origin = request.headers.get('Origin') ?? '';
@@ -317,6 +372,7 @@ export default {
           return;
         }
         if (s.metadata?.src === 'ads') { const ak = /_latam$/.test(String(s.metadata?.camp || '')) ? 'latam' : 'anuncio'; await bump(env, `${ak}_pago:${plan}`); await bump(env, `${ak}_eur`, madridDay(), PLANS[plan].eur); }
+        if (/^[a-z0-9]{8}$/.test(String(s.metadata?.hold || ''))) await deliverHold(env, s.metadata.hold, ctx);
         // Aviso al equipo: sin correo de la usuaria; enlace al pago en el panel de Stripe
         const dash = `https://dashboard.stripe.com/${s.livemode ? '' : 'test/'}${s.payment_intent ? `payments/${s.payment_intent}` : s.subscription ? `subscriptions/${typeof s.subscription === 'string' ? s.subscription : s.subscription.id}` : 'payments'}`;
         const hora = new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid', dateStyle: 'medium', timeStyle: 'short' });
@@ -337,6 +393,18 @@ export default {
       },
     };
     if (request.method === 'POST' && url.pathname === '/stripe/webhook') return new Response(null, { status: await handleWebhook(env, request, payHooks) });
+    // Enlace de pago del correo «consulta guardada»: abre Stripe para esa consulta (o avisa si ya no está)
+    if (request.method === 'GET' && url.pathname === '/pagar') {
+      const id = String(url.searchParams.get('c') || ''); const plan = String(url.searchParams.get('plan') || 'suelta');
+      const raw = /^[a-z0-9]{8}$/.test(id) && PLANS[plan] && !PLANS[plan].video && url.searchParams.get('s') === await holdSig(env, id) ? await env.KV.get(`hold:${id}`, 'json') : null;
+      if (!raw || !env.STRIPE_SECRET_KEY) return new Response(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body style="font:16px/1.5 -apple-system,sans-serif;max-width:32em;margin:40px auto;padding:0 18px;color:#2F3631"><h1 style="font:400 28px Georgia,serif">Esta consulta ya no está pendiente</h1><p>O ya se ha enviado, o han pasado más de ${HOLD_DAYS} días y se ha borrado. Puedes escribirla de nuevo en <a href="https://hera-gine.com/#ask" style="color:#45574C">hera-gine.com</a>.</p></body>`, { status: 404, headers: { 'content-type': 'text/html; charset=utf-8' } });
+      const held = JSON.parse(await openEmail(env, raw.x));
+      try {
+        const u = await createCheckout(env, { email: held.email, plan, h: raw.h, origin: 'https://hera-gine.com', back: 'web', ad: held.src === 'ads', camp: /^[a-z0-9_]{1,24}$/.test(String(held.camp || '')) ? held.camp : '', hold: id, pro: PROS[raw.to] ? raw.to : '' });
+        await bump(env, `pago_inicio:${plan}`);
+        return Response.redirect(u, 303);
+      } catch (e) { console.log(e.message); return new Response('No se ha podido abrir el pago. Inténtalo en un rato.', { status: 502 }); }
+    }
     if (request.method === 'GET' && url.pathname === '/checkout/status') {
       if (!env.STRIPE_SECRET_KEY) return reply(404, { error: 'not_found' });
       try { return reply(200, await sessionStatus(env, url.searchParams.get('cs'), payHooks)); } catch (e) { console.log(e.message); return reply(502, { error: 'stripe' }); }
@@ -424,7 +492,7 @@ export default {
       if (PLANS[body.plan].video && !VIDEO_PROS.includes(vpro)) return reply(400, { error: 'bad_pro' });
       if (await rateLimited(env, request.headers.get('CF-Connecting-IP'))) return reply(429, { error: 'rate' });
       try {
-        const checkoutUrl = await createCheckout(env, { email: String(body.email).trim(), plan: body.plan, h: await hmac(env.HASH_SALT, norm), origin, back: ['web', 'video'].includes(body.back) ? body.back : 'app', ad: body.src === 'ads', pro: vpro, camp: /^[a-z0-9_]{1,24}$/.test(String(body.camp || '')) ? body.camp : '' });
+        const checkoutUrl = await createCheckout(env, { email: String(body.email).trim(), plan: body.plan, h: await hmac(env.HASH_SALT, norm), origin, back: ['web', 'video'].includes(body.back) ? body.back : 'app', ad: body.src === 'ads', pro: vpro, camp: /^[a-z0-9_]{1,24}$/.test(String(body.camp || '')) ? body.camp : '', hold: /^[a-z0-9]{8}$/.test(String(body.hold || '')) && await env.KV.get(`hold:${body.hold}`) ? body.hold : '' });
         await bump(env, `pago_inicio:${body.plan}`);
         return reply(200, { url: checkoutUrl });
       } catch (e) { console.log(e.message); return reply(502, { error: 'stripe' }); }
@@ -477,6 +545,24 @@ export default {
           if (body.src === 'ads') await bump(env, /_latam$/.test(String(body.camp || '')) ? 'latam_limite' : 'anuncio_limite');
           await bump(env, 'gratuitas_agotadas');
           await record(env, { e: 'gratuitas_agotadas', p: await personTag(env, request, madridDay(), body.p) }, sendMail, ctx);
+        }
+        // Pendiente de pago: se guarda cifrada y se le manda el enlace (no llega a la profesional hasta que pague)
+        if (pay && env.RELAY === '1' && body.held !== true) {
+          const hid = newThreadId();
+          const held = { email: q.email, to: body.to, text: q.text, context: q.context, situation: q.situation, follow: body.follow === true, src: body.src, camp: body.camp, ref: body.ref, p: body.p, team: body.team === true };
+          await env.KV.put(`hold:${hid}`, JSON.stringify({ x: await sealEmail(env, JSON.stringify(held)), at: Date.now(), h, to: body.to, rem: 0 }), { expirationTtl: HOLD_DAYS * 86400 });
+          const links = await holdLinks(env, hid);
+          await sendMail(env, { to: q.email, replyTo: 'contacto@hera-gine.com', ...holdEmail(pro, q.text, links) });
+          if (body.team !== true) {
+            await bump(env, 'consulta_guardada');
+            if (env.COPY_TO) {
+              const who = env.COPY_EMAIL === '1' ? `<p style="font-size:13px;color:#6E6C67">Correo de la usuaria: <b>${esc(q.email)}</b></p>` : '';
+              const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${hid.toUpperCase()} · PENDIENTE DE PAGO`, intro: `Consulta guardada para <b>${esc(pro.name)}</b>. <b style="color:#B3261E">Aún no ha pagado</b>: a ${esc(pro.short)} no le ha llegado.`, body: q.text,
+                extra: `${who}<p style="font-size:13px;color:#6E6C67">Le hemos enviado el enlace de pago. Recordatorio a las 3 h si no paga. Se borra en ${HOLD_DAYS} días.${files.length ? ' Los adjuntos no se guardan: podrá enviarlos respondiendo al correo de la profesional.' : ''}</p>` });
+              await sendMail(env, { to: env.COPY_TO, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc });
+            }
+          }
+          return reply(200, { limit: true, used: rec.n, freeLimit: limit, pay: true, held: hid });
         }
         return reply(200, { limit: true, used: rec.n, freeLimit: limit, ...(pay ? { pay: true } : {}) });
       }
@@ -569,8 +655,10 @@ export default {
     await remindOverdue(env);
     await sendFeedbackDue(env, sendMail, PROS);
     await hourlyDigest(env, sendMail);
+    await remindHolds(env);
   },
 };
+export default handler;
 
 /** Reenvía un mensaje del hilo al otro lado y actualiza el hilo. role: quién escribe («p» profesional, «u» usuaria) */
 export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {

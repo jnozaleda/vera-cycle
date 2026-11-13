@@ -801,7 +801,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       let d = null;
       try { d = JSON.parse(store.get('hera-pay-draft') || 'null'); localStorage.removeItem('hera-pay-draft'); } catch { /* sin almacenamiento */ }
       if (d && Date.now() - d.at > 86400000) d = null;
-      if (d?.text) ta.value = d.text;
+      if (d?.text && !d.held) ta.value = d.text;
       if (d?.follow) $('ask-follow').checked = true;
       open();
       if (d?.to) { manual = true; radios.forEach((r) => { r.checked = r.value === d.to; }); }
@@ -816,6 +816,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         fetch(`${API}/checkout/status?cs=${encodeURIComponent(qs.get('cs') || '')}`).then((r) => r.json()).then((j) => {
           if (!j.paid) throw new Error();
           hit(`pago_hecho:${j.plan}`);
+          if (j.held) { ta.value = ''; refresh(); say(`<b>Pago hecho. Tu consulta ya ha llegado a ${esc(PROS[j.pro]?.name || PROS[d?.to]?.name || 'la profesional')}.</b> Te responderá por correo en menos de 48 h. ${j.unlimited ? 'Tienes el plan ilimitado: una consulta nueva al día.' : j.credits ? `Te ${j.credits === 1 ? 'queda 1 consulta pagada' : `quedan ${j.credits} consultas pagadas`}.` : ''}`); return; }
           say(`<b>Pago hecho.</b> ${j.unlimited ? 'Tienes el plan ilimitado: una consulta nueva al día.' : `Tienes ${j.credits === 1 ? '1 consulta pagada' : `${j.credits} consultas pagadas`}.`} ${ta.value.trim() ? 'Tu pregunta está aquí: revísala y envíala.' : 'Escribe tu pregunta y envíala.'}${j.portal ? ` <a href="${esc(j.portal)}" target="_blank" rel="noopener">Gestionar suscripción</a>` : ''}`);
         }).catch(() => say(`No hemos podido confirmar el pago todavía. Si te han cobrado, envía la consulta en unos minutos o escríbenos a contacto@hera-gine.com.`));
       }
@@ -905,6 +906,8 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   function showPlans(j, q) {
     swap(`${j.early ? `<h3>Bono o plan ilimitado</h3>
       <p>Si aún te quedan consultas gratuitas, se usan primero: lo que compres queda para después. Tu pregunta queda guardada y la envías al volver.</p>`
+      : j.held ? `<h3>Tu consulta está guardada</h3>
+      <p>Ya has usado tus ${j.freeLimit || 2} consultas gratis. En cuanto pagues, se la enviamos a ${esc(PROS[q.to]?.name || 'la profesional')}: no tienes que volver a escribirla. También te hemos enviado el enlace por correo; si no pagas en 7 días, la borramos.</p>`
       : `<h3>Has usado tus ${j.freeLimit || 2} consultas gratuitas</h3>
       <p>Para seguir preguntando a Gonzalo, Marina y Lucía, elige cómo. Tu pregunta queda guardada y la envías al volver.</p>`}
       <div style="display:grid;gap:8px;max-width:30em;margin:0 auto;text-align:left">
@@ -922,9 +925,9 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       done.querySelectorAll('[data-plan]').forEach((x) => { x.disabled = true; });
       b.lastElementChild.textContent = 'Abriendo…';
       hit(`pago_elegido:${plan}`);
-      store.set('hera-pay-draft', JSON.stringify({ to: q.to, manual: true, text: q.text, context: '', include: true, follow: q.follow, at: Date.now() }));
+      store.set('hera-pay-draft', JSON.stringify({ to: q.to, manual: true, text: q.text, context: '', include: true, follow: q.follow, at: Date.now(), ...(j.held ? { held: j.held } : {}) }));
       try {
-        const r = await fetch(`${API}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: lastEmail, plan, back: 'web', ...adSrc() }) });
+        const r = await fetch(`${API}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: lastEmail, plan, back: 'web', ...adSrc(), ...(j.held ? { hold: j.held } : {}) }) });
         const k = await r.json().catch(() => ({}));
         if (!r.ok || !k.url) throw new Error();
         location.href = k.url;

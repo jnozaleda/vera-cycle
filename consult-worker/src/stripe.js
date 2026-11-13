@@ -53,7 +53,7 @@ async function priceId(env, lookup) {
 }
 
 /** Crea la sesión de pago y devuelve su URL */
-export async function createCheckout(env, { email, plan, h, origin, back, ad, pro, camp }) {
+export async function createCheckout(env, { email, plan, h, origin, back, ad, pro, camp, hold }) {
   const p = PLANS[plan];
   // Vuelve al mismo sitio desde el que se pagó (la web real, o localhost en pruebas)
   // back = 'web': desde la portada, vuelve a la portada (?web=1 evita que salte a la app instalada)
@@ -74,6 +74,7 @@ export async function createCheckout(env, { email, plan, h, origin, back, ad, pr
     ...(ad ? { 'metadata[src]': 'ads' } : {}),
     ...(pro ? { 'metadata[pro]': pro } : {}),
     ...(ad && camp ? { 'metadata[camp]': camp } : {}),
+    ...(hold ? { 'metadata[hold]': hold } : {}),
   };
   if (p.mode === 'subscription') { params['subscription_data[metadata][h]'] = h; params['subscription_data[metadata][plan]'] = plan; }
   const s = await api(env, 'POST', 'checkout/sessions', params);
@@ -141,6 +142,7 @@ export async function sessionStatus(env, cs, hooks) {
   if (!g) return { paid: false };
   const out = { paid: true, plan: g.plan, credits: (await getBalance(env, g.h)).credits };
   if (PLANS[g.plan].video) { out.video = true; out.pro = s.metadata?.pro || ''; }
+  if (s.metadata?.hold) { out.held = true; out.pro = s.metadata?.pro || ''; }
   if (PLANS[g.plan].mode === 'subscription') { out.unlimited = true; if (env.STRIPE_PORTAL_URL) out.portal = env.STRIPE_PORTAL_URL; }
   return out;
 }

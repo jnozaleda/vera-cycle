@@ -1311,6 +1311,8 @@ function askPayView(a) {
       ${a.result.early
         ? `<div class="t-15 w-500 c-deep">Bono o plan ilimitado</div>
       <p class="t-13 lh-4 c-deep">Si aún te quedan consultas gratuitas, se usan primero: lo que compres queda para después. Tu pregunta queda guardada y la envías al volver.</p>`
+        : a.result.held ? `<div class="t-15 w-500 c-deep">Tu consulta está guardada</div>
+      <p class="t-13 lh-4 c-deep">Ya has usado tus ${a.result.freeLimit || 2} consultas gratis. En cuanto pagues, se la enviamos a ${esc((CONSULTS[a.sentTo] || CONSULTS.gineco).short)}: no tienes que volver a escribirla. También te hemos enviado el enlace por correo; si no pagas en 7 días, la borramos.</p>`
         : `<div class="t-15 w-500 c-deep">Has usado tus ${a.result.freeLimit || 2} consultas gratuitas</div>
       <p class="t-13 lh-4 c-deep">Para seguir preguntando a Gonzalo, Marina y Lucía, elige cómo. Tu pregunta queda guardada y la envías al volver.</p>`}
     </div>
@@ -1408,6 +1410,7 @@ function askSheet() {
   const pd = a.paid;
   const paidBanner = !pd ? '' : pd.checking ? '<div class="pay-ok t-13">Comprobando el pago…</div>'
     : pd.error ? `<div class="pay-ok is-warn t-13 lh-4">No hemos podido confirmar el pago todavía. Si te han cobrado, envía la consulta en unos minutos o escríbenos a ${esc(CONTACT_EMAIL)}.</div>`
+    : pd.held ? `<div class="pay-ok t-13 lh-4"><b>Pago hecho. Tu consulta ya ha llegado a ${esc((CONSULTS[pd.pro] || CONSULTS[a.to] || CONSULTS.gineco).short)}.</b> Te responderá por correo en menos de 48 h.</div>`
     : `<div class="pay-ok t-13 lh-4"><b>Pago hecho.</b> ${pd.unlimited ? 'Tienes el plan ilimitado: una consulta nueva al día.' : `Tienes ${pd.credits === 1 ? '1 consulta pagada' : `${pd.credits} consultas pagadas`}.`} ${a.text ? 'Tu pregunta está aquí: revísala y envíala.' : 'Escribe tu pregunta y envíala.'}${pd.unlimited && pd.portal ? ` <a href="${esc(pd.portal)}" target="_blank" rel="noopener">Gestionar suscripción</a>` : ''}</div>`;
   const EG = {
     cycle: ['Se me ha retrasado la regla, ¿qué hago?', 'Tengo mucho dolor con la regla, ¿es normal?', '¿Qué anticonceptivo me conviene?'],
@@ -2873,10 +2876,10 @@ const actions = {
     a.buy = { busy: plan }; render();
     track(`pago_elegido:${plan}`);
     // Solo en este dispositivo: la pregunta (sin adjuntos) para recuperarla al volver de Stripe. Nunca va en la URL.
-    try { localStorage.setItem(PAY_DRAFT_KEY, JSON.stringify({ to: a.to, manual: a.manual, text: a.text, context: a.context, include: a.include, follow: !!a.follow, at: Date.now() })); } catch { /* sin almacenamiento */ }
+    try { localStorage.setItem(PAY_DRAFT_KEY, JSON.stringify({ to: a.sentTo || a.to, manual: a.manual, text: a.text, context: a.context, include: a.include, follow: !!a.follow, at: Date.now(), ...(a.result?.held ? { held: a.result.held } : {}) })); } catch { /* sin almacenamiento */ }
     try {
       const res = await fetch(`${CONSULT_API}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: a.email.trim(), plan, ...(payTest() ? { payTest: true } : {}), ...adSrc() }) });
+        body: JSON.stringify({ email: a.email.trim(), plan, ...(payTest() ? { payTest: true } : {}), ...adSrc(), ...(a.result?.held ? { hold: a.result.held } : {}) }) });
       const j = await res.json().catch(() => ({}));
       if (!res.ok || !j.url) throw new Error();
       location.href = j.url;
@@ -3353,7 +3356,7 @@ if (location.hash === '#preguntar') {
     try { d = JSON.parse(localStorage.getItem(PAY_DRAFT_KEY) || 'null'); localStorage.removeItem(PAY_DRAFT_KEY); } catch { /* sin almacenamiento */ }
     if (d && Date.now() - d.at > 86400000) d = null;
     ui.ask = { ...ui.ask, sent: null, status: null, result: null, buy: null, paid: null,
-      ...(d ? { to: d.to, manual: d.manual, text: d.text || '', context: d.context || '', include: d.include !== false, follow: !!d.follow } : {}) };
+      ...(d ? { to: d.to, manual: d.manual, text: d.held ? '' : (d.text || ''), context: d.context || '', include: d.include !== false, follow: !!d.follow } : {}) };
     if (!ui.ask.to) ui.ask.to = suggestContact({ text: ui.ask.text, context: ui.ask.context, mode: store.mode }).to;
     ui.sheet = 'ask'; ui.sheetAnim = true;
     if (pago === 'ok') {

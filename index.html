@@ -684,10 +684,10 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   hit('portada');
   // Anuncios (vera-backlog#56): quien llega con gclid o utm_medium=cpc queda marcado 30 días en este dispositivo
   // (localStorage, sin cookies). Solo se usa para contar consultas y pagos que vienen de anuncios.
-  // Prueba en México y Argentina (utm_campaign …_latam): el teléfono de urgencias no es el 112. Se recuerda en esta sesión.
+  // Prueba en Latinoamérica: México, Argentina, Chile y Colombia (utm_campaign …_latam): el teléfono de urgencias no es el 112. Se recuerda en esta sesión.
   let latam = false;
   try { if (/_latam$/.test((new URLSearchParams(location.search).get('utm_campaign') || '').toLowerCase())) sessionStorage.setItem('hera-latam', '1'); latam = sessionStorage.getItem('hera-latam') === '1'; } catch { /* sin almacenamiento */ }
-  const EMERG = latam ? 'llama al número de emergencias de tu país (911 en México, 107 en Argentina)' : 'llama al 112';
+  const EMERG = latam ? 'llama al número de emergencias de tu país (911 en México, 107 en Argentina, 131 en Chile, 123 en Colombia)' : 'llama al 112';
   if (latam) document.querySelectorAll('#ask-urgent, #preguntas details p').forEach((el) => { el.innerHTML = el.innerHTML.replace(/llama al 112/g, EMERG); });
   const AD_KEY = 'hera-src';
   {

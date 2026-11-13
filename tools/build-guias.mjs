@@ -117,7 +117,8 @@ for (const p of pages) {
   writeFileSync(`guias/${p.slug}/index.html`, shell({ title: `${p.title} · Hera`, desc: p.desc, path, ld, body: `
 ${VCSS}<div class="w"><div class="band" style="background:${TINT[p.group]}"><p class="ey">${esc(p.group)}</p><h1>${esc(p.title)}</h1>${v.rev || '<p class="m">Equipo de Hera</p>'}${v.tiles}</div>
 <div class="art"><article class="secs">${v.sem}${v.chart}<section class="sec"><h2>La respuesta</h2>${answer(p.a)}</section>${extra}${v.links}
-<p class="urg"><b>Si es urgente, llama al 112 o ve a urgencias.</b> Esta información es general y no sustituye la valoración de un profesional.</p></article>
+<p class="urg"><b>Si es urgente, llama al 112 o ve a urgencias.</b> Esta información es general y no sustituye la valoración de un profesional.</p>
+<p style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;font-size:15px;color:#4F4E49">¿Conoces a alguien con esta duda? <a data-share href="https://wa.me/?text=${encodeURIComponent(`Te paso esta guía de Hera: ${p.title}. ${SITE}${path}?via=wa_guia`)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:7px;background:#45574C;color:#fff;text-decoration:none;font-weight:600;border-radius:999px;padding:8px 14px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5 5 16a8.5 8.5 0 1 1 3.2 3.1z"/></svg>Enviar por WhatsApp</a></p></article>
 ${askBox('¿Tu caso es distinto?', askFor(p))}</div>
 <section class="more"><h2>También te puede interesar</h2><div class="gcs">${related.map(card).join('')}</div></section></div>${v.stick}` }));
 }

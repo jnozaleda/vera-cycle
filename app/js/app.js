@@ -1292,6 +1292,7 @@ const freeDots = (used, total) => `<span class="free-dots" aria-hidden="true">${
 const PAY_TEST_KEY = 'hera-pagos-test';
 // Llegó desde un anuncio (lo marca la portada, 30 días): solo para contar consultas y pagos de anuncios
 // Invitación (vera-backlog#84): la web guarda ?r=CÓDIGO en hera-ref (30 días); viaja con la consulta
+const viaSrc = () => { try { const r = JSON.parse(localStorage.getItem('hera-via') || 'null'); return r && Date.now() - r.at < 30 * 86400000 ? { via: r.v } : {}; } catch { return {}; } };
 const refSrc = () => { try { const r = JSON.parse(localStorage.getItem('hera-ref') || 'null'); return r && Date.now() - r.at < 30 * 86400000 ? { ref: r.c } : {}; } catch { return {}; } };
 const adSrc = () => { try { const a = JSON.parse(localStorage.getItem('hera-src') || 'null'); return a && Date.now() - a.at < 30 * 86400000 ? { src: 'ads', ...(a.c ? { camp: a.c } : {}) } : {}; } catch { return {}; } };
 const PAY_DRAFT_KEY = 'hera-pay-draft';
@@ -2848,7 +2849,7 @@ const actions = {
       const meta = [];
       if (a.include) meta.push(...consultDetails());
       const res = await fetch(`${CONSULT_API}/ask`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: a.email.trim(), to: to.key, text: a.text.trim(), context: a.context, situation: meta.join('\n'), website: a.website || '', p: visitTag(), attachments: filesPayload(a.files || []), follow: !!a.follow, ...(isTeam() ? { team: true } : {}), ...(payTest() ? { payTest: true } : {}), ...adSrc(), ...refSrc() }) });
+        body: JSON.stringify({ email: a.email.trim(), to: to.key, text: a.text.trim(), context: a.context, situation: meta.join('\n'), website: a.website || '', p: visitTag(), attachments: filesPayload(a.files || []), follow: !!a.follow, ...(isTeam() ? { team: true } : {}), ...(payTest() ? { payTest: true } : {}), ...adSrc(), ...refSrc(), ...viaSrc() }) });
       const j = await res.json().catch(() => ({}));
       if (res.status === 429) throw new Error('Has enviado varias consultas seguidas. Espera unos minutos y vuelve a intentarlo.');
       if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');

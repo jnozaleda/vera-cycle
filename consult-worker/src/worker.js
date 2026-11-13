@@ -30,7 +30,7 @@
 
 import { validateAttachments } from './attachments.js';
 import { sendFeedbackDue, handleOpinion, feedbackEmail, feedbackSig } from './feedback.js';
-import { inviteFor, rewardInvite } from './invite.js';
+import { inviteCode, inviteFor, rewardInvite } from './invite.js';
 import { panel } from './panel.js';
 import { isEvent, isDevice, record, personTag, hourlyDigest, notify } from './activity.js';
 import { PLANS, VIDEO_PROS, paymentsOn, createCheckout, sessionStatus, handleWebhook, getBalance, spendCredit, markDay } from './stripe.js';
@@ -116,7 +116,7 @@ export function teamCopy({ subject, intro, body, extra = '', nFiles = 0, withFil
 }
 
 /** Correo a quien paga una videollamada (vera-backlog#86): pago recibido y siguiente paso (responder con horarios) */
-export function videoPaidEmail(pro, plan) {
+export function videoPaidEmail(pro, plan, invite = null) {
   const what = plan.eur === 99 ? 'asesoría de lactancia de 1 h 30' : 'videollamada de 30 minutos';
   const subject = `Tu ${plan.eur === 99 ? 'asesoría de lactancia' : 'videollamada'} con ${pro.short} · elige día y hora`;
   const step = (n, t) => `<tr><td style="vertical-align:top;padding:6px 10px 6px 0"><span style="display:inline-block;width:24px;height:24px;border-radius:50%;background:#F6E0E2;color:#45574C;font-weight:600;font-size:13px;line-height:24px;text-align:center">${n}</span></td><td style="padding:6px 0;font-size:14px;color:#2F3631">${t}</td></tr>`;
@@ -128,8 +128,8 @@ export function videoPaidEmail(pro, plan) {
 <p style="margin:16px 0 4px;font-weight:600">Después</p>
 <table style="border-collapse:collapse">${step(1, 'En menos de 24 h laborables te proponemos día y hora.')}${step(2, 'Te enviamos el enlace de Google Meet.')}${step(3, 'A la hora acordada, entra en el enlace. En el ordenador se abre en el navegador; en el móvil, con la app de Google Meet.')}</table>
 <p style="font-size:13px;color:#6E6C67;margin-top:16px">Puedes cambiarla o cancelarla hasta 1 hora antes y te devolvemos el dinero entero. La llamada no se graba.</p>
-<p style="font-size:13px;color:#6E6C67">No es un servicio de urgencias. Si algo no va bien, llama al 112 o acude a tu centro de salud.</p>`);
-  const text = `Hola,\n\nHemos recibido el pago de tu ${what} con ${pro.name}, ${pro.role} (${plan.eur} €).\n\nSIGUIENTE PASO: responde a este correo con 3 franjas que te vengan bien en los próximos días (por ejemplo: «martes por la tarde, jueves de 10 a 12, viernes a primera hora»). Si quieres, añade una línea sobre lo que quieres consultar.\n\nDespués:\n1. En menos de 24 h laborables te proponemos día y hora.\n2. Te enviamos el enlace de Google Meet.\n3. A la hora acordada, entra en el enlace (en el ordenador, en el navegador; en el móvil, con la app de Google Meet).\n\nPuedes cambiarla o cancelarla hasta 1 hora antes y te devolvemos el dinero entero. La llamada no se graba.\nNo es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.`;
+<p style="font-size:13px;color:#6E6C67">No es un servicio de urgencias. Si algo no va bien, llama al 112 o acude a tu centro de salud.</p>${invite ? invite.html : ''}`);
+  const text = `Hola,\n\nHemos recibido el pago de tu ${what} con ${pro.name}, ${pro.role} (${plan.eur} €).\n\nSIGUIENTE PASO: responde a este correo con 3 franjas que te vengan bien en los próximos días (por ejemplo: «martes por la tarde, jueves de 10 a 12, viernes a primera hora»). Si quieres, añade una línea sobre lo que quieres consultar.\n\nDespués:\n1. En menos de 24 h laborables te proponemos día y hora.\n2. Te enviamos el enlace de Google Meet.\n3. A la hora acordada, entra en el enlace (en el ordenador, en el navegador; en el móvil, con la app de Google Meet).\n\nPuedes cambiarla o cancelarla hasta 1 hora antes y te devolvemos el dinero entero. La llamada no se graba.\nNo es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.${invite ? `\n\n${invite.text}` : ''}`;
   return { subject, html, text };
 }
 
@@ -217,7 +217,18 @@ ${b(1, 'Sí, mucho', true)}${b(2, 'Más o menos')}${b(3, 'No')}
   };
 }
 
-export function relayEmail(pro, role, id, body, nAttach, rate = null) {
+/** Recuadro para invitar (invite.js) en los correos a la usuaria: su enlace personal y WhatsApp */
+export function inviteBlock(code) {
+  const url = `https://hera-gine.com/?r=${code}`;
+  const msg = `Te paso Hera: le pregunté una duda a una profesional y me respondió por escrito. Las 2 primeras consultas son gratis y no piden tarjeta. ${url}`;
+  const wa = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+  return {
+    html: `<div style="margin:16px 0 0;padding:12px 14px;border-radius:10px;background:#EEF2EC;font-size:14px;line-height:1.5"><b>¿Conoces a alguien con dudas parecidas?</b> Pásale tu enlace: si pregunta en Hera, te regalamos 1 consulta.<br><a href="${wa}" style="color:#45574C;font-weight:600">Enviar por WhatsApp</a> <span style="color:#6E6C67">· o copia hera-gine.com/?r=${code}</span></div>`,
+    text: `¿Conoces a alguien con dudas parecidas? Pásale tu enlace: si pregunta en Hera, te regalamos 1 consulta. ${url}`,
+  };
+}
+
+export function relayEmail(pro, role, id, body, nAttach, rate = null, invite = null) {
   const head = role === 'p' ? `<p style="font-size:13px;color:#6E6C67;margin-bottom:6px">${esc(pro.name)}, ${esc(pro.role)}, te responde:</p>`
     : `<p style="font-size:13px;color:#6E6C67;margin-bottom:6px">La usuaria de la consulta #${id.toUpperCase()} ha escrito:</p>`;
   const att = nAttach ? `<p style="font-size:13px;color:#6E6C67">${nAttach} ${nAttach === 1 ? 'archivo adjunto' : 'archivos adjuntos'}</p>` : '';
@@ -230,8 +241,8 @@ export function relayEmail(pro, role, id, body, nAttach, rate = null) {
     html: `<div style="margin:16px 0 0;padding:12px 14px;border:1px solid #E5E1D8;border-radius:10px;background:#ffffff;font-size:14px">¿Prefieres hablarlo cara a cara? <a href="${vlink}" style="color:#45574C;font-weight:600">Videollamada de 30 min con ${esc(pro.short)} · 55 €</a></div>`,
     text: `¿Prefieres hablarlo cara a cara? Videollamada de 30 min con ${pro.short} (55 €): ${vlink}`,
   } : null;
-  const html = shell(`${head}<div style="white-space:normal">${nl2br(body)}</div>${att}${rate ? rate.html : ''}${video ? video.html : ''}<p style="font-size:12px;color:#8A8A8E;margin-top:18px">${esc(foot)}</p>`);
-  const text = `${role === 'p' ? `${pro.name}, ${pro.role}, te responde:` : `La usuaria de la consulta #${id.toUpperCase()} ha escrito:`}\n\n${body}\n\n${nAttach ? `[${nAttach} adjunto(s)]\n\n` : ''}${rate ? `${rate.text}\n\n` : ''}${video ? `${video.text}\n\n` : ''}${foot}`;
+  const html = shell(`${head}<div style="white-space:normal">${nl2br(body)}</div>${att}${rate ? rate.html : ''}${video ? video.html : ''}${invite ? invite.html : ''}<p style="font-size:12px;color:#8A8A8E;margin-top:18px">${esc(foot)}</p>`);
+  const text = `${role === 'p' ? `${pro.name}, ${pro.role}, te responde:` : `La usuaria de la consulta #${id.toUpperCase()} ha escrito:`}\n\n${body}\n\n${nAttach ? `[${nAttach} adjunto(s)]\n\n` : ''}${rate ? `${rate.text}\n\n` : ''}${video ? `${video.text}\n\n` : ''}${invite ? `${invite.text}\n\n` : ''}${foot}`;
   return { html, text };
 }
 
@@ -364,7 +375,10 @@ const handler = {
         if (PLANS[plan].video) {
           const pro = PROS[s.metadata?.pro] || PROS.matrona;
           const to = s.customer_details?.email || s.customer_email;
-          if (to) await sendMail(env, { to, replyTo: 'contacto@hera-gine.com', ...videoPaidEmail(pro, PLANS[plan]) });
+          // Con su enlace para invitar (invite.js): quien paga una videollamada es quien más confía
+          const h0 = /^[0-9a-f]{64}$/.test(String(s.metadata?.h || '')) ? s.metadata.h : '';
+          const inv = to && h0 ? inviteBlock(await inviteCode(env, h0, await sealEmail(env, to))) : null;
+          if (to) await sendMail(env, { to, replyTo: 'contacto@hera-gine.com', ...videoPaidEmail(pro, PLANS[plan], inv) });
           if (s.metadata?.src === 'ads') { const ak = /_latam$/.test(String(s.metadata?.camp || '')) ? 'latam' : 'anuncio'; await bump(env, `${ak}_pago:${plan}`); await bump(env, `${ak}_eur`, madridDay(), PLANS[plan].eur); }
           const dash = `https://dashboard.stripe.com/${s.livemode ? '' : 'test/'}${s.payment_intent ? `payments/${s.payment_intent}` : 'payments'}`;
           await notify(env, `Pago · ${PLANS[plan].video && PLANS[plan].eur === 99 ? 'Asesoría de lactancia' : 'Videollamada'} con ${pro.short} · ${PLANS[plan].eur} €${s.metadata?.src === 'ads' ? ' · desde anuncio' : ''}${s.livemode ? '' : ' · prueba'}`,
@@ -432,6 +446,8 @@ const handler = {
       body = JSON.parse(raw || '{}');
     } catch { return reply(400, { error: 'bad_request' }); }
     const limit = Number(env.FREE_LIMIT || 2);
+    // Enlace de canal (?via=ig_marina…): solo letras, números y guion bajo
+    const via = /^[a-z0-9_]{1,20}$/.test(String(body.via || '')) ? body.via : '';
 
     if (url.pathname === '/admin/reset') {
       if (!env.ADMIN_TOKEN || request.headers.get('Authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return reply(401, { error: 'unauthorized' });
@@ -598,6 +614,8 @@ const handler = {
           const tag = await personTag(env, request, madridDay(), body.p);
           await record(env, { e: `consulta:${body.to}`, p: tag, note: fromAd ? `vino de un anuncio${camp ? ` (${camp})` : ''}${paid ? ', consulta pagada' : ''}` : (paid ? 'consulta pagada' : '') }, sendMail, ctx);
           if (fromAd) await record(env, { e: camp ? `consulta_anuncio:${camp}` : 'consulta_anuncio', p: tag }, sendMail, ctx);
+          // Enlace de canal (?via=…, p. ej. ig_marina): cuántas consultas trae cada uno
+          if (via) { await bump(env, `consulta_via:${via}`); await record(env, { e: `via_visita:${via}`, p: tag, note: 'envió una consulta' }, sendMail, ctx); }
         }
       }
       // Invitación (invite.js): solo si este correo nunca había preguntado y el enlace es de otra persona
@@ -612,7 +630,7 @@ const handler = {
         // COPY_EMAIL="1" (temporal, Noza 11 nov): la copia dice el correo de la usuaria, por si hay problemas
         const who = env.COPY_EMAIL === '1' ? `<p style="font-size:13px;color:#6E6C67">Correo de la usuaria: <b>${esc(q.email)}</b></p>` : '';
         const extra = `${who}${q.context ? `<p style="font-size:13px;color:#6E6C67">Sobre: ${esc(q.context)}</p>` : ''}${q.situation ? `<p style="font-size:13px;color:#6E6C67">Situación: ${nl2br(q.situation)}</p>` : ''}`;
-        const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${id.toUpperCase()}${files.length ? ` · ${files.length} ${files.length === 1 ? 'adjunto' : 'adjuntos'}` : ''}${body.src === 'ads' ? (/_latam$/.test(String(body.camp || '')) ? ' · desde anuncio (Latinoamérica)' : ' · desde anuncio') : ''}${paid ? ' · pagada' : ''}`,
+        const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${id.toUpperCase()}${files.length ? ` · ${files.length} ${files.length === 1 ? 'adjunto' : 'adjuntos'}` : ''}${body.src === 'ads' ? (/_latam$/.test(String(body.camp || '')) ? ' · desde anuncio (Latinoamérica)' : ' · desde anuncio') : ''}${via ? ` · desde ${via}` : ''}${paid ? ' · pagada' : ''}`,
           intro: `Nueva consulta para <b>${esc(pro.name)}</b>${body.src === 'ads' ? ' (llegó desde un anuncio)' : ''}.`, body: q.text, extra, nFiles: files.length, withFiles });
         await sendMail(env, { to: bcc, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc, ...(withFiles ? { attachments: files } : {}) });
       }
@@ -676,7 +694,9 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
   // Primera respuesta de la profesional: «¿Te ha ayudado?» al pie (si aún no ha valorado)
   let rate = null;
   if (role === 'p' && !t.a && !t.fr) { const sig = await feedbackSig(env, t.id); rate = rateBlock(pro, (r) => `https://hera-gine.com/opinion/?t=${t.id}&s=${sig}&r=${r}`); }
-  const { html, text } = relayEmail(pro, role, t.id, msg.body || '(Sin texto: mira el archivo adjunto.)', msg.attachments.length, rate);
+  // Primera respuesta: su enlace para invitar (invite.js), aunque no valore
+  const invite = role === 'p' && !t.a && t.h && t.p !== 'prueba' ? inviteBlock(await inviteCode(env, t.h, t.u)) : null;
+  const { html, text } = relayEmail(pro, role, t.id, msg.body || '(Sin texto: mira el archivo adjunto.)', msg.attachments.length, rate, invite);
   const refsMine = toUser ? t.ru : t.rp;
   const sent = await sendMail(env, {
     to: toUser ? await openEmail(env, t.u) : pro.email,

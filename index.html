@@ -706,6 +706,11 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     const r0 = (new URLSearchParams(location.search).get('r') || '').toLowerCase();
     if (/^[a-z0-9]{6}$/.test(r0)) { store.set(REF_KEY, JSON.stringify({ c: r0, at: Date.now() })); hit('invitacion_visita'); }
   }
+  // Canales (?via=ig_marina, wa_guia…): de qué enlace llega; queda 30 días en este dispositivo y viaja con la consulta
+  const VIA_KEY = 'hera-via';
+  const via0 = (new URLSearchParams(location.search).get('via') || '').toLowerCase();
+  if (/^[a-z0-9_]{1,20}$/.test(via0)) { store.set(VIA_KEY, JSON.stringify({ v: via0, at: Date.now() })); hit(`via_visita:${via0}`); }
+  const viaSrc = () => { try { const r = JSON.parse(store.get(VIA_KEY) || 'null'); return r && Date.now() - r.at < 30 * 86400000 ? { via: r.v } : {}; } catch { return {}; } };
   const refSrc = () => { try { const r = JSON.parse(store.get(REF_KEY) || 'null'); return r && Date.now() - r.at < 30 * 86400000 ? { ref: r.c } : {}; } catch { return {}; } };
   if (refSrc().ref) { const a = document.querySelector('.annc a'); if (a) a.innerHTML = 'Te han invitado a Hera · Tus 2 primeras consultas, gratis y sin tarjeta · <u>Pregunta ahora</u>'; }
   // Qué hacen al entrar (vera-backlog#80): hasta dónde bajan, qué secciones ven, dónde pulsan y cuánto se quedan.
@@ -839,7 +844,9 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       pediatra: ['Pregunta a una pediatra, <em>por escrito y sin cita</em>', 'La Dra. Lucía Carrascón, pediatra, lee tu duda y te responde por escrito en menos de 48 h. Sueño, alimentación, piel o desarrollo del bebé. Tus 2 primeras consultas, gratis.',
         'Lucía, pediatra', ['Mi bebé tiene fiebre, ¿qué hago?', '¿Cuándo empiezo con la alimentación complementaria?', 'Tiene granitos en la cara, ¿es normal?', 'Duerme muy poco por la noche, ¿es normal?']],
     };
-    const camp = (new URLSearchParams(location.search).get('utm_campaign') || '').toLowerCase().replace(/_latam$/, '');
+    // Enlaces de canal de una profesional: su titular y ella ya elegida (ig_marina → Marina)
+    const VIA_PRO = { ig_marina: 'matrona' };
+    const camp = (new URLSearchParams(location.search).get('utm_campaign') || '').toLowerCase().replace(/_latam$/, '') || VIA_PRO[via0] || '';
     const page = AD_PAGE[camp];
     if (page) {
       const h1 = document.querySelector('.hero h1, h1');
@@ -878,7 +885,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     lastEmail = email.value.trim(); store.set('hera-ask-email', lastEmail);
     try {
       const res = await fetch(`${API}/ask`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: lastEmail, to, text, context: '', situation: '', website: $('ask-hp').value, p: ptag, attachments: filesPayload(files), follow: $('ask-follow').checked, ...(isTeam() ? { team: true } : {}), ...adSrc(), ...refSrc() }) });
+        body: JSON.stringify({ email: lastEmail, to, text, context: '', situation: '', website: $('ask-hp').value, p: ptag, attachments: filesPayload(files), follow: $('ask-follow').checked, ...(isTeam() ? { team: true } : {}), ...adSrc(), ...refSrc(), ...viaSrc() }) });
       const j = await res.json().catch(() => ({}));
       if (res.status === 429) throw new Error('Has enviado varias consultas seguidas. Espera unos minutos y vuelve a intentarlo.');
       if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');

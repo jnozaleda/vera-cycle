@@ -8,6 +8,8 @@ export const PRO = {
 };
 export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 export const BEACON = `<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "edc55b126e2943d8828e3241ae0c4efd"}'></script>`;
+// Canales (?via=…) y «compartir por WhatsApp» en las páginas generadas. Sin contar el modo equipo ni localhost.
+export const SITE_JS = `<script>(()=>{try{const A='https://hera-consultas.tempcheck-app.workers.dev',off=localStorage.getItem('hera-equipo')==='1'||/^(localhost|127\\.0\\.0\\.1)$/.test(location.hostname);const h=(e)=>{if(!off)fetch(A+'/hit',{method:'POST',body:JSON.stringify({e}),keepalive:true}).catch(()=>{})};const v=(new URLSearchParams(location.search).get('via')||'').toLowerCase();if(/^[a-z0-9_]{1,20}$/.test(v)){localStorage.setItem('hera-via',JSON.stringify({v,at:Date.now()}));h('via_visita:'+v)}document.querySelectorAll('[data-share]').forEach((a)=>a.addEventListener('click',()=>h('guia_compartir')))}catch(e){}})()</script>`;
 export const CSS = `@font-face{font-family:Newsreader;src:url('/app/fonts/newsreader.woff2') format('woff2');font-weight:200 800;font-display:swap}
 @font-face{font-family:Newsreader;font-style:italic;src:url('/app/fonts/newsreader-italic.woff2') format('woff2');font-weight:200 800;font-display:swap}
 @font-face{font-family:Inter;src:url('/app/fonts/inter.woff2') format('woff2');font-weight:100 900;font-display:swap}
@@ -45,7 +47,7 @@ export const shell = ({ title, desc, path, ld, body }) => `<!doctype html>
 <script type="application/ld+json">${JSON.stringify(ld)}</script><style>${CSS}</style></head><body>
 <header class="w top"><a class="wm" href="/">Hera</a><nav aria-label="Principal"><a href="/ciclo/">Ciclo</a><a href="/embarazo/">Embarazo</a><a href="/bebe/">Tu bebé</a><a href="/guias/">Guías</a><a href="/equipo.html">El equipo</a><a class="pill" href="/app/">Abrir la app</a></nav></header>
 <nav class="w mnav" aria-label="Secciones">${[['/ciclo/', 'Ciclo'], ['/embarazo/', 'Embarazo'], ['/bebe/', 'Bebé'], ['/guias/', 'Guías']].map(([h, l]) => `<a href="${h}"${path.startsWith(h) ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav><main>${body}</main>
-<footer class="w"><a href="/">Inicio</a> · <a href="/ciclo/">Fases del ciclo</a> · <a href="/embarazo/">Embarazo semana a semana</a> · <a href="/bebe/">Tu bebé mes a mes</a> · <a href="/calculadoras/">Calculadoras</a> · <a href="/guias/">Guías</a> · <a href="/equipo.html">El equipo</a> · <a href="/privacy.html">Privacidad</a> · <a href="/support.html">Soporte</a></footer>${BEACON}</body></html>
+<footer class="w"><a href="/">Inicio</a> · <a href="/ciclo/">Fases del ciclo</a> · <a href="/embarazo/">Embarazo semana a semana</a> · <a href="/bebe/">Tu bebé mes a mes</a> · <a href="/calculadoras/">Calculadoras</a> · <a href="/guias/">Guías</a> · <a href="/equipo.html">El equipo</a> · <a href="/privacy.html">Privacidad</a> · <a href="/support.html">Soporte</a></footer>${SITE_JS}${BEACON}</body></html>
 `;
 export const face = (pro) => `<img src="/portada/equipo/${pro.photo}" alt="" width="52" height="52" loading="lazy">`;
 

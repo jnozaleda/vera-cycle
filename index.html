@@ -745,7 +745,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     // Videollamada (vera-backlog#86): con la profesional elegida, si la hay
     $('ask-video').href = `videollamada/?de=web${to ? `#reservar-${to}` : ''}`;
     $('ask-video').textContent = `¿Prefieres hablarlo cara a cara? Videollamada${to ? ` con ${PROS[to].name}` : ''}`;
-    if (opened && !busy) send.textContent = to ? `Enviar${store.get('hera-free-left') === '0' ? '' : ' gratis'} a ${PROS[to].name}` : 'Elige a quién preguntar';
+    if (opened && !busy) send.textContent = `Enviar${store.get('hera-free-left') === '0' ? '' : ' gratis'}${to ? ` a ${PROS[to].name}` : ''}`;
   }
   function open() {
     if (opened) return;
@@ -865,9 +865,9 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     const text = ta.value.trim();
     open();
     hit('intento_portada');
-    if (text.length < 5) { hit('clic:fallo_texto_corto'); showErr('Cuéntanos tu duda con un poco más de detalle.'); ta.focus(); return; }
-    const to = chosen();
-    if (!to) { hit('clic:fallo_sin_profesional'); showErr('Elige a quién se lo preguntas.'); radios[0].focus(); return; }
+    if (!text) { hit('clic:fallo_texto_corto'); showErr('Escribe tu duda para poder enviarla.'); ta.focus(); return; }
+    // Sin profesional elegida, la consulta va a Gonzalo
+    const to = chosen() || 'gineco';
     if (!isEmail(email.value)) { hit(email.value.trim() ? 'clic:fallo_correo_mal' : 'clic:fallo_sin_correo'); showErr('Escribe tu correo para que te puedan responder.'); email.focus(); return; }
     showErr(''); busy = true; send.disabled = true; send.textContent = 'Enviando…';
     lastEmail = email.value.trim(); store.set('hera-ask-email', lastEmail);

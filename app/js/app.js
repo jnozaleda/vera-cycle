@@ -1434,7 +1434,7 @@ function askSheet() {
       <input class="field" type="email" inputmode="email" autocomplete="email" data-model="ask.email" value="${attr(a.email)}" placeholder="nombre@correo.com"></label>
       <input class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" data-model="ask.website" value="">` : ''}
     ${a.status === 'error' ? `<p class="t-12 c-rose">${esc(a.error || 'No se ha podido enviar. Inténtalo de nuevo.')}</p>` : ''}
-    <button class="btn-primary" data-action="${consultFormOn() ? 'ask-submit' : 'ask-send'}" data-v="email" data-ask-send ${freeOn ? 'data-free' : ''} ${to && a.status !== 'sending' ? '' : 'disabled'}>${a.status === 'sending' ? 'Enviando…' : to ? `Enviar${freeOn ? ' gratis' : ''} a ${esc(to.short)}` : 'Elige a quién preguntar'}</button>
+    <button class="btn-primary" data-action="${consultFormOn() ? 'ask-submit' : 'ask-send'}" data-v="email" data-ask-send ${freeOn ? 'data-free' : ''} ${a.status !== 'sending' ? '' : 'disabled'}>${a.status === 'sending' ? 'Enviando…' : `Enviar${freeOn ? ' gratis' : ''}${to ? ` a ${esc(to.short)}` : ''}`}</button>
     <p class="ask-private">${icon('lock', 13)}<span><b>Privada, sin nombre ni registro.</b> No se publica en ningún sitio y ${to ? esc(to.short) : 'la profesional'} no ve tu correo: lo usamos para hacerte llegar su respuesta. Te escribiremos una vez para saber si te ayudó.</span></p>
     ${consultFormOn() && (CONSULT_ATTACH || isBeta()) ? `<div class="stack-6"><label class="pill-outline row gap-6 center self-start ask-add">${icon('plusCircle', 13)} Añadir foto o PDF<input type="file" hidden multiple accept="image/*,application/pdf" data-ask-files></label>
       ${(a.files || []).map((f, i) => `<div class="period-item"><span class="t-13 grow">${esc(f.filename)}</span><button class="icon-btn soft" data-action="ask-file-remove" data-i="${i}" aria-label="Quitar ${attr(f.filename)}">${icon('xCircle', 16)}</button></div>`).join('')}
@@ -1477,7 +1477,7 @@ function refreshAskSuggestion() {
     const hint = root.querySelector('[data-ask-hint]'); if (hint) hint.textContent = askHint(ui.ask, sugg);
     const urg = root.querySelector('[data-ask-urgent]'); if (urg) urg.hidden = !sugg.urgent;
     const send = root.querySelector('[data-ask-send]');
-    if (send) { const t = CONSULTS[ui.ask.to]; send.disabled = !t; send.textContent = t ? `Enviar${send.hasAttribute('data-free') ? ' gratis' : ''} a ${t.short}` : 'Elige a quién preguntar'; }
+    if (send) { const t = CONSULTS[ui.ask.to]; send.disabled = false; send.textContent = `Enviar${send.hasAttribute('data-free') ? ' gratis' : ''}${t ? ` a ${t.short}` : ''}`; }
     const line = root.querySelector('[data-ask-to]'); if (line && CONSULTS[ui.ask.to]) line.outerHTML = askToLine(ui.ask, sugg);
     const vid = root.querySelector('[data-ask-video]'); if (vid) vid.outerHTML = askVideoCard(CONSULTS[ui.ask.to] || null);
     const eg = root.querySelector('.ask-eg'); if (eg) eg.hidden = !!ui.ask.text.trim();
@@ -2834,9 +2834,10 @@ const actions = {
   'ask-pick': (el) => { ui.ask.to = el.dataset.v; ui.ask.manual = true; render(); },
   'ask-submit': async () => {
     const a = ui.ask;
-    const to = CONSULTS[a.to];
-    if (!to || a.status === 'sending') return;
-    if (!a.text.trim() || a.text.trim().length < 5) { root.querySelector('.ask-text')?.focus(); return; }
+    // Sin profesional elegida, la consulta va a Gonzalo
+    const to = CONSULTS[a.to] || CONSULTS.gineco;
+    if (a.status === 'sending') return;
+    if (!a.text.trim()) { root.querySelector('.ask-text')?.focus(); return; }
     if (!isEmail(a.email)) { a.status = 'error'; a.error = 'Escribe tu correo para que te puedan responder.'; render(); root.querySelector('[data-model="ask.email"]')?.focus(); return; }
     a.status = 'sending'; a.error = ''; render();
     track('consulta_intento');
@@ -2895,8 +2896,7 @@ const actions = {
     n.busy = false; render();
   },
   'ask-send': (el) => {
-    const to = CONSULTS[ui.ask.to];
-    if (!to) return;
+    const to = CONSULTS[ui.ask.to] || CONSULTS.gineco;
     if (!ui.ask.text.trim()) { root.querySelector('.ask-text')?.focus(); return; }
     const body = consultMessage();
     const subject = `Pregunta para ${to.name} · Hera${ui.ask.context ? ` · ${ui.ask.context}` : ''}`;

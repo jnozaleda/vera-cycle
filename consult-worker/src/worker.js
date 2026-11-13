@@ -451,7 +451,7 @@ export default {
         ? { name: 'Prueba de Hera', short: 'Prueba', role: 'prueba', email: env.COPY_TO, key: 'prueba' } : null);
       if (!pro) return reply(400, { error: 'bad_to' });
       const text = String(body.text || '').trim();
-      if (text.length < 5 || text.length > 2000) return reply(400, { error: 'bad_text' });
+      if (text.length < 1 || text.length > 2000) return reply(400, { error: 'bad_text' });
       const { files, error: fileError } = validateAttachments(body.attachments);
       if (fileError) return reply(fileError === 'too_large' ? 413 : 400, { error: fileError });
       const q = { files: files.length, email: String(body.email).trim(), text, context: String(body.context || '').slice(0, 120), situation: String(body.situation || '').slice(0, 500) };

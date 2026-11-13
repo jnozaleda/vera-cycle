@@ -84,6 +84,7 @@ async function topPages(env, days) {
     return { rows: [...m].sort((a, b) => b[1] - a[1]).slice(0, 20), countries, countryError: j2.errors?.length ? j2.errors[0].message : '' };
   } catch (e) { return { error: e.message }; }
 }
+const countryName = (k) => { try { return new Intl.DisplayNames(['es'], { type: 'region' }).of(k) || k; } catch { return k; } };
 const COUNTRY = { ES: 'España', MX: 'México', AR: 'Argentina', CO: 'Colombia', CL: 'Chile', PE: 'Perú', US: 'Estados Unidos', FR: 'Francia', DE: 'Alemania', GB: 'Reino Unido', PT: 'Portugal', IT: 'Italia', NL: 'Países Bajos', IE: 'Irlanda', VE: 'Venezuela', EC: 'Ecuador', UY: 'Uruguay', BR: 'Brasil' };
 
 export async function panel(env, url, openThreads) {
@@ -293,7 +294,7 @@ ${(() => { const lp = [...LATAM].map((k2) => byKey.get(k2)); const ld = (...es) 
 <div class="card"><h2>Qué apuntan en el diario</h2>${bars(DIARY.map(([k2, l]) => withAd(l, g(`diario:${k2}`), [`diario:${k2}`])))}</div>
 <div class="card"><h2>Pestañas visitadas</h2>${bars(TABS.map(([k2, l]) => withAd(l, g(`pestana:${k2}`), [`pestana:${k2}`])))}</div>
 <div class="card"><h2>Páginas más visitadas</h2>${pages.error ? `<p class="mute">${esc(pages.error)}</p>` : pages.rows.length ? bars(pages.rows.map(([pth, n]) => [pth, n])) : '<p class="mute">Nada todavía.</p>'}<p class="mute" style="margin-top:8px">Visitas a cada página según Cloudflare Web Analytics, sin cookies. Incluye al equipo y no separa anuncios.</p></div>
-<div class="card"><h2>Visitas por país</h2>${pages.error || !pages.countries ? `<p class="mute">${esc(pages.error || pages.countryError || 'Sin datos.')}</p>` : pages.countries.length ? `<table><tr><th></th><th>Web</th><th>App</th></tr>${pages.countries.map(([k, o]) => `<tr><td>${esc(COUNTRY[k] || k)}</td><td>${o.web}</td><td>${o.app}</td></tr>`).join('')}</table>` : '<p class="mute">Nada todavía.</p>'}<p class="mute" style="margin-top:8px">Páginas vistas según Cloudflare Web Analytics (sin cookies). «App» es /app, en el navegador o instalada. Incluye al equipo.</p></div>
+<div class="card"><h2>Visitas por país</h2>${pages.error || !pages.countries ? `<p class="mute">${esc(pages.error || pages.countryError || 'Sin datos.')}</p>` : pages.countries.length ? `<table><tr><th></th><th>Web</th><th>App</th></tr>${pages.countries.map(([k, o]) => `<tr><td>${esc(COUNTRY[k] || countryName(k))}</td><td>${o.web}</td><td>${o.app}</td></tr>`).join('')}</table>` : '<p class="mute">Nada todavía.</p>'}<p class="mute" style="margin-top:8px">Páginas vistas según Cloudflare Web Analytics (sin cookies). «App» es /app, en el navegador o instalada. Incluye al equipo.</p></div>
 <div class="card"><h2>Dispositivos</h2>${bars(devices)}</div>
 <div class="card"><h2>Actividad reciente</h2><ul class="feed">${feed || '<li><span class="mute">Nada todavía.</span></li>'}</ul></div>
 <div class="card"><h2>Opiniones tras la consulta</h2>${opRows ? `<table><tr><th></th><th>Sí, mucho</th><th>Más o menos</th><th>No</th></tr>${opRows}</table>` : '<p class="mute">Nada todavía.</p>'}${opFeed ? `<h3 class="fh">Comentarios</h3><ul class="feed">${opFeed}</ul>` : ''}</div>

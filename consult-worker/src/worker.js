@@ -431,22 +431,54 @@ const handler = {
       });
     }
     // Corregir el correo de una consulta (panel → «Corregir el correo»): cuando rebotó por estar mal escrito y la usuaria
-    // ha confirmado el bueno. Después, lo que la profesional responda o reenvíe al hilo le llega al correo nuevo.
+    // ha confirmado el bueno. Cambia a dónde va el hilo y, si se marca, le reenvía lo que no le llegó (Resend guarda los
+    // correos enviados; Hera solo guarda sus identificadores). Lo que la profesional responda después ya va al correo nuevo.
     if (request.method === 'POST' && url.pathname === '/panel/correo') {
       const f = await request.formData().catch(() => null);
-      const page = (msg, ok) => new Response(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><body style="font:16px/1.5 -apple-system,sans-serif;max-width:520px;margin:40px auto;padding:0 16px;color:#2F3631"><p style="font-size:18px;color:${ok ? '#45574C' : '#B3261E'}">${msg}</p><p><a href="/panel?k=${encodeURIComponent(String(f?.get('k') || ''))}" style="color:#45574C">Volver al panel</a></p>`, { status: ok ? 200 : 400, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex', 'referrer-policy': 'no-referrer' } });
+      const page = (msg, ok) => new Response(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><body style="font:16px/1.5 -apple-system,sans-serif;max-width:560px;margin:40px auto;padding:0 16px;color:#2F3631"><div style="font-size:17px;color:${ok ? '#45574C' : '#B3261E'}">${msg}</div><p><a href="/panel?k=${encodeURIComponent(String(f?.get('k') || ''))}" style="color:#45574C">Volver al panel</a></p>`, { status: ok ? 200 : 400, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex', 'referrer-policy': 'no-referrer' } });
       if (!f || !env.DASH_KEY || f.get('k') !== env.DASH_KEY) return new Response('Not found', { status: 404 });
       const id = String(f.get('id') || '').trim().replace(/^#/, '').toLowerCase();
-      const norm = normalizeEmail(f.get('email'));
+      const newEmail = String(f.get('email') || '').trim();
+      const norm = normalizeEmail(newEmail);
       if (!/^[a-z0-9]{8}$/.test(id)) return page('El número de consulta no es válido. Son 8 letras y números, como T6NVC8NM.', false);
       if (!norm) return page('El correo no es válido.', false);
       const t = await loadThread(env, id);
       if (!t) return page(`No encuentro la consulta #${id.toUpperCase()} (o tiene más de 30 días).`, false);
-      t.u = await sealEmail(env, String(f.get('email')).trim());
+      const oldEmail = (await openEmail(env, t.u)).trim().toLowerCase();
+      // Identificadores: los guardados (consultas desde el 14 nov) y los que se peguen de Resend (consultas anteriores)
+      const pasted = [...new Set(String(f.get('ids') || '').toLowerCase().match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/g) || [])];
+      const ids = [...new Set([...(t.ou || []), ...pasted])];
+      t.u = await sealEmail(env, newEmail);
       t.uh = (await hmac(env.HASH_SALT, norm)).slice(0, 24);
+      let resent = 0; const skipped = [];
+      if (f.get('resend') && ids.length && env.RESEND_API_KEY && env.DRY_RUN !== '1') {
+        const replyTo = await relayAddress(env, 'u', id);
+        const oldest = [];
+        for (const rid of ids) {
+          try {
+            const r = await fetch(`https://api.resend.com/emails/${rid}`, { headers: { Authorization: `Bearer ${env.RESEND_API_KEY}` } });
+            const m = r.ok ? await r.json() : null;
+            const to = [].concat(m?.to || []).map((x) => String(x).trim().toLowerCase());
+            // Solo correos de esta consulta: enviados a su correo anterior
+            if (!m || !to.includes(oldEmail)) { skipped.push(rid.slice(0, 8)); continue; }
+            oldest.push(m);
+          } catch { skipped.push(rid.slice(0, 8)); }
+        }
+        oldest.sort((x, y) => String(x.created_at).localeCompare(String(y.created_at)));
+        const sentIds = [];
+        for (const m of oldest) {
+          const ok = await sendMail(env, { to: newEmail, from: m.from, replyTo, subject: m.subject, html: m.html || undefined, text: m.text || undefined });
+          if (ok) { resent += 1; if (ok.id) sentIds.push(ok.id); }
+        }
+        t.ou = [...sentIds].slice(-10);
+      }
       await saveThread(env, t);
       await bump(env, 'correo_corregido');
-      return page(`Hecho: la consulta #${id.toUpperCase()} ya va a <b>${esc(String(f.get('email')).trim())}</b>. Si la profesional ya había respondido, que reenvíe su respuesta (Reenviar → a la misma dirección a la que respondió).`, true);
+      const tail = f.get('resend')
+        ? (resent ? ` Le hemos reenviado <b>${resent} ${resent === 1 ? 'correo' : 'correos'}</b> (sin adjuntos: si los había, que la profesional se los reenvíe).` : ' No había nada que reenviarle: si la consulta es de antes del 15 de noviembre, pega los identificadores de Resend de los correos rebotados.')
+          + (skipped.length ? ` No he reenviado ${skipped.length} identificador${skipped.length === 1 ? '' : 'es'} porque no eran de esta consulta o no se encontraron (${skipped.join(', ')}).` : '')
+        : '';
+      return page(`<p>Hecho: la consulta #${id.toUpperCase()} ya va a <b>${esc(newEmail)}</b>.${tail}</p><p style="font-size:14px;color:#6E6C67">Lo que la profesional responda a partir de ahora le llegará a este correo, y ella puede contestar desde él.</p>`, true);
     }
     if (request.method === 'GET' && url.pathname === '/stats') {
       if (!env.PANEL_CODE || request.headers.get('Authorization') !== `Bearer ${env.PANEL_CODE}`) return reply(401, { error: 'unauthorized' });
@@ -660,7 +692,7 @@ const handler = {
       // Sin relay no hay hilo que seguir (ni recordatorios): no se guarda nada más
       if (relay) {
         await saveThread(env, { id, p: pro.key || body.to, u: await sealEmail(env, q.email), uh: (await hmac(env.HASH_SALT, norm)).slice(0, 24),
-          sp: pm.subject, su: cm.subject, rp: [], ru: [], c: Date.now(), a: 0, rem: false, n: 0, h, ...(rf ? { rf } : {}), ...(body.follow === true ? { f: 1 } : {}) });
+          sp: pm.subject, su: cm.subject, rp: [], ru: [], c: Date.now(), a: 0, rem: false, n: 0, h, ...(sentU?.id ? { ou: [sentU.id] } : {}), ...(rf ? { rf } : {}), ...(body.follow === true ? { f: 1 } : {}) });
       }
       return reply(200, { ok: true, remaining, freeLimit: limit, ...(unlimited ? { unlimited: true } : {}), ...(paid || credits > 0 ? { credits: creditsLeft } : {}), ...(relay ? { id } : {}), dryRun: env.DRY_RUN === '1' });
     }
@@ -739,6 +771,8 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
     if (v && !mine.includes(v)) mine.push(v);
   }
   t.rp = t.rp.slice(-20); t.ru = t.ru.slice(-20);
+  // Lo que le enviamos a la usuaria: solo el identificador de Resend, para poder reenviárselo si rebotó (panel)
+  if (toUser && sent.id) t.ou = [...(t.ou || []), sent.id].slice(-10);
   t.n = (t.n || 0) + 1;
   if (toUser && !t.a) {
     t.a = Date.now();

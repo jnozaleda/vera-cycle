@@ -1,6 +1,6 @@
 import { isEvent, eventText, deviceText, hourlyDigest } from '../src/activity.js';
 import worker, { normalizeEmail, confirmEmail, PROS, relayIncoming, remindOverdue } from '../src/worker.js';
-import { stripQuoted, parseRelayAddress, relayAddress, loadThread, openEmail } from '../src/relay.js';
+import { stripQuoted, parseRelayAddress, relayAddress, loadThread, saveThread, openEmail } from '../src/relay.js';
 import assert from 'node:assert/strict';
 
 assert.equal(normalizeEmail(' Maria.Lopez+hera@Gmail.com '), 'marialopez@gmail.com');
@@ -260,8 +260,24 @@ console.log('consultas: OK');
   const post = (o) => worker.fetch(new Request('https://w/panel/correo', { method: 'POST', body: fd(o) }), env);
   assert.equal((await post({ k: 'mala', id: tid, email: 'maria@gmail.com' })).status, 404, 'sin la clave del panel no se puede');
   assert.equal((await post({ k: 'dk', id: tid, email: 'no-correo' })).status, 400);
-  const ok = await post({ k: 'dk', id: `#${tid.toUpperCase()}`, email: 'maria.buena@gmail.com' });
+  // Resend guarda lo enviado: GET /emails/{id} devuelve el correo (aquí, del registro de la prueba)
+  const byId = new Map(); sent.forEach((m, i) => byId.set(`0000000${i}-0000-4000-8000-000000000000`.slice(-36), m));
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (u, o) => { const m = /\/emails\/([0-9a-f-]{36})$/.exec(u); if (m && (!o || !o.method || o.method === 'GET')) { const x = byId.get(m[1]); return x ? new Response(JSON.stringify({ ...x, created_at: m[1] }), { status: 200 }) : new Response('{}', { status: 404 }); } return realFetch(u, o); };
+  const th = await loadThread(env, tid);
+  const mine = ['aaaaaaaa-0000-4000-8000-000000000001', 'aaaaaaaa-0000-4000-8000-000000000002'];
+  byId.set(mine[0], { to: ['Maria.Lopez@gmail.com'], from: 'Hera <consultas@hera-gine.com>', subject: 'Tu consulta a Marina', html: '<p>confirmación</p>', text: 'confirmación' });
+  byId.set(mine[1], { to: ['maria.lopez@gmail.com'], from: 'Marina · Hera <marina@hera-gine.com>', subject: 'Re: Tu consulta a Marina', html: '<p>respuesta</p>', text: 'respuesta' });
+  const other = 'ffffffff-0000-4000-8000-000000000000'; byId.set(other, { to: ['otra.persona@gmail.com'], from: 'x', subject: 'otra', html: '<p>otra</p>', text: 'otra' });
+  th.ou = []; await saveThread(env, th);
+  const nR = sent.length;
+  const ok = await post({ k: 'dk', id: `#${tid.toUpperCase()}`, email: 'maria.buena@gmail.com', resend: '1', ids: [...mine, other].join('\n') });
   assert.equal(ok.status, 200);
+  const html = await ok.text();
+  assert.match(html, new RegExp(`reenviado <b>${mine.length} correos`), 'reenvía lo que se envió a su correo anterior');
+  assert.match(html, /No he reenviado 1 identificador/, 'no reenvía correos de otra consulta');
+  assert.ok(sent.slice(nR).every((m) => m.to[0] === 'maria.buena@gmail.com' && /^hera-u-/.test(m.reply_to)));
+  globalThis.fetch = realFetch;
   assert.equal(await openEmail(env, (await loadThread(env, tid)).u), 'maria.buena@gmail.com');
   const fwd = `From: g@x.com\r\nTo: ${pAddr}\r\nSubject: Fwd: Re: Tu consulta\r\nMessage-ID: <f${Math.random()}@gmail.com>\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n---------- Forwarded message ---------\r\nFrom: Marina <marina@x.com>\r\nDate: jue, 13 nov 2026\r\nSubject: Re: Tu consulta\r\nTo: <${pAddr}>\r\n\r\nEs normal al principio, ponte calor.\r\n\r\nEl jue, 13 nov 2026, Hera escribió:\r\n> Me duele`;
   const n1 = sent.length;

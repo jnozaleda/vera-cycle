@@ -30,6 +30,7 @@ import { suggestContact } from './contacts.js';
 import { listConsults, addConsult, markSeen, clearConsults, consultState, unseenAnswer, refreshConsults } from './consults.js';
 import { track, isTeam, setTeam, visitTag } from './track.js';
 import { isBeta } from './beta.js';
+import { emailTypo } from './email-typo.js';
 import { pushState, enablePush, disablePush, syncPush, testPush } from './push.js';
 import { sync, syncAvailable, onSyncChange, initSync, connect, reauthorize, disconnect, deleteRemote, syncNow, loadGis } from './sync.js';
 
@@ -2842,6 +2843,9 @@ const actions = {
     const to = CONSULTS[a.to] || CONSULTS.gineco;
     if (a.status === 'sending') return;
     if (!isEmail(a.email)) { a.status = 'error'; a.error = 'Escribe tu correo para que te puedan responder.'; render(); root.querySelector('[data-model="ask.email"]')?.focus(); return; }
+    // Correo mal escrito (gmail.co, hotmial.com…): se pregunta una vez; si lo deja igual, se envía
+    const fx = emailTypo(a.email);
+    if (fx && a.emailOk !== a.email.trim()) { a.emailOk = a.email.trim(); a.status = 'error'; a.error = `¿Querías decir ${fx}? Si es así, corrígelo. Si tu correo está bien, pulsa enviar otra vez.`; track('clic:correo_sugerido'); render(); root.querySelector('[data-model="ask.email"]')?.focus(); return; }
     a.status = 'sending'; a.error = ''; render();
     track('consulta_intento');
     try { localStorage.setItem('hera-ask-email', a.email.trim()); } catch { /* sin almacenamiento */ }

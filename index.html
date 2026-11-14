@@ -697,6 +697,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   import { CONSULT_ATTACH } from './app/js/config.js';
   import { isBeta } from './app/js/beta.js';
   import { device, isTeam, setTeam } from './app/js/track.js';
+  import { emailTypo } from './app/js/email-typo.js';
   const API = 'https://hera-consultas.tempcheck-app.workers.dev';
   const PROS = { gineco: { name: 'Gonzalo', img: 'gonzalo' }, matrona: { name: 'Marina', img: 'marina' }, pediatra: { name: 'Lucía', img: 'lucia' } };
   const local = ['localhost', '127.0.0.1'].includes(location.hostname);
@@ -924,6 +925,9 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     // Sin profesional elegida, la consulta va a Gonzalo
     const to = chosen() || 'gineco';
     if (!isEmail(email.value)) { hit(email.value.trim() ? 'clic:fallo_correo_mal' : 'clic:fallo_sin_correo'); showErr('Escribe tu correo para que te puedan responder.'); email.focus(); return; }
+    // Correo mal escrito (gmail.co, hotmial.com…): se pregunta una vez; si lo deja igual, se envía
+    const fx = emailTypo(email.value);
+    if (fx && email.dataset.ok !== email.value.trim()) { email.dataset.ok = email.value.trim(); hit('clic:correo_sugerido'); showErr(`¿Querías decir ${fx}? Si es así, corrígelo. Si tu correo está bien, pulsa enviar otra vez.`); email.focus(); return; }
     showErr(''); busy = true; send.disabled = true; send.textContent = 'Enviando…';
     lastEmail = email.value.trim(); store.set('hera-ask-email', lastEmail);
     try {
@@ -1122,6 +1126,16 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       }
       if (step === 'correo') {
         if (!isEmail(v)) { hit(v ? 'clic:fallo_correo_mal' : 'clic:fallo_sin_correo'); hera('Ese correo no parece completo. Revísalo, por ejemplo: nombre@gmail.com', 'err'); return; }
+        // Correo mal escrito (gmail.co, gmail.cl, hotmial.com…): rebotaría y no recibiría la respuesta
+        const fx = emailTypo(v);
+        if (fx && email.dataset.ok !== v) {
+          hit('clic:correo_sugerido');
+          const q = hera(`¿Querías decir <b>${esc(fx)}</b>?<small>Con «${esc(v.slice(v.lastIndexOf('@')))}» el correo no te llegaría.</small><span style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button type="button" class="cx-yes" style="background:var(--plum);color:#fff;border:0;border-radius:999px;padding:7px 12px;font:600 13.5px Inter,sans-serif;cursor:pointer">Sí, usar ${esc(fx)}</button><button type="button" class="cx-no" style="background:#fff;color:var(--plum);border:1px solid var(--plum);border-radius:999px;padding:7px 12px;font:500 13.5px Inter,sans-serif;cursor:pointer">No, está bien así</button></span>`);
+          const pick = (val, ev) => { q.querySelectorAll('button').forEach((b) => { b.disabled = true; }); hit(ev); email.dataset.ok = val; cur.value = val; next(); };
+          q.querySelector('.cx-yes').addEventListener('click', () => pick(fx, 'clic:correo_corregido'));
+          q.querySelector('.cx-no').addEventListener('click', () => pick(v, 'clic:correo_mantenido'));
+          return;
+        }
         email.value = v; me(v);
         step = 'enviando'; go.disabled = true; cur.disabled = true;
         const wait = hera('Enviando…');

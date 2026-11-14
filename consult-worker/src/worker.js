@@ -434,6 +434,7 @@ const handler = {
     // ha confirmado el bueno. Cambia a dónde va el hilo y, si se marca, le reenvía lo que no le llegó (Resend guarda los
     // correos enviados; Hera solo guarda sus identificadores). Lo que la profesional responda después ya va al correo nuevo.
     if (request.method === 'POST' && url.pathname === '/panel/correo') {
+      // (si la profesional aún no ha respondido, no hay respuesta que reenviar: le llegará al correo nuevo cuando responda)
       const f = await request.formData().catch(() => null);
       const page = (msg, ok) => new Response(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><body style="font:16px/1.5 -apple-system,sans-serif;max-width:560px;margin:40px auto;padding:0 16px;color:#2F3631"><div style="font-size:17px;color:${ok ? '#45574C' : '#B3261E'}">${msg}</div><p><a href="/panel?k=${encodeURIComponent(String(f?.get('k') || ''))}" style="color:#45574C">Volver al panel</a></p>`, { status: ok ? 200 : 400, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex', 'referrer-policy': 'no-referrer' } });
       if (!f || !env.DASH_KEY || f.get('k') !== env.DASH_KEY) return new Response('Not found', { status: 404 });
@@ -457,12 +458,14 @@ const handler = {
         for (const rid of ids) {
           try {
             const r = await fetch(`https://api.resend.com/emails/${rid}`, { headers: { Authorization: `Bearer ${env.RESEND_API_KEY}` } });
+            if (r.status === 401 || r.status === 403) { skipped.push(`${rid.slice(0, 8)}: la clave de Resend no permite leer correos enviados`); continue; }
             const m = r.ok ? await r.json() : null;
-            const to = [].concat(m?.to || []).map((x) => String(x).trim().toLowerCase());
-            // Solo correos de esta consulta: enviados a su correo anterior
-            if (!m || !to.includes(oldEmail)) { skipped.push(rid.slice(0, 8)); continue; }
+            if (!m) { skipped.push(`${rid.slice(0, 8)}: Resend no lo encuentra (${r.status})`); continue; }
+            const to = [].concat(m.to || []).map((x) => String(x).trim().toLowerCase());
+            // Solo correos de esta consulta: enviados a su correo anterior o con su número en el asunto
+            if (!to.includes(oldEmail) && !String(m.subject || '').toUpperCase().includes(`#${id.toUpperCase()}`)) { skipped.push(`${rid.slice(0, 8)}: es de otra consulta`); continue; }
             oldest.push(m);
-          } catch { skipped.push(rid.slice(0, 8)); }
+          } catch (e) { skipped.push(`${rid.slice(0, 8)}: ${e.message}`); }
         }
         oldest.sort((x, y) => String(x.created_at).localeCompare(String(y.created_at)));
         const sentIds = [];
@@ -470,15 +473,16 @@ const handler = {
           const ok = await sendMail(env, { to: newEmail, from: m.from, replyTo, subject: m.subject, html: m.html || undefined, text: m.text || undefined });
           if (ok) { resent += 1; if (ok.id) sentIds.push(ok.id); }
         }
-        t.ou = [...sentIds].slice(-10);
+        if (sentIds.length) t.ou = sentIds.slice(-10);
       }
       await saveThread(env, t);
       await bump(env, 'correo_corregido');
       const tail = f.get('resend')
         ? (resent ? ` Le hemos reenviado <b>${resent} ${resent === 1 ? 'correo' : 'correos'}</b> (sin adjuntos: si los había, que la profesional se los reenvíe).` : ' No había nada que reenviarle: si la consulta es de antes del 15 de noviembre, pega los identificadores de Resend de los correos rebotados.')
-          + (skipped.length ? ` No he reenviado ${skipped.length} identificador${skipped.length === 1 ? '' : 'es'} porque no eran de esta consulta o no se encontraron (${skipped.join(', ')}).` : '')
+          + (skipped.length ? `<br><br>No he reenviado:<br>${skipped.map((x) => `· ${esc(x)}`).join('<br>')}` : '')
         : '';
-      return page(`<p>Hecho: la consulta #${id.toUpperCase()} ya va a <b>${esc(newEmail)}</b>.${tail}</p><p style="font-size:14px;color:#6E6C67">Lo que la profesional responda a partir de ahora le llegará a este correo, y ella puede contestar desde él.</p>`, true);
+      const pend = t.a ? '' : ` <b>${esc((PROS[t.p] || {}).short || 'La profesional')} aún no ha respondido</b>: cuando lo haga, la respuesta le llegará directamente a este correo.`;
+      return page(`<p>Hecho: la consulta #${id.toUpperCase()} ya va a <b>${esc(newEmail)}</b>.${pend}${tail}</p><p style="font-size:14px;color:#6E6C67">Lo que la profesional responda a partir de ahora le llegará a este correo, y ella puede contestar desde él.</p>`, true);
     }
     if (request.method === 'GET' && url.pathname === '/stats') {
       if (!env.PANEL_CODE || request.headers.get('Authorization') !== `Bearer ${env.PANEL_CODE}`) return reply(401, { error: 'unauthorized' });

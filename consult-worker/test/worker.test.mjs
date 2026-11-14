@@ -275,7 +275,7 @@ console.log('consultas: OK');
   assert.equal(ok.status, 200);
   const html = await ok.text();
   assert.match(html, new RegExp(`reenviado <b>${mine.length} correos`), 'reenvía lo que se envió a su correo anterior');
-  assert.match(html, /No he reenviado 1 identificador/, 'no reenvía correos de otra consulta');
+  assert.match(html, /No he reenviado:<br>· ffffffff: es de otra consulta/, 'no reenvía correos de otra consulta');
   assert.ok(sent.slice(nR).every((m) => m.to[0] === 'maria.buena@gmail.com' && /^hera-u-/.test(m.reply_to)));
   globalThis.fetch = realFetch;
   assert.equal(await openEmail(env, (await loadThread(env, tid)).u), 'maria.buena@gmail.com');

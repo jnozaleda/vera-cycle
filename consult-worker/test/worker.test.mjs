@@ -252,3 +252,24 @@ assert.equal(validateAttachments([{ content: 'A'.repeat(Math.ceil((MAX_BYTES * 4
   assert.ok(!sent.some((m) => m.subject === '¿Te ayudó la respuesta de Lucía?'), 'ya valoró: sin correo de opinión');
 }
 console.log('consultas: OK');
+
+// Corregir el correo de una consulta (rebote por correo mal escrito) y reenvío de la profesional
+{
+  env.DASH_KEY = 'dk';
+  const fd = (o) => { const f = new FormData(); for (const [k, v] of Object.entries(o)) f.set(k, v); return f; };
+  const post = (o) => worker.fetch(new Request('https://w/panel/correo', { method: 'POST', body: fd(o) }), env);
+  assert.equal((await post({ k: 'mala', id: tid, email: 'maria@gmail.com' })).status, 404, 'sin la clave del panel no se puede');
+  assert.equal((await post({ k: 'dk', id: tid, email: 'no-correo' })).status, 400);
+  const ok = await post({ k: 'dk', id: `#${tid.toUpperCase()}`, email: 'maria.buena@gmail.com' });
+  assert.equal(ok.status, 200);
+  assert.equal(await openEmail(env, (await loadThread(env, tid)).u), 'maria.buena@gmail.com');
+  const fwd = `From: g@x.com\r\nTo: ${pAddr}\r\nSubject: Fwd: Re: Tu consulta\r\nMessage-ID: <f${Math.random()}@gmail.com>\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n---------- Forwarded message ---------\r\nFrom: Marina <marina@x.com>\r\nDate: jue, 13 nov 2026\r\nSubject: Re: Tu consulta\r\nTo: <${pAddr}>\r\n\r\nEs normal al principio, ponte calor.\r\n\r\nEl jue, 13 nov 2026, Hera escribió:\r\n> Me duele`;
+  const n1 = sent.length;
+  const rf = await relayIncoming(env, await loadThread(env, tid), 'p', fwd);
+  assert.ok(rf.ok);
+  assert.equal(sent[n1].to[0], 'maria.buena@gmail.com', 'el reenvío llega al correo corregido');
+  assert.ok(sent[n1].text.includes('Es normal al principio, ponte calor.') && !sent[n1].text.includes('Forwarded') && !sent[n1].text.includes('Me duele'), 'solo la respuesta, sin cabecera ni lo citado');
+  const ru = await relayIncoming(env, await loadThread(env, tid), 'u', mime('maria.buena@gmail.com', uAddr, 'Gracias'));
+  assert.ok(ru.ok, 'la usuaria puede contestar desde el correo nuevo');
+  console.log('correo corregido y reenvío: OK');
+}

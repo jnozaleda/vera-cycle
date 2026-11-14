@@ -402,6 +402,12 @@ ${PROS.map(([k2, name]) => { const r = g(`respondida:${k2}`); const fp = (open.f
 
 ${opFeed || opRows ? `<div class="card"><h2>Opiniones tras la consulta</h2>${opRows ? `<table><tr><th></th><th>Sí, mucho</th><th>Más o menos</th><th>No</th></tr>${opRows}</table>` : ''}${opFeed ? `<h3 class="fh">Comentarios</h3><ul class="feed">${opFeed}</ul>` : ''}</div>` : ''}
 
+<details class="more"><summary>Corregir el correo de una consulta</summary><div class="in" style="padding:0 16px 16px">
+<p class="mute" style="margin-bottom:10px">Si la consulta rebotó porque la usuaria escribió mal su correo y ya te ha confirmado el bueno. Lo que la profesional responda (o reenvíe) al hilo le llegará al correo nuevo.</p>
+<form method="post" action="/panel/correo" style="display:grid;gap:8px"><input type="hidden" name="k" value="${esc(url.searchParams.get('k') || '')}">
+<label class="mute">Número de consulta<input name="id" required placeholder="T6NVC8NM" autocomplete="off" style="display:block;width:100%;margin-top:4px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:var(--bg);color:var(--ink)"></label>
+<label class="mute">Correo correcto<input name="email" type="email" required placeholder="nombre@gmail.com" autocomplete="off" style="display:block;width:100%;margin-top:4px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:var(--bg);color:var(--ink)"></label>
+<button type="submit" style="padding:10px;border:0;border-radius:8px;background:var(--plum);color:var(--bg);font:600 15px -apple-system,sans-serif;cursor:pointer">Cambiar el correo</button></form></div></details>
 <details class="more"><summary>Más detalle</summary><div class="in">
 <div class="card"><h2>Personas por día</h2>${chart.join('')}
 <div class="legend"><span><b style="background:var(--plum)"></b>App · ${sumOf('a')}</span><span><b style="background:var(--web)"></b>Web · ${sumOf('w')}</span><span><b style="background:var(--ad)"></b>Parte que vino de anuncio (España): app ${sumOf('aa')} · web ${sumOf('aw')}</span></div>

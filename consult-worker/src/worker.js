@@ -430,6 +430,24 @@ const handler = {
         headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex, nofollow', 'referrer-policy': 'no-referrer' },
       });
     }
+    // Corregir el correo de una consulta (panel → «Corregir el correo»): cuando rebotó por estar mal escrito y la usuaria
+    // ha confirmado el bueno. Después, lo que la profesional responda o reenvíe al hilo le llega al correo nuevo.
+    if (request.method === 'POST' && url.pathname === '/panel/correo') {
+      const f = await request.formData().catch(() => null);
+      const page = (msg, ok) => new Response(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><body style="font:16px/1.5 -apple-system,sans-serif;max-width:520px;margin:40px auto;padding:0 16px;color:#2F3631"><p style="font-size:18px;color:${ok ? '#45574C' : '#B3261E'}">${msg}</p><p><a href="/panel?k=${encodeURIComponent(String(f?.get('k') || ''))}" style="color:#45574C">Volver al panel</a></p>`, { status: ok ? 200 : 400, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex', 'referrer-policy': 'no-referrer' } });
+      if (!f || !env.DASH_KEY || f.get('k') !== env.DASH_KEY) return new Response('Not found', { status: 404 });
+      const id = String(f.get('id') || '').trim().replace(/^#/, '').toLowerCase();
+      const norm = normalizeEmail(f.get('email'));
+      if (!/^[a-z0-9]{8}$/.test(id)) return page('El número de consulta no es válido. Son 8 letras y números, como T6NVC8NM.', false);
+      if (!norm) return page('El correo no es válido.', false);
+      const t = await loadThread(env, id);
+      if (!t) return page(`No encuentro la consulta #${id.toUpperCase()} (o tiene más de 30 días).`, false);
+      t.u = await sealEmail(env, String(f.get('email')).trim());
+      t.uh = (await hmac(env.HASH_SALT, norm)).slice(0, 24);
+      await saveThread(env, t);
+      await bump(env, 'correo_corregido');
+      return page(`Hecho: la consulta #${id.toUpperCase()} ya va a <b>${esc(String(f.get('email')).trim())}</b>. Si la profesional ya había respondido, que reenvíe su respuesta (Reenviar → a la misma dirección a la que respondió).`, true);
+    }
     if (request.method === 'GET' && url.pathname === '/stats') {
       if (!env.PANEL_CODE || request.headers.get('Authorization') !== `Bearer ${env.PANEL_CODE}`) return reply(401, { error: 'unauthorized' });
       const days = Math.min(365, Math.max(1, Number(url.searchParams.get('days')) || 30));

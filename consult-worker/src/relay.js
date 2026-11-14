@@ -106,9 +106,25 @@ export function isAutomatic(headers) {
 }
 
 /** Lee el correo entrante: texto limpio, adjuntos, identificadores */
+// Reenvío («Fwd:», «RV:»): la profesional reenvía una respuesta suya (p. ej. si a la usuaria no le llegó).
+// Se toma lo que escribe encima (si escribe algo) y el texto reenviado, sin la cabecera De/Para/Fecha ni lo citado debajo.
+const FWD_MARK = /\n(?:-{2,}\s*(?:Forwarded message|Mensaje reenviado|Mensaje original|Original Message)\s*-{2,}[^\n]*|\s*(?:Inicio del mensaje reenviado|Begin forwarded message)\s*:\s*|_{8,}\s*)\n/i;
+const FWD_HEAD = /^(De|From|Fecha|Date|Enviado|Sent|Asunto|Subject|Para|To|Cc|CC)\s*:/i;
+export function forwardedText(text, subject = '') {
+  const t = `\n${String(text || '').replace(/\r\n?/g, '\n')}`;
+  const m = FWD_MARK.exec(t);
+  if (!m || !/^\s*(fwd?|rv|reenv[^:]*|tr)\s*:/i.test(subject)) return null;
+  const note = stripQuoted(t.slice(0, m.index));
+  const lines = t.slice(m.index + m[0].length).split('\n');
+  while (lines.length && (FWD_HEAD.test(lines[0].trim()) || !lines[0].trim())) lines.shift();
+  const inner = stripQuoted(lines.join('\n'));
+  return [note, inner].filter(Boolean).join('\n\n') || null;
+}
+
 export async function parseIncoming(raw) {
   const mail = await PostalMime.parse(raw);
-  const body = stripQuoted(mail.text || htmlToText(mail.html));
+  const plain = mail.text || htmlToText(mail.html);
+  const body = forwardedText(plain, mail.subject || '') ?? stripQuoted(plain);
   let total = 0;
   const attachments = [];
   for (const a of mail.attachments || []) {

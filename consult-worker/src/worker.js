@@ -664,9 +664,12 @@ const handler = {
       const paid = !test && !unlimited && rec.n >= limit;
       const n = test || unlimited || paid ? rec.n : rec.n + 1;
       let creditsLeft = credits;
+      // Cuántas consultas lleva este correo en total (gratis, pagadas e ilimitadas), para el aviso al equipo
+      const nth = (rec.all ?? rec.n) + 1;
+      const prevAt = rec.last;
       if (!test) {
         if (paid) creditsLeft = await spendCredit(env, h);
-        else if (!unlimited) await env.KV.put(key, JSON.stringify({ n, first: rec.first || now, last: now }));
+        await env.KV.put(key, JSON.stringify({ n, first: rec.first || now, last: now, all: nth }));
         if (subscriber) await markDay(env, h, madridDay());
         // Dispositivos del equipo (modo equipo en la app): la consulta se envía igual, pero no cuenta en métricas ni avisos
         if (body.team !== true) {
@@ -695,8 +698,8 @@ const handler = {
         // COPY_EMAIL="1" (temporal, Noza 11 nov): la copia dice el correo de la usuaria, por si hay problemas
         const who = env.COPY_EMAIL === '1' ? `<p style="font-size:13px;color:#6E6C67">Correo de la usuaria: <b>${esc(q.email)}</b></p>` : '';
         const extra = `${who}${q.context ? `<p style="font-size:13px;color:#6E6C67">Sobre: ${esc(q.context)}</p>` : ''}${q.situation ? `<p style="font-size:13px;color:#6E6C67">Situación: ${nl2br(q.situation)}</p>` : ''}`;
-        const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${id.toUpperCase()}${files.length ? ` · ${files.length} ${files.length === 1 ? 'adjunto' : 'adjuntos'}` : ''}${body.src === 'ads' ? (/_latam$/.test(String(body.camp || '')) ? ' · desde anuncio (Latinoamérica)' : ' · desde anuncio') : ''}${via ? ` · desde ${via}` : ''}${paid ? ' · pagada' : ''}`,
-          intro: `Nueva consulta para <b>${esc(pro.name)}</b>${body.src === 'ads' ? ' (llegó desde un anuncio)' : ''}.`, body: q.text, extra, nFiles: files.length, withFiles });
+        const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${id.toUpperCase()}${files.length ? ` · ${files.length} ${files.length === 1 ? 'adjunto' : 'adjuntos'}` : ''}${body.src === 'ads' ? (/_latam$/.test(String(body.camp || '')) ? ' · desde anuncio (Latinoamérica)' : ' · desde anuncio') : ''}${via ? ` · desde ${via}` : ''}${paid ? ' · pagada' : ''}${nth > 1 ? ` · ${nth}.ª consulta` : ''}`,
+          intro: `Nueva consulta para <b>${esc(pro.name)}</b>${body.src === 'ads' ? ' (llegó desde un anuncio)' : ''}.${nth > 1 ? ` <b>Es su ${nth}.ª consulta</b>${prevAt ? ` (la anterior, el ${new Date(prevAt).toLocaleDateString('es-ES', { timeZone: 'Europe/Madrid', day: 'numeric', month: 'short' })})` : ''}.` : ''}`, body: q.text, extra, nFiles: files.length, withFiles });
         await sendMail(env, { to: bcc, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc, ...(withFiles ? { attachments: files } : {}) });
       }
       const remaining = Math.max(0, limit - n);

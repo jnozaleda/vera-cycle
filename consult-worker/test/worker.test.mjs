@@ -321,3 +321,15 @@ console.log('consultas: OK');
   assert.equal(r.status, 303); assert.equal(await env.KV.get(`fail:${eid}`), null);
   console.log('correos que no han llegado: OK');
 }
+
+// El aviso al equipo dice si es la 2.ª consulta de ese correo
+{
+  const q2 = { email: 'segunda.vez@gmail.com', to: 'gineco', text: 'Primera duda', context: '' };
+  let n0 = sent.length; await call('/ask', q2);
+  const c1 = sent.slice(n0).find((m) => /^Consulta · /.test(m.subject));
+  assert.ok(c1 && !/consulta$/.test(c1.subject.replace(/^Consulta/, '')), 'la primera no lo dice');
+  n0 = sent.length; await call('/ask', { ...q2, text: 'Segunda duda' });
+  const c2 = sent.slice(n0).find((m) => /^Consulta · /.test(m.subject));
+  assert.match(c2.subject, / · 2\.ª consulta$/); assert.match(c2.html, /Es su 2\.ª consulta/);
+  console.log('n.º de consulta en el aviso: OK');
+}

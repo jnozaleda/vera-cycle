@@ -5,6 +5,8 @@
 
 import { eventText, deviceText } from './activity.js';
 import { PLANS } from './stripe.js';
+import { listFailures } from './bounces.js';
+import { emailTypo } from '../../app/js/email-typo.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const madrid = (ts, opts) => new Intl.DateTimeFormat('es-ES', { timeZone: 'Europe/Madrid', ...opts }).format(new Date(ts));
@@ -95,6 +97,7 @@ export async function panel(env, url, openThreads) {
   // Mismos días de calendario (Madrid) que los contadores: «Hoy» es desde las 00:00, no las últimas 24 h
   const act = actAll.filter((r) => dayISO(r.ts) >= from);
   const open = openThreads ? await openThreads(env) : { pendientes: {}, fuera_plazo: {} };
+  const fails = await listFailures(env).catch(() => []);
   const pages = await topPages(env, days);
 
   // Persona-día (etiqueta anónima diaria) → sus eventos. «De anuncio» = persona-día con una marca de anuncio, sin la
@@ -240,7 +243,9 @@ export async function panel(env, url, openThreads) {
   const late = PROS.reduce((a, [k2]) => a + ((open.fuera_plazo || {})[k2] || 0), 0);
   const sinCorreo = g('clic:fallo_sin_correo'), errores = g('error_portada') + g('consulta_error');
   const guardadas = Math.max(0, g('consulta_guardada') - g('guardada_pagada'));
+  const bounced = fails.filter((x) => x.kind !== 'retrasado').length;
   const chips = [
+    fails.length ? `<a class="chip red" href="#fallos" style="text-decoration:none">${fails.length === 1 ? '1 correo no ha llegado' : `${fails.length} correos no han llegado`}${bounced < fails.length ? ` (${fails.length - bounced} retrasado${fails.length - bounced === 1 ? '' : 's'})` : ''}</a>` : '',
     pendientes ? `<span class="chip warn">${pendientes} ${pendientes === 1 ? 'consulta esperando' : 'consultas esperando'} respuesta: ${pendBy.join(' · ')}</span>` : '<span class="chip ok">Ninguna consulta esperando respuesta</span>',
     late ? `<span class="chip red">${late} fuera de plazo (más de 48 h)</span>` : pendientes ? '<span class="chip ok">Ninguna fuera de plazo (48 h)</span>' : '',
     sinCorreo ? `<span class="chip red">${sinCorreo} ${sinCorreo === 1 ? 'pulsó' : 'pulsaron'} enviar sin poner correo</span>` : '',
@@ -309,6 +314,15 @@ export async function panel(env, url, openThreads) {
   const tripsHtml = trips.slice(0, 15).map((t) => t.html).join('');
   const opTotal = sum('opinion:');
 
+  // Correos que no han llegado (bounces.js): corregir el correo y reenviar, o quitar de la lista
+  const kRaw = esc(url.searchParams.get('k') || '');
+  const failCard = fails.length ? `<div class="card" id="fallos"><h2>Correos que no han llegado</h2><p class="mute" style="margin-bottom:8px">Antes de reenviar a un correo corregido, confirma con ella que es el suyo.</p>${fails.map((x) => {
+    const sug = emailTypo(x.to) || x.to;
+    const when = madrid(x.at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+    const fix = x.id ? `<form method="post" action="/panel/correo" class="fx"><input type="hidden" name="k" value="${kRaw}"><input type="hidden" name="id" value="${esc(x.id)}"><input type="hidden" name="ids" value="${esc(x.eid)}"><input type="hidden" name="resend" value="1"><input name="email" type="email" required value="${esc(sug)}" aria-label="Correo correcto"><button type="submit">Corregir y reenviar</button></form>`
+      : '<p class="mute">No es de una consulta: no se puede reenviar desde aquí.</p>';
+    return `<div class="fail"><p><span class="tagk ${x.kind === 'retrasado' ? 'warn' : 'bad'}">${esc(x.kind)}</span> ${when}${x.id ? ` · <b>#${esc(x.id.toUpperCase())}</b>` : ''}</p><p class="mute">${esc(x.sub)}</p><p class="mute">Para: <b style="color:var(--ink)">${esc(x.to || '—')}</b>${x.to && sug !== x.to ? ` · ¿quería decir <b style="color:var(--ink)">${esc(sug)}</b>?` : ''}${x.why ? `<br>Motivo: ${esc(x.why)}` : ''}${x.kind === 'retrasado' ? '<br>Puede acabar llegando: si llega, desaparece de aquí.' : ''}</p>${fix}<form method="post" action="/panel/fallo"><input type="hidden" name="k" value="${kRaw}"><input type="hidden" name="eid" value="${esc(x.eid)}"><button type="submit" class="lnk">Quitar de la lista</button></form></div>`;
+  }).join('')}</div>` : '';
   const k = encodeURIComponent(url.searchParams.get('k') || '');
   const tab = (d, label) => `<a class="${d === days ? 'on' : ''}" href="?k=${k}&d=${d}">${label}</a>`;
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -356,6 +370,11 @@ details.more>summary{cursor:pointer;padding:14px 16px;font-weight:650;color:var(
 details.more>.in{padding:0 12px 12px}details.more .card{border-color:var(--line)}
 details.sub>summary{cursor:pointer;color:var(--plum);font-size:13.5px;font-weight:600;margin-top:10px}
 .late{color:var(--red)}
+.fail{display:grid;gap:4px;padding:12px 0;border-top:1px solid var(--line)}.fail p{margin:0}
+.tagk{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-radius:4px;padding:1px 6px}.tagk.bad{background:var(--red2);color:var(--red)}.tagk.warn{background:var(--la2);color:var(--la-t)}
+.fx{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}.fx input{flex:1;min-width:180px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:var(--bg);color:var(--ink)}
+.fx button{padding:9px 12px;border:0;border-radius:8px;background:var(--plum);color:var(--bg);font:600 14px -apple-system,sans-serif;cursor:pointer}
+.fail .lnk{background:none;border:0;padding:0;color:var(--mute);font:13px -apple-system,sans-serif;text-decoration:underline;cursor:pointer}
 @media(max-width:640px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.two{grid-template-columns:1fr}.fr{grid-template-columns:112px minmax(0,1fr) 34px}}
 </style></head><body><div class="w">
 <p class="mute">HERA · sin el equipo (modo equipo)</p><h1>Panel</h1>
@@ -363,6 +382,7 @@ details.sub>summary{cursor:pointer;color:var(--plum);font-size:13.5px;font-weigh
 <div class="tabs">${tab(1, 'Hoy')}${tab(7, '7 días')}${tab(30, '30 días')}</div>
 
 <div class="card"><p class="lead">${lead}</p><div class="chips">${chips}</div></div>
+${failCard}
 
 <div class="kpis">
 <div class="k"><b>${visTotal}</b><span>personas en la web</span>${splitTxt(vis)}</div>
@@ -402,7 +422,7 @@ ${PROS.map(([k2, name]) => { const r = g(`respondida:${k2}`); const fp = (open.f
 
 ${opFeed || opRows ? `<div class="card"><h2>Opiniones tras la consulta</h2>${opRows ? `<table><tr><th></th><th>Sí, mucho</th><th>Más o menos</th><th>No</th></tr>${opRows}</table>` : ''}${opFeed ? `<h3 class="fh">Comentarios</h3><ul class="feed">${opFeed}</ul>` : ''}</div>` : ''}
 
-<details class="more"><summary>Corregir el correo de una consulta</summary><div class="in" style="padding:0 16px 16px">
+<details class="more"><summary>Corregir a mano el correo de una consulta</summary><div class="in" style="padding:0 16px 16px">
 <p class="mute" style="margin-bottom:10px">Si la consulta rebotó porque la usuaria escribió mal su correo y ya te ha confirmado el bueno. Cambia a dónde va el hilo y le reenvía lo que no le llegó (la confirmación y las respuestas). Lo que la profesional responda después ya le llega al correo nuevo.</p>
 <form method="post" action="/panel/correo" style="display:grid;gap:8px"><input type="hidden" name="k" value="${esc(url.searchParams.get('k') || '')}">
 <label class="mute">Número de consulta<input name="id" required placeholder="T6NVC8NM" autocomplete="off" style="display:block;width:100%;margin-top:4px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:var(--bg);color:var(--ink)"></label>

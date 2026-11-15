@@ -33,6 +33,7 @@ import { sendFeedbackDue, handleOpinion, feedbackEmail, feedbackSig } from './fe
 import { inviteCode, inviteFor, rewardInvite } from './invite.js';
 import { panel } from './panel.js';
 import { isEvent, isDevice, record, personTag, hourlyDigest, notify } from './activity.js';
+import { handleResendWebhook } from './bounces.js';
 import { PLANS, VIDEO_PROS, paymentsOn, createCheckout, sessionStatus, handleWebhook, getBalance, spendCredit, markDay } from './stripe.js';
 import { newThreadId, relayAddress, parseRelayAddress, sealEmail, openEmail, saveThread, loadThread, parseIncoming, isAutomatic } from './relay.js';
 
@@ -406,6 +407,8 @@ const handler = {
         await notify(env, `Reembolso · ${PLANS[plan].label} · ${PLANS[plan].eur} €`, `Reembolsado: ${PLANS[plan].label}.${PLANS[plan].video ? '' : ` Se han quitado ${PLANS[plan].credits === 1 ? 'esa consulta' : `esas ${PLANS[plan].credits} consultas`} del saldo (si quedaban).`}\n\nVer en Stripe: https://dashboard.stripe.com/${charge.livemode ? '' : 'test/'}payments/${charge.payment_intent}`, sendMail);
       },
     };
+    // Correos que no llegan (Resend avisa de rebotes y retrasos): lista en el panel
+    if (request.method === 'POST' && url.pathname === '/resend/webhook') return new Response(null, { status: await handleResendWebhook(env, request, { notify: (e, s, t) => notify(e, s, t, sendMail), bump }) });
     if (request.method === 'POST' && url.pathname === '/stripe/webhook') return new Response(null, { status: await handleWebhook(env, request, payHooks) });
     // Enlace de pago del correo «consulta guardada»: abre Stripe para esa consulta (o avisa si ya no está)
     if (request.method === 'GET' && url.pathname === '/pagar') {
@@ -433,6 +436,14 @@ const handler = {
     // Corregir el correo de una consulta (panel → «Corregir el correo»): cuando rebotó por estar mal escrito y la usuaria
     // ha confirmado el bueno. Cambia a dónde va el hilo y, si se marca, le reenvía lo que no le llegó (Resend guarda los
     // correos enviados; Hera solo guarda sus identificadores). Lo que la profesional responda después ya va al correo nuevo.
+    // Quitar un correo de la lista «Correos que no han llegado»
+    if (request.method === 'POST' && url.pathname === '/panel/fallo') {
+      const f = await request.formData().catch(() => null);
+      if (!f || !env.DASH_KEY || f.get('k') !== env.DASH_KEY) return new Response('Not found', { status: 404 });
+      const eid = String(f.get('eid') || '');
+      if (/^[0-9a-f-]{36}$/.test(eid)) await env.KV.delete(`fail:${eid}`);
+      return new Response(null, { status: 303, headers: { Location: `/panel?k=${encodeURIComponent(env.DASH_KEY)}`, 'referrer-policy': 'no-referrer' } });
+    }
     if (request.method === 'POST' && url.pathname === '/panel/correo') {
       // (si la profesional aún no ha respondido, no hay respuesta que reenviar: le llegará al correo nuevo cuando responda)
       const f = await request.formData().catch(() => null);
@@ -471,7 +482,7 @@ const handler = {
         const sentIds = [];
         for (const m of oldest) {
           const ok = await sendMail(env, { to: newEmail, from: m.from, replyTo, subject: m.subject, html: m.html || undefined, text: m.text || undefined });
-          if (ok) { resent += 1; if (ok.id) sentIds.push(ok.id); }
+          if (ok) { resent += 1; if (ok.id) sentIds.push(ok.id); if (m.id) await env.KV.delete(`fail:${m.id}`); }
         }
         if (sentIds.length) t.ou = sentIds.slice(-10);
       }

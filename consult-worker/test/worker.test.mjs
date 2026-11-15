@@ -289,3 +289,35 @@ console.log('consultas: OK');
   assert.ok(ru.ok, 'la usuaria puede contestar desde el correo nuevo');
   console.log('correo corregido y reenvío: OK');
 }
+
+// Correos que no han llegado: webhook de Resend (firma Svix) → lista del panel → «Corregir y reenviar»
+{
+  const { panel } = await import('../src/panel.js');
+  const secretRaw = new Uint8Array(24).fill(7);
+  env.RESEND_WEBHOOK_SECRET = `whsec_${btoa(String.fromCharCode(...secretRaw))}`;
+  const sign = async (body, id = 'msg_1', ts = Math.floor(Date.now() / 1000)) => {
+    const key = await crypto.subtle.importKey('raw', secretRaw, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    const mac = btoa(String.fromCharCode(...new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${id}.${ts}.${body}`)))));
+    return { 'svix-id': id, 'svix-timestamp': String(ts), 'svix-signature': `v1,${mac}` };
+  };
+  const hook = async (ev, headers) => { const body = JSON.stringify(ev); return worker.fetch(new Request('https://w/resend/webhook', { method: 'POST', headers: headers || await sign(body), body }), env); };
+  const eid = '11111111-2222-4333-8444-555555555555';
+  const ev = { type: 'email.bounced', data: { email_id: eid, to: ['vasquez@gmail.co'], subject: `Re: Tu consulta a Marina · Hera #${tid.toUpperCase()}`, bounce: { message: 'Mailbox does not exist' } } };
+  assert.equal((await hook(ev, { 'svix-id': 'x', 'svix-timestamp': String(Math.floor(Date.now() / 1000)), 'svix-signature': 'v1,mala' })).status, 401, 'sin firma válida no entra');
+  assert.equal((await hook(ev)).status, 200);
+  const html = await panel(env, new URL('https://w/panel?k=dk&d=7'), async () => ({ pendientes: {}, fuera_plazo: {} }));
+  assert.match(html, /Correos que no han llegado/);
+  assert.match(html, /vasquez@gmail\.co/); assert.match(html, /value="vasquez@gmail\.com"/, 'propone el correo corregido');
+  assert.match(html, new RegExp(`name="ids" value="${eid}"`));
+  // Retrasado que luego llega: desaparece
+  const eid2 = '99999999-2222-4333-8444-555555555555';
+  await hook({ type: 'email.delivery_delayed', data: { email_id: eid2, to: ['x@gmail.cl'], subject: 'Tu consulta a Gonzalo · Hera #ABCDEFGH' } });
+  assert.ok(await env.KV.get(`fail:${eid2}`));
+  await hook({ type: 'email.delivered', data: { email_id: eid2, to: ['x@gmail.cl'], subject: 's' } });
+  assert.equal(await env.KV.get(`fail:${eid2}`), null, 'si al final llega, se quita');
+  // Quitar a mano
+  const fd = new FormData(); fd.set('k', 'dk'); fd.set('eid', eid);
+  const r = await worker.fetch(new Request('https://w/panel/fallo', { method: 'POST', body: fd }), env);
+  assert.equal(r.status, 303); assert.equal(await env.KV.get(`fail:${eid}`), null);
+  console.log('correos que no han llegado: OK');
+}

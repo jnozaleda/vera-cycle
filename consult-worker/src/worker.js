@@ -21,7 +21,7 @@
 // Medición (vera-backlog#6): D1 «hera-metrics» con recuentos por día (tabla counts) y huellas diarias para contar
 // personas distintas (tabla visitors: hash de IP + navegador + día + sal, se borran a las 48 h). Sin IP ni identificadores.
 //
-// Bindings: KV (KV), HASH_SALT, ADMIN_TOKEN, RESEND_API_KEY, COPY_TO (opcional) (secretos), ALLOWED_ORIGINS, FROM, FREE_LIMIT,
+// Bindings: KV (KV), HASH_SALT, ADMIN_TOKEN, RESEND_API_KEY, RESEND_READ_KEY (opcional: leer correos enviados para reenviarlos), COPY_TO (opcional) (secretos), ALLOWED_ORIGINS, FROM, FREE_LIMIT,
 // DRY_RUN ("1" = hace todo menos enviar correos), DB (D1), PANEL_CODE (secreto), FALLBACK_TO (opcional: adónde reenviar
 // lo que llegue a otras direcciones por la regla catch-all; si falta, se usa COPY_TO).
 //
@@ -457,8 +457,8 @@ const handler = {
         const oldest = [];
         for (const rid of ids) {
           try {
-            const r = await fetch(`https://api.resend.com/emails/${rid}`, { headers: { Authorization: `Bearer ${env.RESEND_API_KEY}` } });
-            if (r.status === 401 || r.status === 403) { skipped.push(`${rid.slice(0, 8)}: la clave de Resend no permite leer correos enviados`); continue; }
+            const r = await fetch(`https://api.resend.com/emails/${rid}`, { headers: { Authorization: `Bearer ${env.RESEND_READ_KEY || env.RESEND_API_KEY}` } });
+            if (r.status === 401 || r.status === 403) { skipped.push(`${rid.slice(0, 8)}: la clave de Resend no permite leer correos enviados (falta el secreto RESEND_READ_KEY, una clave con acceso completo)`); continue; }
             const m = r.ok ? await r.json() : null;
             if (!m) { skipped.push(`${rid.slice(0, 8)}: Resend no lo encuentra (${r.status})`); continue; }
             const to = [].concat(m.to || []).map((x) => String(x).trim().toLowerCase());

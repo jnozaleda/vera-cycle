@@ -220,7 +220,7 @@ export async function panel(env, url, openThreads) {
   const net = (k2, x) => Math.max(0, x - g(`pago:devuelto_${k2.slice(5)}`));
   const nPagos = pagos.reduce((a, [k2, x]) => a + net(k2, x), 0);
   const eur = pagos.reduce((a, [k2, x]) => a + net(k2, x) * PLAN_EUR[k2.slice(5)], 0);
-  const nVideo = net('pago:video', g('pago:video')) + net('pago:lactancia', g('pago:lactancia'));
+  const nVideo = net('pago:video', g('pago:video')) + net('pago:lactancia', g('pago:lactancia')) + net('pago:llamada', g('pago:llamada'));
   // Origen de cada persona-día: anuncio España, anuncio Latinoamérica, enlace propio (?via=, invitación) o sin etiqueta
   const VIA_NAME = { ig_marina: 'Instagram de Marina', wa_guia: 'Guías por WhatsApp' };
   const viaOf = (v) => { for (const r of v) { const m = /^via_visita:([a-z0-9_]+)$/.exec(r.e); if (m) return m[1]; } return ''; };
@@ -409,7 +409,7 @@ ${PROS.map(([k2, name]) => { const r = g(`respondida:${k2}`); const fp = (open.f
 <div class="card"><h2>Lo que se mueve</h2>
 <table>
 <tr><td>Vieron la página de videollamada</td>${td(g('video_pagina') + sum('video_pagina:'))}</tr>
-<tr><td>Pagaron una videollamada</td>${td(nVideo)}</tr>
+<tr><td>Pagaron una videollamada o llamada</td>${td(nVideo)}</tr>
 <tr><td>Agotaron las gratuitas</td>${td(g('gratuitas_agotadas'))}</tr>
 <tr><td>Consultas guardadas sin pagar</td>${td(guardadas)}</tr>
 <tr><td>Instalaron la app</td>${td(g('instalada'))}</tr>

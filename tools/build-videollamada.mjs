@@ -12,13 +12,13 @@ const tick = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke
 const CARDS = [
   { k: 'gineco', name: 'Dr. Gonzalo Nozaleda', role: 'Ginecólogo', photo: 'gonzalo.jpg?v=2', short: 'Gonzalo',
     topics: ['Regla, ciclo y anticoncepción', 'Revisar un informe o una analítica', 'Embarazo y menopausia'],
-    offers: [['video', '30 min', 55, 'Reservar con Gonzalo']] },
+    offers: [['video', 'Videollamada · 30 min', 55, 'Reservar con Gonzalo'], ['llamada', 'Llamada · 15 min', 25, 'Llamada con Gonzalo']] },
   { k: 'matrona', name: 'Marina Fernández', role: 'Matrona y asesora de lactancia', photo: 'marina.jpg?v=2', short: 'Marina',
     topics: ['Lactancia: agarre, dolor, crisis, sacaleches', 'Preparar el parto', 'Posparto y recuperación'],
-    offers: [['video', '30 min', 55, 'Reservar con Marina'], ['lactancia', 'Asesoría de lactancia · 1 h 30', 99, 'Reservar asesoría de lactancia']] },
+    offers: [['video', 'Videollamada · 30 min', 55, 'Reservar con Marina'], ['llamada', 'Llamada · 15 min', 25, 'Llamada con Marina'], ['lactancia', 'Asesoría de lactancia · 1 h 30', 99, 'Reservar asesoría de lactancia']] },
   { k: 'pediatra', name: 'Dra. Lucía Carrascón', role: 'Pediatra', photo: 'lucia.jpg?v=3', short: 'Lucía',
     topics: ['Sueño, alimentación y tomas', 'Piel, granitos, cólicos', 'Desarrollo del bebé'],
-    offers: [['video', '30 min', 55, 'Reservar con Lucía']] },
+    offers: [['video', 'Videollamada · 30 min', 55, 'Reservar con Lucía'], ['llamada', 'Llamada · 15 min', 25, 'Llamada con Lucía']] },
 ];
 
 const card = (c) => `<article class="vc-card" id="${c.k}">
@@ -26,7 +26,7 @@ const card = (c) => `<article class="vc-card" id="${c.k}">
   <ul class="vc-t">${c.topics.map((t) => `<li>${t}</li>`).join('')}</ul>
   ${c.offers.map(([plan, dur, eur, label]) => `<div class="vc-o">
     <div class="vc-p"><span>${dur}</span><strong>${eur} €</strong></div>
-    <button type="button" class="vc-btn${plan === 'lactancia' ? ' vc-btn2' : ''}" data-plan="${plan}" data-pro="${c.k}" data-eur="${eur}" data-who="${c.short}">${label}</button>
+    <button type="button" class="vc-btn${plan !== 'video' ? ' vc-btn2' : ''}" data-plan="${plan}" data-pro="${c.k}" data-eur="${eur}" data-who="${c.short}">${label}</button>
   </div>`).join('')}
 </article>`;
 
@@ -63,7 +63,7 @@ const body = `${STYLE}<div class="w vc">
 <section class="vc-hero">
   <p class="ey">Videollamada</p>
   <h1>Habla con tu ginecólogo, tu matrona o tu pediatra, <em>cara a cara</em></h1>
-  <p class="vc-lead">30 minutos cara a cara con el ginecólogo, la matrona o la pediatra que elijas, desde casa y a la hora que te venga bien.</p>
+  <p class="vc-lead">30 minutos cara a cara con el ginecólogo, la matrona o la pediatra que elijas, desde casa y a la hora que te venga bien. ¿Prefieres sin cámara? Una llamada de 15 minutos.</p>
   <ul class="vc-ticks"><li>${tick}Sin desplazarte</li><li>${tick}Día y hora a tu medida</li><li>${tick}Sin instalar nada en el ordenador</li></ul>
   <div class="vc-note" id="vc-note" hidden aria-live="polite"></div>
 </section>
@@ -84,6 +84,7 @@ const body = `${STYLE}<div class="w vc">
 <h2>Lo que conviene saber</h2>
 <div class="vc-faq">
   <div><b>¿Y si no puedo a la hora acordada?</b><p>Puedes cambiarla o cancelarla hasta 1 hora antes y te devolvemos el dinero entero. Si avisas con menos de 1 hora o no te conectas, no se devuelve.</p></div>
+  <div><b>¿Cómo es la llamada de 15 minutos?</b><p>Igual que la videollamada, pero por teléfono y sin cámara: después del pago nos dices 3 franjas y tu teléfono, y la profesional te llama a la hora acordada desde un número oculto. Si estás fuera de España, hablamos por Google Meet solo con voz. 25 €.</p></div>
   <div><b>¿Se graba la llamada?</b><p>No. La llamada no se graba y en ella solo estáis tú y la profesional.</p></div>
   <div><b>¿Necesito una cuenta de Google?</b><p>En el ordenador, no: basta con abrir el enlace en el navegador. En el móvil, la app de Google Meet puede pedirte iniciar sesión.</p></div>
   <div><b>¿Para qué no sirve?</b><p>No es para urgencias ni sustituye una exploración en persona. Si la profesional cree que necesitas que te vean, te lo dirá.</p></div>
@@ -157,9 +158,9 @@ const body = `${STYLE}<div class="w vc">
   }
   document.querySelectorAll('.vc-btn[data-plan]').forEach((b) => b.addEventListener('click', () => openForm(b)));
   // Enlace directo: /videollamada/#reservar-matrona o #lactancia
-  const m = /^#(reservar-(gineco|matrona|pediatra)|lactancia)$/.exec(location.hash);
+  const m = /^#(reservar-(gineco|matrona|pediatra)|llamada-(gineco|matrona|pediatra)|lactancia)$/.exec(location.hash);
   if (m) {
-    const b = m[1] === 'lactancia' ? document.querySelector('[data-plan=lactancia]') : document.querySelector('[data-plan=video][data-pro=' + m[2] + ']');
+    const b = m[1] === 'lactancia' ? document.querySelector('[data-plan=lactancia]') : m[3] ? document.querySelector('[data-plan=llamada][data-pro=' + m[3] + ']') : document.querySelector('[data-plan=video][data-pro=' + m[2] + ']');
     if (b) { b.closest('.vc-card').scrollIntoView({ block: 'start' }); openForm(b, true); }
   }
   // Vuelta de Stripe
@@ -173,7 +174,7 @@ const body = `${STYLE}<div class="w vc">
         if (!j.paid) throw new Error();
         hit('pago_hecho:' + j.plan);
         const who = { gineco: 'Gonzalo', matrona: 'Marina', pediatra: 'Lucía' }[j.pro] || 'la profesional';
-        say('<b>Pago hecho. Ahora, elige tu hora</b>Te hemos enviado un correo a ' + esc(store.get('hera-ask-email') || 'tu dirección') + '. Respóndelo con 3 franjas que te vengan bien y te proponemos día y hora con ' + who + ' en menos de 24 h laborables. Si no lo ves, mira en «Promociones» o «Spam».');
+        say('<b>Pago hecho. Ahora, elige tu hora</b>Te hemos enviado un correo a ' + esc(store.get('hera-ask-email') || 'tu dirección') + '. Respóndelo con 3 franjas que te vengan bien' + (j.plan === 'llamada' ? ' y tu teléfono' : '') + ' y te proponemos día y hora con ' + who + ' en menos de 24 h laborables. Si no lo ves, mira en «Promociones» o «Spam».');
       }).catch(() => say('<b>Aún no podemos confirmar el pago</b>Si te han cobrado, te llegará el correo en unos minutos. Si no, escríbenos a contacto@hera-gine.com.'));
     }
     note.scrollIntoView({ block: 'center' });
@@ -182,10 +183,10 @@ const body = `${STYLE}<div class="w vc">
 
 const html = shell({
   title: 'Videollamada con ginecólogo, matrona o pediatra · Hera',
-  desc: '30 minutos por videollamada con el ginecólogo, la matrona o la pediatra de Hera, desde casa y a la hora que te venga bien. 55 €. Asesoría de lactancia de 1 h 30 con Marina, 99 €.',
+  desc: '30 minutos por videollamada con el ginecólogo, la matrona o la pediatra de Hera, desde casa y a la hora que te venga bien. 55 €. Llamada de 15 minutos, 25 €. Asesoría de lactancia de 1 h 30 con Marina, 99 €.',
   path: '/videollamada/',
   ld: { '@context': 'https://schema.org', '@type': 'Service', name: 'Videollamada con profesionales de Hera', provider: { '@type': 'Organization', name: 'Hera', url: 'https://hera-gine.com' },
-    offers: [{ '@type': 'Offer', name: 'Videollamada de 30 minutos', price: '55', priceCurrency: 'EUR' }, { '@type': 'Offer', name: 'Asesoría de lactancia (1 h 30)', price: '99', priceCurrency: 'EUR' }] },
+    offers: [{ '@type': 'Offer', name: 'Videollamada de 30 minutos', price: '55', priceCurrency: 'EUR' }, { '@type': 'Offer', name: 'Llamada de 15 minutos', price: '25', priceCurrency: 'EUR' }, { '@type': 'Offer', name: 'Asesoría de lactancia (1 h 30)', price: '99', priceCurrency: 'EUR' }] },
   body,
 });
 fs.mkdirSync(new URL('videollamada/', ROOT), { recursive: true });

@@ -21,6 +21,8 @@ export const PLANS = {
   // Videollamadas (vera-backlog#86): no suman consultas; el pago dispara el correo con los pasos para elegir hora
   video: { lookup: 'hera_video30', mode: 'payment', credits: 0, label: 'Videollamada de 30 min', eur: 55, video: true },
   lactancia: { lookup: 'hera_lactancia90', mode: 'payment', credits: 0, label: 'Asesoría de lactancia (1 h 30)', eur: 99, video: true },
+  // Llamada de teléfono (sin vídeo): mismo flujo que la videollamada; la profesional llama con número oculto (o Meet solo voz fuera de España)
+  llamada: { lookup: 'hera_llamada15', mode: 'payment', credits: 0, label: 'Llamada de 15 min', eur: 25, video: true, call: true },
 };
 export const VIDEO_PROS = ['gineco', 'matrona', 'pediatra'];
 

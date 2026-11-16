@@ -120,6 +120,7 @@ export function teamCopy({ subject, intro, body, extra = '', nFiles = 0, withFil
 
 /** Correo a quien paga una videollamada (vera-backlog#86): pago recibido y siguiente paso (responder con horarios) */
 export function videoPaidEmail(pro, plan, invite = null) {
+  if (plan.call) return callPaidEmail(pro, plan, invite);
   const what = plan.eur === 99 ? 'asesoría de lactancia de 1 h 30' : 'videollamada de 30 minutos';
   const subject = `Tu ${plan.eur === 99 ? 'asesoría de lactancia' : 'videollamada'} con ${pro.short} · elige día y hora`;
   const step = (n, t) => `<tr><td style="vertical-align:top;padding:6px 10px 6px 0"><span style="display:inline-block;width:24px;height:24px;border-radius:50%;background:#F6E0E2;color:#45574C;font-weight:600;font-size:13px;line-height:24px;text-align:center">${n}</span></td><td style="padding:6px 0;font-size:14px;color:#2F3631">${t}</td></tr>`;
@@ -136,11 +137,28 @@ export function videoPaidEmail(pro, plan, invite = null) {
   return { subject, html, text };
 }
 
+/** Llamada de 15 min (sin vídeo): pide franjas y el teléfono; la profesional llama con número oculto (fuera de España, Meet solo voz) */
+export function callPaidEmail(pro, plan, invite = null) {
+  const subject = `Tu llamada con ${pro.short} · elige día y hora`;
+  const step = (n, t) => `<tr><td style="vertical-align:top;padding:6px 10px 6px 0"><span style="display:inline-block;width:24px;height:24px;border-radius:50%;background:#F6E0E2;color:#45574C;font-weight:600;font-size:13px;line-height:24px;text-align:center">${n}</span></td><td style="padding:6px 0;font-size:14px;color:#2F3631">${t}</td></tr>`;
+  const html = shell(`<p>Hola,</p>
+<p>Hemos recibido el pago de tu <b>llamada de 15 minutos</b> con <b>${esc(pro.name)}, ${esc(pro.role)}</b> (${plan.eur} €).</p>
+<div style="background:#F6E0E2;border-radius:10px;padding:14px 16px;margin:14px 0">
+<p style="margin:0 0 6px;font-family:Georgia,serif;font-size:19px;color:#45574C">Siguiente paso: responde a este correo</p>
+<p style="margin:0;font-size:14px">Dinos <b>3 franjas que te vengan bien</b> en los próximos días y <b>el teléfono al que quieres que te llamemos</b>, con el prefijo de tu país (por ejemplo: +34 600 000 000). Si quieres, añade una línea sobre lo que quieres consultar.</p></div>
+<p style="margin:16px 0 4px;font-weight:600">Después</p>
+<table style="border-collapse:collapse">${step(1, 'En menos de 24 h laborables te proponemos día y hora.')}${step(2, `A esa hora te llama ${esc(pro.short)}, desde un número oculto. Ten el móvil a mano.`)}${step(3, 'Si estás fuera de España, en lugar de llamarte te enviamos un enlace de Google Meet para hablar solo por voz.')}</table>
+<p style="font-size:13px;color:#6E6C67;margin-top:16px">Puedes cambiarla o cancelarla hasta 1 hora antes y te devolvemos el dinero entero. La llamada no se graba. Tu teléfono solo lo usamos para esta llamada.</p>
+<p style="font-size:13px;color:#6E6C67">No es un servicio de urgencias. Si algo no va bien, llama al 112 o acude a tu centro de salud.</p>${invite ? invite.html : ''}`);
+  const text = `Hola,\n\nHemos recibido el pago de tu llamada de 15 minutos con ${pro.name}, ${pro.role} (${plan.eur} €).\n\nSIGUIENTE PASO: responde a este correo con 3 franjas que te vengan bien en los próximos días y el teléfono al que quieres que te llamemos, con el prefijo de tu país (por ejemplo: +34 600 000 000).\n\nDespués:\n1. En menos de 24 h laborables te proponemos día y hora.\n2. A esa hora te llama ${pro.short}, desde un número oculto.\n3. Si estás fuera de España, te enviamos un enlace de Google Meet para hablar solo por voz.\n\nPuedes cambiarla o cancelarla hasta 1 hora antes y te devolvemos el dinero entero. La llamada no se graba. Tu teléfono solo lo usamos para esta llamada.\nNo es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.${invite ? `\n\n${invite.text}` : ''}`;
+  return { subject, html, text };
+}
+
 /** Único correo a quien deja a medias el pago de una videollamada (vera-backlog#86). Avisado junto al botón de pagar. */
 export function videoAbandonedEmail(pro, plan) {
   const lact = plan.eur === 99;
-  const what = lact ? 'asesoría de lactancia' : 'videollamada';
-  const link = `https://hera-gine.com/videollamada/?de=medias${lact ? '#lactancia' : `#reservar-${pro.key}`}`;
+  const what = plan.call ? 'llamada' : lact ? 'asesoría de lactancia' : 'videollamada';
+  const link = `https://hera-gine.com/videollamada/?de=medias${lact ? '#lactancia' : plan.call ? `#llamada-${pro.key}` : `#reservar-${pro.key}`}`;
   const free = `https://hera-gine.com/#preguntar-${pro.key}`;
   const subject = `Tu ${what} con ${pro.short} se quedó a medias`;
   const html = shell(`<p>Hola,</p><p>Empezaste a reservar una <b>${what} con ${esc(pro.name)}, ${esc(pro.role)}</b>, pero el pago no se llegó a completar.</p>
@@ -384,8 +402,8 @@ const handler = {
           if (to) await sendMail(env, { to, replyTo: 'contacto@hera-gine.com', ...videoPaidEmail(pro, PLANS[plan], inv) });
           if (s.metadata?.src === 'ads') { const ak = /_latam$/.test(String(s.metadata?.camp || '')) ? 'latam' : 'anuncio'; await bump(env, `${ak}_pago:${plan}`); await bump(env, `${ak}_eur`, madridDay(), PLANS[plan].eur); }
           const dash = `https://dashboard.stripe.com/${s.livemode ? '' : 'test/'}${s.payment_intent ? `payments/${s.payment_intent}` : 'payments'}`;
-          await notify(env, `Pago · ${PLANS[plan].video && PLANS[plan].eur === 99 ? 'Asesoría de lactancia' : 'Videollamada'} con ${pro.short} · ${PLANS[plan].eur} €${s.metadata?.src === 'ads' ? ' · desde anuncio' : ''}${s.livemode ? '' : ' · prueba'}`,
-            `${PLANS[plan].label} con ${pro.name}: ${PLANS[plan].eur} €${s.livemode ? '' : ' (modo de prueba, sin dinero real)'}\n\nLe hemos enviado el correo con los pasos: responderá con 3 franjas a contacto@hera-gine.com.\nSiguiente: cuadrar la hora con ${pro.short} y proponérsela en menos de 24 h laborables; después, enviar el enlace de Google Meet.\nSi no responde, su correo está en el pago de Stripe.\n\nVer en Stripe: ${dash}`, sendMail);
+          await notify(env, `Pago · ${PLANS[plan].call ? 'Llamada' : PLANS[plan].eur === 99 ? 'Asesoría de lactancia' : 'Videollamada'} con ${pro.short} · ${PLANS[plan].eur} €${s.metadata?.src === 'ads' ? ' · desde anuncio' : ''}${s.livemode ? '' : ' · prueba'}`,
+            `${PLANS[plan].label} con ${pro.name}: ${PLANS[plan].eur} €${s.livemode ? '' : ' (modo de prueba, sin dinero real)'}\n\nLe hemos enviado el correo con los pasos: responderá con 3 franjas a contacto@hera-gine.com.\nSiguiente: cuadrar la hora con ${pro.short} y proponérsela en menos de 24 h laborables; después, ${PLANS[plan].call ? `que ${pro.short} la llame a esa hora con número oculto (fuera de España, enlace de Meet solo voz). Su teléfono viene en su respuesta` : 'enviar el enlace de Google Meet'}.\nSi no responde, su correo está en el pago de Stripe.\n\nVer en Stripe: ${dash}`, sendMail);
           return;
         }
         if (s.metadata?.src === 'ads') { const ak = /_latam$/.test(String(s.metadata?.camp || '')) ? 'latam' : 'anuncio'; await bump(env, `${ak}_pago:${plan}`); await bump(env, `${ak}_eur`, madridDay(), PLANS[plan].eur); }

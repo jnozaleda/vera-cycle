@@ -38,6 +38,7 @@ const PRICES = [
   { lookup: 'hera_mensual', name: 'Hera ilimitado', desc: 'Consultas por escrito sin límite (hasta una nueva al día). Sin permanencia.', amount: 1500, monthly: true },
   { lookup: 'hera_video30', name: 'Videollamada de 30 min', desc: 'Videollamada por Google Meet con el ginecólogo, la matrona o la pediatra de Hera.', amount: 5500 },
   { lookup: 'hera_lactancia90', name: 'Asesoría de lactancia (1 h 30)', desc: 'Asesoría de lactancia por videollamada con Marina Fernández, matrona.', amount: 9900 },
+  { lookup: 'hera_llamada15', name: 'Llamada de 15 min', desc: 'Llamada de teléfono de 15 minutos con el ginecólogo, la matrona o la pediatra de Hera.', amount: 2500 },
 ];
 
 const mode = /^[sr]k_live_/.test(KEY) ? 'REAL' : 'prueba';

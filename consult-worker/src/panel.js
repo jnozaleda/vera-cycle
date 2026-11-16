@@ -10,8 +10,22 @@ import { listWa, maskPhone, WA_STATES } from './whatsapp.js';
 import { emailTypo } from '../../app/js/email-typo.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-const madrid = (ts, opts) => new Intl.DateTimeFormat('es-ES', { timeZone: 'Europe/Madrid', ...opts }).format(new Date(ts));
-const dayISO = (ts) => madrid(ts, { year: 'numeric', month: '2-digit', day: '2-digit' }).split('/').reverse().join('-');
+// Formateadores en caché: crear un Intl.DateTimeFormat por fila agotaba el tiempo de CPU del Worker (error 1102)
+const FMT = new Map();
+const madrid = (ts, opts) => {
+  const key = JSON.stringify(opts || {});
+  let f = FMT.get(key);
+  if (!f) { f = new Intl.DateTimeFormat('es-ES', { timeZone: 'Europe/Madrid', ...opts }); FMT.set(key, f); }
+  return f.format(new Date(ts));
+};
+// Día de Madrid por hora (memoizado): la mayoría de filas comparten hora
+const DAY = new Map();
+const dayISO = (ts) => {
+  const hk = Math.floor(ts / 3600000);
+  let d = DAY.get(hk);
+  if (!d) { d = madrid(hk * 3600000, { year: 'numeric', month: '2-digit', day: '2-digit' }).split('/').reverse().join('-'); DAY.set(hk, d); }
+  return d;
+};
 const PROS = [['gineco', 'Gonzalo'], ['matrona', 'Marina'], ['pediatra', 'Lucía']];
 const STAGES = [['pregnancy', 'Embarazo'], ['postpartum', 'Posparto'], ['cycle', 'Ciclo'], ['menopause', 'Menopausia']];
 // El embudo de la app se mide paso a paso desde el 31 oct por la noche: antes de eso solo cuenta como «abrieron»

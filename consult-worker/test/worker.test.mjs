@@ -333,3 +333,17 @@ console.log('consultas: OK');
   assert.match(c2.subject, / · 2\.ª consulta$/); assert.match(c2.html, /Es su 2\.ª consulta/);
   console.log('n.º de consulta en el aviso: OK');
 }
+
+// Sin recordatorio si la misma usuaria mandó la duda dos veces y la profesional contestó en el otro hilo
+{
+  const old = Date.now() - 41 * 3600000;
+  const base = { p: 'gineco', u: 'x', uh: 'abcdefabcdefabcdefabcdef', sp: 's', su: 's', rp: [], ru: [], rem: false, n: 0 };
+  await saveThread(env, { ...base, id: 'twin0001', c: old - 180000, a: old + 3600000, n: 1 });
+  await saveThread(env, { ...base, id: 'twin0002', c: old, a: 0 });
+  await saveThread(env, { ...base, id: 'solo0003', uh: 'ffffffffffffffffffffffff', c: old, a: 0 });
+  const n0 = sent.length; await remindOverdue(env);
+  const rem = sent.slice(n0).filter((m) => /lleva 40 horas/.test(m.text || ''));
+  assert.ok(rem.some((m) => /SOLO0003/.test(m.text)), 'la consulta sin respuesta sí recibe recordatorio');
+  assert.ok(!rem.some((m) => /TWIN0002/.test(m.text)), 'la duplicada ya respondida en el otro hilo, no');
+  console.log('recordatorio sin duplicadas: OK');
+}

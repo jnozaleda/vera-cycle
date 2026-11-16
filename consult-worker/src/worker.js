@@ -732,8 +732,21 @@ const handler = {
     if (message.rawSize > 20 * 1024 * 1024) { message.setReject('El mensaje es demasiado grande (máximo 20 MB).'); return; }
     const t = await loadThread(env, dest.id);
     if (!t) { message.setReject('Esta consulta ya ha caducado. Puedes hacer una nueva en https://hera-gine.com'); return; }
-    if (isAutomatic(message.headers)) return; // respuestas automáticas: se descartan
-    await relayIncoming(env, t, dest.role, message.raw, message.from);
+    if (isAutomatic(message.headers)) {
+      // Respuestas automáticas: se descartan. Si viene de la profesional, avisamos por si era una respuesta de verdad.
+      if (dest.role === 'p') await notify(env, `Error · respuesta no entregada · #${dest.id.toUpperCase()}`, `Ha llegado un correo de ${message.from} para la consulta #${dest.id.toUpperCase()}, pero parece una respuesta automática (fuera de la oficina) y no se le ha pasado a la usuaria.\n\nSi era una respuesta de verdad, que la profesional la reenvíe a la misma dirección.`, sendMail);
+      return;
+    }
+    let r;
+    try { r = await relayIncoming(env, t, dest.role, message.raw, message.from); } catch (e) { r = { ok: false, why: `error: ${e.message}` }; }
+    if (!r?.ok) {
+      const WHY = { empty: 'el mensaje llegó vacío (sin texto propio ni adjuntos: quizá escribió dentro del texto citado)', send: 'falló el envío (Resend)', sender: 'lo envió otra dirección distinta de la de la usuaria', pro: 'la consulta no tiene profesional' };
+      const why = WHY[r?.why] || r?.why || 'desconocido';
+      await bump(env, 'relay_fallo');
+      await notify(env, `Error · mensaje no entregado · #${dest.id.toUpperCase()}`, `No se ha podido pasar un mensaje de la consulta #${dest.id.toUpperCase()} (${dest.role === 'p' ? 'de la profesional a la usuaria' : 'de la usuaria a la profesional'}).\n\nMotivo: ${why}\nRemitente: ${message.from}`, sendMail);
+      // La profesional recibe el rebote con el motivo, para que lo vuelva a enviar
+      if (dest.role === 'p' && r?.why !== 'send') message.setReject(`Hera no ha podido entregar tu respuesta: ${why}. Escribe tu respuesta encima del texto citado y vuelve a enviarla.`);
+    }
   },
 
   /** Cada hora: recordatorio al profesional si una consulta lleva 40 h sin respuesta */
@@ -823,6 +836,21 @@ async function openThreads(env) {
   return out;
 }
 
+async function answeredTwin(env, t) {
+  const u = String(t.uh || '').slice(0, 8);
+  let cursor;
+  do {
+    const page = await env.KV.list({ prefix: 't:', cursor });
+    for (const k of page.keys) {
+      const m = k.metadata || {};
+      if (k.name === `t:${t.id}` || m.p !== t.p || !(m.a >= t.c)) continue;
+      if (m.u ? m.u === u : (await loadThread(env, k.name.slice(2)))?.uh === t.uh) return true;
+    }
+    cursor = page.list_complete ? null : page.cursor;
+  } while (cursor);
+  return false;
+}
+
 export async function remindOverdue(env) {
   let cursor; let n = 0;
   do {
@@ -834,6 +862,9 @@ export async function remindOverdue(env) {
       if (!t || t.a || t.rem) continue;
       const pro = PROS[t.p] || (t.p === 'prueba' && env.COPY_TO ? { short: 'Prueba', email: env.COPY_TO } : null);
       if (!pro) continue;
+      // La misma usuaria hizo otra consulta a la misma profesional y esa ya está respondida después de esta:
+      // casi siempre es la misma duda enviada dos veces (la profesional contestó en el otro hilo). Sin recordatorio.
+      if (await answeredTwin(env, t)) { t.rem = true; await saveThread(env, t); await bump(env, 'recordatorio_omitido'); continue; }
       const { html, text } = reminderEmail(pro, t.id);
       const sent = await sendMail(env, { to: pro.email, replyTo: await relayAddress(env, 'p', t.id), subject: `Re: ${t.sp}`, refs: t.rp, html, text });
       if (sent) { t.rem = true; await saveThread(env, t); if (t.p !== 'prueba') await bump(env, `recordatorio:${t.p}`); n++; }

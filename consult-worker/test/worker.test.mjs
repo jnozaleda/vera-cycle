@@ -341,9 +341,11 @@ console.log('consultas: OK');
   await saveThread(env, { ...base, id: 'twin0001', c: old - 180000, a: old + 3600000, n: 1 });
   await saveThread(env, { ...base, id: 'twin0002', c: old, a: 0 });
   await saveThread(env, { ...base, id: 'solo0003', uh: 'ffffffffffffffffffffffff', c: old, a: 0 });
+  await saveThread(env, { ...base, id: 'late0004', c: old - 5 * 3600000, a: 0 }); // misma usuaria, 5 h antes: otra duda, sí recordatorio
   const n0 = sent.length; await remindOverdue(env);
   const rem = sent.slice(n0).filter((m) => /lleva 40 horas/.test(m.text || ''));
   assert.ok(rem.some((m) => /SOLO0003/.test(m.text)), 'la consulta sin respuesta sí recibe recordatorio');
   assert.ok(!rem.some((m) => /TWIN0002/.test(m.text)), 'la duplicada ya respondida en el otro hilo, no');
+  assert.ok(rem.some((m) => /LATE0004/.test(m.text)), 'si la otra se envió horas antes, es otra duda: sí recordatorio');
   console.log('recordatorio sin duplicadas: OK');
 }

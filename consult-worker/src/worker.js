@@ -830,6 +830,9 @@ async function openThreads(env) {
     for (const k of page.keys) {
       const m = k.metadata || {};
       if (!m.p || m.a || m.p === 'prueba') continue;
+      // Consulta repetida (la misma duda enviada dos veces seguidas) ya contestada en la otra: no cuenta como pendiente
+      const tt = await loadThread(env, k.name.slice(2));
+      if (tt && await answeredTwin(env, tt)) continue;
       out.pendientes[m.p] = (out.pendientes[m.p] || 0) + 1;
       if (Date.now() - m.c > 48 * 3600000) out.fuera_plazo[m.p] = (out.fuera_plazo[m.p] || 0) + 1;
     }
@@ -838,6 +841,7 @@ async function openThreads(env) {
   return out;
 }
 
+const TWIN_WINDOW = 3600000;
 async function answeredTwin(env, t) {
   const u = String(t.uh || '').slice(0, 8);
   let cursor;
@@ -845,7 +849,8 @@ async function answeredTwin(env, t) {
     const page = await env.KV.list({ prefix: 't:', cursor });
     for (const k of page.keys) {
       const m = k.metadata || {};
-      if (k.name === `t:${t.id}` || m.p !== t.p || !(m.a >= t.c)) continue;
+      // Gemela: misma profesional, enviada con menos de 1 h de diferencia y respondida después de esta
+      if (k.name === `t:${t.id}` || m.p !== t.p || !(m.a >= t.c) || Math.abs((m.c || 0) - t.c) > TWIN_WINDOW) continue;
       if (m.u ? m.u === u : (await loadThread(env, k.name.slice(2)))?.uh === t.uh) return true;
     }
     cursor = page.list_complete ? null : page.cursor;

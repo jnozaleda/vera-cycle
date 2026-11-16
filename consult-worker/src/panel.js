@@ -328,7 +328,7 @@ export async function panel(env, url, openThreads) {
     const txt = steps.length ? `${steps.join(' → ')}${sent ? '' : ' → se fue'}${tail ? ` · ${tail}` : ''}` : `entró${tail ? ` · ${tail}` : ''} y se fue`;
     const dv = seq.find((r) => r.d)?.d; const [sl, sc] = SRC_LABEL(p);
     return { sent, ts: seq[0].ts, html: `<li><time>${madrid(seq[0].ts, days === 1 ? { hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</time><div><span class="tag">${esc(seq[0].p)}</span> ${dv ? esc(deviceText(dv)) : ''} <span class="src s-${sc}">${esc(sl)}</span><br><span class="steps">${txt}</span></div></li>` };
-  }).sort((a, b) => (b.sent - a.sent) || (b.ts - a.ts));
+  }).sort((a, b) => b.ts - a.ts);
   const tripsHtml = trips.slice(0, 15).map((t) => t.html).join('');
   const opTotal = sum('opinion:');
 
@@ -452,7 +452,7 @@ ${PROS.map(([k2, name]) => { const r = g(`respondida:${k2}`); const fp = (open.f
 </table></div>
 </div>
 
-<div class="card"><h2>Últimas visitas</h2><p class="mute" style="margin-bottom:6px">Una línea por persona y día, con lo que hizo en orden. Las que enviaron, arriba.</p>
+<div class="card"><h2>Últimas visitas</h2><p class="mute" style="margin-bottom:6px">Una línea por persona y día, con lo que hizo en orden. Las más recientes, arriba.</p>
 <ul class="trips">${tripsHtml || '<li><span class="mute">Nada todavía.</span></li>'}</ul>
 <details class="sub"><summary>Ver toda la actividad, evento a evento</summary><ul class="feed">${feed || '<li><span class="mute">Nada todavía.</span></li>'}</ul></details></div>
 

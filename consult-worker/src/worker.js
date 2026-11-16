@@ -34,6 +34,7 @@ import { inviteCode, inviteFor, rewardInvite } from './invite.js';
 import { panel } from './panel.js';
 import { isEvent, isDevice, record, personTag, hourlyDigest, notify } from './activity.js';
 import { handleResendWebhook } from './bounces.js';
+import { addWaConsult, setWaState } from './whatsapp.js';
 import { PLANS, VIDEO_PROS, paymentsOn, createCheckout, sessionStatus, handleWebhook, getBalance, spendCredit, markDay } from './stripe.js';
 import { newThreadId, relayAddress, parseRelayAddress, sealEmail, openEmail, saveThread, loadThread, parseIncoming, isAutomatic } from './relay.js';
 
@@ -456,6 +457,18 @@ const handler = {
     // Corregir el correo de una consulta (panel → «Corregir el correo»): cuando rebotó por estar mal escrito y la usuaria
     // ha confirmado el bueno. Cambia a dónde va el hilo y, si se marca, le reenvía lo que no le llegó (Resend guarda los
     // correos enviados; Hera solo guarda sus identificadores). Lo que la profesional responda después ya va al correo nuevo.
+    // Consultas por WhatsApp (plan A): añadir una y cambiar su estado desde el panel
+    if (request.method === 'POST' && (url.pathname === '/panel/wa' || url.pathname === '/panel/wa/estado')) {
+      const f = await request.formData().catch(() => null);
+      if (!f || !env.DASH_KEY || f.get('k') !== env.DASH_KEY) return new Response('Not found', { status: 404 });
+      let flag = '';
+      if (url.pathname === '/panel/wa') {
+        const pro = String(f.get('pro') || '');
+        if (!PROS[pro]) flag = 'pro';
+        else { const r = await addWaConsult(env, { phone: f.get('tel'), pro, limit: Number(env.FREE_LIMIT || 2), bump }); if (r.error) flag = 'tel'; }
+      } else await setWaState(env, String(f.get('id') || ''), String(f.get('state') || ''));
+      return new Response(null, { status: 303, headers: { Location: `/panel?k=${encodeURIComponent(env.DASH_KEY)}${flag ? `&wa=${flag}` : ''}#wa`, 'referrer-policy': 'no-referrer' } });
+    }
     // Quitar un correo de la lista «Correos que no han llegado»
     if (request.method === 'POST' && url.pathname === '/panel/fallo') {
       const f = await request.formData().catch(() => null);

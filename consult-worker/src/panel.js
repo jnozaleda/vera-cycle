@@ -6,6 +6,7 @@
 import { eventText, deviceText } from './activity.js';
 import { PLANS } from './stripe.js';
 import { listFailures } from './bounces.js';
+import { listWa, maskPhone, WA_STATES } from './whatsapp.js';
 import { emailTypo } from '../../app/js/email-typo.js';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -98,6 +99,7 @@ export async function panel(env, url, openThreads) {
   const act = actAll.filter((r) => dayISO(r.ts) >= from);
   const open = openThreads ? await openThreads(env) : { pendientes: {}, fuera_plazo: {} };
   const fails = await listFailures(env).catch(() => []);
+  const was = await listWa(env).catch(() => []);
   const pages = await topPages(env, days);
 
   // Persona-día (etiqueta anónima diaria) → sus eventos. «De anuncio» = persona-día con una marca de anuncio, sin la
@@ -325,6 +327,19 @@ export async function panel(env, url, openThreads) {
       : '<p class="mute">No es de una consulta: no se puede reenviar desde aquí.</p>';
     return `<div class="fail"><p><span class="tagk ${x.kind === 'retrasado' ? 'warn' : 'bad'}">${esc(x.kind)}</span> ${when}${x.id ? ` · <b>#${esc(x.id.toUpperCase())}</b>` : ''}</p><p class="mute">${esc(x.sub)}</p><p class="mute">Para: <b style="color:var(--ink)">${esc(x.to || '—')}</b>${x.to && sug !== x.to ? ` · ¿quería decir <b style="color:var(--ink)">${esc(sug)}</b>?` : ''}${x.why ? `<br>Motivo: ${esc(x.why)}` : ''}${x.kind === 'retrasado' ? '<br>Puede acabar llegando: si llega, desaparece de aquí.' : ''}</p>${fix}<form method="post" action="/panel/fallo"><input type="hidden" name="k" value="${kRaw}"><input type="hidden" name="eid" value="${esc(x.eid)}"><button type="submit" class="lnk">Quitar de la lista</button></form></div>`;
   }).join('')}</div>` : '';
+  // Consultas por WhatsApp (whatsapp.js): añadir con el número, qué consulta es, estado y abrir el chat
+  const PRO_LABEL = Object.fromEntries(PROS);
+  const waErr = { tel: 'Ese número no parece válido: ponlo con el prefijo del país (por ejemplo +54 9 11 1234 5678).', pro: 'Elige la profesional.' }[url.searchParams.get('wa')] || '';
+  const waCard = `<div class="card" id="wa"><h2>Consultas por WhatsApp</h2>
+<form method="post" action="/panel/wa" class="fx" style="margin-bottom:10px"><input type="hidden" name="k" value="${kRaw}"><input name="tel" type="tel" required placeholder="Número con prefijo, p. ej. +34 600 000 000" aria-label="Número de WhatsApp"><select name="pro" required aria-label="Profesional" style="padding:9px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:var(--bg);color:var(--ink)"><option value="">Profesional…</option>${PROS.map(([k2, nm]) => `<option value="${k2}">${nm}</option>`).join('')}</select><button type="submit">Añadir</button></form>
+${waErr ? `<p class="mute late" style="margin-bottom:8px">${esc(waErr)}</p>` : ''}
+${was.length ? `<div style="overflow-x:auto"><table class="wa-t"><tr><th>Llegó</th><th>Número</th><th>Para</th><th>Consulta</th><th>Estado</th><th></th></tr>${was.map((w) => {
+    const pay = !w.free;
+    const next = { nueva: 'enviada', enviada: 'respondida', respondida: pay ? 'pagada' : '', pagada: '' }[w.state];
+    const NEXT_LABEL = { enviada: 'Marcar enviada', respondida: 'Marcar respondida', pagada: 'Marcar pagada' };
+    return `<tr><td>${madrid(w.at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td><td>${w.d ? esc(maskPhone(w.d)) : '—'}</td><td>${esc(PRO_LABEL[w.pro] || w.pro)}</td><td><span class="tagk ${pay ? 'bad' : 'ok2'}">${pay && w.state !== 'pagada' ? 'Toca pagar' : `${w.nth}.ª${pay ? '' : ' gratis'}`}</span></td><td>${esc(WA_STATES[w.state] || w.state)}${next ? `<form method="post" action="/panel/wa/estado" style="display:inline"><input type="hidden" name="k" value="${kRaw}"><input type="hidden" name="id" value="${esc(w.id)}"><input type="hidden" name="state" value="${next}"> <button type="submit" class="lnk">${NEXT_LABEL[next]}</button></form>` : ''}</td><td>${w.d ? `<a class="wa-go" href="https://wa.me/${esc(w.d)}" target="_blank" rel="noopener">Abrir WhatsApp</a>` : ''}${pay && w.state !== 'pagada' ? ' <a class="lnk2" href="https://hera-gine.com/#precio" target="_blank" rel="noopener">Enlace de pago</a>' : ''}</td></tr>`;
+  }).join('')}</table></div>` : '<p class="mute">Nada todavía. Cuando llegue un WhatsApp, pega aquí el número y elige la profesional: te dirá si es su 1.ª o 2.ª consulta gratis o si le toca pagar.</p>'}
+<p class="mute" style="margin-top:8px">El número se guarda cifrado 30 días solo para el botón «Abrir WhatsApp»; para contar sus consultas, solo una huella.</p></div>`;
   const k = encodeURIComponent(url.searchParams.get('k') || '');
   const tab = (d, label) => `<a class="${d === days ? 'on' : ''}" href="?k=${k}&d=${d}">${label}</a>`;
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -376,6 +391,9 @@ details.sub>summary{cursor:pointer;color:var(--plum);font-size:13.5px;font-weigh
 .tagk{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;border-radius:4px;padding:1px 6px}.tagk.bad{background:var(--red2);color:var(--red)}.tagk.warn{background:var(--la2);color:var(--la-t)}
 .fx{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}.fx input{flex:1;min-width:180px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font:inherit;background:var(--bg);color:var(--ink)}
 .fx button{padding:9px 12px;border:0;border-radius:8px;background:var(--plum);color:var(--bg);font:600 14px -apple-system,sans-serif;cursor:pointer}
+table.wa-t td,table.wa-t th{white-space:nowrap;padding-left:8px}table.wa-t td:first-child,table.wa-t th:first-child{padding-left:0}.tagk.ok2{background:var(--ok2);color:var(--plum)}
+.wa-go{display:inline-block;background:#25803A;color:#fff;text-decoration:none;font-weight:600;font-size:13px;border-radius:999px;padding:5px 11px}.lnk2{font-size:12.5px;color:var(--plum)}
+#wa .lnk{background:none;border:0;padding:0;color:var(--plum);font:600 12.5px -apple-system,sans-serif;text-decoration:underline;cursor:pointer}
 .fail .lnk{background:none;border:0;padding:0;color:var(--mute);font:13px -apple-system,sans-serif;text-decoration:underline;cursor:pointer}
 @media(max-width:640px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.two{grid-template-columns:1fr}.fr{grid-template-columns:112px minmax(0,1fr) 34px}}
 </style></head><body><div class="w">
@@ -385,6 +403,7 @@ details.sub>summary{cursor:pointer;color:var(--plum);font-size:13.5px;font-weigh
 
 <div class="card"><p class="lead">${lead}</p><div class="chips">${chips}</div></div>
 ${failCard}
+${waCard}
 
 <div class="kpis">
 <div class="k"><b>${visTotal}</b><span>personas en la web</span>${splitTxt(vis)}</div>
@@ -412,6 +431,7 @@ ${PROS.map(([k2, name]) => { const r = g(`respondida:${k2}`); const fp = (open.f
 <tr><td>Pagaron una videollamada o llamada</td>${td(nVideo)}</tr>
 <tr><td>Agotaron las gratuitas</td>${td(g('gratuitas_agotadas'))}</tr>
 <tr><td>Consultas guardadas sin pagar</td>${td(guardadas)}</tr>
+<tr><td>Consultas por WhatsApp</td>${td(sum('consulta_wa:'))}</tr>
 <tr><td>Instalaron la app</td>${td(g('instalada'))}</tr>
 <tr><td>Opiniones recibidas</td>${td(opTotal)}</tr>
 <tr><td>Consultas regaladas por invitar</td>${td(g('consulta_regalada'))}</tr>

@@ -364,3 +364,26 @@ console.log('consultas: OK');
   assert.ok(!csv.includes('@'), 'sin correos');
   console.log('conversiones Google Ads: OK');
 }
+
+// Consultas por WhatsApp (plan A): añadir desde el panel, 1.ª/2.ª gratis y luego «toca pagar»; estado; número cifrado
+{
+  const { normalizePhone } = await import('../src/whatsapp.js');
+  const { panel } = await import('../src/panel.js');
+  assert.equal(normalizePhone('+34 600 11 22 33'), '34600112233'); assert.equal(normalizePhone('600112233'), '34600112233');
+  assert.equal(normalizePhone('0054 9 11 1234 5678'), '5491112345678'); assert.equal(normalizePhone('123'), null);
+  const fd = (o) => { const f = new FormData(); for (const [k, v] of Object.entries(o)) f.set(k, v); return f; };
+  const post = (path, o) => worker.fetch(new Request(`https://w${path}`, { method: 'POST', body: fd(o) }), env);
+  assert.equal((await post('/panel/wa', { k: 'mala', tel: '600112233', pro: 'gineco' })).status, 404);
+  for (let i = 0; i < 3; i++) assert.equal((await post('/panel/wa', { k: 'dk', tel: '+34 600 11 22 33', pro: 'gineco' })).status, 303);
+  const bad = await post('/panel/wa', { k: 'dk', tel: 'abc', pro: 'gineco' }); assert.match(bad.headers.get('Location'), /wa=tel/);
+  let html = await panel(env, new URL('https://w/panel?k=dk&d=7'), async () => ({ pendientes: {}, fuera_plazo: {} }));
+  assert.match(html, /Consultas por WhatsApp/); assert.match(html, /1\.ª gratis/); assert.match(html, /2\.ª gratis/); assert.match(html, /Toca pagar/);
+  assert.match(html, /href="https:\/\/wa\.me\/34600112233"/); assert.ok(!html.includes('600 11 22 33') && html.includes('+34 ••• 233'), 'número enmascarado en pantalla');
+  const raw = [...store].filter(([k]) => k.startsWith('wa:')).map(([, v]) => v).join('');
+  assert.ok(!raw.includes('34600112233'), 'el número no se guarda en claro');
+  const id = /name="id" value="([0-9a-f]{8})"/.exec(html)[1];
+  await post('/panel/wa/estado', { k: 'dk', id, state: 'enviada' });
+  html = await panel(env, new URL('https://w/panel?k=dk&d=7'), async () => ({ pendientes: {}, fuera_plazo: {} }));
+  assert.match(html, /Enviada a la profesional/);
+  console.log('consultas por WhatsApp: OK');
+}

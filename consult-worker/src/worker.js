@@ -497,6 +497,24 @@ const handler = {
       const pend = t.a ? '' : ` <b>${esc((PROS[t.p] || {}).short || 'La profesional')} aún no ha respondido</b>: cuando lo haga, la respuesta le llegará directamente a este correo.`;
       return page(`<p>Hecho: la consulta #${id.toUpperCase()} ya va a <b>${esc(newEmail)}</b>.${pend}${tail}</p><p style="font-size:14px;color:#6E6C67">Lo que la profesional responda a partir de ahora le llegará a este correo, y ella puede contestar desde él.</p>`, true);
     }
+    // Conversiones para Google Ads (subida programada desde una URL, con usuario y contraseña): solo códigos de clic y horas
+    if (request.method === 'GET' && url.pathname === '/ads/conversiones.csv') {
+      const [, pass = ''] = atob((request.headers.get('Authorization') || '').replace(/^Basic\s+/i, '') || 'Og==').split(':');
+      if (!env.DASH_KEY || pass !== env.DASH_KEY) return new Response('Unauthorized', { status: 401, headers: { 'WWW-Authenticate': 'Basic realm="Hera"' } });
+      const rows = [];
+      let cursor;
+      do {
+        const page = await env.KV.list({ prefix: 'conv:', cursor });
+        for (const k of page.keys) {
+          const v = await env.KV.get(k.name, 'json'); if (!v) continue;
+          const ts = Number(k.name.split(':')[1]);
+          const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(ts)).map((x) => [x.type, x.value]));
+          rows.push(`${v.g},${v.n},${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}:${p.second}`);
+        }
+        cursor = page.list_complete ? null : page.cursor;
+      } while (cursor);
+      return new Response(['Parameters:TimeZone=Europe/Madrid', 'Google Click ID,Conversion Name,Conversion Time', ...rows].join('\n') + '\n', { headers: { 'content-type': 'text/csv; charset=utf-8', 'cache-control': 'no-store' } });
+    }
     if (request.method === 'GET' && url.pathname === '/stats') {
       if (!env.PANEL_CODE || request.headers.get('Authorization') !== `Bearer ${env.PANEL_CODE}`) return reply(401, { error: 'unauthorized' });
       const days = Math.min(365, Math.max(1, Number(url.searchParams.get('days')) || 30));
@@ -684,6 +702,8 @@ const handler = {
           const tag = await personTag(env, request, madridDay(), body.p);
           await record(env, { e: `consulta:${body.to}`, p: tag, note: fromAd ? `vino de un anuncio${camp ? ` (${camp})` : ''}${paid ? ', consulta pagada' : ''}` : (paid ? 'consulta pagada' : '') }, sendMail, ctx);
           if (fromAd) await record(env, { e: camp ? `consulta_anuncio:${camp}` : 'consulta_anuncio', p: tag }, sendMail, ctx);
+          // Conversión para Google Ads: el código del clic (gclid, de esta misma visita) y la hora, 90 días; Google lo recoge del CSV
+          if (fromAd && /^[\w-]{10,200}$/.test(String(body.gclid || ''))) await env.KV.put(`conv:${Date.now()}:${id}`, JSON.stringify({ g: body.gclid, n: 'Consulta enviada' }), { expirationTtl: 90 * 86400 });
           // Enlace de canal (?via=…, p. ej. ig_marina): cuántas consultas trae cada uno
           if (via) { await bump(env, `consulta_via:${via}`); await record(env, { e: `via_visita:${via}`, p: tag, note: 'envió una consulta' }, sendMail, ctx); }
         }

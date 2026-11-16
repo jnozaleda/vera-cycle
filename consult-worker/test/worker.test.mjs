@@ -349,3 +349,19 @@ console.log('consultas: OK');
   assert.ok(rem.some((m) => /LATE0004/.test(m.text)), 'si la otra se envió horas antes, es otra duda: sí recordatorio');
   console.log('recordatorio sin duplicadas: OK');
 }
+
+// Conversiones para Google Ads: consulta desde anuncio con gclid → fila en el CSV (con contraseña)
+{
+  await call('/ask', { email: 'desde.anuncio@gmail.com', to: 'gineco', text: 'Duda', context: '', src: 'ads', camp: 'gineco_latam', gclid: 'Cj0KCQiA_test-123abc' });
+  await call('/ask', { email: 'sin.gclid@gmail.com', to: 'gineco', text: 'Duda', context: '', src: 'ads', camp: 'gineco' });
+  const get = (pass) => worker.fetch(new Request('https://w/ads/conversiones.csv', { headers: pass ? { Authorization: `Basic ${btoa(`google:${pass}`)}` } : {} }), env);
+  assert.equal((await get('')).status, 401); assert.equal((await get('mala')).status, 401);
+  const csv = await (await get('dk')).text();
+  const lines = csv.trim().split('\n');
+  assert.equal(lines[0], 'Parameters:TimeZone=Europe/Madrid');
+  assert.equal(lines[1], 'Google Click ID,Conversion Name,Conversion Time');
+  assert.equal(lines.length, 3, 'solo la consulta con gclid');
+  assert.match(lines[2], /^Cj0KCQiA_test-123abc,Consulta enviada,\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$/);
+  assert.ok(!csv.includes('@'), 'sin correos');
+  console.log('conversiones Google Ads: OK');
+}

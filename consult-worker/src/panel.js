@@ -216,9 +216,11 @@ export async function panel(env, url, openThreads) {
   // ── Vista nueva (vera-backlog#90): resumen, lo que pide atención, 5 cifras, un embudo, de dónde vienen y visitas por persona
   const PLAN_EUR = Object.fromEntries(Object.entries(PLANS).map(([k2, p]) => [k2, p.eur]));
   const pagos = Object.entries(tot).filter(([k2]) => /^pago:[a-z]+$/.test(k2) && PLAN_EUR[k2.slice(5)]);
-  const nPagos = pagos.reduce((a, [, x]) => a + x, 0);
-  const eur = pagos.reduce((a, [k2, x]) => a + x * PLAN_EUR[k2.slice(5)], 0);
-  const nVideo = g('pago:video') + g('pago:lactancia');
+  // Sin las devoluciones (pago:devuelto_<plan>)
+  const net = (k2, x) => Math.max(0, x - g(`pago:devuelto_${k2.slice(5)}`));
+  const nPagos = pagos.reduce((a, [k2, x]) => a + net(k2, x), 0);
+  const eur = pagos.reduce((a, [k2, x]) => a + net(k2, x) * PLAN_EUR[k2.slice(5)], 0);
+  const nVideo = net('pago:video', g('pago:video')) + net('pago:lactancia', g('pago:lactancia'));
   // Origen de cada persona-día: anuncio España, anuncio Latinoamérica, enlace propio (?via=, invitación) o sin etiqueta
   const VIA_NAME = { ig_marina: 'Instagram de Marina', wa_guia: 'Guías por WhatsApp' };
   const viaOf = (v) => { for (const r of v) { const m = /^via_visita:([a-z0-9_]+)$/.exec(r.e); if (m) return m[1]; } return ''; };

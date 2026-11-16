@@ -182,6 +182,40 @@ export async function panel(env, url, openThreads) {
   chart.push('</svg>');
   const sumOf = (f) => perDay.reduce((acc, x) => acc + x[f], 0);
 
+  // Consultas por día: anuncio España, anuncio Latinoamérica y el resto (orgánico); de los contadores, sin equipo ni pruebas
+  const cDay = slots.map((ts) => {
+    const d = byDay[dayISO(ts)] || {};
+    const total = (d['consulta:gineco'] || 0) + (d['consulta:matrona'] || 0) + (d['consulta:pediatra'] || 0);
+    const es = Math.min(total, (d.anuncio_consulta || 0) + (d.anuncio_consulta_pagada || 0));
+    const la = Math.min(total - es, (d.latam_consulta || 0) + (d.latam_consulta_pagada || 0));
+    return { ts, label: madrid(ts, { day: 'numeric', month: 'short' }).replace('.', ''), total, es, la, org: total - es - la };
+  });
+  const maxC = Math.max(1, ...cDay.map((x) => x.total));
+  const cbw = Math.min(26, gw * 0.6);
+  const yc = (v) => TOP + CH - (CH * v) / maxC;
+  const cchart = [`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Consultas por día" style="display:block">`];
+  for (const gl of [0.5, 1]) { const yy = yc(maxC * gl); cchart.push(`<line x1="0" x2="${W}" y1="${yy.toFixed(1)}" y2="${yy.toFixed(1)}" stroke="var(--line)"/><text x="0" y="${(yy - 4).toFixed(1)}" font-size="9.5" fill="var(--mute)">${Math.round(maxC * gl)}</text>`); }
+  cDay.forEach((x, i) => {
+    const cx = i * gw + gw / 2; const x0 = cx - cbw / 2;
+    const info = `${x.label} · ${x.total} ${x.total === 1 ? 'consulta' : 'consultas'} · orgánico ${x.org} · anuncio España ${x.es} · anuncio Latinoamérica ${x.la}`;
+    cchart.push(`<g class="day" data-t="${esc(info)}"><title>${esc(info)}</title><rect x="${(i * gw).toFixed(1)}" y="0" width="${gw.toFixed(1)}" height="${H}" fill="transparent"/>`);
+    let base = 0;
+    for (const [v, fill] of [[x.org, 'var(--plum)'], [x.es, 'var(--es)'], [x.la, 'var(--la)']]) {
+      if (!v) continue;
+      const h = (CH * v) / maxC; base += h;
+      cchart.push(`<rect x="${x0.toFixed(1)}" y="${(TOP + CH - base).toFixed(1)}" width="${cbw.toFixed(1)}" height="${Math.max(h - 1, 1).toFixed(1)}" rx="2" fill="${fill}"/>`);
+    }
+    if (!x.total) cchart.push(`<rect x="${x0.toFixed(1)}" y="${(TOP + CH - 1.5).toFixed(1)}" width="${cbw.toFixed(1)}" height="1.5" rx="1" fill="var(--line)"/>`);
+    if (n <= 7 || x.total === maxC) cchart.push(`<text x="${cx.toFixed(1)}" y="${(yc(x.total) - 4).toFixed(1)}" text-anchor="middle" font-size="9.5" fill="var(--mute)">${x.total}</text>`);
+    if (n <= 7 || madrid(x.ts, { weekday: 'short' }).startsWith('lun') || i === n - 1) {
+      const anc = i === n - 1 ? 'end' : i === 0 ? 'start' : 'middle'; const lx = i === n - 1 ? W : i === 0 ? 0 : cx;
+      cchart.push(`<text x="${lx.toFixed(1)}" y="${H - 8}" text-anchor="${anc}" font-size="9.5" fill="var(--mute)">${esc(x.label)}</text>`);
+    }
+    cchart.push('</g>');
+  });
+  cchart.push('</svg>');
+  const cSum = (f) => cDay.reduce((acc, x) => acc + x[f], 0);
+
   // Dispositivos (personas distintas por día y dispositivo, de la actividad)
   const dev = new Map();
   for (const r of act) if (r.d && r.p) { const k = deviceText(r.d); (dev.get(k) || dev.set(k, new Set()).get(k)).add(`${dayISO(r.ts)}:${r.p}`); }
@@ -469,7 +503,10 @@ ${opFeed || opRows ? `<div class="card"><h2>Opiniones tras la consulta</h2>${opR
 <details class="more"><summary>Más detalle</summary><div class="in">
 <div class="card"><h2>Personas por día</h2>${chart.join('')}
 <div class="legend"><span><b style="background:var(--plum)"></b>App · ${sumOf('a')}</span><span><b style="background:var(--web)"></b>Web · ${sumOf('w')}</span><span><b style="background:var(--ad)"></b>Parte que vino de anuncio (España): app ${sumOf('aa')} · web ${sumOf('aw')}</span></div>
-<p class="mute" id="dayinfo" style="margin-top:6px">Toca o pasa el ratón por un día para ver sus cifras.</p></div>
+<p class="mute dayinfo" style="margin-top:6px">Toca o pasa el ratón por un día para ver sus cifras.</p></div>
+<div class="card"><h2>Consultas por día</h2>${cchart.join('')}
+<div class="legend"><span><b style="background:var(--plum)"></b>Orgánico · ${cSum('org')}</span><span><b style="background:var(--es)"></b>Anuncio España · ${cSum('es')}</span><span><b style="background:var(--la)"></b>Anuncio Latinoamérica · ${cSum('la')}</span></div>
+<p class="mute dayinfo" style="margin-top:6px">Toca o pasa el ratón por un día para ver sus cifras. Consultas por la web y la app (gratis y pagadas); no incluye WhatsApp.</p></div>
 <div class="card"><h2>Dónde se caen, paso a paso</h2><p class="mute">Personas distintas por día; entre paréntesis, las de anuncio en España. En la app, desde el 1 de noviembre.</p>${funnels.map(funnelCard).join('')}${(() => { const why = [['Sin correo', g('clic:fallo_sin_correo')], ['Correo mal escrito', g('clic:fallo_correo_mal')], ['Duda demasiado corta', g('clic:fallo_texto_corto')], ['Sin elegir profesional', g('clic:fallo_sin_profesional')], ['Error al enviar (servicio o conexión)', g('error_portada')], ['Agotó las gratuitas', g('limite_portada')]]; return why.some(([, n]) => n) ? `<h3 class="fh">En la web, por qué no se envió al pulsar</h3>${bars(why)}` : ''; })()}${opensCard}${lostFeed ? `<h3 class="fh">Últimas caídas</h3><ul class="feed">${lostFeed}</ul>` : ''}</div>
 <div class="card"><h2>Qué hacen quienes llegan por un anuncio (España)</h2>${adPeople.length ? bars(adSteps) : '<p class="mute">Nada todavía.</p>'}
 <p class="mute" style="margin-top:8px">Ingresos de anuncios: España ${g('anuncio_eur')} € · Latinoamérica ${g('latam_eur')} € (sin restar reembolsos). Instalaciones de anuncio: en Android, exacto; en iPhone, aproximado.</p></div>
@@ -484,5 +521,5 @@ ${opFeed || opRows ? `<div class="card"><h2>Opiniones tras la consulta</h2>${opR
 <div class="card"><h2>Dispositivos</h2>${bars(devices)}</div>
 </div></details>
 <p class="mute" style="margin-top:14px">«Persona XXXX» es una etiqueta anónima que cambia cada día; «personas» suma días, así que una misma persona cuenta una vez por cada día que entra. La actividad detallada se guarda 31 días.</p>
-</div><script>document.querySelectorAll('.day').forEach((g)=>{const f=()=>{document.querySelectorAll('.day.on').forEach((x)=>x.classList.remove('on'));g.classList.add('on');document.getElementById('dayinfo').textContent=g.dataset.t;};g.addEventListener('click',f);g.addEventListener('mouseenter',f);});</script></body></html>`;
+</div><script>document.querySelectorAll('.day').forEach((g)=>{const f=()=>{g.closest('.card').querySelectorAll('.day.on').forEach((x)=>x.classList.remove('on'));g.classList.add('on');g.closest('.card').querySelector('.dayinfo').textContent=g.dataset.t;};g.addEventListener('click',f);g.addEventListener('mouseenter',f);});</script></body></html>`;
 }

@@ -16,7 +16,10 @@ const BAD_END = /\.(co|con|cm|om|comm|vom|xom|cpm|ccom|coom)$/;
 const BIG = /^(gmail|hotmail|outlook|yahoo|icloud|live|msn|aol|proton|protonmail)\./;
 
 export function emailTypo(raw) {
-  const e = String(raw || '').trim().toLowerCase();
+  let e = String(raw || '').trim().toLowerCase();
+  // Tildes, «ñ», «ç»…: un correo así no se puede enviar. Se propone sin ellas (maría@ → maria@)
+  const ascii = e.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/ñ/g, 'n').replace(/ç/g, 'c').replace(/[^\x21-\x7e]/g, '');
+  if (ascii !== e && ascii.includes('@')) return emailTypo(ascii) || ascii;
   const at = e.lastIndexOf('@');
   if (at < 1) return '';
   const user = e.slice(0, at), dom = e.slice(at + 1);

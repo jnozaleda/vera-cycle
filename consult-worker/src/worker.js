@@ -50,6 +50,8 @@ const MAX_ASK_BODY = 14 * 1024 * 1024 + 6000; // /ask lleva los adjuntos en base
 /** Minúsculas; sin «+etiqueta»; en Gmail, sin puntos. Así un mismo buzón cuenta una vez. */
 export function normalizeEmail(raw) {
   const e = String(raw || '').trim().toLowerCase();
+  // Con tildes o «ñ» el correo no se puede enviar (Resend lo rechaza y la usuaria nunca recibe nada)
+  if (/[^\x21-\x7e]/.test(e)) return null;
   if (!EMAIL_RE.test(e)) return null;
   let [local, domain] = e.split('@');
   local = local.split('+')[0];

@@ -34,7 +34,7 @@ import { inviteCode, inviteFor, rewardInvite } from './invite.js';
 import { panel } from './panel.js';
 import { isEvent, isDevice, record, personTag, hourlyDigest, notify } from './activity.js';
 import { handleResendWebhook } from './bounces.js';
-import { addWaConsult, setWaState, maskPhone, normalizePhone } from './whatsapp.js';
+import { addWaConsult, setWaState, assignPaidRow, maskPhone, normalizePhone } from './whatsapp.js';
 import { PLANS, VIDEO_PROS, paymentsOn, createCheckout, sessionStatus, handleWebhook, getBalance, spendCredit, markDay, waCode } from './stripe.js';
 import { newThreadId, relayAddress, parseRelayAddress, sealEmail, openEmail, saveThread, loadThread, parseIncoming, isAutomatic } from './relay.js';
 
@@ -514,7 +514,8 @@ const handler = {
       if (url.pathname === '/panel/wa') {
         const pro = String(f.get('pro') || '');
         if (!PROS[pro]) flag = 'pro';
-        else { const r = await addWaConsult(env, { phone: f.get('tel'), pro, limit: Number(env.FREE_LIMIT || 2), bump }); if (r.error) flag = 'tel'; }
+        // WhatsApp es de pago desde la primera: si ese número ya pagó, se le asigna la profesional a esa fila; si no, «Toca pagar»
+        else if (!(await assignPaidRow(env, f.get('tel'), pro))) { const r = await addWaConsult(env, { phone: f.get('tel'), pro, limit: 0, bump }); if (r.error) flag = 'tel'; }
       } else await setWaState(env, String(f.get('id') || ''), String(f.get('state') || ''));
       return new Response(null, { status: 303, headers: { Location: `/panel?k=${encodeURIComponent(env.DASH_KEY)}${flag ? `&wa=${flag}` : ''}#wa`, 'referrer-policy': 'no-referrer' } });
     }

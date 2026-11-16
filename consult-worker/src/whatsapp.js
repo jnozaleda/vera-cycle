@@ -44,7 +44,29 @@ export async function addWaConsult(env, { phone, pro, limit, bump, paid = false,
   return { row };
 }
 
+/** Si ese número ya pagó y su consulta aún no tiene profesional, se le asigna (en vez de crear otra fila) */
+export async function assignPaidRow(env, phone, pro) {
+  const d = normalizePhone(phone);
+  if (!d) return false;
+  const rows = await listWa(env);
+  const row = rows.find((w) => w.d === d && w.code && !w.pro && Date.now() - w.at < 7 * 86400000);
+  if (!row) return false;
+  const page = await env.KV.list({ prefix: 'wa:' });
+  const k = page.keys.find((x) => x.name.endsWith(`:${row.id}`));
+  if (!k) return false;
+  const { d: _, ...clean } = row;
+  clean.pro = pro;
+  await env.KV.put(k.name, JSON.stringify(clean), { expirationTtl: Math.max(60, Math.round((row.at + TTL * 1000 - Date.now()) / 1000)) });
+  return true;
+}
+
 export async function setWaState(env, id, state) {
+  if (state === 'quitar' && /^[0-9a-f]{8}$/.test(id)) {
+    const page = await env.KV.list({ prefix: 'wa:' });
+    const k = page.keys.find((x) => x.name.endsWith(`:${id}`));
+    if (k) await env.KV.delete(k.name);
+    return !!k;
+  }
   if (!WA_STATES[state] || !/^[0-9a-f]{8}$/.test(id)) return false;
   const page = await env.KV.list({ prefix: 'wa:' });
   const k = page.keys.find((x) => x.name.endsWith(`:${id}`));

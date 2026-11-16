@@ -377,7 +377,7 @@ console.log('consultas: OK');
   for (let i = 0; i < 3; i++) assert.equal((await post('/panel/wa', { k: 'dk', tel: '+34 600 11 22 33', pro: 'gineco' })).status, 303);
   const bad = await post('/panel/wa', { k: 'dk', tel: 'abc', pro: 'gineco' }); assert.match(bad.headers.get('Location'), /wa=tel/);
   let html = await panel(env, new URL('https://w/panel?k=dk&d=7'), async () => ({ pendientes: {}, fuera_plazo: {} }));
-  assert.match(html, /Consultas por WhatsApp/); assert.match(html, /1\.ª gratis/); assert.match(html, /2\.ª gratis/); assert.match(html, /Toca pagar/);
+  assert.match(html, /Consultas por WhatsApp/); assert.ok(!/gratis<\/span>/.test(html), 'por WhatsApp no hay gratis'); assert.match(html, /Toca pagar/);
   assert.match(html, /href="https:\/\/wa\.me\/34600112233"/); assert.ok(!html.includes('600 11 22 33') && html.includes('+34 ••• 233'), 'número enmascarado en pantalla');
   const raw = [...store].filter(([k]) => k.startsWith('wa:')).map(([, v]) => v).join('');
   assert.ok(!raw.includes('34600112233'), 'el número no se guarda en claro');
@@ -399,4 +399,21 @@ console.log('consultas: OK');
   assert.ok(row && row.state === 'pagada' && !row.free);
   const m = waPaidEmail(c1); assert.match(m.subject, new RegExp(c1)); assert.match(m.html, /wa\.me\/34603295806/); assert.match(m.text, /\+34 603 29 58 06/);
   console.log('WhatsApp de pago: OK');
+}
+
+// Pago por WhatsApp + añadir a mano el mismo número: se asigna la profesional a la fila pagada (no sale repetida)
+{
+  const { addWaConsult, listWa } = await import('../src/whatsapp.js');
+  await addWaConsult(env, { phone: '+34 611 22 33 44', pro: '', limit: 0, bump: async () => {}, paid: true, code: 'ABCD' });
+  const before = (await listWa(env)).length;
+  const fd = new FormData(); fd.set('k', 'dk'); fd.set('tel', '611 22 33 44'); fd.set('pro', 'matrona');
+  await worker.fetch(new Request('https://w/panel/wa', { method: 'POST', body: fd }), env);
+  const rows = await listWa(env);
+  assert.equal(rows.length, before, 'no crea otra fila');
+  assert.equal(rows.find((w) => w.code === 'ABCD').pro, 'matrona');
+  const id = rows.find((w) => w.code === 'ABCD').id;
+  const q = new FormData(); q.set('k', 'dk'); q.set('id', id); q.set('state', 'quitar');
+  await worker.fetch(new Request('https://w/panel/wa/estado', { method: 'POST', body: q }), env);
+  assert.ok(!(await listWa(env)).some((w) => w.code === 'ABCD'), 'se puede quitar');
+  console.log('WhatsApp: asignar y quitar: OK');
 }

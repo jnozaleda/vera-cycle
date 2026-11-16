@@ -819,7 +819,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     // Videollamada (vera-backlog#86): con la profesional elegida, si la hay
     $('ask-video').href = `videollamada/?de=web${to ? `#reservar-${to}` : ''}`;
     $('ask-video').textContent = `¿Prefieres hablarlo cara a cara? Videollamada${to ? ` con ${PROS[to].name}` : ''}`;
-    if (opened && !busy) send.textContent = `Enviar${store.get('hera-free-left') === '0' ? '' : ' gratis'}${to ? ` a ${PROS[to].name}` : ''}`;
+    if (opened && !busy) send.textContent = `Enviar${store.get('hera-free-left') === '0' || (to && (store.get('hera-free-pros') || '').split(',').includes(to)) ? '' : ' gratis'}${to ? ` a ${PROS[to].name}` : ''}`;
     chat?.sync();
   }
   function open() {
@@ -961,7 +961,8 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');
       if (j.error === 'bad_files' || j.error === 'too_large') throw new Error('Revisa los archivos: solo fotos o PDF, hasta 10 MB en total.');
       if (!res.ok && !j.limit) throw new Error('No se ha podido enviar. Inténtalo de nuevo en un rato.');
-      if (j.limit) store.set('hera-free-left', '0'); else if (j.ok && j.remaining != null) store.set('hera-free-left', String(j.remaining));
+      if (j.limit && !j.same) store.set('hera-free-left', '0'); else if (j.ok && j.remaining != null) store.set('hera-free-left', String(j.remaining));
+      if (j.ok && j.fp) store.set('hera-free-pros', j.fp.join(','));
       if (j.limit) { hit('limite_portada'); showLimit(j, { to, text, follow: $('ask-follow').checked }); } else { hit('enviada_portada'); if (j.id) addConsult({ id: j.id, to, text }); showDone(to, j); }
     } catch (e) {
       // Sin respuesta del servicio (conexión cortada o página cerrada al enviar): puede que sí haya llegado
@@ -980,7 +981,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <h3>Consulta enviada</h3>
       <p>${p.name} te responderá en menos de 48 h a <b>${esc(lastEmail)}</b>. Te hemos mandado una copia.</p>
       ${j.unlimited ? '<p class="small">Tienes consultas ilimitadas.</p>' : `<span class="dots" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i < total - rem ? 'on' : ''}"></i>`).join('')}</span>
-      <p class="small">${rem === 0 ? 'Era tu última consulta gratuita.' : `Te ${rem === 1 ? 'queda 1 consulta gratuita' : `quedan ${rem} consultas gratuitas`}.`}</p>`}
+      <p class="small">${rem === 0 ? 'Era tu última consulta gratuita.' : `Te ${rem === 1 ? `queda 1 consulta gratuita${j.next ? `, con ${esc(j.next)}` : ''}` : `quedan ${rem} consultas gratuitas`}.`}</p>`}
       ${j.dryRun ? '<p class="small">Modo ensayo: no se ha enviado ningún correo.</p>' : ''}
       <p>Mientras esperas, Hera te cuenta qué es lo normal en tu semana o a la edad de tu bebé.</p>
       <a class="btn btn-p" href="app/" data-open>Abre Hera, es gratis</a>
@@ -995,7 +996,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     swap(`${j.early ? `<h3>Bono o plan ilimitado</h3>
       <p>Si aún te quedan consultas gratuitas, se usan primero: lo que compres queda para después. Tu pregunta queda guardada y la envías al volver.</p>`
       : j.held ? `<h3>Tu consulta está guardada</h3>
-      <p>Ya has usado tus ${j.freeLimit || 2} consultas gratis. En cuanto pagues, se la enviamos a ${esc(PROS[q.to]?.name || 'la profesional')}: no tienes que volver a escribirla. También te hemos enviado el enlace por correo; si no pagas en 7 días, la borramos.</p>`
+      <p>${j.same ? `Tu consulta gratis con ${esc(PROS[q.to]?.name || 'esta profesional')} ya la usaste (la que te queda es para ${esc(j.same)})` : `Ya has usado tus ${j.freeLimit || 2} consultas gratis`}. En cuanto pagues, se la enviamos a ${esc(PROS[q.to]?.name || 'la profesional')}: no tienes que volver a escribirla. También te hemos enviado el enlace por correo; si no pagas en 7 días, la borramos.</p>`
       : `<h3>Has usado tus ${j.freeLimit || 2} consultas gratuitas</h3>
       <p>Para seguir preguntando a Gonzalo, Marina y Lucía, elige cómo. Tu pregunta queda guardada y la envías al volver.</p>`}
       <div style="display:grid;gap:8px;max-width:30em;margin:0 auto;text-align:left">
@@ -1184,7 +1185,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     function sent(to, j) {
       step = 'hecho';
       const rem = j.remaining ?? 0;
-      hera(`<b>Enviada a ${PROS[to].name}.</b> Te responderá a <b>${esc(lastEmail)}</b> en menos de 48 h. Mira también en promociones o spam.${j.unlimited ? '' : ` ${rem === 0 ? 'Era tu última consulta gratis.' : `Te ${rem === 1 ? 'queda <b>1 consulta gratis</b>' : `quedan <b>${rem} consultas gratis</b>`}.`}`}${j.dryRun ? '<small>Modo ensayo: no se ha enviado ningún correo.</small>' : ''}`);
+      hera(`<b>Enviada a ${PROS[to].name}.</b> Te responderá a <b>${esc(lastEmail)}</b> en menos de 48 h. Mira también en promociones o spam.${j.unlimited ? '' : ` ${rem === 0 ? 'Era tu última consulta gratis.' : `Te ${rem === 1 ? `queda <b>1 consulta gratis</b>${j.next ? `, con ${esc(j.next)}` : ''}` : `quedan <b>${rem} consultas gratis</b>`}.`}`}${j.dryRun ? '<small>Modo ensayo: no se ha enviado ningún correo.</small>' : ''}`);
       add(`<p class="cx-urg">No es para urgencias: si algo no va bien, ${EMERG} o acude a tu centro de salud.</p>`);
       $('cx-bar').hidden = true; $('cx-foot').hidden = true;
       $('cx-links').innerHTML = `<button type="button" id="cx-again">Hacer otra pregunta</button><a href="videollamada/?de=web#reservar-${to}">Videollamada con ${PROS[to].name}</a><a href="app/" id="cx-app">Abre la app de Hera, es gratis</a>`;

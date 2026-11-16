@@ -201,17 +201,19 @@ const HOLD_DAYS = 7;
 const holdSig = async (env, id) => (await hmac(env.HASH_SALT, `hold:${id}`)).slice(0, 16);
 const holdLinks = async (env, id) => { const s = await holdSig(env, id); return Object.fromEntries(['suelta', 'bono', 'mensual'].map((p) => [p, `${WORKER_URL}/pagar?c=${id}&s=${s}&plan=${p}`])); };
 
-export function holdEmail(pro, text, links, reminder = false) {
+export function holdEmail(pro, text, links, reminder = false, others = '') {
+  // others: la gratis que le queda es con otra especialista (1 gratis por especialista)
+  const why = others ? `Tu consulta gratis con ${pro.short} ya la usaste (la que te queda es para ${others})` : 'Ya has usado tus consultas gratis';
   const excerpt = text.length > 220 ? `${text.slice(0, 220).trim()}…` : text;
   const btn = `<p style="margin:16px 0"><a href="${links.suelta}" style="display:inline-block;background:#45574C;color:#ffffff;text-decoration:none;font-weight:600;border-radius:8px;padding:12px 20px">Pagar 9 € y enviarla</a></p>`;
   const quote = `<div style="background:#F6E0E2;border-radius:10px;padding:12px;margin:12px 0;font-size:14px">«${esc(excerpt)}»</div>`;
   const subject = reminder ? `¿Seguimos con tu consulta a ${pro.short}?` : `Tu consulta a ${pro.short} está guardada · falta el pago`;
   const html = reminder
     ? shell(`<p>Hola,</p><p>Tu consulta para ${esc(pro.short)} sigue guardada y esperando el pago:</p>${quote}${btn}<p style="font-size:14px">¿Te quedó alguna duda antes de pagar? Responde a este correo y te contestamos.</p><p style="font-size:13px;color:#6E6C67">Es el único recordatorio. Si no pagas, la borramos en ${HOLD_DAYS} días.</p>`)
-    : shell(`<p>Hola,</p><p>Ya has usado tus consultas gratis, así que hemos <b>guardado tu consulta</b> para ${esc(pro.name)}, ${esc(pro.role)}:</p>${quote}<p>Para que le llegue, solo falta el pago. En cuanto pagues, se la enviamos y te responde en menos de 48 h; no tienes que volver a escribirla.</p>${btn}<p style="font-size:14px">¿Vas a preguntar más veces? <a href="${links.bono}" style="color:#45574C;font-weight:600">Bono de 5 consultas por 35 €</a> o <a href="${links.mensual}" style="color:#45574C;font-weight:600">ilimitado por 15 € al mes</a>.</p><p style="font-size:13px;color:#6E6C67">Si no pagas en ${HOLD_DAYS} días, borramos tu consulta. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.</p>`);
+    : shell(`<p>Hola,</p><p>${esc(why)}, así que hemos <b>guardado tu consulta</b> para ${esc(pro.name)}, ${esc(pro.role)}:</p>${quote}<p>Para que le llegue, solo falta el pago. En cuanto pagues, se la enviamos y te responde en menos de 48 h; no tienes que volver a escribirla.</p>${btn}<p style="font-size:14px">¿Vas a preguntar más veces? <a href="${links.bono}" style="color:#45574C;font-weight:600">Bono de 5 consultas por 35 €</a> o <a href="${links.mensual}" style="color:#45574C;font-weight:600">ilimitado por 15 € al mes</a>.</p><p style="font-size:13px;color:#6E6C67">Si no pagas en ${HOLD_DAYS} días, borramos tu consulta. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.</p>`);
   const text2 = reminder
     ? `Hola,\n\nTu consulta para ${pro.short} sigue guardada y esperando el pago:\n\n«${excerpt}»\n\nPagar 9 € y enviarla: ${links.suelta}\n\n¿Te quedó alguna duda antes de pagar? Responde a este correo.\nEs el único recordatorio. Si no pagas, la borramos en ${HOLD_DAYS} días.`
-    : `Hola,\n\nYa has usado tus consultas gratis, así que hemos guardado tu consulta para ${pro.name}, ${pro.role}:\n\n«${excerpt}»\n\nPara que le llegue, solo falta el pago. En cuanto pagues, se la enviamos; no tienes que volver a escribirla.\n\nPagar 9 € y enviarla: ${links.suelta}\nBono de 5 por 35 €: ${links.bono}\nIlimitado por 15 € al mes: ${links.mensual}\n\nSi no pagas en ${HOLD_DAYS} días, borramos tu consulta. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.`;
+    : `Hola,\n\n${why}, así que hemos guardado tu consulta para ${pro.name}, ${pro.role}:\n\n«${excerpt}»\n\nPara que le llegue, solo falta el pago. En cuanto pagues, se la enviamos; no tienes que volver a escribirla.\n\nPagar 9 € y enviarla: ${links.suelta}\nBono de 5 por 35 €: ${links.bono}\nIlimitado por 15 € al mes: ${links.mensual}\n\nSi no pagas en ${HOLD_DAYS} días, borramos tu consulta. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.`;
   return { subject, html, text: text2 };
 }
 
@@ -724,7 +726,11 @@ const handler = {
       const pay = paymentsOn(env, body) && !!env.STRIPE_SECRET_KEY;
       if (!test && subscriber && bal.day === madridDay()) return reply(200, { limit: true, daily: true, freeLimit: limit, ...(env.STRIPE_PORTAL_URL ? { portal: env.STRIPE_PORTAL_URL } : {}) });
       const credits = unlimited ? 0 : bal.credits;
-      if (!test && !unlimited && rec.n >= limit && credits <= 0) {
+      // 2 gratis en total, como mucho 1 por especialista (Noza, 16 nov). fp = especialistas ya usadas gratis (los registros antiguos no lo tienen)
+      const fp = Array.isArray(rec.fp) ? rec.fp : [];
+      const samePro = !test && rec.n < limit && fp.includes(body.to);
+      const others = samePro ? Object.values(PROS).filter((x) => !fp.includes(x.key)).map((x) => x.short).join(' o ') : '';
+      if (!test && !unlimited && (rec.n >= limit || samePro) && credits <= 0) {
         if (body.team !== true) {
           if (body.src === 'ads') await bump(env, /_latam$/.test(String(body.camp || '')) ? 'latam_limite' : 'anuncio_limite');
           await bump(env, 'gratuitas_agotadas');
@@ -736,7 +742,7 @@ const handler = {
           const held = { email: q.email, to: body.to, text: q.text, context: q.context, situation: q.situation, follow: body.follow === true, src: body.src, camp: body.camp, ref: body.ref, p: body.p, team: body.team === true };
           await env.KV.put(`hold:${hid}`, JSON.stringify({ x: await sealEmail(env, JSON.stringify(held)), at: Date.now(), h, to: body.to, rem: 0 }), { expirationTtl: HOLD_DAYS * 86400 });
           const links = await holdLinks(env, hid);
-          await sendMail(env, { to: q.email, replyTo: 'contacto@hera-gine.com', ...holdEmail(pro, q.text, links) });
+          await sendMail(env, { to: q.email, replyTo: 'contacto@hera-gine.com', ...holdEmail(pro, q.text, links, false, others) });
           if (body.team !== true) {
             await bump(env, 'consulta_guardada');
             if (env.COPY_TO) {
@@ -746,9 +752,9 @@ const handler = {
               await sendMail(env, { to: env.COPY_TO, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc });
             }
           }
-          return reply(200, { limit: true, used: rec.n, freeLimit: limit, pay: true, held: hid });
+          return reply(200, { limit: true, used: rec.n, freeLimit: limit, pay: true, held: hid, ...(samePro ? { same: others } : {}) });
         }
-        return reply(200, { limit: true, used: rec.n, freeLimit: limit, ...(pay ? { pay: true } : {}) });
+        return reply(200, { limit: true, used: rec.n, freeLimit: limit, ...(pay ? { pay: true } : {}), ...(samePro ? { same: others } : {}) });
       }
       if (!test && await rateLimited(env, request.headers.get('CF-Connecting-IP'))) return reply(429, { error: 'rate' });
 
@@ -764,7 +770,7 @@ const handler = {
       if (!sent) return reply(502, { error: 'send' });
       const now = new Date().toISOString();
       // Primero se gastan las gratuitas y después las pagadas
-      const paid = !test && !unlimited && rec.n >= limit;
+      const paid = !test && !unlimited && (rec.n >= limit || samePro);
       const n = test || unlimited || paid ? rec.n : rec.n + 1;
       let creditsLeft = credits;
       // Cuántas consultas lleva este correo en total (gratis, pagadas e ilimitadas), para el aviso al equipo
@@ -772,7 +778,8 @@ const handler = {
       const prevAt = rec.last;
       if (!test) {
         if (paid) creditsLeft = await spendCredit(env, h);
-        await env.KV.put(key, JSON.stringify({ n, first: rec.first || now, last: now, all: nth }));
+        const fpNext = !unlimited && !paid && !fp.includes(body.to) ? [...fp, body.to] : fp;
+        await env.KV.put(key, JSON.stringify({ n, first: rec.first || now, last: now, all: nth, ...(fpNext.length ? { fp: fpNext } : {}) }));
         if (subscriber) await markDay(env, h, madridDay());
         // Dispositivos del equipo (modo equipo en la app): la consulta se envía igual, pero no cuenta en métricas ni avisos
         if (body.team !== true) {
@@ -810,14 +817,16 @@ const handler = {
       const remaining = Math.max(0, limit - n);
       const paidLeft = remaining === 0 && !unlimited && creditsLeft >= 0 && (paid || credits > 0)
         ? (creditsLeft === 0 ? 'Era la última consulta de tu saldo' : `Te ${creditsLeft === 1 ? 'queda 1 consulta' : `quedan ${creditsLeft} consultas`} en tu saldo`) : '';
-      const cm = confirmEmail(pro, q, remaining, id, unlimited, subscriber ? 'Tienes el plan ilimitado: una consulta nueva al día' : paidLeft);
+      const usedPros = test ? fp : (!unlimited && !paid && !fp.includes(body.to) ? [...fp, body.to] : fp);
+      const nextWith = remaining > 0 && usedPros.length ? Object.values(PROS).filter((x) => !usedPros.includes(x.key)).map((x) => x.short).join(' o ') : '';
+      const cm = confirmEmail(pro, q, remaining, id, unlimited, subscriber ? 'Tienes el plan ilimitado: una consulta nueva al día' : paidLeft || (nextWith && remaining === 1 ? `Te queda 1 consulta gratuita, con ${nextWith}` : ''));
       const sentU = await sendMail(env, { to: q.email, replyTo: relay ? await relayAddress(env, 'u', id) : pro.email, ...cm });
       // Sin relay no hay hilo que seguir (ni recordatorios): no se guarda nada más
       if (relay) {
         await saveThread(env, { id, p: pro.key || body.to, u: await sealEmail(env, q.email), uh: (await hmac(env.HASH_SALT, norm)).slice(0, 24),
           sp: pm.subject, su: cm.subject, rp: [], ru: [], c: Date.now(), a: 0, rem: false, n: 0, h, ...(sentU?.id ? { ou: [sentU.id] } : {}), ...(rf ? { rf } : {}), ...(body.follow === true ? { f: 1 } : {}) });
       }
-      return reply(200, { ok: true, remaining, freeLimit: limit, ...(unlimited ? { unlimited: true } : {}), ...(paid || credits > 0 ? { credits: creditsLeft } : {}), ...(relay ? { id } : {}), dryRun: env.DRY_RUN === '1' });
+      return reply(200, { ok: true, remaining, freeLimit: limit, ...(nextWith ? { next: nextWith, fp: usedPros } : {}), ...(unlimited ? { unlimited: true } : {}), ...(paid || credits > 0 ? { credits: creditsLeft } : {}), ...(relay ? { id } : {}), dryRun: env.DRY_RUN === '1' });
     }
     return reply(404, { error: 'not_found' });
   },

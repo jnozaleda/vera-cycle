@@ -219,6 +219,22 @@ assert.equal(validateAttachments([{ content: 'A'.repeat(Math.ceil((MAX_BYTES * 4
   const pg2 = await (await worker.fetch(new Request('https://w/panel?k=dk&d=30'), env)).text();
   assert.match(pg2, /Opiniones tras la consulta/); assert.match(pg2, /Laura G\./);
 
+  // MARK: 2 gratis, como mucho 1 por especialista (16 nov)
+  {
+    const a1 = await call('/ask', { email: 'unapor@example.com', to: 'gineco', text: 'Primera para Gonzalo' });
+    assert.equal(a1.j.remaining, 1); assert.equal(a1.j.next, 'Marina o Lucía', 'dice con quién es la que queda');
+    assert.ok(sent.some((m) => m.to?.[0] === 'unapor@example.com' && /queda 1 consulta gratuita, con Marina o Lucía/.test(m.html)), 'la confirmación lo dice');
+    const a2 = await call('/ask', { email: 'unapor@example.com', to: 'gineco', text: 'Otra para Gonzalo' });
+    assert.equal(a2.j.limit, true, 'la 2.ª con la misma especialista no es gratis'); assert.equal(a2.j.same, 'Marina o Lucía');
+    const a3 = await call('/ask', { email: 'unapor@example.com', to: 'pediatra', text: 'Ahora para Lucía' });
+    assert.equal(a3.j.ok, true, 'con otra especialista sí'); assert.equal(a3.j.remaining, 0);
+    const a4 = await call('/ask', { email: 'unapor@example.com', to: 'matrona', text: 'Y para Marina' });
+    assert.equal(a4.j.limit, true, '2 en total'); assert.equal(a4.j.same, undefined);
+    const hmac = async (k, t) => [...new Uint8Array(await crypto.subtle.sign('HMAC', await crypto.subtle.importKey('raw', new TextEncoder().encode(k), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']), new TextEncoder().encode(t)))].map((x) => x.toString(16).padStart(2, '0')).join('');
+    await KV.put(`c:${await hmac('sal', 'antigua@example.com')}`, JSON.stringify({ n: 1, first: 'x', last: 'x', all: 1 }));
+    assert.equal((await call('/ask', { email: 'antigua@example.com', to: 'gineco', text: 'Registro sin fp' })).j.ok, true, 'registros antiguos: se respeta su 2.ª gratis');
+  }
+
   // MARK: invitaciones (vera-backlog#84)
   const inv = (await call('/opinion', { t: r2.j.id, s: s2, r: 1 })).j.invite;
   assert.match(inv, /^[a-hjkmnp-z2-9]{6}$/, 'quien valora «Sí, mucho» recibe su enlace');
@@ -226,7 +242,7 @@ assert.equal(validateAttachments([{ content: 'A'.repeat(Math.ceil((MAX_BYTES * 4
   { const t0 = await loadThread(env, r2.j.id); delete t0.h; await saveThread(env, t0); }
   assert.equal((await call('/opinion', { t: r2.j.id, s: s2, r: 1 })).j.invite, inv, 'consultas antiguas: la huella se rehace con el correo cifrado');
   assert.equal((await call('/opinion', { t: id, s, r: 1 })).j.invite, undefined, 'sin enlace si no le ayudó');
-  const own = await call('/ask', { email: 'contenta@example.com', to: 'matrona', text: 'Me invito a mí misma', ref: inv });
+  const own = await call('/ask', { email: 'contenta@example.com', to: 'pediatra', text: 'Me invito a mí misma', ref: inv });
   assert.equal((await loadThread(env, own.j.id)).rf, undefined, 'no vale invitarse a una misma');
   const old = await call('/ask', { email: 'opina@example.com', to: 'matrona', text: 'Ya había preguntado', ref: inv });
   assert.equal((await loadThread(env, old.j.id)).rf, undefined, 'solo correos que nunca han preguntado');
@@ -328,7 +344,7 @@ console.log('consultas: OK');
   let n0 = sent.length; await call('/ask', q2);
   const c1 = sent.slice(n0).find((m) => /^Consulta · /.test(m.subject));
   assert.ok(c1 && !/consulta$/.test(c1.subject.replace(/^Consulta/, '')), 'la primera no lo dice');
-  n0 = sent.length; await call('/ask', { ...q2, text: 'Segunda duda' });
+  n0 = sent.length; await call('/ask', { ...q2, to: 'matrona', text: 'Segunda duda' });
   const c2 = sent.slice(n0).find((m) => /^Consulta · /.test(m.subject));
   assert.match(c2.subject, / · 2\.ª consulta$/); assert.match(c2.html, /Es su 2\.ª consulta/);
   console.log('n.º de consulta en el aviso: OK');

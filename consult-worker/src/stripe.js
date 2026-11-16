@@ -22,6 +22,8 @@ export const PLANS = {
   video: { lookup: 'hera_video30', mode: 'payment', credits: 0, label: 'Videollamada de 30 min', eur: 55, video: true },
   lactancia: { lookup: 'hera_lactancia90', mode: 'payment', credits: 0, label: 'Asesoría de lactancia (1 h 30)', eur: 99, video: true },
   // Llamada de teléfono (sin vídeo): mismo flujo que la videollamada; la profesional llama con número oculto (o Meet solo voz fuera de España)
+  // Consulta por WhatsApp (de pago desde la primera): Stripe pide correo y móvil; al pagar se da un código para el chat
+  whatsapp: { lookup: 'hera_whatsapp9', mode: 'payment', credits: 0, label: 'Consulta por WhatsApp', eur: 9, wa: true },
   llamada: { lookup: 'hera_llamada15', mode: 'payment', credits: 0, label: 'Llamada de 15 min', eur: 25, video: true, call: true },
 };
 export const VIDEO_PROS = ['gineco', 'matrona', 'pediatra'];
@@ -54,18 +56,26 @@ async function priceId(env, lookup) {
   return (priceCache[lookup] = id);
 }
 
+/** Código corto de una consulta por WhatsApp pagada (sale siempre igual para la misma sesión de pago) */
+export async function waCode(sessionId) {
+  const ALPHA = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  const d = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`wa:${sessionId}`)));
+  return [...d.slice(0, 4)].map((b) => ALPHA[b % ALPHA.length]).join('');
+}
+
 /** Crea la sesión de pago y devuelve su URL */
 export async function createCheckout(env, { email, plan, h, origin, back, ad, pro, camp, hold }) {
   const p = PLANS[plan];
   // Vuelve al mismo sitio desde el que se pagó (la web real, o localhost en pruebas)
   // back = 'web': desde la portada, vuelve a la portada (?web=1 evita que salte a la app instalada)
   const root = origin && origin !== 'https://hera-gine.com' ? origin : APP_URL.replace(/\/app\/$/, '');
-  const ret = back === 'video' ? `${root}/videollamada/?` : back === 'web' ? `${root}/?web=1&` : `${root}/app/?`;
+  const ret = back === 'wa' ? `${root}/whatsapp/?` : back === 'video' ? `${root}/videollamada/?` : back === 'web' ? `${root}/?web=1&` : `${root}/app/?`;
   const params = {
     mode: p.mode,
     'line_items[0][price]': await priceId(env, p.lookup),
     'line_items[0][quantity]': '1',
-    customer_email: email,
+    ...(email ? { customer_email: email } : {}),
+    ...(p.wa ? { 'phone_number_collection[enabled]': 'true' } : {}),
     locale: 'es',
     success_url: `${ret}pago=ok&cs={CHECKOUT_SESSION_ID}`,
     cancel_url: `${ret}pago=no`,
@@ -144,6 +154,7 @@ export async function sessionStatus(env, cs, hooks) {
   if (!g) return { paid: false };
   const out = { paid: true, plan: g.plan, credits: (await getBalance(env, g.h)).credits };
   if (PLANS[g.plan].video) { out.video = true; out.pro = s.metadata?.pro || ''; }
+  if (PLANS[g.plan].wa) { out.wa = true; out.code = await waCode(s.id); }
   if (s.metadata?.hold) { out.held = true; out.pro = s.metadata?.pro || ''; }
   if (PLANS[g.plan].mode === 'subscription') { out.unlimited = true; if (env.STRIPE_PORTAL_URL) out.portal = env.STRIPE_PORTAL_URL; }
   return out;

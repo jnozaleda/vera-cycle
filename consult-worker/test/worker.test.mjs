@@ -387,3 +387,16 @@ console.log('consultas: OK');
   assert.match(html, /Enviada a la profesional/);
   console.log('consultas por WhatsApp: OK');
 }
+
+// Consulta por WhatsApp de pago: código estable por sesión, fila «Pagada · código» y correo con el código
+{
+  const { waCode } = await import('../src/stripe.js');
+  const { addWaConsult, listWa } = await import('../src/whatsapp.js');
+  const { waPaidEmail } = await import('../src/worker.js');
+  const c1 = await waCode('cs_test_abc123'); assert.match(c1, /^[A-Z2-9]{4}$/); assert.equal(c1, await waCode('cs_test_abc123'));
+  await addWaConsult(env, { phone: '+54 9 11 5555 4444', pro: '', limit: 0, bump: async () => {}, paid: true, code: c1 });
+  const row = (await listWa(env)).find((w) => w.code === c1);
+  assert.ok(row && row.state === 'pagada' && !row.free);
+  const m = waPaidEmail(c1); assert.match(m.subject, new RegExp(c1)); assert.match(m.html, /wa\.me\/34603295806/); assert.match(m.text, /\+34 603 29 58 06/);
+  console.log('WhatsApp de pago: OK');
+}

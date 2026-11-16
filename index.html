@@ -1077,7 +1077,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <div class="cx-eg" id="cx-eg" aria-label="Dudas de ejemplo">${examples.map((t) => `<button type="button">${esc(t)}</button>`).join('')}</div>
       <div class="cx-bar" id="cx-bar">${canAttach ? `<button type="button" class="cx-clip" id="cx-clip" aria-label="Añadir foto o PDF">${CLIP}</button>` : ''}<textarea class="cx-in" id="cx-in" rows="1" maxlength="2000" placeholder="Escribe tu duda…" aria-label="Tu duda"></textarea><button type="button" class="cx-go" id="cx-go" aria-label="Enviar" disabled>${ARROW}</button></div>
       <p class="cx-foot" id="cx-foot">Privada · Tus 2 primeras consultas, gratis · Sin tarjeta · Sin registro</p>
-      <div class="cx-links" id="cx-links"><a id="cx-video" href="videollamada/?de=web">¿Prefieres hablarlo cara a cara? Videollamada</a>${WA_NUMBER ? '<a id="cx-wa" href="#" target="_blank" rel="noopener">¿Prefieres WhatsApp? Escríbenos</a>' : ''}</div>`;
+      <div class="cx-links" id="cx-links"><a id="cx-video" href="videollamada/?de=web">¿Prefieres hablarlo cara a cara? Videollamada</a>${WA_NUMBER ? '<a id="cx-wa" href="whatsapp/">¿Prefieres WhatsApp? Consulta por WhatsApp · 9 €</a>' : ''}</div>`;
     box.classList.add('chat-on');
     box.insertBefore(el, form);
     const log = $('cx-log'), inp = $('cx-in'), go = $('cx-go'), eg = $('cx-eg');
@@ -1099,7 +1099,6 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       el.querySelectorAll('[data-pro]').forEach((b) => { const on = b.dataset.pro === k; b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false'); });
       $('cx-s').innerHTML = `<b>${PROS[k].name}, ${ROLE[k]}</b><br>lee tu duda y te responde por correo en menos de 48 h`;
       $('cx-video').href = `videollamada/?de=web#reservar-${k}`;
-      const wa = $('cx-wa'); if (wa) wa.href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`Hola, tengo una duda para ${PROS[k].name}: `)}`;
       $('cx-video').textContent = `¿Prefieres hablarlo cara a cara? Videollamada con ${PROS[k].name}`;
       if (!said && shown !== k) { greet(); shown = k; }
       if (step === 'correo') ask();
@@ -1192,7 +1191,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       log.textContent = ''; askEl = null; said = false; shown = ''; step = 'duda'; nFiles = 0;
       ta.value = ''; manual = false; done.hidden = true;
       $('cx-bar').hidden = false; $('cx-foot').hidden = false; eg.hidden = false;
-      $('cx-links').innerHTML = `<a id="cx-video" href="videollamada/?de=web">¿Prefieres hablarlo cara a cara? Videollamada</a>${WA_NUMBER ? '<a id="cx-wa" href="#" target="_blank" rel="noopener">¿Prefieres WhatsApp? Escríbenos</a>' : ''}`;
+      $('cx-links').innerHTML = `<a id="cx-video" href="videollamada/?de=web">¿Prefieres hablarlo cara a cara? Videollamada</a>${WA_NUMBER ? '<a id="cx-wa" href="whatsapp/">¿Prefieres WhatsApp? Consulta por WhatsApp · 9 €</a>' : ''}`;
       setInput('duda'); go.disabled = true; refresh(); cur.focus();
     }
     // Planes o aviso (sin consultas gratis): el panel de siempre, dentro del chat

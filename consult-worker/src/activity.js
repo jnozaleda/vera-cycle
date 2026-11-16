@@ -70,6 +70,8 @@ export const EVENTS = {
   invitacion_whatsapp: ['Compartió su enlace por WhatsApp', false],
   invitacion_copiar: ['Copió su enlace para invitar', false],
   invitacion_visita: ['Llegó con el enlace de una invitación', false],
+  whatsapp_pagina: ['Vio la página de consulta por WhatsApp', false],
+  whatsapp_pagar: ['Pulsó pagar una consulta por WhatsApp', true],
   via_visita: ['Llegó con un enlace de canal', false],
   guia_compartir: ['Compartió una guía por WhatsApp', false],
   consulta_invitada: ['Envió su primera consulta con una invitación', true],

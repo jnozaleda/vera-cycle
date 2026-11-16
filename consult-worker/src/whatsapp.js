@@ -29,7 +29,7 @@ async function phoneHash(env, d) {
 }
 
 /** Nueva consulta por WhatsApp: devuelve la fila creada (con qué consulta es de ese número) */
-export async function addWaConsult(env, { phone, pro, limit, bump }) {
+export async function addWaConsult(env, { phone, pro, limit, bump, paid = false, code = '' }) {
   const d = normalizePhone(phone);
   if (!d) return { error: 'tel' };
   const h = await phoneHash(env, d);
@@ -37,10 +37,10 @@ export async function addWaConsult(env, { phone, pro, limit, bump }) {
   const nth = rec.n + 1;
   await env.KV.put(`wac:${h}`, JSON.stringify({ n: nth, last: Date.now() }), { expirationTtl: COUNT_TTL });
   const id = crypto.randomUUID().slice(0, 8);
-  const row = { id, at: Date.now(), t: await sealEmail(env, d), pro, nth, free: nth <= limit, state: 'nueva' };
+  const row = { id, at: Date.now(), t: await sealEmail(env, d), pro, nth, free: !paid && nth <= limit, state: paid ? 'pagada' : 'nueva', ...(code ? { code } : {}) };
   await env.KV.put(`wa:${row.at}:${id}`, JSON.stringify(row), { expirationTtl: TTL });
-  await bump(env, `consulta_wa:${pro}`);
-  if (nth > limit) await bump(env, 'consulta_wa_pago');
+  await bump(env, `consulta_wa:${pro || 'sin_elegir'}`);
+  if (!row.free) await bump(env, 'consulta_wa_pago');
   return { row };
 }
 

@@ -34,8 +34,8 @@ import { inviteCode, inviteFor, rewardInvite } from './invite.js';
 import { panel } from './panel.js';
 import { isEvent, isDevice, record, personTag, hourlyDigest, notify } from './activity.js';
 import { handleResendWebhook } from './bounces.js';
-import { addWaConsult, setWaState } from './whatsapp.js';
-import { PLANS, VIDEO_PROS, paymentsOn, createCheckout, sessionStatus, handleWebhook, getBalance, spendCredit, markDay } from './stripe.js';
+import { addWaConsult, setWaState, maskPhone, normalizePhone } from './whatsapp.js';
+import { PLANS, VIDEO_PROS, paymentsOn, createCheckout, sessionStatus, handleWebhook, getBalance, spendCredit, markDay, waCode } from './stripe.js';
 import { newThreadId, relayAddress, parseRelayAddress, sealEmail, openEmail, saveThread, loadThread, parseIncoming, isAutomatic } from './relay.js';
 
 export const PROS = {
@@ -152,6 +152,28 @@ export function callPaidEmail(pro, plan, invite = null) {
 <p style="font-size:13px;color:#6E6C67;margin-top:16px">Puedes cambiarla o cancelarla hasta 1 hora antes y te devolvemos el dinero entero. La llamada no se graba. Tu teléfono solo lo usamos para esta llamada.</p>
 <p style="font-size:13px;color:#6E6C67">No es un servicio de urgencias. Si algo no va bien, llama al 112 o acude a tu centro de salud.</p>${invite ? invite.html : ''}`);
   const text = `Hola,\n\nHemos recibido el pago de tu llamada de 15 minutos con ${pro.name}, ${pro.role} (${plan.eur} €).\n\nSIGUIENTE PASO: responde a este correo con 3 franjas que te vengan bien en los próximos días y el teléfono al que quieres que te llamemos, con el prefijo de tu país (por ejemplo: +34 600 000 000).\n\nDespués:\n1. En menos de 24 h laborables te proponemos día y hora.\n2. A esa hora te llama ${pro.short}, desde un número oculto.\n3. Si estás fuera de España, te enviamos un enlace de Google Meet para hablar solo por voz.\n\nPuedes cambiarla o cancelarla hasta 1 hora antes y te devolvemos el dinero entero. La llamada no se graba. Tu teléfono solo lo usamos para esta llamada.\nNo es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.${invite ? `\n\n${invite.text}` : ''}`;
+  return { subject, html, text };
+}
+
+// WhatsApp de Hera (prueba manual): número público de Hera, no de ninguna profesional
+export const WA_NUMBER = '34603295806';
+export const waLink = (code) => `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`Hola, he pagado mi consulta por WhatsApp (código ${code}). Mi duda: `)}`;
+
+/** Correo a quien paga una consulta por WhatsApp: el código y el botón para abrir el chat (por si cerró la página) */
+export function waPaidEmail(code) {
+  const subject = `Tu consulta por WhatsApp · código ${code}`;
+  const link = waLink(code);
+  const html = shell(`<p>Hola,</p>
+<p>Hemos recibido tu pago de <b>9 €</b> por una <b>consulta por WhatsApp</b> con Hera.</p>
+<div style="background:#F6E0E2;border-radius:10px;padding:14px 16px;margin:14px 0">
+<p style="margin:0 0 4px;font-size:13px;color:#6E6C67">Tu código</p>
+<p style="margin:0 0 12px;font-family:Georgia,serif;font-size:28px;letter-spacing:.08em;color:#45574C">${code}</p>
+<p style="margin:0;font-size:14px">Siguiente paso: escríbenos tu duda por WhatsApp con este código y dinos si quieres preguntársela a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra).</p></div>
+<p style="margin:18px 0"><a href="${link}" style="display:inline-block;background:#25803A;color:#ffffff;text-decoration:none;font-weight:600;border-radius:8px;padding:12px 20px">Abrir WhatsApp</a></p>
+<p style="font-size:14px">Si el botón no funciona, escribe al <b>+34 603 29 58 06</b> y pon tu código.</p>
+<p style="font-size:14px">La profesional te responde por el mismo chat en menos de 48 h. Tu número no lo ven las profesionales.</p>
+<p style="font-size:13px;color:#6E6C67">No es un servicio de urgencias. Si algo no va bien, llama al 112 (o al número de emergencias de tu país) o acude a tu centro de salud.</p>`);
+  const text = `Hola,\n\nHemos recibido tu pago de 9 € por una consulta por WhatsApp con Hera.\n\nTu código: ${code}\n\nSiguiente paso: escríbenos tu duda por WhatsApp con este código y dinos si quieres preguntársela a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra).\n\nAbrir WhatsApp: ${link}\nSi no funciona, escribe al +34 603 29 58 06 y pon tu código.\n\nLa profesional te responde por el mismo chat en menos de 48 h. Tu número no lo ven las profesionales.\nNo es un servicio de urgencias: si algo no va bien, llama al 112 (o al número de emergencias de tu país) o acude a tu centro de salud.`;
   return { subject, html, text };
 }
 
@@ -394,6 +416,17 @@ const handler = {
     const payHooks = {
       paid: async (plan, s) => {
         await bump(env, `pago:${plan}`);
+        if (PLANS[plan].wa) {
+          const code = await waCode(s.id);
+          const to = s.customer_details?.email || s.customer_email;
+          const tel = normalizePhone(s.customer_details?.phone || '');
+          if (tel) await addWaConsult(env, { phone: tel, pro: '', limit: 0, bump, paid: true, code });
+          if (to) await sendMail(env, { to, replyTo: 'contacto@hera-gine.com', ...waPaidEmail(code) });
+          if (s.metadata?.src === 'ads') { const ak = /_latam$/.test(String(s.metadata?.camp || '')) ? 'latam' : 'anuncio'; await bump(env, `${ak}_pago:${plan}`); await bump(env, `${ak}_eur`, madridDay(), PLANS[plan].eur); }
+          await notify(env, `Pago · WhatsApp · 9 € · código ${code}${s.metadata?.src === 'ads' ? ' · desde anuncio' : ''}${s.livemode ? '' : ' · prueba'}`,
+            `Consulta por WhatsApp pagada (9 €${s.livemode ? '' : ', modo de prueba'}).\n\nCódigo: ${code}\nMóvil: ${tel ? maskPhone(tel) : 'no lo dio'}\n\nYa está en el panel («Consultas por WhatsApp», Pagada · ${code}). Cuando te escriba con ese código, pásale la duda a la profesional que elija.`, sendMail);
+          return;
+        }
         if (PLANS[plan].video) {
           const pro = PROS[s.metadata?.pro] || PROS.matrona;
           const to = s.customer_details?.email || s.customer_email;
@@ -442,6 +475,22 @@ const handler = {
         await bump(env, `pago_inicio:${plan}`);
         return Response.redirect(u, 303);
       } catch (e) { console.log(e.message); return new Response('No se ha podido abrir el pago. Inténtalo en un rato.', { status: 502 }); }
+    }
+    // Consulta por WhatsApp: abre el pago de Stripe (pide correo y móvil) y vuelve a hera-gine.com/whatsapp/
+    if (request.method === 'GET' && url.pathname === '/wa/pagar') {
+      const back = 'https://hera-gine.com/whatsapp/';
+      if (!env.STRIPE_SECRET_KEY) return Response.redirect(`${back}?pago=error`, 303);
+      if (await rateLimited(env, request.headers.get('CF-Connecting-IP'))) return Response.redirect(`${back}?pago=error`, 303);
+      try {
+        const h = [...crypto.getRandomValues(new Uint8Array(32))].map((b) => b.toString(16).padStart(2, '0')).join('');
+        const camp = /^[a-z0-9_]{1,24}$/.test(url.searchParams.get('camp') || '') ? url.searchParams.get('camp') : '';
+        const to = await createCheckout(env, { email: '', plan: 'whatsapp', h, origin: 'https://hera-gine.com', back: 'wa', ad: url.searchParams.get('src') === 'ads', camp });
+        if (url.searchParams.get('t') !== '1') {
+          await bump(env, 'pago_inicio:whatsapp');
+          await record(env, { e: 'whatsapp_pagar', p: await personTag(env, request, madridDay(), url.searchParams.get('p') || '') }, sendMail, ctx);
+        }
+        return Response.redirect(to, 303);
+      } catch (e) { console.log(e.message); return Response.redirect(`${back}?pago=error`, 303); }
     }
     if (request.method === 'GET' && url.pathname === '/checkout/status') {
       if (!env.STRIPE_SECRET_KEY) return reply(404, { error: 'not_found' });

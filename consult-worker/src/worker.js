@@ -508,12 +508,14 @@ const handler = {
         for (const k of page.keys) {
           const v = await env.KV.get(k.name, 'json'); if (!v) continue;
           const ts = Number(k.name.split(':')[1]);
-          const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(ts)).map((x) => [x.type, x.value]));
-          rows.push(`${v.g},${v.n},${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}:${p.second}`);
+          // Hora de Madrid con su desfase (+01:00 / +02:00): el conector nuevo de Google no lee la línea «Parameters:TimeZone»
+          const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Madrid', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23', timeZoneName: 'longOffset' }).formatToParts(new Date(ts)).map((x) => [x.type, x.value]));
+          const off = (p.timeZoneName || 'GMT+01:00').replace('GMT', '') || '+00:00';
+          rows.push(`${v.g},${v.n},${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}:${p.second}${off}`);
         }
         cursor = page.list_complete ? null : page.cursor;
       } while (cursor);
-      return new Response(['Parameters:TimeZone=Europe/Madrid', 'Google Click ID,Conversion Name,Conversion Time', ...rows].join('\n') + '\n', { headers: { 'content-type': 'text/csv; charset=utf-8', 'cache-control': 'no-store' } });
+      return new Response(['Google Click ID,Conversion Name,Conversion Time', ...rows].join('\n') + '\n', { headers: { 'content-type': 'text/csv; charset=utf-8', 'cache-control': 'no-store' } });
     }
     if (request.method === 'GET' && url.pathname === '/stats') {
       if (!env.PANEL_CODE || request.headers.get('Authorization') !== `Bearer ${env.PANEL_CODE}`) return reply(401, { error: 'unauthorized' });

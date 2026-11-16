@@ -358,10 +358,9 @@ console.log('consultas: OK');
   assert.equal((await get('')).status, 401); assert.equal((await get('mala')).status, 401);
   const csv = await (await get('dk')).text();
   const lines = csv.trim().split('\n');
-  assert.equal(lines[0], 'Parameters:TimeZone=Europe/Madrid');
-  assert.equal(lines[1], 'Google Click ID,Conversion Name,Conversion Time');
-  assert.equal(lines.length, 3, 'solo la consulta con gclid');
-  assert.match(lines[2], /^Cj0KCQiA_test-123abc,Consulta enviada,\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$/);
+  assert.equal(lines[0], 'Google Click ID,Conversion Name,Conversion Time');
+  assert.equal(lines.length, 2, 'solo la consulta con gclid');
+  assert.match(lines[1], /^Cj0KCQiA_test-123abc,Consulta enviada,\d{4}-\d\d-\d\d \d\d:\d\d:\d\d\+0[12]:00$/);
   assert.ok(!csv.includes('@'), 'sin correos');
   console.log('conversiones Google Ads: OK');
 }

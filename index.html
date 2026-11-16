@@ -58,6 +58,12 @@ header.top { position: sticky; top: 0; z-index: 10; background: color-mix(in srg
 .top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 14px; }
 .logo { display: block; height: 34px; width: auto; }
 .nav { display: none; gap: 26px; font-size: 15px; }
+/* Móvil: fila de accesos bajo la cabecera (en ordenador ya están en el menú) */
+.mnav { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 6px; }
+.mnav::-webkit-scrollbar { display: none; }
+.mnav a { flex: none; font: 600 14px/1 'Inter', sans-serif; color: var(--plum); text-decoration: none; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 9px 14px; }
+.mnav a.hl { background: #F6E0E2; border-color: #E8C9CC; }
+@media (min-width: 900px) { .mnav { display: none; } }
 .nav a { text-decoration: none; color: var(--text); }
 .nav a:hover { color: var(--plum); }
 @media (min-width: 900px) { .nav { display: flex; } }
@@ -404,6 +410,12 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     </div>
   </div>
 </header>
+<nav class="wrap mnav" aria-label="Accesos">
+  <a href="videollamada/" data-cta="clic:mnav_llamada">Llamada y videollamada</a>
+  <a href="equipo.html" data-cta="clic:mnav_equipo">Profesionales</a>
+  <a href="guias/" data-cta="clic:mnav_guias">Guías</a>
+  <a class="hl" href="#precio" data-cta="clic:mnav_precios">Precios</a>
+</nav>
 
 <main>
 <div class="wrap">
@@ -701,6 +713,8 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   import { emailTypo } from './app/js/email-typo.js';
   const API = 'https://hera-consultas.tempcheck-app.workers.dev';
   const PROS = { gineco: { name: 'Gonzalo', img: 'gonzalo' }, matrona: { name: 'Marina', img: 'marina' }, pediatra: { name: 'Lucía', img: 'lucia' } };
+  // WhatsApp de Hera (prueba manual): número con prefijo y sin «+» ni espacios, p. ej. '34600000000'. Vacío = no se enseña.
+  const WA_NUMBER = '';
   const local = ['localhost', '127.0.0.1'].includes(location.hostname);
   // Etiqueta del día: hasta tener la primera respuesta, los envíos van en fila para llevarla todos (Android cambia de IP)
   let ptag = ''; let line = null;
@@ -1063,10 +1077,11 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <div class="cx-eg" id="cx-eg" aria-label="Dudas de ejemplo">${examples.map((t) => `<button type="button">${esc(t)}</button>`).join('')}</div>
       <div class="cx-bar" id="cx-bar">${canAttach ? `<button type="button" class="cx-clip" id="cx-clip" aria-label="Añadir foto o PDF">${CLIP}</button>` : ''}<textarea class="cx-in" id="cx-in" rows="1" maxlength="2000" placeholder="Escribe tu duda…" aria-label="Tu duda"></textarea><button type="button" class="cx-go" id="cx-go" aria-label="Enviar" disabled>${ARROW}</button></div>
       <p class="cx-foot" id="cx-foot">Privada · Tus 2 primeras consultas, gratis · Sin tarjeta · Sin registro</p>
-      <div class="cx-links" id="cx-links"><a id="cx-video" href="videollamada/?de=web">¿Prefieres hablarlo cara a cara? Videollamada</a></div>`;
+      <div class="cx-links" id="cx-links"><a id="cx-video" href="videollamada/?de=web">¿Prefieres hablarlo cara a cara? Videollamada</a>${WA_NUMBER ? '<a id="cx-wa" href="#" target="_blank" rel="noopener">¿Prefieres WhatsApp? Escríbenos</a>' : ''}</div>`;
     box.classList.add('chat-on');
     box.insertBefore(el, form);
     const log = $('cx-log'), inp = $('cx-in'), go = $('cx-go'), eg = $('cx-eg');
+    el.addEventListener('click', (ev) => { if (ev.target.closest?.('#cx-wa')) hit('clic:whatsapp'); });
     let step = 'duda', shown = '', said = false;
     hit('clic:caja_chat');
     const pro = () => chosen() || 'gineco';
@@ -1084,6 +1099,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       el.querySelectorAll('[data-pro]').forEach((b) => { const on = b.dataset.pro === k; b.classList.toggle('on', on); b.setAttribute('aria-checked', on ? 'true' : 'false'); });
       $('cx-s').innerHTML = `<b>${PROS[k].name}, ${ROLE[k]}</b><br>lee tu duda y te responde por correo en menos de 48 h`;
       $('cx-video').href = `videollamada/?de=web#reservar-${k}`;
+      const wa = $('cx-wa'); if (wa) wa.href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(`Hola, tengo una duda para ${PROS[k].name}: `)}`;
       $('cx-video').textContent = `¿Prefieres hablarlo cara a cara? Videollamada con ${PROS[k].name}`;
       if (!said && shown !== k) { greet(); shown = k; }
       if (step === 'correo') ask();
@@ -1176,7 +1192,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       log.textContent = ''; askEl = null; said = false; shown = ''; step = 'duda'; nFiles = 0;
       ta.value = ''; manual = false; done.hidden = true;
       $('cx-bar').hidden = false; $('cx-foot').hidden = false; eg.hidden = false;
-      $('cx-links').innerHTML = '<a id="cx-video" href="videollamada/?de=web">¿Prefieres hablarlo cara a cara? Videollamada</a>';
+      $('cx-links').innerHTML = `<a id="cx-video" href="videollamada/?de=web">¿Prefieres hablarlo cara a cara? Videollamada</a>${WA_NUMBER ? '<a id="cx-wa" href="#" target="_blank" rel="noopener">¿Prefieres WhatsApp? Escríbenos</a>' : ''}`;
       setInput('duda'); go.disabled = true; refresh(); cur.focus();
     }
     // Planes o aviso (sin consultas gratis): el panel de siempre, dentro del chat

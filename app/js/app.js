@@ -1440,17 +1440,18 @@ function askSheet() {
       <input class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" data-model="ask.website" value="">` : ''}
     ${a.status === 'error' ? `<p class="t-12 c-rose">${esc(a.error || 'No se ha podido enviar. Inténtalo de nuevo.')}</p>` : ''}
     <button class="btn-primary" data-action="${consultFormOn() ? 'ask-submit' : 'ask-send'}" data-v="email" data-ask-send ${freeOn ? 'data-free' : ''} ${a.status !== 'sending' ? '' : 'disabled'}>${a.status === 'sending' ? 'Enviando…' : `Enviar${freeOn ? ' gratis' : ''}${to ? ` a ${esc(to.short)}` : ''}`}</button>
-    <p class="ask-private">${icon('lock', 13)}<span><b>Privada, sin nombre ni registro.</b> No se publica en ningún sitio y ${to ? esc(to.short) : 'la profesional'} no ve tu correo: lo usamos para hacerte llegar su respuesta. Te escribiremos una vez para saber si te ayudó.</span></p>
+    <p class="ask-private">${icon('lock', 13)}<span><b>Privada.</b> ${to ? esc(to.short) : 'La profesional'} no ve tu correo.</span></p>
     ${consultFormOn() && (CONSULT_ATTACH || isBeta()) ? `<div class="stack-6"><label class="pill-outline row gap-6 center self-start ask-add">${icon('plusCircle', 13)} Añadir foto o PDF<input type="file" hidden multiple accept="image/*,application/pdf" data-ask-files></label>
       ${(a.files || []).map((f, i) => `<div class="period-item"><span class="t-13 grow">${esc(f.filename)}</span><button class="icon-btn soft" data-action="ask-file-remove" data-i="${i}" aria-label="Quitar ${attr(f.filename)}">${icon('xCircle', 16)}</button></div>`).join('')}
-      ${a.fileError ? `<p class="t-12 c-rose">${esc(a.fileError)}</p>` : ''}</div>` : ''}
-    ${consultFormOn() ? `<label class="ask-check"><input type="checkbox" data-ask-follow ${a.follow ? 'checked' : ''}><span class="t-13 lh-4">Quiero que Hera me haga seguimiento si la respuesta no me deja satisfecha.</span></label>` : ''}
+      ${a.fileError ? `<p class="t-12 c-rose">${esc(a.fileError)}</p>` : ''}<p class="t-11 soft-70 lh-3">Hasta 3 archivos (10 MB). ${ATTACH_NOTE}</p></div>` : ''}
+    ${consultFormOn() ? `<label class="ask-check"><input type="checkbox" data-ask-follow ${a.follow ? 'checked' : ''}><span class="t-13 lh-4">Quiero seguimiento si la respuesta no me sirve.</span></label>` : ''}
     ${askVideoCard(to)}
     <div class="ask-more t-12 soft lh-4">
       <a class="link-deep" href="../equipo.html">Conoce al equipo</a> · <button class="inline-link" data-action="ask-pay-preview">Ver bono e ilimitado</button>${to?.whatsapp ? ' · <button class="inline-link" data-action="ask-send" data-v="whatsapp">Escribir por WhatsApp</button>' : ''}
     </div>
     ${mine.length ? `<details class="my-consults" data-id="my-consults" ${ui.openDetails.has('my-consults') ? 'open' : ''}><summary>Tus consultas (${mine.length})</summary>${consultList(10)}</details>` : ''}
-    <p class="t-11 soft-70 lh-3">No es para urgencias: si algo no va bien, contacta con tu centro de salud o tu unidad de referencia.</p>
+    <p class="t-11 c-rose lh-3">Si es urgente, ve a urgencias.</p>
+    <p class="t-11 soft-70 lh-3">Consulta <a class="link-deep" href="../privacy.html#consultas">cómo tratamos tus datos</a>.</p>
   </div>`);
 }
 

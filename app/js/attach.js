@@ -41,4 +41,4 @@ export async function addFiles(current, picked) {
 }
 /** Lo que se envía al servicio */
 export const filesPayload = (files) => files.map(({ filename, content, content_type }) => ({ filename, content, content_type }));
-export const ATTACH_NOTE = 'Evita fotos en las que se te reconozca y tapa tu nombre o tu DNI en los informes.';
+export const ATTACH_NOTE = 'Que no salga tu cara, tu nombre ni tu DNI.';

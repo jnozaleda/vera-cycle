@@ -34,7 +34,7 @@ const is = (e, names) => names.some((n) => e === n || e.startsWith(`${n}:`));
 const pct = (a, t) => (t ? `${Math.round((a * 100) / t)} %` : '—');
 // Marcas de anuncio: la visita desde el anuncio y lo que la app o el servicio apuntan después con la marca guardada (30 días)
 const AD_MARK = ['anuncio_visita', 'consulta_anuncio', 'instalada_anuncio', 'vuelta_anuncio'];
-const AD_GROUPS = [['matrona', 'Matrona'], ['gineco', 'Ginecólogo'], ['pediatra', 'Pediatra'], ['lactancia', 'Lactancia'], ['gineco_latam', 'Ginecólogo · Latinoamérica'], ['pediatra_latam', 'Pediatra · Latinoamérica'], ['', 'Sin grupo (enlace de sitio u otro)']];
+const AD_GROUPS = [['matrona', 'Matrona'], ['gineco', 'Ginecólogo'], ['pediatra', 'Pediatra'], ['lactancia', 'Lactancia'], ['gineco_latam', 'Ginecólogo · Argentina'], ['pediatra_latam', 'Pediatra · Argentina'], ['gineco_resto_latam', 'Ginecólogo · México, Chile y Colombia'], ['pediatra_resto_latam', 'Pediatra · México, Chile y Colombia'], ['', 'Sin grupo (enlace de sitio u otro)']];
 const TABS = [['today', 'Hoy'], ['diary', 'Diario'], ['care', 'Cuidados'], ['guide', 'Dudas'], ['baby', 'Tu bebé'], ['cycle', 'Ciclo'], ['trends', 'Patrones']];
 const DIARY = [['sintoma', 'Síntomas'], ['animo', 'Ánimo'], ['regla', 'Regla'], ['dato', 'Peso, sueño o temperatura'], ['flujo', 'Flujo'], ['estres', 'Estrés'], ['intimidad', 'Relaciones'], ['ovulacion', 'Test de ovulación']];
 

@@ -926,7 +926,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     };
     // Enlaces de canal de una profesional: su titular y ella ya elegida (ig_marina → Marina)
     const VIA_PRO = { ig_marina: 'matrona' };
-    const camp = (new URLSearchParams(location.search).get('utm_campaign') || '').toLowerCase().replace(/_latam$/, '') || VIA_PRO[via0] || '';
+    const camp = (new URLSearchParams(location.search).get('utm_campaign') || '').toLowerCase().replace(/(_resto)?_latam$/, '') || VIA_PRO[via0] || ''; // gineco_latam (Argentina) y gineco_resto_latam (México, Chile y Colombia) → gineco
     const page = AD_PAGE[camp];
     if (page) {
       const h1 = document.querySelector('.hero h1, h1');

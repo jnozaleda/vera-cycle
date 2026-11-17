@@ -157,6 +157,38 @@ section { padding: 64px 0; }
 .btn-pill:hover { background: var(--plum-h); }
 .hero .eyebrow { font-size: 11.5px; letter-spacing: .2em; margin-bottom: 14px; }
 .hero h1 { color: #45574C; }
+/* Elegir canal (17 nov): WhatsApp (lo más rápido, 9 €) o correo (gratis). data-ch en .ask: pick · mail · wa */
+.ask[data-ch=pick] #ask-form > :not(.who):not(.chpick) { display: none !important; }
+.ask[data-ch=wa] #ask-form > :not(.who):not(.chseg):not(.chwa) { display: none !important; }
+.ask:not([data-ch=pick]) .chpick, .ask[data-ch=pick] .chseg, .ask:not([data-ch=wa]) .chwa { display: none !important; }
+.chq { font: 400 21px/1.2 'Newsreader', Georgia, serif; color: var(--ink); margin: 2px 0 0; }
+.chpick { display: grid; gap: 10px; }
+.chopt { position: relative; display: grid; gap: 4px; text-align: left; width: 100%; background: #fff; border: 1.5px solid var(--line); border-radius: 12px; padding: 12px 14px; font: inherit; color: var(--ink); cursor: pointer; }
+.chopt.wa { border-color: #25803A; background: #F1F8F2; }
+.chopt:hover { border-color: var(--plum); } .chopt.wa:hover { border-color: #1E6B30; }
+.chopt .oh { display: flex; align-items: center; gap: 8px; } .chopt .oh b { font-size: 16px; white-space: nowrap; }
+.chopt .ic { display: inline-flex; width: 30px; height: 30px; border-radius: 50%; align-items: center; justify-content: center; background: #EFECE4; color: var(--plum); flex: none; }
+.chopt.wa .ic { background: #25803A; color: #fff; }
+.chopt .fast { margin-left: auto; font: 600 11px/1 'Inter', sans-serif; color: #fff; background: #25803A; border-radius: 99px; padding: 5px 9px; white-space: nowrap; }
+.chopt .big { display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 15px; }
+.chopt .sub { font-size: 13px; color: #6E6C67; padding-right: 54px; }
+.chopt .price { position: absolute; right: 14px; bottom: 12px; font-weight: 600; font-size: 16px; } .chopt.mail .price { color: var(--plum); }
+.chpick .churg { font-size: 12.5px; color: #B3261E; margin: 0; }
+.chseg { display: grid; grid-template-columns: 1fr 1fr; background: #EFECE4; border-radius: 10px; padding: 3px; }
+.chseg button { display: flex; gap: 6px; align-items: center; justify-content: center; font: 600 13px/1 'Inter', sans-serif; padding: 9px 4px; border: 0; border-radius: 8px; background: transparent; color: #6E6C67; cursor: pointer; }
+.chseg button svg { width: 15px; height: 15px; }
+.chseg button[aria-pressed=true] { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.08); } .chseg button.wa[aria-pressed=true] { color: #1E6B30; }
+.chwa { display: grid; gap: 10px; }
+.chwa .head { background: #F1F8F2; border-radius: 10px; padding: 12px 14px; } .chwa .head b { display: block; font: 400 22px/1.2 'Newsreader', Georgia, serif; } .chwa .head span { font-size: 13px; color: #4F4E49; }
+.chwa ol { list-style: none; counter-reset: s; margin: 0; padding: 0; }
+.chwa li { counter-increment: s; display: grid; grid-template-columns: 30px 1fr; padding: 8px 0; border-top: 1px solid #EFECE4; font-size: 13.5px; color: #4F4E49; }
+.chwa li:before { content: counter(s); grid-row: span 2; width: 24px; height: 24px; border-radius: 50%; background: #F6E0E2; color: var(--plum); font: 600 12px/24px 'Inter', sans-serif; text-align: center; }
+.chwa li b { color: var(--ink); font-size: 14px; }
+.chwa .wabtn { display: flex; gap: 8px; align-items: center; justify-content: center; background: #25803A; color: #fff; font: 600 16px/1.2 'Inter', sans-serif; border-radius: 8px; padding: 15px; text-decoration: none; }
+.chwa .wabtn:hover { background: #1E6B30; }
+.chwa .back, .chnudge { font-size: 13px; color: #4F4E49; text-align: center; margin: 0; }
+.chwa .back button, .chnudge button { font: inherit; color: var(--plum); font-weight: 600; text-decoration: underline; background: none; border: 0; padding: 0; cursor: pointer; }
+.chnudge button { color: #1E6B30; }
 /* Tres datos con líneas finas bajo la caja (como en Function Health) */
 .facts { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 22px; max-width: 560px; border-top: 1px solid #E8DFD8; padding-top: 14px; }
 .facts div { padding: 0 10px; border-left: 1px solid #E8DFD8; min-width: 0; }
@@ -431,9 +463,22 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <p class="lead">Ginecólogo, matrona y pediatra con nombre y apellido. Leen tu caso y te responden por escrito en menos de 24 h.</p>
 
       <div class="askwrap">
-      <div class="ask" id="ask">
+      <div class="ask" id="ask" data-ch="pick">
       <form id="ask-form" novalidate>
         <div class="who"><span class="who-faces"><img src="portada/equipo/gonzalo.jpg?v=2" alt="" width="30" height="30"><img src="portada/equipo/marina.jpg?v=2" alt="" width="30" height="30"><img src="portada/equipo/lucia.jpg?v=3" alt="" width="30" height="30"></span><span>Te responde <a class="who-link" href="equipo.html"><b>Gonzalo, Marina o Lucía</b></a></span></div>
+                <div class="chpick" id="ask-ch">
+          <p class="chq">¿Cómo quieres la respuesta?</p>
+          <button type="button" class="chopt wa" data-ch="wa"><span class="oh"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5 5 16a8.5 8.5 0 1 1 3.2 3.1z"/></svg></span><b>Por WhatsApp</b><span class="fast">Lo más rápido</span></span><span class="big"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Respuesta en menos de 12&nbsp;h</span><span class="sub">Te avisa el móvil · puedes mandar fotos · sigues hablando por el mismo chat</span><span class="price">9 €</span></button>
+          <button type="button" class="chopt mail" data-ch="mail"><span class="oh"><span class="ic"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span><b>Por correo</b></span><span class="big"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Respuesta en menos de 24&nbsp;h</span><span class="sub">Tus 2 primeras consultas, gratis</span><span class="price">Gratis</span></button>
+          <p class="churg">Si es urgente, no esperes: llama al 112 o ve a urgencias.</p>
+        </div>
+        <div class="chseg" role="group" aria-label="Cómo quieres la respuesta"><button type="button" data-ch="mail" aria-pressed="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>Correo · gratis</button><button type="button" class="wa" data-ch="wa" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5 5 16a8.5 8.5 0 1 1 3.2 3.1z"/></svg>WhatsApp · 12 h</button></div>
+        <div class="chwa" id="ask-wa">
+          <div class="head"><b>Respuesta en menos de 12&nbsp;h</b><span>Por WhatsApp, de Gonzalo, Marina o Lucía. Tu número no lo ven las profesionales.</span></div>
+          <ol><li><b>Pagas 9 €</b><span>Con tarjeta, Apple Pay o Google Pay.</span></li><li><b>Se abre WhatsApp con tu código</b><span>Escribe tu duda y para quién es. Puedes mandar fotos.</span></li><li><b>Te responde la profesional</b><span>Por el mismo chat. Te avisa el móvil.</span></li></ol>
+          <a class="wabtn" id="ask-wa-pay" href="whatsapp/"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5 5 16a8.5 8.5 0 1 1 3.2 3.1z"/></svg>Pagar 9 € y escribir por WhatsApp</a>
+          <p class="back">¿Prefieres gratis? <button type="button" data-ch="mail">Pregunta por correo</button> (en menos de 24 h)</p>
+        </div>
         <label for="duda" class="sr">Tu duda</label>
         <textarea id="duda" name="duda" maxlength="2000" placeholder="Escribe tu duda con tus palabras…"></textarea>
         <div class="eg" id="ask-eg" aria-label="Dudas de ejemplo">
@@ -466,6 +511,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         <button class="btn btn-p" type="submit" id="ask-send">Preguntar gratis</button>
         <ul class="perks" aria-label="Condiciones"><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin tarjeta de crédito</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin registro</li></ul>
         <button type="button" class="linkplans" id="ask-plans" hidden>Ver planes</button>
+        <p class="chnudge" id="ask-nudge">¿La necesitas antes? <button type="button" data-ch="wa">Por WhatsApp, en menos de 12 h</button> · 9 €</p>
         <a class="linkplans linkvideo" id="ask-video" href="videollamada/?de=web">¿Prefieres hablarlo cara a cara? Videollamada</a>
         <p class="fine" id="ask-fine" hidden>Te escribiremos una vez para saber si te ayudó. No es para urgencias. <a href="privacy.html#consultas">Cómo tratamos tus datos</a>.</p>
       </form>
@@ -1064,8 +1110,29 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   {
     const qs0 = new URLSearchParams(location.search);
     let classic = false;
-    try { if (qs0.get('caja') === 'clasica') sessionStorage.setItem('hera-caja', 'clasica'); if (qs0.get('caja') === 'chat') sessionStorage.removeItem('hera-caja'); classic = sessionStorage.getItem('hera-caja') === 'clasica'; } catch { /* sin almacenamiento */ }
+    // Desde el 17 nov la caja de siempre (con elegir correo o WhatsApp) es la normal; el chat solo con ?caja=chat
+    classic = true;
+    try { if (qs0.get('caja') === 'chat') sessionStorage.setItem('hera-caja', 'chat'); if (qs0.get('caja') === 'clasica') sessionStorage.removeItem('hera-caja'); classic = sessionStorage.getItem('hera-caja') !== 'chat'; } catch { /* sin almacenamiento */ }
     if (!classic) chat = makeChat();
+    // Elegir canal: pick (las dos tarjetas) → mail (formulario) o wa (pago de WhatsApp)
+    const setCh = (c, track = true) => {
+      box.dataset.ch = c;
+      form.querySelectorAll('.chseg [data-ch]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.ch === c)));
+      if (track) hit(`clic:canal_${c === 'wa' ? 'whatsapp' : 'correo'}`);
+      if (c === 'mail' && track) setTimeout(() => ta.focus({ preventScroll: true }), 50);
+    };
+    if (chat || opened || !done.hidden || ta.value.trim()) setCh('mail', false);
+    form.addEventListener('click', (ev) => { const b = ev.target.closest('[data-ch]'); if (b && b.tagName === 'BUTTON') { ev.preventDefault(); setCh(b.dataset.ch); } });
+    const _open = open;
+    open = () => { if (box.dataset.ch !== 'mail') setCh('mail', false); _open(); };
+    $('ask-wa-pay').addEventListener('click', (ev) => {
+      const u = new URL(`${API}/wa/pagar`);
+      const a = adSrc(); if (a.src) { u.searchParams.set('src', 'ads'); if (a.camp) u.searchParams.set('camp', a.camp); }
+      if (local || isTeam()) u.searchParams.set('t', '1');
+      if (ptag) u.searchParams.set('p', ptag);
+      hit('clic:canal_wa_pagar');
+      ev.currentTarget.href = u.toString();
+    });
   }
   function makeChat() {
     const ROLE = { gineco: 'ginecólogo', matrona: 'matrona', pediatra: 'pediatra' };

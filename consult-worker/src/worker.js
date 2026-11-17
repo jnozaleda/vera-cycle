@@ -171,9 +171,9 @@ export function waPaidEmail(code) {
 <p style="margin:0;font-size:14px">Siguiente paso: escríbenos tu duda por WhatsApp con este código y dinos si quieres preguntársela a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra).</p></div>
 <p style="margin:18px 0"><a href="${link}" style="display:inline-block;background:#25803A;color:#ffffff;text-decoration:none;font-weight:600;border-radius:8px;padding:12px 20px">Abrir WhatsApp</a></p>
 <p style="font-size:14px">Si el botón no funciona, escribe al <b>+34 603 29 58 06</b> y pon tu código.</p>
-<p style="font-size:14px">La profesional te responde por el mismo chat en menos de 24 h. Tu número no lo ven las profesionales.</p>
+<p style="font-size:14px">La profesional te responde por el mismo chat en menos de 12 h. Tu número no lo ven las profesionales.</p>
 <p style="font-size:13px;color:#6E6C67">No es un servicio de urgencias. Si algo no va bien, llama al 112 (o al número de emergencias de tu país) o acude a tu centro de salud.</p>`);
-  const text = `Hola,\n\nHemos recibido tu pago de 9 € por una consulta por WhatsApp con Hera.\n\nTu código: ${code}\n\nSiguiente paso: escríbenos tu duda por WhatsApp con este código y dinos si quieres preguntársela a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra).\n\nAbrir WhatsApp: ${link}\nSi no funciona, escribe al +34 603 29 58 06 y pon tu código.\n\nLa profesional te responde por el mismo chat en menos de 24 h. Tu número no lo ven las profesionales.\nNo es un servicio de urgencias: si algo no va bien, llama al 112 (o al número de emergencias de tu país) o acude a tu centro de salud.`;
+  const text = `Hola,\n\nHemos recibido tu pago de 9 € por una consulta por WhatsApp con Hera.\n\nTu código: ${code}\n\nSiguiente paso: escríbenos tu duda por WhatsApp con este código y dinos si quieres preguntársela a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra).\n\nAbrir WhatsApp: ${link}\nSi no funciona, escribe al +34 603 29 58 06 y pon tu código.\n\nLa profesional te responde por el mismo chat en menos de 12 h. Tu número no lo ven las profesionales.\nNo es un servicio de urgencias: si algo no va bien, llama al 112 (o al número de emergencias de tu país) o acude a tu centro de salud.`;
   return { subject, html, text };
 }
 

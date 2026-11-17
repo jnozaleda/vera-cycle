@@ -24,6 +24,7 @@ const STYLE = `<style>
 .wa-small{font-size:12.5px;color:#6E6C67;line-height:1.45;margin:0}
 .wa-note{background:#DCEBE4;border-radius:12px;padding:16px 18px;margin:18px 0 0;max-width:520px;display:grid;gap:10px;color:#2D4A3A}.wa-note b.t{font:400 23px/1.2 Newsreader,Georgia,serif}
 .wa-code{font:400 34px/1 Newsreader,Georgia,serif;letter-spacing:.08em;color:#2D4A3A}
+.wa-duda{display:block;text-align:left;border-left:3px solid #25803A;background:#F1F8F2;border-radius:0 8px 8px 0;padding:8px 12px;font-size:14px;white-space:pre-wrap}.wa-duda small{display:block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#1E6B30;margin-bottom:3px}
 .wa h2{font-size:30px;color:#45574C;margin:44px 0 6px}
 .wa-steps{list-style:none;counter-reset:s;margin:14px 0 0;padding:0;max-width:640px}
 .wa-steps li{counter-increment:s;display:grid;grid-template-columns:34px 1fr;gap:14px;padding:14px 0;border-top:1px solid #E5E1D8}
@@ -95,9 +96,16 @@ const body = `${STYLE}<div class="w wa">
       say('<b class="t">Comprobando el pago…</b>');
       fetch(API + '/checkout/status?cs=' + encodeURIComponent(q.get('cs') || '')).then((r) => r.json()).then((j) => {
         if (!j.paid || !j.code) throw new Error();
-        const link = 'https://wa.me/${WA}?text=' + encodeURIComponent('Hola, he pagado mi consulta por WhatsApp (código ' + j.code + '). Mi duda: ');
+        // La duda escrita en la portada (si la hay, de hace menos de 1 día) va ya en el mensaje
+        let d = null;
+        try { d = JSON.parse(localStorage.getItem('hera-wa-duda') || 'null'); if (!d || !d.t || Date.now() - d.at > 86400000) d = null; } catch { d = null; }
+        const PRO = { gineco: 'Gonzalo, ginecólogo', matrona: 'Marina, matrona', pediatra: 'Lucía, pediatra' };
+        const para = d && PRO[d.to] ? 'Para ' + PRO[d.to] + '. ' : '';
+        const link = 'https://wa.me/${WA}?text=' + encodeURIComponent('Hola, he pagado mi consulta por WhatsApp (código ' + j.code + '). ' + para + 'Mi duda: ' + (d ? d.t : ''));
+        const esc = (x) => x.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
         document.getElementById('wa-box').hidden = true;
-        say('<b class="t">Pago hecho. Ahora escríbenos tu duda</b><span>Tu código</span><span class="wa-code">' + j.code + '</span><a class="wa-btn" href="' + link + '">${waIcon.replace(/'/g, "\\'")}Abrir WhatsApp</a><span style="font-size:13.5px">El mensaje ya lleva tu código: añade tu duda y dinos si es para Gonzalo, Marina o Lucía. También te lo hemos mandado por correo. Si el botón no funciona, escribe al +34 603 29 58 06.</span>');
+        say('<b class="t">' + (d ? 'Pago hecho. Ahora, a WhatsApp' : 'Pago hecho. Ahora escríbenos tu duda') + '</b><span>Tu código</span><span class="wa-code">' + j.code + '</span>' + (d ? '<span class="wa-duda"><small>Tu duda ya va escrita</small>' + esc(d.t) + '</span>' : '') + '<a class="wa-btn" href="' + link + '">${waIcon.replace(/'/g, "\\'")}' + (d ? 'Abrir WhatsApp y enviar' : 'Abrir WhatsApp') + '</a>' + '<span style="font-size:13.5px">' + (d ? 'El mensaje ya lleva tu código' + (para ? ', para quién es' : '') + ' y tu duda: solo tienes que enviarlo. Puedes añadir fotos en el mismo chat.' : 'El mensaje ya lleva tu código: añade tu duda y dinos si es para Gonzalo, Marina o Lucía.') + ' También te lo hemos mandado por correo. Si el botón no funciona, escribe al +34 603 29 58 06.</span>');
+        if (d) { try { localStorage.removeItem('hera-wa-duda'); } catch {} }
       }).catch(() => say('<b class="t">Aún no podemos confirmar el pago</b><span>Si te han cobrado, en unos minutos te llega un correo con tu código. Si no, escríbenos a contacto@hera-gine.com.</span>'));
     }
   }

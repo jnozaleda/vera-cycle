@@ -1412,7 +1412,7 @@ function askSheet() {
   const pd = a.paid;
   const paidBanner = !pd ? '' : pd.checking ? '<div class="pay-ok t-13">Comprobando el pago…</div>'
     : pd.error ? `<div class="pay-ok is-warn t-13 lh-4">No hemos podido confirmar el pago todavía. Si te han cobrado, envía la consulta en unos minutos o escríbenos a ${esc(CONTACT_EMAIL)}.</div>`
-    : pd.held ? `<div class="pay-ok t-13 lh-4"><b>Pago hecho. Tu consulta ya ha llegado a ${esc((CONSULTS[pd.pro] || CONSULTS[a.to] || CONSULTS.gineco).short)}.</b> Te responderá por correo en menos de 48 h.</div>`
+    : pd.held ? `<div class="pay-ok t-13 lh-4"><b>Pago hecho. Tu consulta ya ha llegado a ${esc((CONSULTS[pd.pro] || CONSULTS[a.to] || CONSULTS.gineco).short)}.</b> Te responderá por correo en menos de 24 h.</div>`
     : `<div class="pay-ok t-13 lh-4"><b>Pago hecho.</b> ${pd.unlimited ? 'Tienes el plan ilimitado: una consulta nueva al día.' : `Tienes ${pd.credits === 1 ? '1 consulta pagada' : `${pd.credits} consultas pagadas`}.`} ${a.text ? 'Tu pregunta está aquí: revísala y envíala.' : 'Escribe tu pregunta y envíala.'}${pd.unlimited && pd.portal ? ` <a href="${esc(pd.portal)}" target="_blank" rel="noopener">Gestionar suscripción</a>` : ''}</div>`;
   const EG = {
     cycle: ['Se me ha retrasado la regla, ¿qué hago?', 'Tengo mucho dolor con la regla, ¿es normal?', '¿Qué anticonceptivo me conviene?'],
@@ -1425,7 +1425,7 @@ function askSheet() {
   let freeOn = true; try { freeOn = localStorage.getItem('hera-free-left') !== '0' && !pd; } catch { /* sin almacenamiento */ }
   return sheetFrame('Consulta', `<div class="stack-14">
     ${paidBanner}
-    ${freeOn ? '<div class="ask-free"><span><b>Tus 2 primeras consultas son gratis.</b> Sin tarjeta y sin registro: solo tu correo para recibir la respuesta, en menos de 48 h.</span></div>' : ''}
+    ${freeOn ? '<div class="ask-free"><span><b>Tus 2 primeras consultas son gratis.</b> Sin tarjeta y sin registro: solo tu correo para recibir la respuesta, en menos de 24 h.</span></div>' : ''}
     ${a.context ? `<div><button class="ctx-tag" data-action="ask-clear-ctx" aria-label="Quitar el tema">Sobre: ${esc(a.context)} ${icon('x', 10)}</button></div>` : ''}
     <textarea class="field ask-text" data-model="ask.text" rows="4" maxlength="2000" placeholder="Escribe tu duda con tus palabras…">${esc(a.text)}</textarea>
     ${a.text ? '' : `<div class="ask-eg" aria-label="Dudas de ejemplo">${EG.map((t) => `<button class="ask-eg-b" data-action="ask-example">${esc(t)}</button>`).join('')}</div>`}

@@ -39,7 +39,7 @@ const body = `${STYLE}<div class="w wa">
 <section class="wa-hero">
   <p class="ey">Consulta por WhatsApp</p>
   <h1>Pregunta a tu ginecólogo, matrona o pediatra <em>por WhatsApp</em></h1>
-  <p class="wa-lead">Escribe tu duda a Gonzalo, Marina o Lucía y te responden por el mismo chat en menos de 48 h.</p>
+  <p class="wa-lead">Escribe tu duda a Gonzalo, Marina o Lucía y te responden por el mismo chat en menos de 24 h.</p>
   <ul class="wa-ticks"><li>${tick}Sin instalar nada</li><li>${tick}Tu número no lo ven las profesionales</li><li>${tick}Puedes mandar fotos</li></ul>
   <div class="wa-box" id="wa-box">
     <div class="wa-faces"><span><img src="/portada/equipo/gonzalo.jpg?v=2" alt=""><img src="/portada/equipo/marina.jpg?v=2" alt=""><img src="/portada/equipo/lucia.jpg?v=3" alt=""></span>Gonzalo, Marina o Lucía, tú eliges</div>
@@ -56,7 +56,7 @@ const body = `${STYLE}<div class="w wa">
 <ol class="wa-steps">
   <li><div><b>Pagas 9 €</b><span>En la página de pago. Te mandamos el código también por correo, por si cierras la página.</span></div></li>
   <li><div><b>Abres WhatsApp con tu código</b><span>El mensaje ya va escrito con tu código. Añade tu duda y dinos a quién se la preguntas.</span></div></li>
-  <li><div><b>Te responde la profesional</b><span>Por el mismo chat, en menos de 48 h. Si te queda algo, puedes contestar.</span></div></li>
+  <li><div><b>Te responde la profesional</b><span>Por el mismo chat, en menos de 24 h. Si te queda algo, puedes contestar.</span></div></li>
 </ol>
 
 <h2>Lo que conviene saber</h2>
@@ -105,7 +105,7 @@ const body = `${STYLE}<div class="w wa">
 
 const html = shell({
   title: 'Consulta por WhatsApp con ginecólogo, matrona o pediatra · Hera',
-  desc: 'Pregunta tu duda a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra) por WhatsApp y te responden por el mismo chat en menos de 48 h. 9 € la consulta.',
+  desc: 'Pregunta tu duda a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra) por WhatsApp y te responden por el mismo chat en menos de 24 h. 9 € la consulta.',
   path: '/whatsapp/',
   ld: { '@context': 'https://schema.org', '@type': 'Service', name: 'Consulta por WhatsApp con profesionales de Hera', provider: { '@type': 'Organization', name: 'Hera', url: 'https://hera-gine.com' },
     offers: [{ '@type': 'Offer', name: 'Consulta por WhatsApp', price: '9', priceCurrency: 'EUR' }] },

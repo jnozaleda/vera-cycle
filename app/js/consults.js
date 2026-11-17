@@ -19,10 +19,10 @@ export function addConsult({ id, to, text }) {
 export function markSeen(id) { write(read().map((c) => (c.id === id ? { ...c, seen: true } : c))); }
 export function clearConsults() { try { localStorage.removeItem(KEY); } catch { /* sin almacenamiento */ } }
 
-/** 'respondida' · 'pendiente' · 'fuera' (más de 48 h sin respuesta) */
+/** 'respondida' · 'pendiente' · 'fuera' (más de 24 h sin respuesta) */
 export function consultState(c) {
   if (c.a) return 'respondida';
-  return Date.now() - c.at > 48 * 3600000 ? 'fuera' : 'pendiente';
+  return Date.now() - c.at > 24 * 3600000 ? 'fuera' : 'pendiente';
 }
 
 /** La primera consulta respondida que aún no se ha visto en la app (para avisar en Hoy) */

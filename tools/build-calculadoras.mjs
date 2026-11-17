@@ -110,7 +110,7 @@ writeFileSync('calculadoras/index.html', shell({ title: 'Calculadoras de embaraz
   ld: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Calculadoras de Hera', inLanguage: 'es-ES', url: `${SITE}/calculadoras/` }, body: `${CSS}
 <div class="w"><div class="ih"><p class="ey">Calculadoras</p><h1>Tus cuentas, <em>en un momento</em></h1><p class="sub">Gratis y sin registro. El cálculo se hace en tu móvil: no guardamos ni enviamos tus datos.</p></div>
 <div class="cards3">${CALCS.map((c) => `<a class="cc" href="/calculadoras/${c.slug}/" style="background:${c.tint}"><b>${esc(c.h1)}</b><p>${esc(c.lead)}</p></a>`).join('')}</div>
-<div class="final"><div class="fin"><h2>¿Tienes una duda?</h2><p>Ginecólogo, matrona y pediatra te responden por escrito en menos de 48 h.</p><a class="btn" href="/#ask">Preguntar gratis</a></div></div></div>` }));
+<div class="final"><div class="fin"><h2>¿Tienes una duda?</h2><p>Ginecólogo, matrona y pediatra te responden por escrito en menos de 24 h.</p><a class="btn" href="/#ask">Preguntar gratis</a></div></div></div>` }));
 
 let sm = readFileSync('sitemap.xml', 'utf8').replace(/\s*<url><loc>[^<]*\/calculadoras\/[^<]*<\/loc><lastmod>[^<]*<\/lastmod><\/url>/g, '');
 const urls = ['/calculadoras/', ...CALCS.map((c) => `/calculadoras/${c.slug}/`)].map((u) => `  <url><loc>${SITE}${u}</loc><lastmod>${UPDATED}</lastmod></url>`).join('\n');

@@ -68,7 +68,7 @@ const body = `${STYLE}<div class="w vc">
   <div class="vc-note" id="vc-note" hidden aria-live="polite"></div>
 </section>
 <div class="vc-cards">${CARDS.map(card).join('')}</div>
-<div class="vc-free" id="gratis"><b>¿No sabes si necesitas una videollamada?</b><p>Pregúntalo gratis por escrito: te responde en menos de 48 h y te dice si te conviene hablarlo cara a cara. Tus 2 primeras consultas son gratis, sin tarjeta.</p>
+<div class="vc-free" id="gratis"><b>¿No sabes si necesitas una videollamada?</b><p>Pregúntalo gratis por escrito: te responde en menos de 24 h y te dice si te conviene hablarlo cara a cara. Tus 2 primeras consultas son gratis, sin tarjeta.</p>
   <div class="vc-free-l"><a href="/#preguntar-gineco">Preguntar a Gonzalo</a><a href="/#preguntar-matrona">Preguntar a Marina</a><a href="/#preguntar-pediatra">Preguntar a Lucía</a></div></div>
 
 <h2>Cómo funciona</h2>

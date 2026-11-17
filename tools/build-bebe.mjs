@@ -58,7 +58,7 @@ writeFileSync('bebe/index.html', shell({ title: 'Tu bebé mes a mes · Hera', de
   ld: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Tu bebé mes a mes', inLanguage: 'es-ES', url: `${SITE}/bebe/` }, body: `${CSS_EXTRA}
 <div class="w"><div class="ih"><p class="ey">Tu bebé</p><h1>Tu bebé, <em>mes a mes</em></h1><p class="sub">Qué hace, cuánto suele pesar y qué le toca durante su primer año. Y si tienes una duda, <a href="/#preguntar-pediatra">pregúntale a Lucía</a>.</p></div>
 ${groups.map(([a, b]) => `<section class="grp"><div class="grph" style="background:${tint(a)}"><h2>${STAGE(a)}</h2></div><div class="wgrid">${pages.filter((p) => p.m >= a && p.m <= b).map((p) => `<a href="/bebe/${p.slug}/"><b>${label(p.m)[0].toUpperCase()}${label(p.m).slice(1)}</b><span>${fmt(p.d.kg[0])}–${fmt(p.d.kg[1])} kg</span></a>`).join('')}</div></section>`).join('\n')}
-<div class="final"><div class="fin"><h2>¿Tienes una duda de tu bebé?</h2><p>Pediatra y matrona te responden por escrito en menos de 48 h.</p><a class="btn" href="/#ask">Preguntar gratis</a></div></div></div>` }));
+<div class="final"><div class="fin"><h2>¿Tienes una duda de tu bebé?</h2><p>Pediatra y matrona te responden por escrito en menos de 24 h.</p><a class="btn" href="/#ask">Preguntar gratis</a></div></div></div>` }));
 
 let sm = readFileSync('sitemap.xml', 'utf8').replace(/\s*<url><loc>[^<]*\/bebe\/[^<]*<\/loc><lastmod>[^<]*<\/lastmod><\/url>/g, '');
 const urls = ['/bebe/', ...pages.map((p) => `/bebe/${p.slug}/`)].map((u) => `  <url><loc>${SITE}${u}</loc><lastmod>${UPDATED}</lastmod></url>`).join('\n');

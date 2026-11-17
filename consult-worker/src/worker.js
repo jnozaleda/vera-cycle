@@ -26,7 +26,7 @@
 // lo que llegue a otras direcciones por la regla catch-all; si falta, se usa COPY_TO).
 //
 // Respuestas a través de Hera (relay.js): email() recibe lo que llega a hera-p-…/hera-u-… y lo reenvía al otro lado;
-// scheduled() avisa al profesional cuando una consulta lleva 40 h sin respuesta.
+// scheduled() avisa al profesional cuando una consulta lleva 16 h sin respuesta.
 
 import { validateAttachments } from './attachments.js';
 import { sendFeedbackDue, handleOpinion, feedbackEmail, feedbackSig } from './feedback.js';
@@ -85,9 +85,9 @@ export function proEmail(pro, q, id = '', relay = true) {
 ${q.context ? `<p style="font-size:13px;color:#6E6C67">Sobre: ${esc(q.context)}</p>` : ''}
 ${q.situation ? `<p style="font-size:13px;color:#6E6C67">Situación: ${nl2br(q.situation)}</p>` : ''}
 ${q.files ? `<p style="font-size:13px;color:#6E6C67">Incluye ${q.files} ${q.files === 1 ? 'archivo adjunto' : 'archivos adjuntos'}. Hera no los guarda: solo están en este correo.</p>` : ''}
-${relay ? `<p style="font-size:13px;color:#6E6C67"><b>Para contestar, responde a este correo</b> desde el móvil o el ordenador. Tu respuesta le llegará a la usuaria desde ${esc(pro.email)}: tu correo personal no se muestra. Si ella vuelve a escribir, te llegará en esta misma conversación. Plazo comprometido: 48 h.</p>`
-    : `<p style="font-size:13px;color:#6E6C67">Responde a este correo para contestar directamente a la usuaria (${esc(q.email)}). Plazo comprometido: 48 h.</p>`}`);
-  const text = `Nueva consulta para ${pro.name}\n\n${q.text}\n\n${q.context ? `Sobre: ${q.context}\n` : ''}${q.situation ? `Situación: ${q.situation}\n` : ''}\n${relay ? `Para contestar, responde a este correo: tu respuesta le llegará a la usuaria desde ${pro.email}, sin mostrar tu correo personal. Plazo: 48 h.` : `Responde a este correo para contestar a la usuaria (${q.email}).`}`;
+${relay ? `<p style="font-size:13px;color:#6E6C67"><b>Para contestar, responde a este correo</b> desde el móvil o el ordenador. Tu respuesta le llegará a la usuaria desde ${esc(pro.email)}: tu correo personal no se muestra. Si ella vuelve a escribir, te llegará en esta misma conversación. Plazo comprometido: 24 h.</p>`
+    : `<p style="font-size:13px;color:#6E6C67">Responde a este correo para contestar directamente a la usuaria (${esc(q.email)}). Plazo comprometido: 24 h.</p>`}`);
+  const text = `Nueva consulta para ${pro.name}\n\n${q.text}\n\n${q.context ? `Sobre: ${q.context}\n` : ''}${q.situation ? `Situación: ${q.situation}\n` : ''}\n${relay ? `Para contestar, responde a este correo: tu respuesta le llegará a la usuaria desde ${pro.email}, sin mostrar tu correo personal. Plazo: 24 h.` : `Responde a este correo para contestar a la usuaria (${q.email}).`}`;
   return { subject, html, text };
 }
 
@@ -96,13 +96,13 @@ export function confirmEmail(pro, q, remaining, id = '', unlimited = false, left
   const left = leftText || (unlimited ? 'Tienes consultas ilimitadas' : remaining === 0 ? 'Era tu última consulta gratuita' : `Te ${remaining === 1 ? 'queda 1 consulta gratuita' : `quedan ${remaining} consultas gratuitas`}`);
   const subject = `Tu consulta a ${pro.short} · Hera${id ? ` #${id.toUpperCase()}` : ''}`;
   const html = shell(`<p>Hola,</p>
-<p>Tu consulta ha llegado a <b>${esc(pro.name)}, ${esc(pro.role)}</b>. Te responderá en esta misma conversación en menos de 48 h.</p>
+<p>Tu consulta ha llegado a <b>${esc(pro.name)}, ${esc(pro.role)}</b>. Te responderá en esta misma conversación en menos de 24 h.</p>
 <div style="background:#F6E0E2;border-radius:10px;padding:12px;margin:12px 0;font-size:14px;color:#2F3631">«${esc(excerpt)}»${q.context ? `<br><span style="color:#6E6C67">Sobre: ${esc(q.context)}</span>` : ''}</div>
 <p><span style="display:inline-block;background:#ffffff;color:#45574C;border:1.5px solid #45574C;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600">${left}</span></p>
 <p style="font-size:13px;color:#6E6C67">¿Quieres añadir algo o enviar una foto? Responde a este correo y le llegará a ${esc(pro.short)}.</p>
 <p style="font-size:13px;color:#6E6C67">No es un servicio de urgencias. Si algo no va bien, llama al 112 o acude a tu centro de salud.</p>
 <p style="font-size:12px;color:#8A8A8E">¿No has escrito tú esta consulta? Escríbenos a contacto@hera-gine.com y la borramos.</p>`);
-  const text = `Tu consulta ha llegado a ${pro.name}, ${pro.role}. Te responderá en esta misma conversación en menos de 48 h.\n\n«${excerpt}»\n\n${left}.\n\n¿Quieres añadir algo o enviar una foto? Responde a este correo y le llegará a ${pro.short}.\n\nNo es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.\n¿No has escrito tú esta consulta? Escríbenos a contacto@hera-gine.com y la borramos.`;
+  const text = `Tu consulta ha llegado a ${pro.name}, ${pro.role}. Te responderá en esta misma conversación en menos de 24 h.\n\n«${excerpt}»\n\n${left}.\n\n¿Quieres añadir algo o enviar una foto? Responde a este correo y le llegará a ${pro.short}.\n\nNo es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.\n¿No has escrito tú esta consulta? Escríbenos a contacto@hera-gine.com y la borramos.`;
   return { subject, html, text };
 }
 
@@ -171,9 +171,9 @@ export function waPaidEmail(code) {
 <p style="margin:0;font-size:14px">Siguiente paso: escríbenos tu duda por WhatsApp con este código y dinos si quieres preguntársela a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra).</p></div>
 <p style="margin:18px 0"><a href="${link}" style="display:inline-block;background:#25803A;color:#ffffff;text-decoration:none;font-weight:600;border-radius:8px;padding:12px 20px">Abrir WhatsApp</a></p>
 <p style="font-size:14px">Si el botón no funciona, escribe al <b>+34 603 29 58 06</b> y pon tu código.</p>
-<p style="font-size:14px">La profesional te responde por el mismo chat en menos de 48 h. Tu número no lo ven las profesionales.</p>
+<p style="font-size:14px">La profesional te responde por el mismo chat en menos de 24 h. Tu número no lo ven las profesionales.</p>
 <p style="font-size:13px;color:#6E6C67">No es un servicio de urgencias. Si algo no va bien, llama al 112 (o al número de emergencias de tu país) o acude a tu centro de salud.</p>`);
-  const text = `Hola,\n\nHemos recibido tu pago de 9 € por una consulta por WhatsApp con Hera.\n\nTu código: ${code}\n\nSiguiente paso: escríbenos tu duda por WhatsApp con este código y dinos si quieres preguntársela a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra).\n\nAbrir WhatsApp: ${link}\nSi no funciona, escribe al +34 603 29 58 06 y pon tu código.\n\nLa profesional te responde por el mismo chat en menos de 48 h. Tu número no lo ven las profesionales.\nNo es un servicio de urgencias: si algo no va bien, llama al 112 (o al número de emergencias de tu país) o acude a tu centro de salud.`;
+  const text = `Hola,\n\nHemos recibido tu pago de 9 € por una consulta por WhatsApp con Hera.\n\nTu código: ${code}\n\nSiguiente paso: escríbenos tu duda por WhatsApp con este código y dinos si quieres preguntársela a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra).\n\nAbrir WhatsApp: ${link}\nSi no funciona, escribe al +34 603 29 58 06 y pon tu código.\n\nLa profesional te responde por el mismo chat en menos de 24 h. Tu número no lo ven las profesionales.\nNo es un servicio de urgencias: si algo no va bien, llama al 112 (o al número de emergencias de tu país) o acude a tu centro de salud.`;
   return { subject, html, text };
 }
 
@@ -210,7 +210,7 @@ export function holdEmail(pro, text, links, reminder = false, others = '') {
   const subject = reminder ? `¿Seguimos con tu consulta a ${pro.short}?` : `Tu consulta a ${pro.short} está guardada · falta el pago`;
   const html = reminder
     ? shell(`<p>Hola,</p><p>Tu consulta para ${esc(pro.short)} sigue guardada y esperando el pago:</p>${quote}${btn}<p style="font-size:14px">¿Te quedó alguna duda antes de pagar? Responde a este correo y te contestamos.</p><p style="font-size:13px;color:#6E6C67">Es el único recordatorio. Si no pagas, la borramos en ${HOLD_DAYS} días.</p>`)
-    : shell(`<p>Hola,</p><p>${esc(why)}, así que hemos <b>guardado tu consulta</b> para ${esc(pro.name)}, ${esc(pro.role)}:</p>${quote}<p>Para que le llegue, solo falta el pago. En cuanto pagues, se la enviamos y te responde en menos de 48 h; no tienes que volver a escribirla.</p>${btn}<p style="font-size:14px">¿Vas a preguntar más veces? <a href="${links.bono}" style="color:#45574C;font-weight:600">Bono de 5 consultas por 35 €</a> o <a href="${links.mensual}" style="color:#45574C;font-weight:600">ilimitado por 15 € al mes</a>.</p><p style="font-size:13px;color:#6E6C67">Si no pagas en ${HOLD_DAYS} días, borramos tu consulta. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.</p>`);
+    : shell(`<p>Hola,</p><p>${esc(why)}, así que hemos <b>guardado tu consulta</b> para ${esc(pro.name)}, ${esc(pro.role)}:</p>${quote}<p>Para que le llegue, solo falta el pago. En cuanto pagues, se la enviamos y te responde en menos de 24 h; no tienes que volver a escribirla.</p>${btn}<p style="font-size:14px">¿Vas a preguntar más veces? <a href="${links.bono}" style="color:#45574C;font-weight:600">Bono de 5 consultas por 35 €</a> o <a href="${links.mensual}" style="color:#45574C;font-weight:600">ilimitado por 15 € al mes</a>.</p><p style="font-size:13px;color:#6E6C67">Si no pagas en ${HOLD_DAYS} días, borramos tu consulta. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.</p>`);
   const text2 = reminder
     ? `Hola,\n\nTu consulta para ${pro.short} sigue guardada y esperando el pago:\n\n«${excerpt}»\n\nPagar 9 € y enviarla: ${links.suelta}\n\n¿Te quedó alguna duda antes de pagar? Responde a este correo.\nEs el único recordatorio. Si no pagas, la borramos en ${HOLD_DAYS} días.`
     : `Hola,\n\n${why}, así que hemos guardado tu consulta para ${pro.name}, ${pro.role}:\n\n«${excerpt}»\n\nPara que le llegue, solo falta el pago. En cuanto pagues, se la enviamos; no tienes que volver a escribirla.\n\nPagar 9 € y enviarla: ${links.suelta}\nBono de 5 por 35 €: ${links.bono}\nIlimitado por 15 € al mes: ${links.mensual}\n\nSi no pagas en ${HOLD_DAYS} días, borramos tu consulta. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.`;
@@ -292,11 +292,11 @@ export function relayEmail(pro, role, id, body, nAttach, rate = null, invite = n
   return { html, text };
 }
 
-/** Aviso al profesional cuando una consulta lleva 40 h sin respuesta */
+/** Aviso al profesional cuando una consulta lleva 16 h sin respuesta */
 export function reminderEmail(pro, id) {
-  const html = shell(`<p>Hola, ${esc(pro.short)}:</p><p>La consulta <b>#${id.toUpperCase()}</b> lleva 40 horas sin respuesta y el plazo que damos a las usuarias es de 48 h.</p>
+  const html = shell(`<p>Hola, ${esc(pro.short)}:</p><p>La consulta <b>#${id.toUpperCase()}</b> lleva 16 horas sin respuesta y el plazo que damos a las usuarias es de 24 h.</p>
 <p>Puedes responder a este mismo correo y le llegará a ella.</p>`);
-  return { html, text: `Hola, ${pro.short}: la consulta #${id.toUpperCase()} lleva 40 horas sin respuesta (plazo: 48 h). Puedes responder a este mismo correo y le llegará a la usuaria.` };
+  return { html, text: `Hola, ${pro.short}: la consulta #${id.toUpperCase()} lleva 16 horas sin respuesta (plazo: 24 h). Puedes responder a este mismo correo y le llegará a la usuaria.` };
 }
 
 // MARK: - Medición de uso
@@ -863,7 +863,7 @@ const handler = {
     }
   },
 
-  /** Cada hora: recordatorio al profesional si una consulta lleva 40 h sin respuesta */
+  /** Cada hora: recordatorio al profesional si una consulta lleva 16 h sin respuesta */
   async scheduled(event, env) {
     await remindOverdue(env);
     await sendFeedbackDue(env, sendMail, PROS);
@@ -946,7 +946,7 @@ async function openThreads(env) {
       const tt = await loadThread(env, k.name.slice(2));
       if (tt && await answeredTwin(env, tt)) continue;
       out.pendientes[m.p] = (out.pendientes[m.p] || 0) + 1;
-      if (Date.now() - m.c > 48 * 3600000) out.fuera_plazo[m.p] = (out.fuera_plazo[m.p] || 0) + 1;
+      if (Date.now() - m.c > 24 * 3600000) out.fuera_plazo[m.p] = (out.fuera_plazo[m.p] || 0) + 1;
     }
     cursor = page.list_complete ? null : page.cursor;
   } while (cursor);
@@ -976,7 +976,7 @@ export async function remindOverdue(env) {
     const page = await env.KV.list({ prefix: 't:', cursor });
     for (const k of page.keys) {
       const m = k.metadata || {};
-      if (!m.p || m.a || m.r || Date.now() - m.c < 40 * 3600000) continue;
+      if (!m.p || m.a || m.r || Date.now() - m.c < 16 * 3600000) continue;
       const t = await loadThread(env, k.name.slice(2));
       if (!t || t.a || t.rem) continue;
       const pro = PROS[t.p] || (t.p === 'prueba' && env.COPY_TO ? { short: 'Prueba', email: env.COPY_TO } : null);

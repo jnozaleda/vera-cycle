@@ -299,7 +299,7 @@ export async function panel(env, url, openThreads) {
   const chips = [
     fails.length ? `<a class="chip red" href="#fallos" style="text-decoration:none">${fails.length === 1 ? '1 correo no ha llegado' : `${fails.length} correos no han llegado`}${bounced < fails.length ? ` (${fails.length - bounced} retrasado${fails.length - bounced === 1 ? '' : 's'})` : ''}</a>` : '',
     pendientes ? `<span class="chip warn">${pendientes} ${pendientes === 1 ? 'consulta esperando' : 'consultas esperando'} respuesta: ${pendBy.join(' · ')}</span>` : '<span class="chip ok">Ninguna consulta esperando respuesta</span>',
-    late ? `<span class="chip red">${late} fuera de plazo (más de 48 h)</span>` : pendientes ? '<span class="chip ok">Ninguna fuera de plazo (48 h)</span>' : '',
+    late ? `<span class="chip red">${late} fuera de plazo (más de 24 h)</span>` : pendientes ? '<span class="chip ok">Ninguna fuera de plazo (24 h)</span>' : '',
     sinCorreo ? `<span class="chip red">${sinCorreo} ${sinCorreo === 1 ? 'pulsó' : 'pulsaron'} enviar sin poner correo</span>` : '',
     errores ? `<span class="chip red">${errores === 1 ? '1 envío falló' : `${errores} envíos fallaron`} (servicio o conexión)</span>` : '',
     guardadas ? `<span class="chip warn">${guardadas === 1 ? '1 consulta guardada' : `${guardadas} consultas guardadas`} sin pagar</span>` : '',
@@ -472,7 +472,7 @@ ${fun}${funNote ? `<p class="mute" style="margin-top:6px">${funNote}</p>` : ''}<
 <div class="card"><h2>Consultas por profesional</h2>
 <table><tr><th></th><th>Enviadas</th><th>Resp.</th><th>Media</th><th>Esperan</th></tr>
 ${PROS.map(([k2, name]) => { const r = g(`respondida:${k2}`); const fp = (open.fuera_plazo || {})[k2] || 0; return `<tr><td>${name}</td>${td(g(`consulta:${k2}`))}${td(r)}<td>${r ? `${Math.round(g(`resp_horas:${k2}`) / r)} h` : '—'}</td><td${fp ? ' class="late"' : (open.pendientes || {})[k2] ? '' : ' class="zero"'}>${(open.pendientes || {})[k2] || 0}</td></tr>`; }).join('')}
-</table>${late ? '<p class="mute late" style="margin-top:8px">En rojo: alguna de más de 48 h sin responder.</p>' : ''}</div>
+</table>${late ? '<p class="mute late" style="margin-top:8px">En rojo: alguna de más de 24 h sin responder.</p>' : ''}</div>
 <div class="card"><h2>Lo que se mueve</h2>
 <table>
 <tr><td>Vieron la página de videollamada</td>${td(g('video_pagina') + sum('video_pagina:'))}</tr>

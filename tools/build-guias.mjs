@@ -128,7 +128,7 @@ writeFileSync('guias/index.html', shell({ title: 'Guías de embarazo, posparto y
   ld: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Guías de Hera', inLanguage: 'es-ES', url: `${SITE}/guias/` }, body: `
 <div class="w"><div class="ih"><p class="ey">Guías</p><h1>Las dudas de cada etapa, <em>con una respuesta clara</em></h1><p class="sub">Para orientarte. Y si tu caso es distinto, <a href="/#ask">pregúntanos</a>.</p></div>
 ${groups.map((g) => `<section class="grp"><div class="grph" style="background:${TINT[g]}"><h2>${esc(g)}</h2><p>${SUB[g]}</p></div><div class="gcs">${pages.filter((p) => p.group === g).map(card).join('')}</div></section>`).join('\n')}
-<div class="final"><div class="fin"><h2>¿No encuentras tu duda?</h2><p>Ginecólogo, matrona y pediatra te responden por escrito en menos de 48 h.</p><a class="btn" href="/#ask">Preguntar gratis</a></div></div></div>` }));
+<div class="final"><div class="fin"><h2>¿No encuentras tu duda?</h2><p>Ginecólogo, matrona y pediatra te responden por escrito en menos de 24 h.</p><a class="btn" href="/#ask">Preguntar gratis</a></div></div></div>` }));
 
 let sm = readFileSync('sitemap.xml', 'utf8').replace(/\s*<url><loc>[^<]*\/guias\/[^<]*<\/loc><lastmod>[^<]*<\/lastmod><\/url>/g, '');
 const urls = ['/guias/', ...pages.map((p) => `/guias/${p.slug}/`)].map((u) => `  <url><loc>${SITE}${u}</loc><lastmod>${(pages.find((p) => u === `/guias/${p.slug}/`) || {}).updated || UPDATED}</lastmod></url>`).join('\n');

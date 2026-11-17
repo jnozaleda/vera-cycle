@@ -53,12 +53,12 @@ export const face = (pro) => `<img src="/portada/equipo/${pro.photo}" alt="" wid
 
 
 /** Recuadro «¿Tienes una duda?» con varias profesionales: [clave, temas] */
-export const askBox = (title, list, extra = '') => `<aside class="ask2"><h2>${esc(title)}</h2>${list.map(([k, topics]) => { const pr = PRO[k]; return `<div class="pro">${face(pr)}<b>${pr.name} · ${pr.role}</b><span>${esc(topics)}</span><a href="/#preguntar-${k}">Preguntar a ${pr.name}</a></div>`; }).join('')}<small>Te responden por escrito en menos de 48 h. Tus dos primeras consultas son gratis, sin nombre ni registro.</small>${extra}</aside>`;
+export const askBox = (title, list, extra = '') => `<aside class="ask2"><h2>${esc(title)}</h2>${list.map(([k, topics]) => { const pr = PRO[k]; return `<div class="pro">${face(pr)}<b>${pr.name} · ${pr.role}</b><span>${esc(topics)}</span><a href="/#preguntar-${k}">Preguntar a ${pr.name}</a></div>`; }).join('')}<small>Te responden por escrito en menos de 24 h. Tus dos primeras consultas son gratis, sin nombre ni registro.</small>${extra}</aside>`;
 
 /** Barra fija en el móvil para preguntar: una o dos profesionales (con dos, va al formulario sin elegir) */
 export const stickyAsk = (keys, title) => {
   const pros = keys.map((k) => PRO[k]);
-  const who = pros.length === 1 ? `${pros[0].name} te responde en 48 h` : `${pros.map((x) => x.name).join(' y ')}, en 48 h`;
+  const who = pros.length === 1 ? `${pros[0].name} te responde en 24 h` : `${pros.map((x) => x.name).join(' y ')}, en 24 h`;
   const href = keys.length === 1 ? `/#preguntar-${keys[0]}` : '/#ask';
   return `<a class="stick" href="${href}">${pros.map((x) => face(x)).join('')}<span><b>${esc(title)}</b>${who}</span><em>Preguntar</em></a><script>document.body.classList.add('has-stick')</script>`;
 };

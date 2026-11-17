@@ -101,7 +101,7 @@ n0 = sent.length;
 rr = await relayIncoming(env, await loadThread(env, tid), 'u', mime('maria.lopez@gmail.com', uAddr, '¿Y si sangra?'));
 assert.ok(rr.ok); assert.equal(sent[n0].to[0], 'marina@hera-gine.com'); assert.equal(sent[n0].reply_to, pAddr);
 assert.ok(sent[n0].headers.References.split(' ').length >= 2, 'el hilo del profesional incluye el aviso original y su propia respuesta');
-// recordatorio a las 40 h
+// recordatorio a las 16 h
 await call('/ask', { ...q, email: 'nueva@x.com', to: 'gineco' });
 const old = [...store.keys()].filter((k) => k.startsWith('t:')).map((k) => [k, JSON.parse(store.get(k))]).find(([, v]) => v.p === 'gineco');
 old[1].c = Date.now() - 41 * 3600000; await KV.put(old[0], JSON.stringify(old[1]), { metadata: { p: 'gineco', c: old[1].c, a: 0, r: 0 } });
@@ -359,7 +359,7 @@ console.log('consultas: OK');
   await saveThread(env, { ...base, id: 'solo0003', uh: 'ffffffffffffffffffffffff', c: old, a: 0 });
   await saveThread(env, { ...base, id: 'late0004', c: old - 5 * 3600000, a: 0 }); // misma usuaria, 5 h antes: otra duda, sí recordatorio
   const n0 = sent.length; await remindOverdue(env);
-  const rem = sent.slice(n0).filter((m) => /lleva 40 horas/.test(m.text || ''));
+  const rem = sent.slice(n0).filter((m) => /lleva 16 horas/.test(m.text || ''));
   assert.ok(rem.some((m) => /SOLO0003/.test(m.text)), 'la consulta sin respuesta sí recibe recordatorio');
   assert.ok(!rem.some((m) => /TWIN0002/.test(m.text)), 'la duplicada ya respondida en el otro hilo, no');
   assert.ok(rem.some((m) => /LATE0004/.test(m.text)), 'si la otra se envió horas antes, es otra duda: sí recordatorio');

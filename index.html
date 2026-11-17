@@ -452,7 +452,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
           <button type="button">Mi bebé tiene fiebre, ¿qué hago?</button>
           <button type="button">Tengo sofocos por la noche, ¿es normal?</button>
         </div>
-        <p class="priv"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span><b>Privada.</b> No se publica en ningún sitio y la profesional no ve tu correo: solo lo usamos para enviarte su respuesta.</span></p>
+        <p class="priv"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span><b>Privada.</b> La profesional no ve tu correo.</span></p>
         <div class="more" id="ask-more" hidden>
           <fieldset class="picks">
             <legend>¿A quién se lo preguntas?</legend>
@@ -469,7 +469,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
             <p class="err" id="ask-file-err" hidden></p>
             <p class="fine" id="ask-file-note"></p>
           </div>
-          <label class="fld-ck"><input type="checkbox" id="ask-follow"><span>Quiero que Hera me haga seguimiento si la respuesta no me deja satisfecha.</span></label>
+          <label class="fld-ck"><input type="checkbox" id="ask-follow"><span>Quiero seguimiento si la respuesta no me sirve.</span></label>
           <input class="hp" id="ask-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
           <p class="err" id="ask-err" role="alert" hidden></p>
         </div>
@@ -480,7 +480,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         <a class="wabtn2" id="ask-wa-pay" href="whatsapp/"><b><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5 5 16a8.5 8.5 0 1 1 3.2 3.1z"/></svg>Enviar por WhatsApp · 9 €</b><small>Respuesta en menos de 12&nbsp;h</small></a>
         <a class="linkplans linkvideo" id="ask-video" href="videollamada/?de=web">¿Prefieres hablarlo cara a cara? Videollamada</a>
         <p class="churg2">Si es urgente, ve a urgencias.</p>
-        <p class="fine" id="ask-fine" hidden>Te escribiremos una vez para saber si te ayudó. No es para urgencias. <a href="privacy.html#consultas">Cómo tratamos tus datos</a>.</p>
+        <p class="fine" id="ask-fine" hidden>Consulta <a href="privacy.html#consultas">cómo tratamos tus datos</a>.</p>
       </form>
       <div class="done" id="ask-done" hidden aria-live="polite"></div>
       </div>
@@ -724,7 +724,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   // (2 gratuitas por correo, campo trampa, límite de envíos). Nada viaja en la URL.
   import { suggestContact } from './app/js/contacts.js';
   import { addConsult } from './app/js/consults.js';
-  import { addFiles, filesPayload, ATTACH_NOTE } from './app/js/attach.js';
+  import { addFiles, filesPayload } from './app/js/attach.js';
   import { CONSULT_ATTACH } from './app/js/config.js';
   import { isBeta } from './app/js/beta.js';
   import { device, isTeam, setTeam } from './app/js/track.js';
@@ -852,7 +852,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   let files = [];
   if (CONSULT_ATTACH || isBeta()) {
     $('ask-files').hidden = false;
-    $('ask-file-note').textContent = `Hasta 3 archivos y 10 MB. ${ATTACH_NOTE} Hera no los guarda: solo llegan a la profesional.`;
+    $('ask-file-note').textContent = 'Hasta 3 archivos (10 MB). Que no salga tu cara, tu nombre ni tu DNI.';
     const drawFiles = (error = '') => {
       const list = $('ask-file-list'); list.textContent = '';
       files.forEach((f, i) => {

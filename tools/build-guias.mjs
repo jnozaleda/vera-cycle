@@ -5,6 +5,7 @@ import { PREGNANCY_GUIDE, POSTPARTUM_GUIDE } from '../app/js/guide.js';
 import { SITE, PRO, esc, shell, face, askBox, stickyAsk } from './web-shell.mjs';
 import { VISUAL, REVIEWED } from './data/guias-visual.mjs';
 import { BABY_WEB } from './data/guias-bebe.mjs';
+import { GINE_WEB } from './data/guias-gine.mjs';
 
 const UPDATED = '2026-10-31';
 // [pregunta en la app, slug, título para buscadores, profesional, grupo, resumen para las tarjetas]
@@ -45,10 +46,10 @@ const EXTRA = {
   },
 };
 // Guías solo de la web (tools/data/guias-bebe.mjs): su texto, su ampliación y su formato visual van juntos
-for (const g of BABY_WEB) { PAGES.push(g.page); if (g.x) EXTRA[g.page[1]] = g.x; if (g.v) VISUAL[g.page[1]] = g.v; }
-const all = [...PREGNANCY_GUIDE, ...POSTPARTUM_GUIDE].flatMap((s) => s.items).concat(BABY_WEB.map((g) => ({ q: g.page[0], a: g.a })));
-const TINT = { Embarazo: '#DCEBE4', Posparto: '#E4E2F4', 'Tu bebé': '#F6E0E2' };
-const SUB = { Embarazo: 'De la primera falta a la bolsa del hospital.', Posparto: 'Tu recuperación después del parto.', 'Tu bebé': 'Fiebre, sueño, piel, comida y primeros meses.' };
+for (const g of [...BABY_WEB, ...GINE_WEB]) { PAGES.push(g.page); if (g.x) EXTRA[g.page[1]] = g.x; if (g.v) VISUAL[g.page[1]] = g.v; }
+const all = [...PREGNANCY_GUIDE, ...POSTPARTUM_GUIDE].flatMap((s) => s.items).concat([...BABY_WEB, ...GINE_WEB].map((g) => ({ q: g.page[0], a: g.a })));
+const TINT = { Regla: '#F3E3DA', Embarazo: '#DCEBE4', Posparto: '#E4E2F4', 'Tu bebé': '#F6E0E2', Menopausia: '#EFE6D3' };
+const SUB = { Regla: 'Retrasos, sangrados y anticoncepción.', Menopausia: 'Síntomas, edad y cuándo consultar.', Embarazo: 'De la primera falta a la bolsa del hospital.', Posparto: 'Tu recuperación después del parto.', 'Tu bebé': 'Fiebre, sueño, piel, comida y primeros meses.' };
 const plain = (a) => a.flat().join(' ');
 /** La primera frase va destacada; el resto del texto no cambia */
 function answer(a) {
@@ -60,6 +61,8 @@ function answer(a) {
 }
 // Quién aparece en el recuadro para preguntar, según la etapa (la autora de la guía va primero)
 const TOPICS = {
+  Regla: { gineco: 'Regla, ciclo y anticoncepción' },
+  Menopausia: { gineco: 'Sofocos, sangrados y tratamientos' },
   Embarazo: { gineco: 'Embarazo, pruebas y medicación', matrona: 'Síntomas, cuidados y parto' },
   Posparto: { matrona: 'Recuperación, puntos y lactancia', gineco: 'Revisión, regla y anticoncepción' },
   'Tu bebé': { pediatra: 'Fiebre, sueño, piel y desarrollo', matrona: 'Lactancia y cuidados del recién nacido' },
@@ -124,7 +127,7 @@ ${askBox('¿Tu caso es distinto?', askFor(p))}</div>
 }
 const groups = Object.keys(TINT);
 mkdirSync('guias', { recursive: true });
-writeFileSync('guias/index.html', shell({ title: 'Guías de embarazo, posparto y bebé · Hera', desc: 'Respuestas claras a las dudas más frecuentes del embarazo, el posparto y los primeros meses de tu bebé.', path: '/guias/',
+writeFileSync('guias/index.html', shell({ title: 'Guías de regla, embarazo, posparto, bebé y menopausia · Hera', desc: 'Respuestas claras a las dudas más frecuentes de la regla, la anticoncepción, el embarazo, el posparto, los primeros meses de tu bebé y la menopausia.', path: '/guias/',
   ld: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Guías de Hera', inLanguage: 'es-ES', url: `${SITE}/guias/` }, body: `
 <div class="w"><div class="ih"><p class="ey">Guías</p><h1>Las dudas de cada etapa, <em>con una respuesta clara</em></h1><p class="sub">Para orientarte. Y si tu caso es distinto, <a href="/#ask">pregúntanos</a>.</p></div>
 ${groups.map((g) => `<section class="grp"><div class="grph" style="background:${TINT[g]}"><h2>${esc(g)}</h2><p>${SUB[g]}</p></div><div class="gcs">${pages.filter((p) => p.group === g).map(card).join('')}</div></section>`).join('\n')}

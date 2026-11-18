@@ -287,7 +287,7 @@ export async function panel(env, url, openThreads) {
   const eur = pagos.reduce((a, [k2, x]) => a + net(k2, x) * PLAN_EUR[k2.slice(5)], 0);
   const nVideo = net('pago:video', g('pago:video')) + net('pago:lactancia', g('pago:lactancia')) + net('pago:llamada', g('pago:llamada'));
   // Origen de cada persona-día: anuncio España, anuncio Latinoamérica, enlace propio (?via=, invitación) o sin etiqueta
-  const VIA_NAME = { ig_marina: 'Instagram de Marina', wa_guia: 'Guías por WhatsApp' };
+  const VIA_NAME = { ig_marina: 'Instagram de Marina', wa_guia: 'Guías por WhatsApp', reddit_gonzalo: 'Reddit de Gonzalo' };
   const viaOf = (v) => { for (const r of v) { const m = /^via_visita:([a-z0-9_]+)$/.exec(r.e); if (m) return m[1]; } return ''; };
   const srcOf = (k2, v) => (AD.has(k2) ? 'es' : LATAM.has(k2) ? 'la' : viaOf(v) ? `via:${viaOf(v)}` : v.some((r) => is(r.e, ['invitacion_visita', 'consulta_invitada'])) ? 'inv' : 'ot');
   const people = [...byKey].map(([k2, v]) => ({ k: k2, v, src: srcOf(k2, v) }));

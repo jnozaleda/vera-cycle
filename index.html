@@ -960,7 +960,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         'Lucía, pediatra', ['Mi bebé tiene fiebre, ¿qué hago?', 'Mi bebé no hace caca desde hace 2 días', 'Tiene granitos en la cara']],
     };
     // Enlaces de canal de una profesional: su titular y ella ya elegida (ig_marina → Marina)
-    const VIA_PRO = { ig_marina: 'matrona' };
+    const VIA_PRO = { ig_marina: 'matrona', reddit_gonzalo: 'gineco' };
     const camp = (new URLSearchParams(location.search).get('utm_campaign') || '').toLowerCase().replace(/(_resto)?_latam$/, '') || VIA_PRO[via0] || ''; // gineco_latam (Argentina) y gineco_resto_latam (México, Chile y Colombia) → gineco
     const page = AD_PAGE[camp];
     if (page) {

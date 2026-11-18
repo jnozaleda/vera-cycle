@@ -63,6 +63,7 @@ header.top { position: sticky; top: 0; z-index: 10; background: color-mix(in srg
 .mnav::-webkit-scrollbar { display: none; }
 .mnav a { flex: none; font: 600 14px/1 'Inter', sans-serif; color: var(--plum); text-decoration: none; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 9px 14px; }
 .mnav a.hl { background: #F6E0E2; border-color: #E8C9CC; }
+.mnav a.gu { display: inline-flex; align-items: center; gap: 6px; background: #F6E0E2; border-color: #E8C9CC; }
 .mnav a.wa { display: inline-flex; align-items: center; gap: 6px; color: #1E6B30; border-color: #BFDCC6; background: #EEF7F0; }
 @media (min-width: 900px) { .mnav { display: none; } }
 .nav a { text-decoration: none; color: var(--text); }
@@ -165,6 +166,16 @@ section { padding: 64px 0; }
 .wabtn2 { display: grid; gap: 3px; justify-items: center; text-align: center; background: #F1F8F2; border: 1.5px solid #25803A; color: #1E6B30; border-radius: 8px; padding: 12px 14px; text-decoration: none; }
 .wabtn2:hover { background: #E4F2E7; }
 .wabtn2 s.old { font-weight: 500; opacity: .6; } .wabtn2 .bf { font: 600 10.5px/1 'Inter', sans-serif; letter-spacing: .04em; text-transform: uppercase; color: #fff; background: #1E6B30; border-radius: 99px; padding: 3px 7px; margin-right: 6px; vertical-align: 1px; }
+.gsug { display: flex; gap: 10px; align-items: center; text-align: left; border: 1.5px solid #E8C9CC; background: #FBF1F2; border-radius: 10px; padding: 10px 12px; margin: 4px 0 14px; text-decoration: none; color: var(--ink); }
+.gsug .gi { flex: none; width: 32px; height: 32px; border-radius: 8px; background: #fff; color: var(--plum); display: flex; align-items: center; justify-content: center; }
+.gsug small { display: block; font: 600 10.5px/1.3 'Inter', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: #8A6D3B; }
+.gsug b { display: block; font-size: 14px; line-height: 1.3; } .gsug .m { font-size: 12px; color: var(--muted); } .gsug .ar { margin-left: auto; font-size: 22px; color: var(--plum); }
+.gl-h { font: 600 11px/1 'Inter', sans-serif; letter-spacing: .08em; text-transform: uppercase; color: #8A6D3B; margin: 14px 0 6px; }
+.gl { list-style: none; margin: 0; padding: 0; background: #fff; border-radius: 10px; border: 1px solid var(--line); }
+.gl li + li { border-top: 1px solid #EFECE4; }
+.gl a { display: flex; align-items: center; gap: 8px; padding: 10px 12px; font-size: 14px; font-weight: 500; color: var(--ink); text-decoration: none; }
+.gl a svg { flex: none; color: #8A6D3B; } .gl a::after { content: "›"; margin-left: auto; color: var(--muted); font-size: 18px; }
+.gl-more { display: inline-block; margin-top: 8px; font-size: 13.5px; color: var(--plum); }
 .ask.sending .wabtn2 { opacity: .45; pointer-events: none; }
 .wabtn2 b { display: flex; gap: 8px; align-items: center; font: 600 16px/1.2 'Inter', sans-serif; white-space: nowrap; }
 .wabtn2 small { font-size: 13px; }
@@ -428,9 +439,9 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
 </header>
 <nav class="wrap mnav" aria-label="Accesos">
   <a class="wa" href="whatsapp/" data-cta="clic:mnav_whatsapp"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5 5 16a8.5 8.5 0 1 1 3.2 3.1z"/></svg>WhatsApp</a>
+  <a class="gu" href="guias/" data-cta="clic:mnav_guias"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>Guías</a>
   <a href="videollamada/" data-cta="clic:mnav_llamada">Llamada y videollamada</a>
   <a href="equipo.html" data-cta="clic:mnav_equipo">Profesionales</a>
-  <a href="guias/" data-cta="clic:mnav_guias">Guías</a>
   <a class="hl" href="#precio" data-cta="clic:mnav_precios">Precios</a>
 </nav>
 
@@ -539,12 +550,17 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         <div class="tile" style="background-image:url('portada/fluido/seda-melocoton.webp')" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="6.5"/><path d="M9 6.8c.9-1.7 2.4-2.8 4.5-3"/></svg></div>
         <h3>Embarazo</h3>
         <p>Cómo crece tu bebé semana a semana, con ilustración, ecografía y modelo 3D; las pruebas de cada trimestre; lo normal en cada momento y un registro de contracciones al final.</p>
+        <p class="gl-h">Guías gratis</p>
+        <ul class="gl"><li><a href="guias/nauseas-en-el-embarazo/" data-cta="clic:guia_etapa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>Náuseas en el embarazo</a></li><li><a href="guias/contracciones-de-braxton-hicks/" data-cta="clic:guia_etapa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>Contracciones de Braxton Hicks</a></li><li><a href="guias/cuando-ir-al-hospital-de-parto/" data-cta="clic:guia_etapa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>Cuándo ir al hospital de parto</a></li></ul>
         <div class="shot"><img src="portada/etapa-embarazo.jpg" width="560" height="1213" loading="lazy" alt="Hera en el embarazo: semana 20, segundo trimestre"></div>
       </div>
       <div class="stage lav">
         <div class="tile" style="background-image:url('portada/fluido/seda-musgo.webp');background-size:400%;background-position:35% 50%" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="4"/><path d="M5 20c1.2-3.4 3.8-5 7-5s5.8 1.6 7 5"/></svg></div>
         <h3>Posparto y tu bebé</h3>
         <p>Tu recuperación, la lactancia y el suelo pélvico. Y el primer año de tu bebé: lo normal a su edad, su peso, el sueño, las vacunas y cuándo ir a urgencias.</p>
+        <p class="gl-h">Guías gratis</p>
+        <ul class="gl"><li><a href="guias/bebe-llora-mucho-colicos/" data-cta="clic:guia_etapa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>Mi bebé llora mucho, ¿son cólicos?</a></li><li><a href="guias/estrenimiento-bebe/" data-cta="clic:guia_etapa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>Estreñimiento en el bebé</a></li><li><a href="guias/subida-de-la-leche/" data-cta="clic:guia_etapa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>Subida de la leche</a></li></ul>
+        <a class="gl-more" href="guias/" data-cta="clic:guia_etapa_todas">Ver las 23 guías</a>
         <div class="shot"><img src="portada/etapa-posparto.jpg" width="560" height="1213" loading="lazy" alt="Hera en el posparto: 4 semanas desde el parto"></div>
       </div>
       <div class="stage sand">
@@ -984,6 +1000,39 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   });
 
   function swap(html) { form.hidden = true; done.innerHTML = html; done.hidden = false; if (chat) chat.panel(); else box.scrollIntoView({ block: 'nearest' }); }
+  // Guía relacionada en «Consulta enviada» (18 nov): solo después de enviar, para no quitarle consultas a la caja.
+  // [guía, título, profesionales, palabras (sin tildes)]. La primera que coincide; si ninguna, no sale nada.
+  const GUIDES = [
+    ['bebe-llora-mucho-colicos', 'Mi bebé llora mucho, ¿son cólicos?', 'pediatra', /colic|llora mucho|llanto|no para de llorar/],
+    ['estrenimiento-bebe', 'Estreñimiento en el bebé: ¿cuándo preocuparse?', 'pediatra', /estren|no hace caca|no hace popo|caca dura|no ha hecho caca/],
+    ['bebe-con-fiebre-que-hago', 'Mi bebé tiene fiebre, ¿qué hago?', 'pediatra', /fiebre|temperatura|febre/],
+    ['denticion-bebe-sintomas', 'Dentición del bebé: síntomas y cómo aliviarla', 'pediatra', /dient|dentic|encias/],
+    ['costra-lactea-bebe', 'Costra láctea en el bebé', 'pediatra', /costra/],
+    ['granitos-cara-bebe', 'Granitos en la cara del bebé: ¿son normales?', 'pediatra', /granit|sarpull|acne|ronchas/],
+    ['bebe-amarillo-ictericia', 'Mi bebé está amarillo, ¿es normal?', 'pediatra', /amarill|ictericia/],
+    ['alimentacion-complementaria', 'Alimentación complementaria: cuándo y cómo empezar', 'pediatra', /complementaria|papilla|blw|pure|ablactacion|empezar a comer/],
+    ['bebe-no-quiere-comer', 'Mi bebé no quiere comer, ¿qué hago?', 'pediatra', /no quiere comer|no come|come poco|rechaza/],
+    ['como-duerme-seguro-un-bebe', '¿Cómo duerme seguro un bebé?', 'pediatra', /duerm|dormir|sueno|colecho|cuna/],
+    ['crisis-de-lactancia', 'Crisis de lactancia: qué son y cuánto duran', 'matrona pediatra', /crisis/],
+    ['subida-de-la-leche', 'Subida de la leche: cuándo llega y cómo aliviarla', 'matrona', /subida|ingurgit|pechos duros|leche/],
+    ['como-saber-si-he-roto-aguas', '¿Cómo sé si he roto aguas?', 'matrona gineco', /roto aguas|romper aguas|bolsa|liquido/],
+    ['contracciones-de-braxton-hicks', '¿Qué son las contracciones de Braxton Hicks?', 'matrona gineco', /braxton|contraccion|barriga dura|tripa dura/],
+    ['cuando-ir-al-hospital-de-parto', '¿Cuándo tengo que ir al hospital de parto?', 'matrona', /hospital|ir al parto|cuando voy/],
+    ['cuanto-dura-el-sangrado-despues-del-parto', '¿Cuánto dura el sangrado después del parto?', 'matrona gineco', /loquios|cuarentena|sangr[a-z]* (despues|tras) (del )?parto/],
+    ['cuando-vuelve-la-regla-despues-del-parto', '¿Cuándo vuelve la regla después del parto?', 'matrona gineco', /(regla|menstruacion).*(parto|lactancia)|(parto|lactancia).*(regla|menstruacion)/],
+    ['manchar-al-principio-del-embarazo', '¿Es normal manchar al principio del embarazo?', 'matrona gineco', /manch|sangr[a-z]* .*embaraz|embaraz.* sangr/],
+    ['nauseas-en-el-embarazo', 'Náuseas en el embarazo: ¿hasta cuándo duran?', 'matrona gineco', /nausea|vomit|mareo/],
+    ['jamon-y-embutidos-en-el-embarazo', 'Jamón y embutidos en el embarazo', 'matrona gineco', /jamon|embutid|chorizo|fuet|york|croqueta/],
+    ['alimentos-a-evitar-en-el-embarazo', 'Qué alimentos evitar en el embarazo', 'matrona gineco', /queso|sushi|pescado crudo|que puedo comer|alimentos/],
+    ['cuanto-peso-ganar-en-el-embarazo', '¿Cuánto peso es normal ganar en el embarazo?', 'matrona gineco', /(peso|kilos|engord).*embaraz|embaraz.*(peso|kilos|engord)/],
+    ['test-de-o-sullivan', '¿Qué es el test de O’Sullivan?', 'matrona gineco', /sullivan|curva de glucosa|glucosa/],
+  ];
+  const BOOK_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>';
+  function guideCard(to) {
+    const t = ta.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const g = GUIDES.find(([, , pros, re]) => pros.split(' ').includes(to) && re.test(t));
+    return g ? `<a class="gsug" href="guias/${g[0]}/" data-guide="${g[0]}"><span class="gi">${BOOK_ICON}</span><span><small>Mientras te responde ${esc(PROS[to].name)}</small><b>${esc(g[1])}</b><span class="m">Guía gratis de Hera</span></span><span class="ar">›</span></a>` : '';
+  }
   function showDone(to, j) {
     if (chat) { chat.sent(to, j); return; }
     const total = j.freeLimit || 2, rem = j.remaining ?? 0, p = PROS[to];
@@ -993,10 +1042,12 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       ${j.unlimited ? '<p class="small">Tienes consultas ilimitadas.</p>' : `<span class="dots" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i < total - rem ? 'on' : ''}"></i>`).join('')}</span>
       <p class="small">${rem === 0 ? 'Era tu última consulta gratuita.' : `Te ${rem === 1 ? `queda 1 consulta gratuita${j.next ? `, con ${esc(j.next)}` : ''}` : `quedan ${rem} consultas gratuitas`}.`}</p>`}
       ${j.dryRun ? '<p class="small">Modo ensayo: no se ha enviado ningún correo.</p>' : ''}
+      ${guideCard(to)}
       <p>Mientras esperas, Hera te cuenta qué es lo normal en tu semana o a la edad de tu bebé.</p>
       <a class="btn btn-p" href="app/" data-open>Abre Hera, es gratis</a>
       <button type="button" class="linkbtn" data-again>Escribir otra pregunta</button>`);
     done.querySelector('[data-open]').addEventListener('click', () => hit('abrir_portada'));
+    done.querySelector('[data-guide]')?.addEventListener('click', (ev) => hit(`clic:guia_tras_enviar:${ev.currentTarget.dataset.guide}`));
     done.querySelector('[data-again]').addEventListener('click', () => { ta.value = ''; manual = false; done.hidden = true; form.hidden = false; refresh(); ta.focus(); });
   }
   // Pagos (vera-backlog#56): elegir plan → Stripe → vuelve a la app, que recupera la pregunta (sin adjuntos) de este dispositivo

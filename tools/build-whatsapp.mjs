@@ -45,8 +45,8 @@ const body = `${STYLE}<div class="w wa">
   <ul class="wa-ticks"><li>${tick}Sin instalar nada</li><li>${tick}Tu número no lo ven las profesionales</li><li>${tick}Puedes mandar fotos</li></ul>
   <div class="wa-box" id="wa-box">
     <div class="wa-faces"><span><img src="/portada/equipo/gonzalo.jpg?v=2" alt=""><img src="/portada/equipo/marina.jpg?v=2" alt=""><img src="/portada/equipo/lucia.jpg?v=3" alt=""></span>Gonzalo, Marina o Lucía, tú eliges</div>
-    <div class="wa-price"><span>Una consulta por WhatsApp <em class="wa-bf">Black Friday</em></span><strong><s>9 €</s> 4,50 €</strong></div>
-    <a class="wa-btn" id="wa-pay" href="${API}/wa/pagar">${waIcon}Pagar 4,50 € y escribir por WhatsApp</a>
+    <div class="wa-price"><span>Una consulta por WhatsApp <em class="wa-bf">Black Friday</em></span><strong><s>9 €</s> <span class="waprice">4,50 €</span></strong></div>
+    <a class="wa-btn" id="wa-pay" href="${API}/wa/pagar">${waIcon}Pagar <span class="waprice">4,50 €</span> y escribir por WhatsApp</a>
     <p class="wa-small">Pagas con tarjeta, Apple Pay o Google Pay en una página de pago segura; te pedimos el correo (para mandarte el código) y el móvil. Al terminar te damos un código y se abre WhatsApp.</p>
   </div>
   <div class="wa-note" id="wa-note" hidden aria-live="polite"></div>
@@ -56,7 +56,7 @@ const body = `${STYLE}<div class="w wa">
 
 <h2>Cómo funciona</h2>
 <ol class="wa-steps">
-  <li><div><b>Pagas 4,50 €</b><span>En la página de pago. Te mandamos el código también por correo, por si cierras la página.</span></div></li>
+  <li><div><b>Pagas <span class="waprice">4,50 €</span></b><span>En la página de pago. Te mandamos el código también por correo, por si cierras la página.</span></div></li>
   <li><div><b>Abres WhatsApp con tu código</b><span>El mensaje ya va escrito con tu código. Añade tu duda y dinos a quién se la preguntas.</span></div></li>
   <li><div><b>Te responde la profesional</b><span>Por el mismo chat, en menos de 12 h. Si te queda algo, puedes contestar.</span></div></li>
 </ol>
@@ -77,6 +77,8 @@ const body = `${STYLE}<div class="w wa">
   const hit = (e) => { if (local || isTeam()) return; fetch(API + '/hit', { method: 'POST', body: JSON.stringify({ e, d: device(), p: ptag }), keepalive: true }).then((r) => r.json()).then((j) => { if (/^[0-9A-F]{4}$/.test(j?.p || '')) ptag = j.p; }).catch(() => {}); };
   const q = new URLSearchParams(location.search);
   hit('whatsapp_pagina');
+  // Precio para esta visita (en Argentina, la mitad)
+  fetch(API + '/precio').then((r) => r.json()).then((j) => { if (j && j.wa) document.querySelectorAll('.waprice').forEach((el) => { el.textContent = j.wa; }); }).catch(() => {});
   // Anuncios: misma marca de 30 días que la portada (sin cookies)
   let ad = {};
   try { const a = JSON.parse(localStorage.getItem('hera-src') || 'null'); if (a && Date.now() - a.at < 30 * 86400000) ad = { src: 'ads', camp: a.c || '' }; } catch {}

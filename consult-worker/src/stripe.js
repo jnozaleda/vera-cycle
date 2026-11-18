@@ -24,7 +24,8 @@ export const PLANS = {
   // Llamada de teléfono (sin vídeo): mismo flujo que la videollamada; la profesional llama con número oculto (o Meet solo voz fuera de España)
   // Consulta por WhatsApp (de pago desde la primera): Stripe pide correo y móvil; al pagar se da un código para el chat
   // Black Friday (desde el 18 nov): 4,50 € en vez de 9 €. Para volver: lookup 'hera_whatsapp9', eur 9 (y los textos con WA_PRICE)
-  whatsapp: { lookup: 'hera_whatsapp450', mode: 'payment', credits: 0, label: 'Consulta por WhatsApp', eur: 4.5, wa: true },
+  // Argentina (prueba desde el 18 nov, por la IP del pago): la mitad, 2,25 €
+  whatsapp: { lookup: 'hera_whatsapp450', mode: 'payment', credits: 0, label: 'Consulta por WhatsApp', eur: 4.5, wa: true, ar: { lookup: 'hera_whatsapp225', eur: 2.25 } },
   llamada: { lookup: 'hera_llamada15', mode: 'payment', credits: 0, label: 'Llamada de 15 min', eur: 25, video: true, call: true },
 };
 export const VIDEO_PROS = ['gineco', 'matrona', 'pediatra'];
@@ -65,7 +66,7 @@ export async function waCode(sessionId) {
 }
 
 /** Crea la sesión de pago y devuelve su URL */
-export async function createCheckout(env, { email, plan, h, origin, back, ad, pro, camp, hold }) {
+export async function createCheckout(env, { email, plan, h, origin, back, ad, pro, camp, hold, country }) {
   const p = PLANS[plan];
   // Vuelve al mismo sitio desde el que se pagó (la web real, o localhost en pruebas)
   // back = 'web': desde la portada, vuelve a la portada (?web=1 evita que salte a la app instalada)
@@ -73,7 +74,8 @@ export async function createCheckout(env, { email, plan, h, origin, back, ad, pr
   const ret = back === 'wa' ? `${root}/whatsapp/?` : back === 'video' ? `${root}/videollamada/?` : back === 'web' ? `${root}/?web=1&` : `${root}/app/?`;
   const params = {
     mode: p.mode,
-    'line_items[0][price]': await priceId(env, p.lookup),
+    'line_items[0][price]': await priceId(env, country === 'AR' && p.ar ? p.ar.lookup : p.lookup),
+    ...(country === 'AR' && p.ar ? { 'metadata[pais]': 'AR' } : {}),
     'line_items[0][quantity]': '1',
     ...(email ? { customer_email: email } : {}),
     ...(p.wa ? { 'phone_number_collection[enabled]': 'true' } : {}),

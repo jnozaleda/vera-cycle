@@ -478,7 +478,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         <ul class="perks" aria-label="Condiciones"><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin tarjeta de crédito</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin registro</li></ul>
         <button type="button" class="linkplans" id="ask-plans" hidden>Ver planes</button>
         <p class="chor">¿La necesitas antes?</p>
-        <a class="wabtn2" id="ask-wa-pay" href="whatsapp/"><b><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5 5 16a8.5 8.5 0 1 1 3.2 3.1z"/></svg>Enviar por WhatsApp · 4,50 €</b><small><span class="bf">Black Friday</span> Antes <s class="old">9 €</s> · en menos de 12&nbsp;h</small></a>
+        <a class="wabtn2" id="ask-wa-pay" href="whatsapp/"><b><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5 5 16a8.5 8.5 0 1 1 3.2 3.1z"/></svg>Enviar por WhatsApp · <span class="waprice">4,50 €</span></b><small><span class="bf">Black Friday</span> Antes <s class="old">9 €</s> · en menos de 12&nbsp;h</small></a>
         <p class="churg2">Si es urgente, ve a urgencias.</p>
         <p class="fine" id="ask-fine" hidden>Consulta <a href="privacy.html#consultas">cómo tratamos tus datos</a>.</p>
       </form>
@@ -1078,6 +1078,8 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     classic = true;
     try { if (qs0.get('caja') === 'chat') sessionStorage.setItem('hera-caja', 'chat'); if (qs0.get('caja') === 'clasica') sessionStorage.removeItem('hera-caja'); classic = sessionStorage.getItem('hera-caja') !== 'chat'; } catch { /* sin almacenamiento */ }
     if (!classic) chat = makeChat();
+    // Precio de WhatsApp para esta visita (en Argentina, la mitad)
+    fetch(`${API}/precio`).then((r) => r.json()).then((j) => { if (j?.wa) document.querySelectorAll('.waprice').forEach((el) => { el.textContent = j.wa; }); }).catch(() => {});
     $('ask-wa-pay').addEventListener('click', (ev) => {
       // Mientras se envía la consulta por correo no se sale de la página: cortaría el envío a medias (B45WUAX3, 18 nov)
       if (busy) { ev.preventDefault(); return; }

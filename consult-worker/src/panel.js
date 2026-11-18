@@ -6,6 +6,7 @@
 import { eventText, deviceText } from './activity.js';
 import { PLANS } from './stripe.js';
 import { listFailures } from './bounces.js';
+import { openEmail } from './relay.js';
 import { listWa, maskPhone, WA_STATES } from './whatsapp.js';
 import { emailTypo } from '../../app/js/email-typo.js';
 
@@ -113,6 +114,20 @@ export async function panel(env, url, openThreads) {
   const act = actAll.filter((r) => dayISO(r.ts) >= from);
   const open = openThreads ? await openThreads(env) : { pendientes: {}, fuera_plazo: {} };
   const fails = await listFailures(env).catch(() => []);
+  // Consultas guardadas sin pagar (KV hold:, 7 días): solo el principio del correo, nunca el correo entero ni la duda
+  const holds = [];
+  try {
+    const { keys = [] } = await env.KV.list({ prefix: 'hold:' });
+    for (const k of keys.slice(0, 30)) {
+      const raw = await env.KV.get(k.name, 'json');
+      if (!raw) continue;
+      let h = {};
+      try { h = JSON.parse(await openEmail(env, raw.x)); } catch { /* sin descifrar */ }
+      const [lp = '', dom = ''] = String(h.email || '').split('@');
+      holds.push({ id: k.name.slice(5), to: raw.to || h.to, at: raw.at || 0, rem: raw.rem || 0, ad: h.src === 'ads' ? (h.camp || 'anuncio') : '', mail: lp ? `${lp.slice(0, 3)}…@${dom}` : '—' });
+    }
+    holds.sort((a, b) => b.at - a.at);
+  } catch { /* sin KV */ }
   const was = await listWa(env).catch(() => []);
   const pages = await topPages(env, days);
 
@@ -375,6 +390,8 @@ export async function panel(env, url, openThreads) {
       : '<p class="mute">No es de una consulta: no se puede reenviar desde aquí.</p>';
     return `<div class="fail"><p><span class="tagk ${x.kind === 'retrasado' ? 'warn' : 'bad'}">${esc(x.kind)}</span> ${when}${x.id ? ` · <b>#${esc(x.id.toUpperCase())}</b>` : ''}</p><p class="mute">${esc(x.sub)}</p><p class="mute">Para: <b style="color:var(--ink)">${esc(x.to || '—')}</b>${x.to && sug !== x.to ? ` · ¿quería decir <b style="color:var(--ink)">${esc(sug)}</b>?` : ''}${x.why ? `<br>Motivo: ${esc(x.why)}` : ''}${x.kind === 'retrasado' ? '<br>Puede acabar llegando: si llega, desaparece de aquí.' : ''}</p>${fix}<form method="post" action="/panel/fallo"><input type="hidden" name="k" value="${kRaw}"><input type="hidden" name="eid" value="${esc(x.eid)}"><button type="submit" class="lnk">Quitar de la lista</button></form></div>`;
   }).join('')}</div>` : '';
+  const PRO_SHORT = { gineco: 'Gonzalo', matrona: 'Marina', pediatra: 'Lucía' };
+  const holdCard = holds.length ? `<div class="card" id="guardadas"><h2>Consultas guardadas sin pagar</h2><p class="mute" style="margin-bottom:8px">No llegan a la profesional hasta que pagan. Se borran solas a los 7 días. «Borrar» la quita al momento (para pruebas).</p><div style="overflow-x:auto"><table><tr><th>Número</th><th>Para</th><th>Cuándo</th><th>Correo</th><th>Anuncio</th><th>Recordatorio</th><th>Caduca</th><th></th></tr>${holds.map((x) => `<tr><td><b>#${esc(x.id.toUpperCase())}</b></td><td>${esc(PRO_SHORT[x.to] || x.to || '—')}</td><td>${madrid(x.at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td><td>${esc(x.mail)}</td><td>${esc(x.ad || '—')}</td><td>${x.rem ? 'Sí' : 'No'}</td><td>${madrid(x.at + 7 * 86400000, { day: 'numeric', month: 'short' })}</td><td><form method="post" action="/panel/guardada"><input type="hidden" name="k" value="${kRaw}"><input type="hidden" name="id" value="${esc(x.id)}"><button type="submit" class="lnk">Borrar</button></form></td></tr>`).join('')}</table></div></div>` : '';
   // Consultas por WhatsApp (whatsapp.js): añadir con el número, qué consulta es, estado y abrir el chat
   const PRO_LABEL = Object.fromEntries(PROS);
   const waErr = { tel: 'Ese número no parece válido: ponlo con el prefijo del país (por ejemplo +54 9 11 1234 5678).', pro: 'Elige la profesional.' }[url.searchParams.get('wa')] || '';
@@ -451,6 +468,7 @@ table.wa-t td,table.wa-t th{white-space:nowrap;padding-left:8px}table.wa-t td:fi
 
 <div class="card"><p class="lead">${lead}</p><div class="chips">${chips}</div></div>
 ${failCard}
+${holdCard}
 ${waCard}
 
 <div class="kpis">

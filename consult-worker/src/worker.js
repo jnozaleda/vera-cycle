@@ -538,6 +538,14 @@ const handler = {
       if (/^[0-9a-f-]{36}$/.test(eid)) await env.KV.delete(`fail:${eid}`);
       return new Response(null, { status: 303, headers: { Location: `/panel?k=${encodeURIComponent(env.DASH_KEY)}`, 'referrer-policy': 'no-referrer' } });
     }
+    // Borrar una consulta guardada sin pagar (pruebas): solo con la clave del panel
+    if (request.method === 'POST' && url.pathname === '/panel/guardada') {
+      const f = await request.formData().catch(() => null);
+      if (!f || !env.DASH_KEY || f.get('k') !== env.DASH_KEY) return new Response('Not found', { status: 404 });
+      const id = String(f.get('id') || '');
+      if (/^[a-z0-9]{8}$/.test(id)) await env.KV.delete(`hold:${id}`);
+      return new Response(null, { status: 303, headers: { Location: `/panel?k=${encodeURIComponent(env.DASH_KEY)}#guardadas`, 'referrer-policy': 'no-referrer' } });
+    }
     if (request.method === 'POST' && url.pathname === '/panel/correo') {
       // (si la profesional aún no ha respondido, no hay respuesta que reenviar: le llegará al correo nuevo cuando responda)
       const f = await request.formData().catch(() => null);

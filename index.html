@@ -164,6 +164,7 @@ section { padding: 64px 0; }
 .chor:before, .chor:after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .wabtn2 { display: grid; gap: 3px; justify-items: center; text-align: center; background: #F1F8F2; border: 1.5px solid #25803A; color: #1E6B30; border-radius: 8px; padding: 12px 14px; text-decoration: none; }
 .wabtn2:hover { background: #E4F2E7; }
+.ask.sending .wabtn2 { opacity: .45; pointer-events: none; }
 .wabtn2 b { display: flex; gap: 8px; align-items: center; font: 600 16px/1.2 'Inter', sans-serif; white-space: nowrap; }
 .wabtn2 small { font-size: 13px; }
 .churg2 { margin: 0; font-size: 12.5px; color: #B3261E; text-align: center; }
@@ -964,7 +965,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     // Correo mal escrito (gmail.co, hotmial.com…): se pregunta una vez; si lo deja igual, se envía
     const fx = emailTypo(email.value);
     if (fx && email.dataset.ok !== email.value.trim()) { email.dataset.ok = email.value.trim(); hit('clic:correo_sugerido'); showErr(`¿Querías decir ${fx}? Si es así, corrígelo. Si tu correo está bien, pulsa enviar otra vez.`); email.focus(); return; }
-    showErr(''); busy = true; send.disabled = true; $('ask-send-t').textContent = 'Enviando…';
+    showErr(''); busy = true; box.classList.add('sending'); send.disabled = true; $('ask-send-t').textContent = 'Enviando…';
     lastEmail = email.value.trim(); store.set('hera-ask-email', lastEmail);
     try {
       const res = await fetch(`${API}/ask`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -983,7 +984,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       hit('error_portada'); hit(net ? 'clic:fallo_conexion' : 'clic:fallo_servicio');
       showErr(net ? 'Se ha cortado la conexión al enviar. Puede que tu consulta sí haya llegado: mira si tienes nuestro correo de confirmación antes de volver a enviarla.' : e.message);
     }
-    busy = false; send.disabled = false; refresh();
+    busy = false; box.classList.remove('sending'); send.disabled = false; refresh();
   });
 
   function swap(html) { form.hidden = true; done.innerHTML = html; done.hidden = false; if (chat) chat.panel(); else box.scrollIntoView({ block: 'nearest' }); }
@@ -1082,6 +1083,8 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     try { if (qs0.get('caja') === 'chat') sessionStorage.setItem('hera-caja', 'chat'); if (qs0.get('caja') === 'clasica') sessionStorage.removeItem('hera-caja'); classic = sessionStorage.getItem('hera-caja') !== 'chat'; } catch { /* sin almacenamiento */ }
     if (!classic) chat = makeChat();
     $('ask-wa-pay').addEventListener('click', (ev) => {
+      // Mientras se envía la consulta por correo no se sale de la página: cortaría el envío a medias (B45WUAX3, 18 nov)
+      if (busy) { ev.preventDefault(); return; }
       const u = new URL(`${API}/wa/pagar`);
       const a = adSrc(); if (a.src) { u.searchParams.set('src', 'ads'); if (a.camp) u.searchParams.set('camp', a.camp); }
       if (local || isTeam()) u.searchParams.set('t', '1');

@@ -768,6 +768,11 @@ const handler = {
       const proReply = relay ? await relayAddress(env, 'p', id) : q.email;
       const sent = await sendMail(env, { to: pro.email, replyTo: proReply, ...pm, attachments: files });
       if (!sent) return reply(502, { error: 'send' });
+      // La consulta se guarda ya (antes de contadores y correos): si la usuaria sale de la página y la petición se corta,
+      // la respuesta de la profesional igual le llega (B45WUAX3, 18 nov). Al final se vuelve a guardar completa.
+      const baseThread = relay ? { id, p: pro.key || body.to, u: await sealEmail(env, q.email), uh: (await hmac(env.HASH_SALT, norm)).slice(0, 24),
+        sp: pm.subject, su: `Tu consulta a ${pro.short} · Hera #${id.toUpperCase()}`, rp: [], ru: [], c: Date.now(), a: 0, rem: false, n: 0, h, ...(body.follow === true ? { f: 1 } : {}) } : null;
+      if (baseThread) await saveThread(env, baseThread);
       const now = new Date().toISOString();
       // Primero se gastan las gratuitas y después las pagadas
       const paid = !test && !unlimited && (rec.n >= limit || samePro);
@@ -823,8 +828,7 @@ const handler = {
       const sentU = await sendMail(env, { to: q.email, replyTo: relay ? await relayAddress(env, 'u', id) : pro.email, ...cm });
       // Sin relay no hay hilo que seguir (ni recordatorios): no se guarda nada más
       if (relay) {
-        await saveThread(env, { id, p: pro.key || body.to, u: await sealEmail(env, q.email), uh: (await hmac(env.HASH_SALT, norm)).slice(0, 24),
-          sp: pm.subject, su: cm.subject, rp: [], ru: [], c: Date.now(), a: 0, rem: false, n: 0, h, ...(sentU?.id ? { ou: [sentU.id] } : {}), ...(rf ? { rf } : {}), ...(body.follow === true ? { f: 1 } : {}) });
+        await saveThread(env, { ...baseThread, su: cm.subject, ...(sentU?.id ? { ou: [sentU.id] } : {}), ...(rf ? { rf } : {}) });
       }
       return reply(200, { ok: true, remaining, freeLimit: limit, ...(nextWith ? { next: nextWith, fp: usedPros } : {}), ...(unlimited ? { unlimited: true } : {}), ...(paid || credits > 0 ? { credits: creditsLeft } : {}), ...(relay ? { id } : {}), dryRun: env.DRY_RUN === '1' });
     }

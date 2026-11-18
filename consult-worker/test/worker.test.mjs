@@ -208,7 +208,7 @@ assert.equal(validateAttachments([{ content: 'A'.repeat(Math.ceil((MAX_BYTES * 4
   await call('/opinion/comentario', { t: r2.j.id, s: s2, text: 'Me respondió rapidísimo', name: 'Laura G.', publish: true });
   const last = opiniones.at(-1); assert.deepEqual([last.publicable, last.nombre, last.pro], [1, 'Laura G.', 'matrona']);
   const avisos = sent.filter((m) => /^Opinión · /.test(m.subject || ''));
-  assert.ok(avisos.some((m) => m.subject === 'Opinión · «Sí, mucho» para Marina'), 'aviso de opinión al equipo');
+  assert.ok(avisos.some((m) => /^Opinión · «Sí, mucho» para Marina · #[0-9A-Z]{8}$/.test(m.subject)), 'aviso de opinión al equipo');
   assert.ok(avisos.some((m) => m.subject.startsWith('Opinión · comentario') && m.text.includes('Laura G.')), 'aviso de comentario con el nombre');
   assert.ok(avisos.every((m) => m.to[0] === 'copia@example.com' && !m.text.includes('contenta@')), 'al equipo y sin el correo de la usuaria');
   assert.ok(!JSON.stringify(opiniones).includes('@'), 'las opiniones no llevan correos');

@@ -100,8 +100,8 @@ export async function handleOpinion(env, path, body, { PROS, sendMail, bump, has
       if (r > 1 && t.f && !t.fs && pro) await askFollowUp(env, t, pro, sendMail);
       await saveThread(env, t);
       // Aviso al equipo de cada opinión, positiva o negativa (sin el correo de la usuaria)
-      if (t.p !== 'prueba') await notify(env, `Opinión · «${RATING[r]}» para ${pro?.short || t.p}`,
-        `Nueva opinión sobre una consulta respondida por ${pro?.short || t.p}: «${RATING[r]}».${r > 1 ? (t.f ? '\nPidió seguimiento al preguntar: la profesional ya tiene el aviso.' : '\nTodavía no ha pedido seguimiento.') : ''}\n\nSi deja un comentario, te llegará en otro aviso. Panel: ${PANEL}`, sendMail);
+      if (t.p !== 'prueba') await notify(env, `Opinión · «${RATING[r]}» para ${pro?.short || t.p} · #${String(t.id).toUpperCase()}`,
+        `Nueva opinión sobre la consulta #${String(t.id).toUpperCase()}, respondida por ${pro?.short || t.p}: «${RATING[r]}».${r > 1 ? (t.f ? '\nPidió seguimiento al preguntar: la profesional ya tiene el aviso.' : '\nTodavía no ha pedido seguimiento.') : ''}\n\nSi deja un comentario, te llegará en otro aviso. Panel: ${PANEL}`, sendMail);
     }
     // Enlace para invitar (invite.js): solo a quien la respuesta le ayudó mucho
     // Consultas de antes del 10 nov: sin huella guardada, se rehace con el correo cifrado del hilo

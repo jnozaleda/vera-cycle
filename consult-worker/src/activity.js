@@ -63,7 +63,7 @@ export const EVENTS = {
   vista: ['Cambió de vista', false],
   // Solo del servicio
   consulta: ['Envió una consulta a', false], // el equipo ya recibe la copia «Consulta · …» con el texto entero
-  respondida: ['Respondida una consulta por', true],
+  respondida: ['Respondida una consulta por', false], // sin aviso al momento: ya llega la copia de la respuesta (sale en el resumen de 3 h)
   gratuitas_agotadas: ['Intentó consultar con las gratuitas agotadas', true],
   anuncio_visita: ['Llegó desde un anuncio', false],
   invitacion_vista: ['Vio su enlace para invitar (tras valorar «Sí, mucho»)', false],

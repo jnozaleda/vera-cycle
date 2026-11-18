@@ -23,7 +23,8 @@ export const PLANS = {
   lactancia: { lookup: 'hera_lactancia90', mode: 'payment', credits: 0, label: 'Asesoría de lactancia (1 h 30)', eur: 99, video: true },
   // Llamada de teléfono (sin vídeo): mismo flujo que la videollamada; la profesional llama con número oculto (o Meet solo voz fuera de España)
   // Consulta por WhatsApp (de pago desde la primera): Stripe pide correo y móvil; al pagar se da un código para el chat
-  whatsapp: { lookup: 'hera_whatsapp9', mode: 'payment', credits: 0, label: 'Consulta por WhatsApp', eur: 9, wa: true },
+  // Black Friday (desde el 18 nov): 4,50 € en vez de 9 €. Para volver: lookup 'hera_whatsapp9', eur 9 (y los textos con WA_PRICE)
+  whatsapp: { lookup: 'hera_whatsapp450', mode: 'payment', credits: 0, label: 'Consulta por WhatsApp', eur: 4.5, wa: true },
   llamada: { lookup: 'hera_llamada15', mode: 'payment', credits: 0, label: 'Llamada de 15 min', eur: 25, video: true, call: true },
 };
 export const VIDEO_PROS = ['gineco', 'matrona', 'pediatra'];

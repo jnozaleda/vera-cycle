@@ -23,6 +23,7 @@ const STYLE = `<style>
 .wa-btn{display:flex;align-items:center;justify-content:center;gap:8px;font:600 16px/1 Inter,sans-serif;color:#fff;background:#25803A;border:0;border-radius:8px;padding:15px;text-decoration:none;cursor:pointer}.wa-btn:hover{background:#1E6B30}
 .wa-small{font-size:12.5px;color:#6E6C67;line-height:1.45;margin:0}
 .wa-note{background:#DCEBE4;border-radius:12px;padding:16px 18px;margin:18px 0 0;max-width:520px;display:grid;gap:10px;color:#2D4A3A}.wa-note b.t{font:400 23px/1.2 Newsreader,Georgia,serif}
+.wa-price s{font-weight:400;opacity:.55;margin-right:6px}.wa-bf{font-style:normal;font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:#1E6B30;border-radius:99px;padding:3px 8px;margin-left:6px;vertical-align:2px}
 .wa-code{font:400 34px/1 Newsreader,Georgia,serif;letter-spacing:.08em;color:#2D4A3A}
 .wa-duda{display:block;text-align:left;border-left:3px solid #25803A;background:#F1F8F2;border-radius:0 8px 8px 0;padding:8px 12px;font-size:14px;white-space:pre-wrap}.wa-duda small{display:block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#1E6B30;margin-bottom:3px}
 .wa h2{font-size:30px;color:#45574C;margin:44px 0 6px}
@@ -44,8 +45,8 @@ const body = `${STYLE}<div class="w wa">
   <ul class="wa-ticks"><li>${tick}Sin instalar nada</li><li>${tick}Tu número no lo ven las profesionales</li><li>${tick}Puedes mandar fotos</li></ul>
   <div class="wa-box" id="wa-box">
     <div class="wa-faces"><span><img src="/portada/equipo/gonzalo.jpg?v=2" alt=""><img src="/portada/equipo/marina.jpg?v=2" alt=""><img src="/portada/equipo/lucia.jpg?v=3" alt=""></span>Gonzalo, Marina o Lucía, tú eliges</div>
-    <div class="wa-price"><span>Una consulta por WhatsApp</span><strong>9 €</strong></div>
-    <a class="wa-btn" id="wa-pay" href="${API}/wa/pagar">${waIcon}Pagar 9 € y escribir por WhatsApp</a>
+    <div class="wa-price"><span>Una consulta por WhatsApp <em class="wa-bf">Black Friday</em></span><strong><s>9 €</s> 4,50 €</strong></div>
+    <a class="wa-btn" id="wa-pay" href="${API}/wa/pagar">${waIcon}Pagar 4,50 € y escribir por WhatsApp</a>
     <p class="wa-small">Pagas con tarjeta, Apple Pay o Google Pay en una página de pago segura; te pedimos el correo (para mandarte el código) y el móvil. Al terminar te damos un código y se abre WhatsApp.</p>
   </div>
   <div class="wa-note" id="wa-note" hidden aria-live="polite"></div>
@@ -55,7 +56,7 @@ const body = `${STYLE}<div class="w wa">
 
 <h2>Cómo funciona</h2>
 <ol class="wa-steps">
-  <li><div><b>Pagas 9 €</b><span>En la página de pago. Te mandamos el código también por correo, por si cierras la página.</span></div></li>
+  <li><div><b>Pagas 4,50 €</b><span>En la página de pago. Te mandamos el código también por correo, por si cierras la página.</span></div></li>
   <li><div><b>Abres WhatsApp con tu código</b><span>El mensaje ya va escrito con tu código. Añade tu duda y dinos a quién se la preguntas.</span></div></li>
   <li><div><b>Te responde la profesional</b><span>Por el mismo chat, en menos de 12 h. Si te queda algo, puedes contestar.</span></div></li>
 </ol>
@@ -113,7 +114,7 @@ const body = `${STYLE}<div class="w wa">
 
 const html = shell({
   title: 'Consulta por WhatsApp con ginecólogo, matrona o pediatra · Hera',
-  desc: 'Pregunta tu duda a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra) por WhatsApp y te responden por el mismo chat en menos de 12 h. 9 € la consulta.',
+  desc: 'Pregunta tu duda a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra) por WhatsApp y te responden por el mismo chat en menos de 12 h. Black Friday: 4,50 € la consulta (antes 9 €).',
   path: '/whatsapp/',
   ld: { '@context': 'https://schema.org', '@type': 'Service', name: 'Consulta por WhatsApp con profesionales de Hera', provider: { '@type': 'Organization', name: 'Hera', url: 'https://hera-gine.com' },
     offers: [{ '@type': 'Offer', name: 'Consulta por WhatsApp', price: '9', priceCurrency: 'EUR' }] },

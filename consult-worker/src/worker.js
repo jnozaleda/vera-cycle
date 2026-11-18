@@ -35,6 +35,8 @@ import { panel } from './panel.js';
 import { isEvent, isDevice, record, personTag, hourlyDigest, notify } from './activity.js';
 import { handleResendWebhook } from './bounces.js';
 import { addWaConsult, setWaState, assignPaidRow, maskPhone, normalizePhone } from './whatsapp.js';
+// Precio de WhatsApp en los textos, sacado del plan (4,50 € en Black Friday)
+const WA_PRICE = `${String(PLANS.whatsapp.eur).replace('.', ',').replace(/,5$/, ',50')} €`;
 import { PLANS, VIDEO_PROS, paymentsOn, createCheckout, sessionStatus, handleWebhook, getBalance, spendCredit, markDay, waCode } from './stripe.js';
 import { newThreadId, relayAddress, parseRelayAddress, sealEmail, openEmail, saveThread, loadThread, parseIncoming, isAutomatic } from './relay.js';
 
@@ -164,7 +166,7 @@ export function waPaidEmail(code) {
   const subject = `Tu consulta por WhatsApp · código ${code}`;
   const link = waLink(code);
   const html = shell(`<p>Hola,</p>
-<p>Hemos recibido tu pago de <b>9 €</b> por una <b>consulta por WhatsApp</b> con Hera.</p>
+<p>Hemos recibido tu pago de <b>${WA_PRICE}</b> por una <b>consulta por WhatsApp</b> con Hera.</p>
 <div style="background:#F6E0E2;border-radius:10px;padding:14px 16px;margin:14px 0">
 <p style="margin:0 0 4px;font-size:13px;color:#6E6C67">Tu código</p>
 <p style="margin:0 0 12px;font-family:Georgia,serif;font-size:28px;letter-spacing:.08em;color:#45574C">${code}</p>
@@ -173,7 +175,7 @@ export function waPaidEmail(code) {
 <p style="font-size:14px">Si el botón no funciona, escribe al <b>+34 603 29 58 06</b> y pon tu código.</p>
 <p style="font-size:14px">La profesional te responde por el mismo chat en menos de 12 h. Tu número no lo ven las profesionales.</p>
 <p style="font-size:13px;color:#6E6C67">No es un servicio de urgencias. Si algo no va bien, llama al 112 (o al número de emergencias de tu país) o acude a tu centro de salud.</p>`);
-  const text = `Hola,\n\nHemos recibido tu pago de 9 € por una consulta por WhatsApp con Hera.\n\nTu código: ${code}\n\nSiguiente paso: escríbenos tu duda por WhatsApp con este código y dinos si quieres preguntársela a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra).\n\nAbrir WhatsApp: ${link}\nSi no funciona, escribe al +34 603 29 58 06 y pon tu código.\n\nLa profesional te responde por el mismo chat en menos de 12 h. Tu número no lo ven las profesionales.\nNo es un servicio de urgencias: si algo no va bien, llama al 112 (o al número de emergencias de tu país) o acude a tu centro de salud.`;
+  const text = `Hola,\n\nHemos recibido tu pago de ${WA_PRICE} por una consulta por WhatsApp con Hera.\n\nTu código: ${code}\n\nSiguiente paso: escríbenos tu duda por WhatsApp con este código y dinos si quieres preguntársela a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra).\n\nAbrir WhatsApp: ${link}\nSi no funciona, escribe al +34 603 29 58 06 y pon tu código.\n\nLa profesional te responde por el mismo chat en menos de 12 h. Tu número no lo ven las profesionales.\nNo es un servicio de urgencias: si algo no va bien, llama al 112 (o al número de emergencias de tu país) o acude a tu centro de salud.`;
   return { subject, html, text };
 }
 
@@ -425,8 +427,8 @@ const handler = {
           if (tel) await addWaConsult(env, { phone: tel, pro: '', limit: 0, bump, paid: true, code });
           if (to) await sendMail(env, { to, replyTo: 'contacto@hera-gine.com', ...waPaidEmail(code) });
           if (s.metadata?.src === 'ads') { const ak = /_latam$/.test(String(s.metadata?.camp || '')) ? 'latam' : 'anuncio'; await bump(env, `${ak}_pago:${plan}`); await bump(env, `${ak}_eur`, madridDay(), PLANS[plan].eur); }
-          await notify(env, `Pago · WhatsApp · 9 € · código ${code}${s.metadata?.src === 'ads' ? ' · desde anuncio' : ''}${s.livemode ? '' : ' · prueba'}`,
-            `Consulta por WhatsApp pagada (9 €${s.livemode ? '' : ', modo de prueba'}).\n\nCódigo: ${code}\nMóvil: ${tel ? maskPhone(tel) : 'no lo dio'}\n\nYa está en el panel («Consultas por WhatsApp», Pagada · ${code}). Cuando te escriba con ese código, pásale la duda a la profesional que elija.`, sendMail);
+          await notify(env, `Pago · WhatsApp · ${WA_PRICE} · código ${code}${s.metadata?.src === 'ads' ? ' · desde anuncio' : ''}${s.livemode ? '' : ' · prueba'}`,
+            `Consulta por WhatsApp pagada (${WA_PRICE}${s.livemode ? '' : ', modo de prueba'}).\n\nCódigo: ${code}\nMóvil: ${tel ? maskPhone(tel) : 'no lo dio'}\n\nYa está en el panel («Consultas por WhatsApp», Pagada · ${code}). Cuando te escriba con ese código, pásale la duda a la profesional que elija.`, sendMail);
           return;
         }
         if (PLANS[plan].video) {

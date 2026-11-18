@@ -479,7 +479,6 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         <button type="button" class="linkplans" id="ask-plans" hidden>Ver planes</button>
         <p class="chor">¿La necesitas antes?</p>
         <a class="wabtn2" id="ask-wa-pay" href="whatsapp/"><b><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5 5 16a8.5 8.5 0 1 1 3.2 3.1z"/></svg>Enviar por WhatsApp · 4,50 €</b><small><span class="bf">Black Friday</span> Antes <s class="old">9 €</s> · en menos de 12&nbsp;h</small></a>
-        <a class="linkplans linkvideo" id="ask-video" href="videollamada/?de=web">¿Prefieres hablarlo cara a cara? Videollamada</a>
         <p class="churg2">Si es urgente, ve a urgencias.</p>
         <p class="fine" id="ask-fine" hidden>Consulta <a href="privacy.html#consultas">cómo tratamos tus datos</a>.</p>
       </form>
@@ -830,9 +829,6 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     const to = chosen();
     $('ask-hint').textContent = !manual && s.to && s.reason ? `Sugerido por tu duda sobre ${s.reason}. Puedes cambiarlo.` : '';
     $('ask-urgent').hidden = !s.urgent;
-    // Videollamada (vera-backlog#86): con la profesional elegida, si la hay
-    $('ask-video').href = `videollamada/?de=web${to ? `#reservar-${to}` : ''}`;
-    $('ask-video').textContent = `¿Prefieres hablarlo cara a cara? Videollamada${to ? ` con ${PROS[to].name}` : ''}`;
     if (opened && !busy) $('ask-send-t').textContent = `Enviar${store.get('hera-free-left') === '0' || (to && (store.get('hera-free-pros') || '').split(',').includes(to)) ? '' : ' gratis'}${to ? ` a ${PROS[to].name}` : ' por correo'}`;
     chat?.sync();
   }

@@ -126,8 +126,8 @@ export async function handleOpinion(env, path, body, { PROS, sendMail, bump, has
     const before = !!t.fs;
     if (t.f && t.fr > 1 && !t.fs && pro) await askFollowUp(env, t, pro, sendMail);
     await saveThread(env, t);
-    if (t.p !== 'prueba' && (text || (t.fs && !before))) await notify(env, `Opinión · comentario («${RATING[t.fr]}») para ${pro?.short || t.p}`,
-      `${text ? `Comentario sobre la respuesta de ${pro?.short || t.p} («${RATING[t.fr]}»):\n\n«${text}»\n\n${publish ? `Se puede publicar en la web como «${name}».` : 'No dio permiso para publicarlo.'}` : `Sin comentario.`}${t.fs && !before ? `\n\nHa pedido seguimiento: ${pro?.short || 'la profesional'} ya tiene el aviso para escribirle.` : ''}\n\nPanel: ${PANEL}`, sendMail);
+    if (t.p !== 'prueba' && (text || (t.fs && !before))) await notify(env, `Opinión · comentario («${RATING[t.fr]}») para ${pro?.short || t.p} · #${String(t.id).toUpperCase()}`,
+      `Consulta #${String(t.id).toUpperCase()}\n\n${text ? `Comentario sobre la respuesta de ${pro?.short || t.p} («${RATING[t.fr]}»):\n\n«${text}»\n\n${publish ? `Se puede publicar en la web como «${name}».` : 'No dio permiso para publicarlo.'}` : `Sin comentario.`}${t.fs && !before ? `\n\nHa pedido seguimiento: ${pro?.short || 'la profesional'} ya tiene el aviso para escribirle.` : ''}\n\nPanel: ${PANEL}`, sendMail);
     return [200, { ok: true, followSent: !!t.fs }];
   }
   return [404, { error: 'not_found' }];

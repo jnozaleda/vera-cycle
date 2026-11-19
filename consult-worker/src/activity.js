@@ -92,7 +92,7 @@ export const EVENTS = {
 };
 
 const VALUE_LABEL = {
-  ig_marina: 'Instagram de Marina', reddit_gonzalo: 'Reddit de Gonzalo', x4d: 'enlace de Gonzalo', p9t: 'enlace de Lucía', q7m: 'enlace de Maite', k2v: 'enlace de Noza',
+  ig_marina: 'Instagram de Marina', reddit_gonzalo: 'Reddit de Gonzalo', x4d: 'enlace de Gonzalo', p9t: 'enlace de Lucía', q7m: 'enlace de Maite', g8w: 'grupo de Maite', k2v: 'enlace de Noza',
   pregnancy: 'embarazo', postpartum: 'posparto', cycle: 'ciclo', regular: 'regular', irregular: 'irregular',
   parto: 'fecha de parto', peso: 'peso en el embarazo', ovulacion: 'ovulación', suelta: 'consulta suelta', bono: 'bono de 5', mensual: 'ilimitado mensual', video: 'videollamada de 30 min', lactancia: 'asesoría de lactancia', gineco: 'Gonzalo', matrona: 'Marina', pediatra: 'Lucía', prueba: 'prueba', rapido: 'en menos de 5 s sin escribir', sin_escribir: 'sin escribir', cabecera: 'desde el botón de arriba', barra: 'desde la barra', tema: 'desde un tema', dudas: 'desde Dudas', ajustes: 'desde Ajustes', web: 'desde la web', respuesta: 'desde una respuesta', app: 'desde la app', medias: 'desde el correo de pago a medias',
   today: 'Hoy', diary: 'Diario', care: 'Cuidados', guide: 'Dudas', trends: 'Patrones', baby: 'Tu bebé', tu: 'Tú', bebe: 'Tu bebé',

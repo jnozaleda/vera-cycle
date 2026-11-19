@@ -12,7 +12,7 @@
 // nombre → [texto, ¿aviso al momento?]. Un evento puede llevar «:valor» (p. ej. onboarding:pregnancy).
 export const EVENTS = {
   apertura: ['Abrió la app', false],
-  instalada: ['Instaló la app en el móvil', true],
+  instalada: ['Instaló la app en el móvil', false],
   portada: ['Visitó la web', false],
   pregunta_portada: ['Empezó a escribir una duda en la web', false],
   ejemplo_duda: ['Tocó una duda de ejemplo en la web', false],
@@ -34,11 +34,11 @@ export const EVENTS = {
   consulta_limite: ['Agotó las gratuitas en la app', false],
   consulta_ejemplo: ['Tocó una duda de ejemplo en la app', false],
   consulta_cerrada: ['Cerró la hoja de consulta', false],
-  onboarding: ['Completó la bienvenida', true],
-  demo: ['Entró con datos de ejemplo', true],
-  fecha_parto: ['Añadió su fecha prevista de parto', true],
-  fecha_nacimiento: ['Añadió la fecha de nacimiento del bebé', true],
-  ciclo: ['Configuró su ciclo', true],
+  onboarding: ['Completó la bienvenida', false],
+  demo: ['Entró con datos de ejemplo', false],
+  fecha_parto: ['Añadió su fecha prevista de parto', false],
+  fecha_nacimiento: ['Añadió la fecha de nacimiento del bebé', false],
+  ciclo: ['Configuró su ciclo', false],
   ajustes: ['Guardó cambios en Ajustes', false],
   diario: ['Apuntó en el diario', false],
   medicacion: ['Añadió una medicación', false],
@@ -46,17 +46,17 @@ export const EVENTS = {
   cita: ['Añadió una cita', false],
   peso: ['Apuntó su peso', false],
   peso_bebe: ['Apuntó el peso del bebé', false],
-  nacimiento: ['Indicó que el bebé ha nacido', true],
+  nacimiento: ['Indicó que el bebé ha nacido', false],
   contraccion: ['Registró una contracción', false],
   abrir_contracciones: ['Abrió el registro de contracciones', false],
   movimientos: ['Apuntó los movimientos del bebé', false],
   tarea: ['Marcó una prueba de «Lo que toca ahora»', false],
   urgencias: ['Abrió «Cuándo ir a urgencias»', false],
   exportar: ['Exportó una copia de sus datos', false],
-  borrar_datos: ['Borró todos sus datos', true],
+  borrar_datos: ['Borró todos sus datos', false],
   contacto: ['Pulsó «Contacto» (correo a contacto@)', true],
-  push_on: ['Activó el aviso semanal', true],
-  sync_on: ['Conectó su Google Drive', true],
+  push_on: ['Activó el aviso semanal', false],
+  sync_on: ['Conectó su Google Drive', false],
   aviso_pago_pedido: ['Pidió aviso de consultas de pago', true],
   etapa: ['Abrió la app en la etapa', false],
   pestana: ['Fue a la pestaña', false],
@@ -72,7 +72,7 @@ export const EVENTS = {
   invitacion_visita: ['Llegó con el enlace de una invitación', false],
   whatsapp_pagina: ['Vio la página de consulta por WhatsApp', false],
   whatsapp_pagar: ['Pulsó pagar una consulta por WhatsApp', true],
-  via_visita: ['Llegó con un enlace de canal', false],
+  via_visita: ['Visita desde', false],
   guia_compartir: ['Compartió una guía por WhatsApp', false],
   consulta_invitada: ['Envió su primera consulta con una invitación', true],
   consulta_anuncio: ['La consulta vino de un anuncio', false],
@@ -92,6 +92,7 @@ export const EVENTS = {
 };
 
 const VALUE_LABEL = {
+  ig_marina: 'Instagram de Marina', reddit_gonzalo: 'Reddit de Gonzalo', x4d: 'enlace de Gonzalo', p9t: 'enlace de Lucía', q7m: 'enlace de Maite', k2v: 'enlace de Noza',
   pregnancy: 'embarazo', postpartum: 'posparto', cycle: 'ciclo', regular: 'regular', irregular: 'irregular',
   parto: 'fecha de parto', peso: 'peso en el embarazo', ovulacion: 'ovulación', suelta: 'consulta suelta', bono: 'bono de 5', mensual: 'ilimitado mensual', video: 'videollamada de 30 min', lactancia: 'asesoría de lactancia', gineco: 'Gonzalo', matrona: 'Marina', pediatra: 'Lucía', prueba: 'prueba', rapido: 'en menos de 5 s sin escribir', sin_escribir: 'sin escribir', cabecera: 'desde el botón de arriba', barra: 'desde la barra', tema: 'desde un tema', dudas: 'desde Dudas', ajustes: 'desde Ajustes', web: 'desde la web', respuesta: 'desde una respuesta', app: 'desde la app', medias: 'desde el correo de pago a medias',
   today: 'Hoy', diary: 'Diario', care: 'Cuidados', guide: 'Dudas', trends: 'Patrones', baby: 'Tu bebé', tu: 'Tú', bebe: 'Tu bebé',
@@ -116,7 +117,13 @@ export function deviceText(d) {
   const [p, m] = d.split('-');
   return `${DEVICE_LABEL[p] || p} · ${m === 'app' ? 'app instalada' : 'navegador'}`;
 }
-const isImmediate = (e) => !!EVENTS[String(e).split(':')[0]]?.[1];
+// Noza, 20 nov: sin avisos al momento por el uso de la app (instalar, ciclo, fechas…); sí por visitas de los enlaces propios
+export const OWN_LINKS = new Set(['ig_marina', 'reddit_gonzalo', 'x4d', 'p9t', 'q7m', 'k2v']);
+const isImmediate = (e) => {
+  const [name, value] = String(e).split(':');
+  if (name === 'via_visita') return OWN_LINKS.has(value);
+  return !!EVENTS[name]?.[1];
+};
 
 async function hmacHex(secret, text) {
   const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);

@@ -863,7 +863,9 @@ const handler = {
       if (relay) {
         await saveThread(env, { ...baseThread, su: cm.subject, ...(sentU?.id ? { ou: [sentU.id] } : {}), ...(rf ? { rf } : {}) });
       }
-      return reply(200, { ok: true, remaining, freeLimit: limit, ...(nextWith ? { next: nextWith, fp: usedPros } : {}), ...(unlimited ? { unlimited: true } : {}), ...(paid || credits > 0 ? { credits: creditsLeft } : {}), ...(relay ? { id } : {}), dryRun: env.DRY_RUN === '1' });
+      // «Envíaselo a alguien» en la pantalla de enviada: su enlace personal (invite.js), si quien llega pregunta, 1 consulta para ella
+      const invite = relay && !test && body.team !== true ? await inviteCode(env, h, baseThread.u).catch(() => '') : '';
+      return reply(200, { ok: true, ...(invite ? { invite } : {}), remaining, freeLimit: limit, ...(nextWith ? { next: nextWith, fp: usedPros } : {}), ...(unlimited ? { unlimited: true } : {}), ...(paid || credits > 0 ? { credits: creditsLeft } : {}), ...(relay ? { id } : {}), dryRun: env.DRY_RUN === '1' });
     }
     return reply(404, { error: 'not_found' });
   },

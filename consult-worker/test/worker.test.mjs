@@ -139,8 +139,12 @@ assert.ok(activity.some((a) => a.e === 'consulta:matrona'), 'las consultas tambi
 n0 = sent.length;
 env.ALERTS = '1';
 await call('/hit', { e: 'instalada', d: 'android-app' }, { 'CF-Connecting-IP': '8.8.8.8', 'User-Agent': 'z' });
-assert.equal(sent.length, n0 + 1, 'aviso al momento'); assert.match(sent.at(-1).subject, /Instaló la app/); assert.equal(sent.at(-1).to[0], 'copia@example.com');
-await call('/hit', { e: 'instalada', d: 'android-app' }, { 'CF-Connecting-IP': '8.8.8.8', 'User-Agent': 'z' });
+assert.equal(sent.length, n0, 'instalar la app ya no avisa al momento');
+await call('/hit', { e: 'via_visita:google', d: 'android-app' }, { 'CF-Connecting-IP': '8.8.8.8', 'User-Agent': 'z' });
+assert.equal(sent.length, n0, 'un via ajeno no avisa');
+await call('/hit', { e: 'via_visita:q7m', d: 'android-app' }, { 'CF-Connecting-IP': '8.8.8.8', 'User-Agent': 'z' });
+assert.equal(sent.length, n0 + 1, 'aviso al momento'); assert.match(sent.at(-1).subject, /enlace de Maite/); assert.equal(sent.at(-1).to[0], 'copia@example.com');
+await call('/hit', { e: 'via_visita:q7m', d: 'android-app' }, { 'CF-Connecting-IP': '8.8.8.8', 'User-Agent': 'z' });
 assert.equal(sent.length, n0 + 1, 'sin repetir el mismo aviso en 30 min');
 await call('/hit', { e: 'diario:sintoma', d: 'android-app' }, { 'CF-Connecting-IP': '8.8.8.8', 'User-Agent': 'z' });
 assert.equal(sent.length, n0 + 1, 'lo frecuente va al resumen');

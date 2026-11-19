@@ -170,6 +170,9 @@ section { padding: 64px 0; }
 .gsug .gi { flex: none; width: 32px; height: 32px; border-radius: 8px; background: #fff; color: var(--plum); display: flex; align-items: center; justify-content: center; }
 .gsug small { display: block; font: 600 10.5px/1.3 'Inter', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: #8A6D3B; }
 .gsug b { display: block; font-size: 14px; line-height: 1.3; } .gsug .m { font-size: 12px; color: var(--muted); } .gsug .ar { margin-left: auto; font-size: 22px; color: var(--plum); }
+.share { display: flex; gap: 10px; align-items: center; width: 100%; text-align: left; border: 1.5px solid #CFD8CC; background: #EEF2EC; border-radius: 10px; padding: 10px 12px; margin: 4px 0 14px; color: var(--ink); font: inherit; cursor: pointer; }
+.share .gi { flex: none; width: 32px; height: 32px; border-radius: 8px; background: #fff; color: #45574C; display: flex; align-items: center; justify-content: center; }
+.share b { display: block; font-size: 14px; line-height: 1.3; } .share .m { display: block; font-size: 12px; color: var(--muted); line-height: 1.4; } .share .ar { margin-left: auto; font-size: 22px; color: #45574C; }
 .gl-h { font: 600 11px/1 'Inter', sans-serif; letter-spacing: .08em; text-transform: uppercase; color: #8A6D3B; margin: 14px 0 6px; }
 .gl { list-style: none; margin: 0; padding: 0; background: #fff; border-radius: 10px; border: 1px solid var(--line); }
 .gl li + li { border-top: 1px solid #EFECE4; }
@@ -1115,6 +1118,20 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     const g = GUIDES.find(([, , pros, re]) => pros.split(' ').includes(to) && re.test(t));
     return g ? `<a class="gsug" href="guias/${g[0]}/" data-guide="${g[0]}"><span class="gi">${BOOK_ICON}</span><span><small>Mientras te responde ${esc(PROS[to].name)}</small><b>${esc(g[1])}</b><span class="m">Guía gratis de Hera</span></span><span class="ar">›</span></a>` : '';
   }
+  // «Envíaselo a alguien»: con el enlace de amigas se pasa ese mismo (5 gratis); si no, su enlace personal (?r=, 1 consulta de regalo)
+  const SHARE_ICON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>';
+  function shareLink(j) {
+    const fv = FRIEND && Date.now() < Date.parse('2026-12-31T23:59:59+01:00') ? viaSrc().via : '';
+    const url = fv ? `https://hera-gine.com/?via=${fv}` : j.invite ? `https://hera-gine.com/?r=${j.invite}` : 'https://hera-gine.com/';
+    const msg = fv ? `Te paso Hera: le pregunto mis dudas a una ginecóloga, una matrona o una pediatra y me responden por escrito. Con este enlace tienes 5 consultas gratis hasta el 31 de diciembre. ${url}`
+      : `Te paso Hera: le pregunté una duda a una profesional y me respondió por escrito. Las 2 primeras consultas son gratis y no piden tarjeta. ${url}`;
+    return { url, msg, fv };
+  }
+  function shareCard(j) {
+    const { fv } = shareLink(j);
+    const note = fv ? 'Con tu enlace tendrá 5 consultas gratis hasta el 31 de diciembre' : j.invite ? 'Si pregunta con tu enlace, te regalamos 1 consulta' : 'Las 2 primeras consultas son gratis';
+    return `<button type="button" class="share" data-share><span class="gi">${SHARE_ICON}</span><span><b>Envíaselo a alguien</b><span class="m">${note}</span></span><span class="ar">›</span></button>`;
+  }
   function showDone(to, j) {
     if (chat) { chat.sent(to, j); return; }
     const total = j.freeLimit || 2, rem = j.remaining ?? 0, p = PROS[to];
@@ -1125,10 +1142,16 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <p class="small">${rem === 0 ? 'Era tu última consulta gratuita.' : `Te ${rem === 1 ? `queda 1 consulta gratuita${j.next ? `, con ${esc(j.next)}` : ''}` : `quedan ${rem} consultas gratuitas`}.`}</p>`}
       ${j.dryRun ? '<p class="small">Modo ensayo: no se ha enviado ningún correo.</p>' : ''}
       ${guideCard(to)}
+      ${shareCard(j)}
       <p>Mientras esperas, Hera te cuenta qué es lo normal en tu semana o a la edad de tu bebé.</p>
       <a class="btn btn-p" href="app/" data-open>Abre Hera, es gratis</a>
       <button type="button" class="linkbtn" data-again>Escribir otra pregunta</button>`);
     done.querySelector('[data-open]').addEventListener('click', () => hit('abrir_portada'));
+    done.querySelector('[data-share]')?.addEventListener('click', async (ev) => {
+      const { url, msg } = shareLink(j); hit('clic:compartir_tras_enviar');
+      if (navigator.share) { try { await navigator.share({ text: msg.replace(url, '').trim(), url }); return; } catch (e) { if (e.name === 'AbortError') return; } }
+      location.href = `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    });
     done.querySelector('[data-guide]')?.addEventListener('click', (ev) => hit(`clic:guia_tras_enviar:${ev.currentTarget.dataset.guide}`));
     done.querySelector('[data-again]').addEventListener('click', () => { ta.value = ''; manual = false; done.hidden = true; form.hidden = false; refresh(); ta.focus(); });
   }

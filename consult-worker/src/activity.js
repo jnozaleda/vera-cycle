@@ -120,6 +120,8 @@ export function deviceText(d) {
 }
 // Noza, 20 nov: sin avisos al momento por el uso de la app (instalar, ciclo, fechas…); sí por visitas de los enlaces propios
 export const OWN_LINKS = new Set(['ig_marina', 'reddit_gonzalo', 'x4d', 'p9t', 'q7m', 'k2v']);
+// Nombre legible de nuestros enlaces (asunto de la copia del equipo, correo a la profesional y avisos)
+export const LINK_NAME = { ig_marina: 'Instagram de Marina', reddit_gonzalo: 'Reddit de Gonzalo', x4d: 'enlace de Gonzalo', p9t: 'enlace de Lucía', q7m: 'enlace de Maite', g8w: 'grupo de Maite', k2v: 'enlace de Noza' };
 const isImmediate = (e) => {
   const [name, value] = String(e).split(':');
   if (name === 'via_visita') return OWN_LINKS.has(value);

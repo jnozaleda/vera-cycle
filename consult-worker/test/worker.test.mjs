@@ -483,7 +483,11 @@ console.log('consultas: OK');
 // Enlace de amigas (q7m): 5 gratis, también con la misma especialista; sin el enlace, 2
 {
   const ask = (n, via) => call('/ask', { email: `amiga-q7m${via ? "" : "-sin"}@example.com`, to: 'gineco', text: `Duda número ${n} sobre la regla`, context: '', ...(via ? { via } : {}) });
-  for (let n = 1; n <= 5; n++) { const r = await ask(n, 'q7m'); assert.ok(r.j.ok && !r.j.limit, `amiga: consulta ${n} gratis: ${r.s} ${JSON.stringify(r.j)}`); }
+  const s0 = sent.length; await ask(1, 'q7m');
+  const viaMails = sent.slice(s0);
+  assert.ok(viaMails.some((m) => m.to[0] === PROS.gineco.email && /vía enlace de Maite/.test(m.subject) && /Llegó desde enlace de Maite/.test(m.html)), 'la profesional ve de qué enlace viene');
+  assert.ok(viaMails.some((m) => m.to[0] === 'copia@example.com' && /desde enlace de Maite/.test(m.subject)), 'la copia del equipo lo dice en el asunto');
+  for (let n = 2; n <= 5; n++) { const r = await ask(n, 'q7m'); assert.ok(r.j.ok && !r.j.limit, `amiga: consulta ${n} gratis: ${r.s} ${JSON.stringify(r.j)}`); }
   const sixth = await ask(6, 'q7m');
   assert.ok(sixth.j.limit, 'la sexta ya no es gratis');
   assert.ok((await ask(1)).j.ok);

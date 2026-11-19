@@ -32,7 +32,7 @@ import { validateAttachments } from './attachments.js';
 import { sendFeedbackDue, handleOpinion, feedbackEmail, feedbackSig } from './feedback.js';
 import { inviteCode, inviteFor, rewardInvite } from './invite.js';
 import { panel } from './panel.js';
-import { isEvent, isDevice, record, personTag, hourlyDigest, notify } from './activity.js';
+import { isEvent, isDevice, record, personTag, hourlyDigest, notify, LINK_NAME } from './activity.js';
 import { handleResendWebhook } from './bounces.js';
 import { addWaConsult, setWaState, assignPaidRow, maskPhone, normalizePhone } from './whatsapp.js';
 // Precio de WhatsApp en los textos, sacado del plan (4,50 € en Black Friday)
@@ -95,8 +95,8 @@ const reassignHtml = (links) => (links?.length ? `<!--ra--><p style="font-size:1
 const reassignText = (links) => (links?.length ? `\n\n¿No es de tu área? ${links.map((l) => `Pasársela a ${l.short}: ${l.url}`).join(' · ')}` : '');
 
 export function proEmail(pro, q, id = '', relay = true, links = []) {
-  const subject = `Consulta Hera${id ? ` #${id.toUpperCase()}` : ''}${q.context ? ` · ${q.context}` : ''}`;
-  const html = shell(`<p>Nueva consulta para <b>${esc(pro.name)}</b>.</p>
+  const subject = `Consulta Hera${id ? ` #${id.toUpperCase()}` : ''}${q.context ? ` · ${q.context}` : ''}${q.via ? ` · vía ${q.via}` : ''}`;
+  const html = shell(`<p>Nueva consulta para <b>${esc(pro.name)}</b>.${q.via ? ` Llegó desde ${esc(q.via)}.` : ''}</p>
 <div style="background:#F6E0E2;border-radius:10px;padding:14px;margin:12px 0">${nl2br(q.text)}</div>
 ${q.context ? `<p style="font-size:13px;color:#6E6C67">Sobre: ${esc(q.context)}</p>` : ''}
 ${q.situation ? `<p style="font-size:13px;color:#6E6C67">Situación: ${nl2br(q.situation)}</p>` : ''}
@@ -648,6 +648,7 @@ const handler = {
     } catch { return reply(400, { error: 'bad_request' }); }
     // Enlace de canal (?via=ig_marina…): solo letras, números y guion bajo
     const via = /^[a-z0-9_]{1,20}$/.test(String(body.via || '')) ? body.via : '';
+    const viaName = LINK_NAME[via] || ''; // uno de nuestros enlaces (Noza, 19 nov: que se vea en los asuntos)
     // Amigas que prueban Hera (enlace de Maite, 20 nov): más consultas gratis hasta una fecha y sin la regla de 1 por especialista
     const friend = FRIEND_LINKS[via] && Date.now() < Date.parse(FRIEND_LINKS[via].until) ? FRIEND_LINKS[via] : null;
     const limit = friend ? friend.free : Number(env.FREE_LIMIT || 2);
@@ -793,7 +794,7 @@ const handler = {
             await bump(env, 'consulta_guardada');
             if (env.COPY_TO) {
               const who = env.COPY_EMAIL === '1' ? `<p style="font-size:13px;color:#6E6C67">Correo de la usuaria: <b>${esc(q.email)}</b></p>` : '';
-              const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${hid.toUpperCase()} · PENDIENTE DE PAGO`, intro: `Consulta guardada para <b>${esc(pro.name)}</b>. <b style="color:#B3261E">Aún no ha pagado</b>: a ${esc(pro.short)} no le ha llegado.`, body: q.text,
+              const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${hid.toUpperCase()} · PENDIENTE DE PAGO${viaName ? ` · desde ${viaName}` : ''}`, intro: `Consulta guardada para <b>${esc(pro.name)}</b>. <b style="color:#B3261E">Aún no ha pagado</b>: a ${esc(pro.short)} no le ha llegado.`, body: q.text,
                 extra: `${who}<p style="font-size:13px;color:#6E6C67">Le hemos enviado el enlace de pago. Recordatorio a las 3 h si no paga. Se borra en ${HOLD_DAYS} días.${files.length ? ' Los adjuntos no se guardan: podrá enviarlos respondiendo al correo de la profesional.' : ''}</p>` });
               await sendMail(env, { to: env.COPY_TO, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc });
             }
@@ -809,7 +810,7 @@ const handler = {
       const bcc = test ? undefined : env.COPY_TO || undefined; // COPY_TO (secreto): copia oculta de cada consulta mientras se prueba
       // RELAY="1": respuestas a través de Hera (necesita la regla catch-all → Worker en Email Routing). Las pruebas siempre lo usan.
       const relay = env.RELAY === '1' || !!test;
-      const pm = proEmail(pro, q, id, relay, relay && !test ? await reassignLinks(env, id, pro.key) : []);
+      const pm = proEmail(pro, { ...q, via: viaName }, id, relay, relay && !test ? await reassignLinks(env, id, pro.key) : []);
       // Con adjuntos, la copia de control va aparte y sin los archivos: solo los recibe la profesional
       const proReply = relay ? await relayAddress(env, 'p', id) : q.email;
       const sent = await sendMail(env, { to: pro.email, replyTo: proReply, ...pm, attachments: files });
@@ -841,7 +842,7 @@ const handler = {
           const camp = /^[a-z0-9_]{1,24}$/.test(String(body.camp || '')) ? body.camp : '';
           const fromAd = body.src === 'ads';
           const tag = await personTag(env, request, madridDay(), body.p);
-          await record(env, { e: `consulta:${body.to}`, p: tag, note: fromAd ? `vino de un anuncio${camp ? ` (${camp})` : ''}${paid ? ', consulta pagada' : ''}` : (paid ? 'consulta pagada' : '') }, sendMail, ctx);
+          await record(env, { e: `consulta:${body.to}`, p: tag, note: [fromAd ? `vino de un anuncio${camp ? ` (${camp})` : ''}` : '', viaName ? `vino desde ${viaName}` : '', paid ? 'consulta pagada' : ''].filter(Boolean).join(', ') }, sendMail, ctx);
           if (fromAd) await record(env, { e: camp ? `consulta_anuncio:${camp}` : 'consulta_anuncio', p: tag }, sendMail, ctx);
           // Conversión para Google Ads: el código del clic (gclid, de esta misma visita) y la hora, 90 días; Google lo recoge del CSV
           if (fromAd && /^[\w-]{10,200}$/.test(String(body.gclid || ''))) await env.KV.put(`conv:${Date.now()}:${id}`, JSON.stringify({ g: body.gclid, n: 'Consulta enviada' }), { expirationTtl: 90 * 86400 });
@@ -861,7 +862,7 @@ const handler = {
         // COPY_EMAIL="1" (temporal, Noza 11 nov): la copia dice el correo de la usuaria, por si hay problemas
         const who = env.COPY_EMAIL === '1' ? `<p style="font-size:13px;color:#6E6C67">Correo de la usuaria: <b>${esc(q.email)}</b></p>` : '';
         const extra = `${who}${q.context ? `<p style="font-size:13px;color:#6E6C67">Sobre: ${esc(q.context)}</p>` : ''}${q.situation ? `<p style="font-size:13px;color:#6E6C67">Situación: ${nl2br(q.situation)}</p>` : ''}`;
-        const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${id.toUpperCase()}${files.length ? ` · ${files.length} ${files.length === 1 ? 'adjunto' : 'adjuntos'}` : ''}${body.src === 'ads' ? (/_latam$/.test(String(body.camp || '')) ? ' · desde anuncio (Latinoamérica)' : ' · desde anuncio') : ''}${via ? ` · desde ${via}` : ''}${paid ? ' · pagada' : ''}${nth > 1 ? ` · ${nth}.ª consulta` : ''}`,
+        const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${id.toUpperCase()}${files.length ? ` · ${files.length} ${files.length === 1 ? 'adjunto' : 'adjuntos'}` : ''}${body.src === 'ads' ? (/_latam$/.test(String(body.camp || '')) ? ' · desde anuncio (Latinoamérica)' : ' · desde anuncio') : ''}${via ? ` · desde ${viaName || via}` : ''}${paid ? ' · pagada' : ''}${nth > 1 ? ` · ${nth}.ª consulta` : ''}`,
           intro: `Nueva consulta para <b>${esc(pro.name)}</b>${body.src === 'ads' ? ' (llegó desde un anuncio)' : ''}.${nth > 1 ? ` <b>Es su ${nth}.ª consulta</b>${prevAt ? ` (la anterior, el ${new Date(prevAt).toLocaleDateString('es-ES', { timeZone: 'Europe/Madrid', day: 'numeric', month: 'short' })})` : ''}.` : ''}`, body: q.text, extra, nFiles: files.length, withFiles });
         await sendMail(env, { to: bcc, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc, ...(withFiles ? { attachments: files } : {}) });
       }

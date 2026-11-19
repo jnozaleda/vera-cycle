@@ -1374,6 +1374,18 @@ function askLimitView(a) {
   </div>`);
 }
 
+// «Envíaselo a alguien» (como en la web): con el enlace de amigas se pasa ese mismo; si no, su enlace personal (?r=)
+const FRIEND_VIAS = ['q7m', 'k2v'];
+function shareLink(r = {}) {
+  const v = viaSrc().via;
+  const fv = FRIEND_VIAS.includes(v) && Date.now() < Date.parse('2026-12-31T23:59:59+01:00') ? v : '';
+  const url = fv ? `https://hera-gine.com/?via=${fv}` : r.invite ? `https://hera-gine.com/?r=${r.invite}` : 'https://hera-gine.com/';
+  const msg = fv ? 'Te paso Hera: le pregunto mis dudas a una ginecóloga, una matrona o una pediatra y me responden por escrito. Con este enlace tienes 5 consultas gratis hasta el 31 de diciembre.'
+    : 'Te paso Hera: le pregunté una duda a una profesional y me respondió por escrito. Las 2 primeras consultas son gratis y no piden tarjeta.';
+  const note = fv ? 'Con tu enlace tendrá 5 consultas gratis hasta el 31 de diciembre' : r.invite ? 'Si pregunta con tu enlace, te regalamos 1 consulta' : 'Las 2 primeras consultas son gratis';
+  return { url, msg, note };
+}
+
 function askSheet() {
   const a = ui.ask;
   const to = CONSULTS[a.to];
@@ -1392,6 +1404,8 @@ function askSheet() {
       ${a.result.unlimited ? '<p class="t-12 soft">Tienes consultas ilimitadas</p>' : a.result.credits != null && rem === 0 ? `<p class="t-12 soft">${a.result.credits === 0 ? 'Era la última consulta de tu saldo' : `Te ${a.result.credits === 1 ? 'queda 1 consulta' : `quedan ${a.result.credits} consultas`} en tu saldo`}</p>` : `${freeDots(total - rem, total)}
       <p class="t-12 soft">${rem === 0 ? 'Era tu última consulta gratuita' : `Te ${rem === 1 ? 'queda 1 consulta gratuita' : `quedan ${rem} consultas gratuitas`}`}</p>`}
       ${a.result.dryRun ? '<p class="t-11 c-rose">Modo ensayo: no se ha enviado ningún correo.</p>' : ''}
+      <button class="outline-sage" data-action="ask-share">${icon('share', 14)} Envíaselo a alguien</button>
+      <p class="t-11 soft-70 lh-3">${shareLink(a.result).note}</p>
       <button class="link-soft self-center" data-action="ask-reset">Escribir otra pregunta</button>
     </div>`);
   }
@@ -2836,6 +2850,11 @@ const actions = {
   'consult-seen': (el) => { markSeen(el.dataset.v); render(); },
   'consults-clear': () => { if (!confirm('¿Borrar el historial de consultas de este dispositivo? Las respuestas siguen en tu correo.')) return; clearConsults(); render(); },
   'hito-close': (el) => { try { localStorage.setItem(HITOS_KEY, JSON.stringify([...hitosVistos(), el.dataset.v])); } catch { /* sin almacenamiento */ } render(); },
+  'ask-share': async () => {
+    const { url, msg } = shareLink(ui.ask.result || {}); track('clic:compartir_tras_enviar');
+    if (navigator.share) { try { await navigator.share({ text: msg, url }); return; } catch (e) { if (e.name === 'AbortError') return; } }
+    window.open(`https://wa.me/?text=${encodeURIComponent(`${msg} ${url}`)}`, '_blank', 'noopener');
+  },
   'ask-reset': () => { ui.ask = { ...ui.ask, context: '', include: true, text: '', sent: null, to: null, manual: false, status: null, result: ui.ask.result?.limit && !ui.ask.result.early ? ui.ask.result : null, notify: null }; render(); },
   'ask-pick': (el) => { ui.ask.to = el.dataset.v; ui.ask.manual = true; render(); },
   'ask-submit': async () => {

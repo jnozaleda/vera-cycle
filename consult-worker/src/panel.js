@@ -287,7 +287,7 @@ export async function panel(env, url, openThreads) {
   const eur = pagos.reduce((a, [k2, x]) => a + net(k2, x) * PLAN_EUR[k2.slice(5)], 0);
   const nVideo = net('pago:video', g('pago:video')) + net('pago:lactancia', g('pago:lactancia')) + net('pago:llamada', g('pago:llamada'));
   // Origen de cada persona-día: anuncio España, anuncio Latinoamérica, enlace propio (?via=, invitación) o sin etiqueta
-  const VIA_NAME = { ig_marina: 'Instagram de Marina', wa_guia: 'Guías por WhatsApp', reddit_gonzalo: 'Reddit de Gonzalo', q7m: 'Enlace de Maite', x4d: 'Enlace de Gonzalo', p9t: 'Enlace de Lucía' };
+  const VIA_NAME = { ig_marina: 'Instagram de Marina', wa_guia: 'Guías por WhatsApp', reddit_gonzalo: 'Reddit de Gonzalo', q7m: 'Enlace de Maite', k2v: 'Enlace de Noza', x4d: 'Enlace de Gonzalo', p9t: 'Enlace de Lucía' };
   const viaOf = (v) => { for (const r of v) { const m = /^via_visita:([a-z0-9_]+)$/.exec(r.e); if (m) return m[1]; } return ''; };
   const srcOf = (k2, v) => (AD.has(k2) ? 'es' : LATAM.has(k2) ? 'la' : viaOf(v) ? `via:${viaOf(v)}` : v.some((r) => is(r.e, ['invitacion_visita', 'consulta_invitada'])) ? 'inv' : 'ot');
   const people = [...byKey].map(([k2, v]) => ({ k: k2, v, src: srcOf(k2, v) }));
@@ -342,7 +342,7 @@ export async function panel(env, url, openThreads) {
   const srcRows = [];
   const esRows = AD_GROUPS.filter(([c2]) => !/_latam$/.test(c2)).map(([c2, l]) => rowOf(people.filter((p) => p.src === 'es' && (c2 ? campOfP(p) === c2 : !knownCamp.has(campOfP(p)))), c2 ? l : 'Sitelinks y otros')).filter((r) => r[1] || r[3]);
   const laRows = AD_GROUPS.filter(([c2]) => /_latam$/.test(c2)).map(([c2, l]) => rowOf(people.filter((p) => p.src === 'la' && campOfP(p) === c2), l.replace(' · Latinoamérica', ''))).filter((r) => r[1] || r[3]);
-  const vias = [...new Set([...Object.keys(tot).filter((k2) => /^(via_visita|consulta_via):/.test(k2)).map((k2) => k2.split(':')[1]), 'ig_marina', 'q7m', 'x4d', 'p9t'])];
+  const vias = [...new Set([...Object.keys(tot).filter((k2) => /^(via_visita|consulta_via):/.test(k2)).map((k2) => k2.split(':')[1]), 'ig_marina', 'q7m', 'k2v', 'x4d', 'p9t'])];
   const ownRows = [...vias.map((v) => rowOf(people.filter((p) => p.src === `via:${v}`), VIA_NAME[v] || v, g(`consulta_via:${v}`))), rowOf(people.filter((p) => p.src === 'inv'), 'Invitaciones', g('consulta_invitada'))];
   const otRow = rowOf(people.filter((p) => p.src === 'ot'), 'Google, directo y otros');
   if (esRows.length) srcRows.push(['Google Ads · España', esRows]);

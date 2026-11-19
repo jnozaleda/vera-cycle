@@ -831,7 +831,8 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   if (/^[a-z0-9_]{1,20}$/.test(via0)) { store.set(VIA_KEY, JSON.stringify({ v: via0, at: Date.now() })); hit(`via_visita:${via0}`); }
   const viaSrc = () => { try { const r = JSON.parse(store.get(VIA_KEY) || 'null'); return r && Date.now() - r.at < 30 * 86400000 ? { via: r.v } : {}; } catch { return {}; } };
   // Enlace de amigas (q7m, de Maite): 5 consultas gratis hasta el 31 dic (el servicio aplica lo mismo)
-  if ((viaSrc().via || '') === 'q7m' && Date.now() < Date.parse('2026-12-31T23:59:59+01:00')) { const a = document.getElementById('annc-t'); if (a) a.innerHTML = 'Invitación de Maite: 5 consultas gratis hasta el 31 de diciembre · <u>Pregunta ahora</u>'; }
+  const FRIEND = { q7m: 'Maite', k2v: 'Noza' }[viaSrc().via || ''];
+  if (FRIEND && Date.now() < Date.parse('2026-12-31T23:59:59+01:00')) { const a = document.getElementById('annc-t'); if (a) a.innerHTML = `Invitación de ${FRIEND}: 5 consultas gratis hasta el 31 de diciembre · <u>Pregunta ahora</u>`; }
   const refSrc = () => { try { const r = JSON.parse(store.get(REF_KEY) || 'null'); return r && Date.now() - r.at < 30 * 86400000 ? { ref: r.c } : {}; } catch { return {}; } };
   if (refSrc().ref) { const a = document.querySelector('.annc a'); if (a) a.innerHTML = 'Te han invitado a Hera · Tus 2 primeras consultas, gratis y sin tarjeta · <u>Pregunta ahora</u>'; }
   // Qué hacen al entrar (vera-backlog#80): hasta dónde bajan, qué secciones ven, dónde pulsan y cuánto se quedan.
@@ -884,7 +885,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     }
     $('ask-topro').hidden = !to;
     box.classList.toggle('pickpro', pickOpen || !to);
-    if (opened && !busy) $('ask-send-t').textContent = `Enviar${store.get('hera-free-left') === '0' || (to && viaSrc().via !== 'q7m' && (store.get('hera-free-pros') || '').split(',').includes(to)) ? '' : ' gratis'}${to ? ` a ${PROS[to].name}` : ' por correo'}`;
+    if (opened && !busy) $('ask-send-t').textContent = `Enviar${store.get('hera-free-left') === '0' || (to && !['q7m', 'k2v'].includes(viaSrc().via) && (store.get('hera-free-pros') || '').split(',').includes(to)) ? '' : ' gratis'}${to ? ` a ${PROS[to].name}` : ' por correo'}`;
     chat?.sync();
   }
   function open() {

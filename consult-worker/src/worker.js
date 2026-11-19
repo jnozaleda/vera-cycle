@@ -44,7 +44,7 @@ import { PLANS, VIDEO_PROS, paymentsOn, createCheckout, sessionStatus, handleWeb
 import { newThreadId, relayAddress, parseRelayAddress, sealEmail, openEmail, saveThread, loadThread, parseIncoming, isAutomatic } from './relay.js';
 
 /** Enlaces de amigas: consultas gratis y hasta cuándo (Noza, 20 nov) */
-export const FRIEND_LINKS = { q7m: { free: 5, until: '2026-12-31T23:59:59+01:00' } };
+export const FRIEND_LINKS = { q7m: { free: 5, until: '2026-12-31T23:59:59+01:00' }, k2v: { free: 5, until: '2026-12-31T23:59:59+01:00' } }; // q7m Maite, k2v Noza
 
 export const PROS = {
   gineco: { key: 'gineco', name: 'Dr. Gonzalo Nozaleda', short: 'Gonzalo', role: 'ginecólogo', email: 'gonzalo@hera-gine.com' },

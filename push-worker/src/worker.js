@@ -83,7 +83,7 @@ const validEndpoint = (e) => {
     return u.protocol === 'https:' && PUSH_HOSTS.some((h) => (h.startsWith('.') ? u.hostname.endsWith(h) : u.hostname === h));
   } catch { return false; }
 };
-const validBirth = (d) => { const n = dayNumber(d), t = dayNumber(madridNow().date); return n != null && n <= t && n > t - 400; };
+const validBirth = (d) => { const n = dayNumber(d), t = dayNumber(madridNow().date); return n != null && n <= t && n > t - 800; }; // hasta 2 años (el contenido del bebé llega a los 2 años)
 const validPeriod = (d) => { const n = dayNumber(d), t = dayNumber(madridNow().date); return n != null && n >= t - 30 && n <= t + 120; };
 const validDue = (due) => { const d = dayNumber(due); return d != null && d > dayNumber('2020-01-01') && d < dayNumber('2100-01-01'); };
 

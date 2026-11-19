@@ -81,7 +81,8 @@ export const POSTPARTUM_LINE = [
   w(0, 1, { text: 'Tu cuerpo está empezando a recuperarse. Descansa y acepta ayuda.' }),
   w(2, 5, { text: 'Cada día será un poco más fácil. Ve a tu ritmo.' }),
   w(6, 11, { text: 'Ya pasó la cuarentena. Es buen momento para tu revisión.' }),
-  w(12, 999, { text: 'Sigue a tu ritmo: la recuperación completa lleva meses.' }),
+  w(12, 51, { text: 'Sigue a tu ritmo: la recuperación completa lleva meses.' }),
+  w(52, 999, { text: 'Ya ha pasado más de un año del parto. Si te ha vuelto la regla, puedes pasar a seguir tu ciclo.' }),
 ];
 export const postpartumLine = (weeks) => inRange(POSTPARTUM_LINE, weeks).text;
 
@@ -128,7 +129,10 @@ const POSTPARTUM_BABY_NORMAL = [
   w(0, 3, { items: ['Duerme la mayor parte del día y se despierta para comer cada 2 o 3 horas.', 'Pierde algo de peso los primeros días (hasta un 7 % aproximadamente) y lo recupera hacia los 10 a 14 días.', 'Sus cacas pasan de negras a amarillas, y a partir del quinto día moja al menos 6 pañales al día.'] }),
   w(4, 11, { items: ['Llora más hacia las 6 a 8 semanas; suele mejorar hacia los 3 o 4 meses.', 'Empieza a sonreír hacia los 2 meses.', 'Duerme en tramos cortos, también de noche: es normal.'] }),
   w(12, 23, { items: ['Sonríe, balbucea y empieza a sostener la cabeza hacia los 4 meses.', 'Le sienta bien el tiempo boca abajo, despierto y vigilado.', 'Las primeras vacunas son a los 2 meses; después, a los 4 y a los 11–12 meses.'] }),
-  w(24, 999, { items: ['Hacia los 6 meses empieza a comer otros alimentos, sin dejar la leche.', 'Se sienta con apoyo y puede salirle el primer diente.', 'Cada vez se mueve más: conviene revisar los riesgos de la casa.'] }),
+  w(24, 51, { items: ['Hacia los 6 meses empieza a comer otros alimentos, sin dejar la leche.', 'Se sienta con apoyo y puede salirle el primer diente.', 'Cada vez se mueve más: conviene revisar los riesgos de la casa.'] }),
+  // De 1 a 2 años (19 nov 2026): antes se repetía el contenido de 6 a 12 meses. BORRADOR, pendiente de Lucía.
+  w(52, 77, { items: ['Entre los 12 y los 18 meses da sus primeros pasos: cada bebé tiene su ritmo.', 'Dice sus primeras palabras y entiende mucho más de lo que dice.', 'Come casi de todo en la mesa familiar, en trozos blandos y sin sal ni azúcar añadidos.'] }),
+  w(78, 999, { items: ['Camina con soltura y le encanta imitar lo que haces.', 'Hacia los 2 años junta dos palabras; las rabietas son normales a esta edad.', 'Lávale los dientes dos veces al día con pasta con flúor, una cantidad como un grano de arroz.'] }),
 ];
 export const postpartumBabyNormal = (weeks) => inRange(POSTPARTUM_BABY_NORMAL, weeks).items;
 

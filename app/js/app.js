@@ -1645,9 +1645,9 @@ function postpartumToday() {
   const weightLine = bb?.birthWeight ? `${fmtBabyKg(bb.birthWeight)} al nacer${lw ? ` · último ${fmtBabyKg(lw.g)}` : ''}` : 'Aún sin peso apuntado';
 
   if (ui.hoyView === 'baby') {
-    const bw = Math.min(52, Math.max(0, ui.ppBabyWeek ?? s.weeks));
-    const phase = bw < 4 ? 'Primer mes' : bw < 12 ? 'Primeros 3 meses' : bw < 24 ? 'De 3 a 6 meses' : 'De 6 a 12 meses';
-    const nav = weekNavigator({ week: bw, min: 0, max: 52, current: Math.min(52, s.weeks), action: 'pp-baby-week', title: bw === 0 ? 'Primera semana' : `${bw} ${plural(bw, 'semana', 'semanas')}`, subtitle: phase, backLabel: 'Volver a su semana' });
+    const bw = Math.min(104, Math.max(0, ui.ppBabyWeek ?? s.weeks));
+    const phase = bw < 4 ? 'Primer mes' : bw < 12 ? 'Primeros 3 meses' : bw < 24 ? 'De 3 a 6 meses' : bw < 52 ? 'De 6 a 12 meses' : bw < 78 ? 'De 12 a 18 meses' : 'De 18 meses a 2 años';
+    const nav = weekNavigator({ week: bw, min: 0, max: 104, current: Math.min(104, s.weeks), action: 'pp-baby-week', title: bw === 0 ? 'Primera semana' : `${bw} ${plural(bw, 'semana', 'semanas')}`, subtitle: phase, backLabel: 'Volver a su semana' });
     return `<div class="stack-14">
     ${switcher}
     ${nav}
@@ -1684,7 +1684,7 @@ function postpartumToday() {
             ? `<span class="preg-weeks sm">${s.days}</span><span class="stack-0"><span class="serif-22">${plural(s.days, 'día', 'días')}</span><span class="t-12 soft">primera semana</span></span>`
             : `<span class="preg-weeks sm">${s.weeks}</span><span class="stack-0"><span class="serif-22">${plural(s.weeks, 'semana', 'semanas')}</span><span class="t-12 soft">+ ${s.days} ${plural(s.days, 'día', 'días')}</span></span>`}
         </div>
-        <div class="text-right"><div class="t-11 soft">Tu bebé nació el</div><div class="t-14 w-500">${esc(fmtDayMonthShort(s.birth))}</div></div>
+        <div class="text-right"><div class="t-11 soft">Tu bebé nació el</div><div class="t-14 w-500">${esc(s.total > 300 ? fmtDayMonthYear(s.birth) : fmtDayMonthShort(s.birth))}</div></div>
       </div>
       <p class="t-13 soft lh-4">${esc(postpartumLine(s.weeks))}</p>
     </div>

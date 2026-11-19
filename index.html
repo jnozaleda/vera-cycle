@@ -187,7 +187,7 @@ section { padding: 64px 0; }
 .nm-almost .ck { flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--plum); color: #fff; display: flex; align-items: center; justify-content: center; }
 .nm-almost b { display: block; } .nm-almost span span { color: #4F4E49; font-size: 13.5px; }
 .ask.needmail #ask-files, .ask.needmail .fld-ck, .ask.needmail #duda, .ask.needmail .picks, .ask.needmail #ask-hint, .ask.needmail .chor, .ask.needmail #ask-wa-pay, .ask.needmail .perks { display: none !important; }
-.ask.needmail #ask-email { border-color: #B3261E; box-shadow: 0 0 0 3px #F6D6D2; }
+.ask.needmail #ask-email:not(.nm-ok) { border-color: #B3261E; box-shadow: 0 0 0 3px #F6D6D2; }
 .ask.needmail #ask-send:disabled { background: #C9CFC9; cursor: not-allowed; }
 .nm-wa { margin: 0; text-align: center; font-size: 13.5px; color: #4F4E49; }
 .nm-wa button { font: 600 13.5px/1.3 'Inter', sans-serif; color: #1E6B30; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; white-space: nowrap; display: inline-flex; gap: 4px; align-items: center; }
@@ -960,7 +960,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         'Lucía, pediatra', ['Mi bebé tiene fiebre, ¿qué hago?', 'Mi bebé no hace caca desde hace 2 días', 'Tiene granitos en la cara']],
     };
     // Enlaces de canal de una profesional: su titular y ella ya elegida (ig_marina → Marina)
-    const VIA_PRO = { ig_marina: 'matrona', reddit_gonzalo: 'gineco' };
+    const VIA_PRO = { ig_marina: 'matrona', reddit_gonzalo: 'gineco', x4d: 'gineco', p9t: 'pediatra' }; // x4d = enlace de Gonzalo, p9t = de Lucía, q7m = de Maite (sin profesional)
     const camp = (new URLSearchParams(location.search).get('utm_campaign') || '').toLowerCase().replace(/(_resto)?_latam$/, '') || VIA_PRO[via0] || ''; // gineco_latam (Argentina) y gineco_resto_latam (México, Chile y Colombia) → gineco
     const page = AD_PAGE[camp];
     if (page) {
@@ -988,7 +988,8 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   document.querySelectorAll('[data-cta]').forEach((a) => a.addEventListener('click', () => hit(a.dataset.cta)));
 
   // Enviar sin correo: «Ya casi está», duda y profesional recogidas, correo en rojo y botón inactivo hasta que esté bien escrito
-  const nmOk = () => { if (box.classList.contains('needmail')) send.disabled = busy || !isEmail(email.value); };
+  // El botón no se desactiva (en iPhone el autorrelleno puede no avisar): al pulsar sin correo válido, se vuelve a pedir
+  const nmOk = () => { if (box.classList.contains('needmail')) email.classList.toggle('nm-ok', isEmail(email.value)); };
   function needMail(to) {
     const p = PROS[to];
     $('ask-sum-t').textContent = ta.value.trim();

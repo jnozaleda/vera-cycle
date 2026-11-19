@@ -10,6 +10,10 @@ import { shell, BEACON } from './web-shell.mjs';
 const ROOT = new URL('../', import.meta.url);
 const API = 'https://hera-consultas.tempcheck-app.workers.dev';
 const WA = '34603295806';
+// 19 nov: WhatsApp de pago apagado mientras se afina. SOON = true enseña «Próximamente» y «Avísame» (correo cifrado, /avisame).
+// Quien vuelve de un pago ya hecho (?pago=ok) sigue viendo su código. Para volver a encenderlo: SOON = false y reconstruir.
+const SOON = true;
+const bell = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>';
 const tick = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';
 const waIcon = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5 5 16a8.5 8.5 0 1 1 3.2 3.1z"/></svg>';
 
@@ -34,6 +38,12 @@ const STYLE = `<style>
 .wa-free{background:#F6E0E2;border-radius:12px;padding:16px 18px;margin-top:26px;max-width:640px;font-size:15px;color:#4F4E49}.wa-free a{color:#45574C;font-weight:600}
 .wa-faq{max-width:640px}.wa-faq div{border-top:1px solid #E5E1D8;padding:14px 0}.wa-faq b{display:block;font-size:15.5px;margin-bottom:3px}.wa-faq p{font-size:14.5px;color:#4F4E49}
 .wa-box[hidden],.wa-note[hidden]{display:none}
+.wa-soon-t{display:flex;align-items:center;gap:8px;font:600 16px/1.2 Inter,sans-serif;color:#2F3631}.wa-soon-t svg{color:#1E6B30}
+.wa-pill{font:600 10.5px/1 Inter,sans-serif;letter-spacing:.04em;text-transform:uppercase;color:#1E6B30;background:#E4F2E7;border-radius:99px;padding:4px 8px}
+.wa-form{display:flex;gap:8px;flex-wrap:wrap}.wa-form input{flex:1 1 200px;min-width:0;font:16px Inter,sans-serif;border:1.5px solid #E5E1D8;border-radius:8px;padding:11px 12px;background:#FAF9F4;color:#2F3631}
+.wa-form input.bad{border-color:#B3261E;box-shadow:0 0 0 3px #F6D6D2}
+.wa-form button{flex:none;display:inline-flex;align-items:center;gap:6px;font:600 15px/1 Inter,sans-serif;color:#1E6B30;background:#fff;border:1.5px solid #25803A;border-radius:8px;padding:11px 16px;cursor:pointer}.wa-form button:disabled{opacity:.6}
+.wa-ok{display:flex;gap:6px;align-items:center;font-size:14.5px;color:#1E6B30;margin:0}
 .wa-urg{font-size:13.5px;color:#B3261E;margin:18px 0 26px;max-width:640px}
 </style>`;
 
@@ -41,20 +51,22 @@ const body = `${STYLE}<div class="w wa">
 <section class="wa-hero">
   <p class="ey">Consulta por WhatsApp</p>
   <h1>Pregunta a tu ginecólogo, matrona o pediatra <em>por WhatsApp</em></h1>
-  <p class="wa-lead">Escribe tu duda a Gonzalo, Marina o Lucía y te responden por el mismo chat en menos de 12 h.</p>
+  <p class="wa-lead">${SOON ? 'Muy pronto podrás escribir tu duda a Gonzalo, Marina o Lucía por WhatsApp.' : 'Escribe tu duda a Gonzalo, Marina o Lucía y te responden por el mismo chat en menos de 12 h.'}</p>
   <ul class="wa-ticks"><li>${tick}Sin instalar nada</li><li>${tick}Tu número no lo ven las profesionales</li><li>${tick}Puedes mandar fotos</li></ul>
   <div class="wa-box" id="wa-box">
-    <div class="wa-faces"><span><img src="/portada/equipo/gonzalo.jpg?v=2" alt=""><img src="/portada/equipo/marina.jpg?v=2" alt=""><img src="/portada/equipo/lucia.jpg?v=3" alt=""></span>Gonzalo, Marina o Lucía, tú eliges</div>
+${SOON ? `    <div class="wa-faces"><span><img src="/portada/equipo/gonzalo.jpg?v=2" alt=""><img src="/portada/equipo/marina.jpg?v=2" alt=""><img src="/portada/equipo/lucia.jpg?v=3" alt=""></span>Gonzalo, Marina y Lucía</div>
+    <div class="wa-soon-t">${waIcon}WhatsApp <span class="wa-pill">Próximamente</span></div>
+    <form class="wa-form" id="wa-soon"><input id="wa-mail" type="email" inputmode="email" autocomplete="email" placeholder="Tu correo" aria-label="Tu correo"><button type="submit">${bell}Avísame</button></form>` : `    <div class="wa-faces"><span><img src="/portada/equipo/gonzalo.jpg?v=2" alt=""><img src="/portada/equipo/marina.jpg?v=2" alt=""><img src="/portada/equipo/lucia.jpg?v=3" alt=""></span>Gonzalo, Marina o Lucía, tú eliges</div>
     <div class="wa-price"><span>Una consulta por WhatsApp <em class="wa-bf">Black Friday</em></span><strong><s>9 €</s> <span class="waprice">4,50 €</span></strong></div>
     <a class="wa-btn" id="wa-pay" href="${API}/wa/pagar">${waIcon}Pagar <span class="waprice">4,50 €</span> y escribir por WhatsApp</a>
-    <p class="wa-small">Pagas con tarjeta, Apple Pay o Google Pay en una página de pago segura; te pedimos el correo (para mandarte el código) y el móvil. Al terminar te damos un código y se abre WhatsApp.</p>
+    <p class="wa-small">Pagas con tarjeta, Apple Pay o Google Pay en una página de pago segura; te pedimos el correo (para mandarte el código) y el móvil. Al terminar te damos un código y se abre WhatsApp.</p>`}
   </div>
   <div class="wa-note" id="wa-note" hidden aria-live="polite"></div>
 </section>
 
-<div class="wa-free">¿Prefieres gratis? <a href="/#ask">Pregunta por la web</a>: tus 2 primeras consultas son gratis y te responden por correo.</div>
+<div class="wa-free">${SOON ? 'Mientras, <a href="/#ask">pregunta por la web</a>' : '¿Prefieres gratis? <a href="/#ask">Pregunta por la web</a>'}: tus 2 primeras consultas son gratis y te responden por correo.</div>
 
-<h2>Cómo funciona</h2>
+${SOON ? '' : `<h2>Cómo funciona</h2>
 <ol class="wa-steps">
   <li><div><b>Pagas <span class="waprice">4,50 €</span></b><span>En la página de pago. Te mandamos el código también por correo, por si cierras la página.</span></div></li>
   <li><div><b>Abres WhatsApp con tu código</b><span>El mensaje ya va escrito con tu código. Añade tu duda y dinos a quién se la preguntas.</span></div></li>
@@ -66,7 +78,7 @@ const body = `${STYLE}<div class="w wa">
   <div><b>¿Quién me contesta?</b><p>Gonzalo Nozaleda (ginecólogo), Marina Fernández (matrona) o Lucía Carrascón (pediatra), la que elijas. El WhatsApp es de Hera: ni ves su número ni ellas el tuyo.</p></div>
   <div><b>¿Y si escribo al WhatsApp sin pagar?</b><p>Te contestamos con este enlace para pagar. En cuanto llega el pago, le pasamos tu duda a la profesional.</p></div>
   <div><b>¿Qué pasa con mis datos?</b><p>La conversación pasa por WhatsApp (Meta). Guardamos tu número cifrado 30 días para llevar la cuenta de tu consulta. Más en la <a href="/privacy.html">política de privacidad</a>.</p></div>
-</div>
+</div>`}
 <p class="wa-urg">No es para urgencias. Si hay sangrado abundante, pérdida de líquido, el bebé no se mueve, dolor muy fuerte o fiebre alta en un bebé pequeño, llama al 112 (o al número de emergencias de tu país) o ve a urgencias.</p>
 </div>
 <script type="module">
@@ -82,12 +94,26 @@ const body = `${STYLE}<div class="w wa">
   // Anuncios: misma marca de 30 días que la portada (sin cookies)
   let ad = {};
   try { const a = JSON.parse(localStorage.getItem('hera-src') || 'null'); if (a && Date.now() - a.at < 30 * 86400000) ad = { src: 'ads', camp: a.c || '' }; } catch {}
+  const soon = document.getElementById('wa-soon');
+  if (soon) soon.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const inp = document.getElementById('wa-mail'), b = soon.querySelector('button');
+    if (!/^[^\\s@]+@[^\\s@]+\\.[a-z]{2,}$/i.test(inp.value.trim())) { inp.classList.add('bad'); inp.focus(); return; }
+    inp.classList.remove('bad'); b.disabled = true;
+    try {
+      const r = await fetch(API + '/avisame', { method: 'POST', body: JSON.stringify({ email: inp.value.trim(), src: 'whatsapp', p: ptag }) });
+      if (!r.ok) throw new Error();
+      soon.outerHTML = '<p class="wa-ok">${tick}Hecho. Te avisaremos por correo.</p>';
+    } catch { b.disabled = false; }
+  });
   const pay = document.getElementById('wa-pay');
+  if (pay) {
   const u = new URL(pay.href);
   if (ad.src) { u.searchParams.set('src', 'ads'); if (ad.camp) u.searchParams.set('camp', ad.camp); }
   if (local || isTeam()) u.searchParams.set('t', '1');
   pay.href = u.toString();
   pay.addEventListener('click', () => { if (ptag) { const v = new URL(pay.href); v.searchParams.set('p', ptag); pay.href = v.toString(); } });
+  }
   const note = document.getElementById('wa-note');
   const say = (html) => { note.innerHTML = html; note.hidden = false; note.scrollIntoView({ block: 'center' }); };
   const pago = q.get('pago');
@@ -116,7 +142,7 @@ const body = `${STYLE}<div class="w wa">
 
 const html = shell({
   title: 'Consulta por WhatsApp con ginecólogo, matrona o pediatra · Hera',
-  desc: 'Pregunta tu duda a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra) por WhatsApp y te responden por el mismo chat en menos de 12 h. Black Friday: 4,50 € la consulta (antes 9 €).',
+  desc: SOON ? 'Muy pronto podrás preguntar tu duda a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra) por WhatsApp. Mientras, tus 2 primeras consultas por la web son gratis.' : 'Pregunta tu duda a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra) por WhatsApp y te responden por el mismo chat en menos de 12 h. Black Friday: 4,50 € la consulta (antes 9 €).',
   path: '/whatsapp/',
   ld: { '@context': 'https://schema.org', '@type': 'Service', name: 'Consulta por WhatsApp con profesionales de Hera', provider: { '@type': 'Organization', name: 'Hera', url: 'https://hera-gine.com' },
     offers: [{ '@type': 'Offer', name: 'Consulta por WhatsApp', price: '9', priceCurrency: 'EUR' }] },

@@ -717,6 +717,19 @@ const handler = {
       } catch (e) { console.log(e.message); return reply(502, { error: 'stripe' }); }
     }
 
+    // WhatsApp «Próximamente» (19 nov): quien pulsa «Avísame» deja su correo cifrado para avisarla cuando vuelva (12 meses como mucho)
+    if (url.pathname === '/avisame') {
+      const norm = normalizeEmail(body.email);
+      if (!norm) return reply(400, { error: 'bad_email' });
+      const h = (await hmac(env.HASH_SALT, norm)).slice(0, 24);
+      if (!(await env.KV.get(`wa_aviso:${h}`))) {
+        await env.KV.put(`wa_aviso:${h}`, JSON.stringify({ u: await sealEmail(env, norm), at: Date.now(), src: String(body.src || '').slice(0, 20) }), { expirationTtl: 365 * 86400 });
+        await bump(env, 'whatsapp_avisame');
+        await record(env, { e: 'whatsapp_avisame', p: await personTag(env, request, madridDay(), body.p) }, sendMail, ctx);
+      }
+      return reply(200, { ok: true });
+    }
+
     if (url.pathname === '/notify') {
       const norm = normalizeEmail(body.email);
       if (!norm) return reply(400, { error: 'bad_email' });

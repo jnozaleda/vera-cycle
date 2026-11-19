@@ -498,6 +498,7 @@ ${PROS.map(([k2, name]) => { const r = g(`respondida:${k2}`); const fp = (open.f
 <tr><td>Agotaron las gratuitas</td>${td(g('gratuitas_agotadas'))}</tr>
 <tr><td>Consultas guardadas sin pagar</td>${td(guardadas)}</tr>
 <tr><td>Consultas por WhatsApp</td>${td(sum('consulta_wa:'))}</tr>
+<tr><td>Pidieron aviso cuando vuelva WhatsApp</td>${td(g('whatsapp_avisame'))}</tr>
 <tr><td>Instalaron la app</td>${td(g('instalada'))}</tr>
 <tr><td>Opiniones recibidas</td>${td(opTotal)}</tr>
 <tr><td>Consultas regaladas por invitar</td>${td(g('consulta_regalada'))}</tr>

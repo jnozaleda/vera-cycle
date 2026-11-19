@@ -165,6 +165,13 @@ section { padding: 64px 0; }
 .chor:before, .chor:after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .wabtn2 { display: grid; gap: 3px; justify-items: center; text-align: center; background: #F1F8F2; border: 1.5px solid #25803A; color: #1E6B30; border-radius: 8px; padding: 12px 14px; text-decoration: none; }
 .wabtn2:hover { background: #E4F2E7; }
+/* WhatsApp «Próximamente» (19 nov): una franja con «Avísame» mientras se afina el WhatsApp de pago */
+.soon { border: 1.5px dashed #B9C7BC; border-radius: 8px; padding: 7px 7px 7px 12px; display: flex; align-items: center; gap: 8px; background: #FAFAF6; }
+.soon .t { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 7px; font: 600 14px/1.2 'Inter', sans-serif; color: #4F4E49; min-width: 0; } .soon .t svg { color: #1E6B30; flex: none; }
+.soon .pill { font: 600 9.5px/1 'Inter', sans-serif; letter-spacing: .04em; text-transform: uppercase; color: #1E6B30; background: #E4F2E7; border-radius: 99px; padding: 4px 7px; }
+.soon button { margin-left: auto; flex: none; font: 600 13.5px/1 'Inter', sans-serif; color: #1E6B30; background: #fff; border: 1.5px solid #25803A; border-radius: 7px; padding: 8px 11px; display: inline-flex; gap: 5px; align-items: center; white-space: nowrap; cursor: pointer; }
+.soon button:disabled { opacity: .6; cursor: default; }
+.soon .ok { margin-left: auto; display: flex; gap: 6px; align-items: center; font-size: 13px; color: #1E6B30; white-space: nowrap; min-height: 33px; }
 .wabtn2 s.old { font-weight: 500; opacity: .6; } .wabtn2 .bf { font: 600 10.5px/1 'Inter', sans-serif; letter-spacing: .04em; text-transform: uppercase; color: #fff; background: #1E6B30; border-radius: 99px; padding: 3px 7px; margin-right: 6px; vertical-align: 1px; }
 .gsug { display: flex; gap: 10px; align-items: center; text-align: left; border: 1.5px solid #E8C9CC; background: #FBF1F2; border-radius: 10px; padding: 10px 12px; margin: 4px 0 14px; text-decoration: none; color: var(--ink); }
 .gsug .gi { flex: none; width: 32px; height: 32px; border-radius: 8px; background: #fff; color: var(--plum); display: flex; align-items: center; justify-content: center; }
@@ -189,8 +196,8 @@ section { padding: 64px 0; }
 .nm-almost { display: flex; gap: 10px; align-items: flex-start; background: #EEF4EF; border-radius: 10px; padding: 11px 12px; font-size: 14px; }
 .nm-almost .ck { flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--plum); color: #fff; display: flex; align-items: center; justify-content: center; }
 .nm-almost b { display: block; } .nm-almost span span { color: #4F4E49; font-size: 13.5px; }
-.ask.needmail #ask-files, .ask.needmail .fld-ck, .ask.needmail #duda, .ask.needmail .picks, .ask.needmail #ask-hint, .ask.needmail .chor, .ask.needmail #ask-wa-pay, .ask.needmail .perks { display: none !important; }
-.ask.needmail #ask-email:not(.nm-ok) { border-color: #B3261E; box-shadow: 0 0 0 3px #F6D6D2; }
+.ask.needmail #ask-files, .ask.needmail .fld-ck, .ask.needmail #duda, .ask.needmail .picks, .ask.needmail #ask-hint, .ask.needmail #ask-soon, .ask.needmail .perks { display: none !important; }
+.ask.soonmail #ask-email:not(.nm-ok), .ask.needmail #ask-email:not(.nm-ok) { border-color: #B3261E; box-shadow: 0 0 0 3px #F6D6D2; }
 .ask.needmail #ask-send:disabled { background: #C9CFC9; cursor: not-allowed; }
 .nm-wa { margin: 0; text-align: center; font-size: 13.5px; color: #4F4E49; }
 .nm-wa button { font: 600 13.5px/1.3 'Inter', sans-serif; color: #1E6B30; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; white-space: nowrap; display: inline-flex; gap: 4px; align-items: center; }
@@ -451,7 +458,6 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     <nav class="nav" aria-label="Secciones">
       <a href="equipo.html">Profesionales</a>
       <a href="guias/">Guías</a>
-      <a href="whatsapp/">WhatsApp</a>
       <a href="videollamada/">Videollamada</a>
       <a href="#precio">Precios</a>
       <a href="app/" data-cta="abrir_portada">Abrir la app</a>
@@ -463,7 +469,6 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   </div>
 </header>
 <nav class="wrap mnav" aria-label="Accesos">
-  <a class="wa" href="whatsapp/" data-cta="clic:mnav_whatsapp"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5 5 16a8.5 8.5 0 1 1 3.2 3.1z"/></svg>WhatsApp</a>
   <a class="gu" href="guias/" data-cta="clic:mnav_guias"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>Guías</a>
   <a href="videollamada/" data-cta="clic:mnav_llamada">Llamada y videollamada</a>
   <a href="equipo.html" data-cta="clic:mnav_equipo">Profesionales</a>
@@ -516,9 +521,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         <button class="btn btn-p" type="submit" id="ask-send"><span id="ask-send-t">Enviar gratis por correo</span><small>Respuesta por correo en menos de 24&nbsp;h</small></button>
         <ul class="perks" aria-label="Condiciones"><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin tarjeta de crédito</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin registro</li></ul>
         <button type="button" class="linkplans" id="ask-plans" hidden>Ver planes</button>
-        <p class="nm-wa" id="ask-nm-wa" hidden>¿Prefieres no dar tu correo? <button type="button" id="ask-nm-wa-b"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5 5 16a8.5 8.5 0 1 1 3.2 3.1z"/></svg>Pregunta por WhatsApp</button></p>
-        <p class="chor">¿La necesitas antes?</p>
-        <a class="wabtn2" id="ask-wa-pay" href="whatsapp/"><b><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5 5 16a8.5 8.5 0 1 1 3.2 3.1z"/></svg>Enviar por WhatsApp · <span class="waprice">4,50 €</span></b><small><span class="bf">Black Friday</span> Antes <s class="old">9 €</s> · en menos de 12&nbsp;h</small></a>
+        <div class="soon" id="ask-soon"><span class="t"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5 5 16a8.5 8.5 0 1 1 3.2 3.1z"/></svg>WhatsApp<span class="pill">Próximamente</span></span><button type="button" id="ask-soon-b"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Avísame</button></div>
         <p class="churg2">Si es urgente, ve a urgencias.</p>
         <p class="fine" id="ask-fine" hidden>Consulta <a href="privacy.html#consultas">cómo tratamos tus datos</a>.</p>
       </form>
@@ -781,7 +784,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   const API = 'https://hera-consultas.tempcheck-app.workers.dev';
   const PROS = { gineco: { name: 'Gonzalo', img: 'gonzalo', role: 'ginecólogo' }, matrona: { name: 'Marina', img: 'marina', role: 'matrona' }, pediatra: { name: 'Lucía', img: 'lucia', role: 'pediatra' } };
   // WhatsApp de Hera (prueba manual): número con prefijo y sin «+» ni espacios, p. ej. '34600000000'. Vacío = no se enseña.
-  const WA_NUMBER = '34603295806';
+  const WA_NUMBER = ''; // WhatsApp apagado el 19 nov («Próximamente»); antes '34603295806'
   const local = ['localhost', '127.0.0.1'].includes(location.hostname);
   // Etiqueta del día: hasta tener la primera respuesta, los envíos van en fila para llevarla todos (Android cambia de IP)
   let ptag = ''; let line = null;
@@ -1019,7 +1022,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     $('ask-almost-t').textContent = `Solo falta tu correo para que ${p.name} te pueda responder.`;
     showErr('');
     box.classList.add('needmail');
-    $('ask-sum').hidden = false; $('ask-almost').hidden = false; $('ask-nm-wa').hidden = false;
+    $('ask-sum').hidden = false; $('ask-almost').hidden = false;
     nmOk();
     email.scrollIntoView({ block: 'center', behavior: 'smooth' });
     setTimeout(() => email.focus({ preventScroll: true }), 250);
@@ -1027,7 +1030,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   function leaveNeedMail() {
     if (!box.classList.contains('needmail')) return;
     box.classList.remove('needmail');
-    $('ask-sum').hidden = true; $('ask-almost').hidden = true; $('ask-nm-wa').hidden = true;
+    $('ask-sum').hidden = true; $('ask-almost').hidden = true;
     send.disabled = busy;
   }
   ['input', 'change', 'keyup', 'blur'].forEach((e) => email.addEventListener(e, nmOk));
@@ -1038,7 +1041,22 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     leaveNeedMail();
     if (b.dataset.nmEdit === 'duda') ta.focus(); else form.querySelector('.picks')?.scrollIntoView({ block: 'center' });
   });
-  $('ask-nm-wa-b').addEventListener('click', () => { hit('clic:sin_correo_whatsapp'); $('ask-wa-pay').click(); });
+  // WhatsApp «Próximamente»: «Avísame» con el correo de arriba; sin correo, se marca el campo en rojo
+  $('ask-soon-b').addEventListener('click', async (ev) => {
+    const b = ev.currentTarget;
+    if (!isEmail(email.value)) {
+      box.classList.add('soonmail'); email.classList.remove('nm-ok'); hit('clic:wa_avisame_sin_correo');
+      email.scrollIntoView({ block: 'center', behavior: 'smooth' }); setTimeout(() => email.focus({ preventScroll: true }), 250);
+      return;
+    }
+    b.disabled = true;
+    try {
+      const r = await fetch(`${API}/avisame`, { method: 'POST', body: JSON.stringify({ email: email.value.trim(), src: 'portada', p: ptag }) });
+      if (!r.ok) throw new Error();
+      b.outerHTML = '<span class="ok"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Te avisaremos</span>';
+    } catch { b.disabled = false; }
+  });
+  ['input', 'change'].forEach((e) => email.addEventListener(e, () => { if (box.classList.contains('soonmail')) email.classList.toggle('nm-ok', isEmail(email.value)); }));
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
     if (busy) return;
@@ -1234,21 +1252,6 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     classic = true;
     try { if (qs0.get('caja') === 'chat') sessionStorage.setItem('hera-caja', 'chat'); if (qs0.get('caja') === 'clasica') sessionStorage.removeItem('hera-caja'); classic = sessionStorage.getItem('hera-caja') !== 'chat'; } catch { /* sin almacenamiento */ }
     if (!classic) chat = makeChat();
-    // Precio de WhatsApp para esta visita (en Argentina, la mitad)
-    fetch(`${API}/precio`).then((r) => r.json()).then((j) => { if (j?.wa) document.querySelectorAll('.waprice').forEach((el) => { el.textContent = j.wa; }); }).catch(() => {});
-    $('ask-wa-pay').addEventListener('click', (ev) => {
-      // Mientras se envía la consulta por correo no se sale de la página: cortaría el envío a medias (B45WUAX3, 18 nov)
-      if (busy) { ev.preventDefault(); return; }
-      const u = new URL(`${API}/wa/pagar`);
-      const a = adSrc(); if (a.src) { u.searchParams.set('src', 'ads'); if (a.camp) u.searchParams.set('camp', a.camp); }
-      if (local || isTeam()) u.searchParams.set('t', '1');
-      if (ptag) u.searchParams.set('p', ptag);
-      hit('clic:canal_wa_pagar');
-      // La duda escrita viaja a WhatsApp: la página de pago la añade al mensaje (solo en este móvil, 1 día)
-      const t = ta.value.trim().slice(0, 1500), to = chosen();
-      if (t) store.set('hera-wa-duda', JSON.stringify({ t, to, at: Date.now() })); else { try { localStorage.removeItem('hera-wa-duda'); } catch { /* */ } }
-      ev.currentTarget.href = u.toString();
-    });
   }
   function makeChat() {
     const ROLE = { gineco: 'ginecólogo', matrona: 'matrona', pediatra: 'pediatra' };

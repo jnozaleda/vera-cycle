@@ -490,3 +490,13 @@ console.log('consultas: OK');
   assert.ok((await ask(2)).j.limit, 'sin el enlace, la segunda a Gonzalo no es gratis');
   console.log('Enlace de amigas: OK');
 }
+
+// WhatsApp «Próximamente»: «Avísame» guarda el correo cifrado una sola vez
+{
+  const bad = await call('/avisame', { email: 'no-es-correo' }); assert.equal(bad.s, 400);
+  const a = await call('/avisame', { email: 'Aviso-WA@Example.com', src: 'portada' }); assert.equal(a.s, 200);
+  const b = await call('/avisame', { email: 'aviso-wa@example.com' }); assert.equal(b.s, 200);
+  const keys = [...store.keys()].filter((k) => k.startsWith('wa_aviso:'));
+  assert.equal(keys.length, 1, 'una sola entrada por correo'); assert.ok(!store.get(keys[0]).includes('aviso-wa@'), 'correo cifrado');
+  console.log('WhatsApp avísame: OK');
+}

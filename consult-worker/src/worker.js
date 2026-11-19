@@ -43,6 +43,9 @@ const waEur = (request) => (request.cf?.country === 'AR' && PLANS.whatsapp.ar ? 
 import { PLANS, VIDEO_PROS, paymentsOn, createCheckout, sessionStatus, handleWebhook, getBalance, spendCredit, markDay, waCode } from './stripe.js';
 import { newThreadId, relayAddress, parseRelayAddress, sealEmail, openEmail, saveThread, loadThread, parseIncoming, isAutomatic } from './relay.js';
 
+/** Enlaces de amigas: consultas gratis y hasta cuándo (Noza, 20 nov) */
+export const FRIEND_LINKS = { q7m: { free: 5, until: '2026-12-31T23:59:59+01:00' } };
+
 export const PROS = {
   gineco: { key: 'gineco', name: 'Dr. Gonzalo Nozaleda', short: 'Gonzalo', role: 'ginecólogo', email: 'gonzalo@hera-gine.com' },
   matrona: { key: 'matrona', name: 'Marina Fernández', short: 'Marina', role: 'matrona', email: 'marina@hera-gine.com' },
@@ -643,9 +646,11 @@ const handler = {
       if (raw.length > (url.pathname === '/ask' ? MAX_ASK_BODY : MAX_BODY)) return reply(413, { error: 'too_large' });
       body = JSON.parse(raw || '{}');
     } catch { return reply(400, { error: 'bad_request' }); }
-    const limit = Number(env.FREE_LIMIT || 2);
     // Enlace de canal (?via=ig_marina…): solo letras, números y guion bajo
     const via = /^[a-z0-9_]{1,20}$/.test(String(body.via || '')) ? body.via : '';
+    // Amigas que prueban Hera (enlace de Maite, 20 nov): más consultas gratis hasta una fecha y sin la regla de 1 por especialista
+    const friend = FRIEND_LINKS[via] && Date.now() < Date.parse(FRIEND_LINKS[via].until) ? FRIEND_LINKS[via] : null;
+    const limit = friend ? friend.free : Number(env.FREE_LIMIT || 2);
 
     if (url.pathname === '/admin/reset') {
       if (!env.ADMIN_TOKEN || request.headers.get('Authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return reply(401, { error: 'unauthorized' });
@@ -756,7 +761,7 @@ const handler = {
       const credits = unlimited ? 0 : bal.credits;
       // 2 gratis en total, como mucho 1 por especialista (Noza, 16 nov). fp = especialistas ya usadas gratis (los registros antiguos no lo tienen)
       const fp = Array.isArray(rec.fp) ? rec.fp : [];
-      const samePro = !test && rec.n < limit && fp.includes(body.to);
+      const samePro = !test && !friend && rec.n < limit && fp.includes(body.to);
       const others = samePro ? Object.values(PROS).filter((x) => !fp.includes(x.key)).map((x) => x.short).join(' o ') : '';
       if (!test && !unlimited && (rec.n >= limit || samePro) && credits <= 0) {
         if (body.team !== true) {
@@ -851,7 +856,7 @@ const handler = {
       const paidLeft = remaining === 0 && !unlimited && creditsLeft >= 0 && (paid || credits > 0)
         ? (creditsLeft === 0 ? 'Era la última consulta de tu saldo' : `Te ${creditsLeft === 1 ? 'queda 1 consulta' : `quedan ${creditsLeft} consultas`} en tu saldo`) : '';
       const usedPros = test ? fp : (!unlimited && !paid && !fp.includes(body.to) ? [...fp, body.to] : fp);
-      const nextWith = remaining > 0 && usedPros.length ? Object.values(PROS).filter((x) => !usedPros.includes(x.key)).map((x) => x.short).join(' o ') : '';
+      const nextWith = !friend && remaining > 0 && usedPros.length ? Object.values(PROS).filter((x) => !usedPros.includes(x.key)).map((x) => x.short).join(' o ') : '';
       const cm = confirmEmail(pro, q, remaining, id, unlimited, subscriber ? 'Tienes el plan ilimitado: una consulta nueva al día' : paidLeft || (nextWith && remaining === 1 ? `Te queda 1 consulta gratuita, con ${nextWith}` : ''));
       const sentU = await sendMail(env, { to: q.email, replyTo: relay ? await relayAddress(env, 'u', id) : pro.email, ...cm });
       // Sin relay no hay hilo que seguir (ni recordatorios): no se guarda nada más

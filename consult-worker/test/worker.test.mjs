@@ -475,3 +475,14 @@ console.log('consultas: OK');
   globalThis.fetch = realFetch;
   console.log('Pasar consulta a otra especialista: OK');
 }
+
+// Enlace de amigas (q7m): 5 gratis, también con la misma especialista; sin el enlace, 2
+{
+  const ask = (n, via) => call('/ask', { email: `amiga-q7m${via ? "" : "-sin"}@example.com`, to: 'gineco', text: `Duda número ${n} sobre la regla`, context: '', ...(via ? { via } : {}) });
+  for (let n = 1; n <= 5; n++) { const r = await ask(n, 'q7m'); assert.ok(r.j.ok && !r.j.limit, `amiga: consulta ${n} gratis: ${r.s} ${JSON.stringify(r.j)}`); }
+  const sixth = await ask(6, 'q7m');
+  assert.ok(sixth.j.limit, 'la sexta ya no es gratis');
+  assert.ok((await ask(1)).j.ok);
+  assert.ok((await ask(2)).j.limit, 'sin el enlace, la segunda a Gonzalo no es gratis');
+  console.log('Enlace de amigas: OK');
+}

@@ -504,3 +504,12 @@ console.log('consultas: OK');
   assert.equal(keys.length, 1, 'una sola entrada por correo'); assert.ok(!store.get(keys[0]).includes('aviso-wa@'), 'correo cifrado');
   console.log('WhatsApp avísame: OK');
 }
+
+// Modo equipo: la copia también llega, marcada como prueba del equipo
+{
+  const s0 = sent.length;
+  const r = await call('/ask', { email: 'equipo-prueba@example.com', to: 'matrona', text: 'Prueba del equipo para ver la copia', context: '', team: true });
+  assert.ok(r.j.ok, JSON.stringify(r.j));
+  assert.ok(sent.slice(s0).some((m) => m.to[0] === 'copia@example.com' && /prueba del equipo/.test(m.subject)), 'copia marcada');
+  console.log('Copia en modo equipo: OK');
+}

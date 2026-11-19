@@ -191,6 +191,13 @@ section { padding: 64px 0; }
 .ask.needmail #ask-send:disabled { background: #C9CFC9; cursor: not-allowed; }
 .nm-wa { margin: 0; text-align: center; font-size: 13.5px; color: #4F4E49; }
 .nm-wa button { font: 600 13.5px/1.3 'Inter', sans-serif; color: #1E6B30; background: none; border: 0; padding: 0; text-decoration: underline; cursor: pointer; white-space: nowrap; display: inline-flex; gap: 4px; align-items: center; }
+/* Correo justo debajo de la duda (20 nov): la profesional en una línea; las tres fichas solo con «Cambiar» */
+.topro { display: flex; align-items: center; gap: 10px; background: #F5F3EC; border-radius: 999px; padding: 6px 12px 6px 6px; font-size: 14px; }
+.topro img { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; flex: none; }
+.topro span { min-width: 0; flex: 1; } .topro small { color: #8A6D3B; font-size: 12px; }
+.topro button { flex: none; font: 500 13.5px/1 'Inter', sans-serif; color: var(--plum); background: none; border: 0; padding: 4px 0; text-decoration: underline; cursor: pointer; }
+.ask:not(.pickpro) .picks { display: none; } .ask:not(.pickpro) #ask-hint { display: none; }
+.ask.needmail #ask-topro { display: none !important; }
 .ask.sending .wabtn2 { opacity: .45; pointer-events: none; }
 .wabtn2 b { display: flex; gap: 8px; align-items: center; font: 600 16px/1.2 'Inter', sans-serif; white-space: nowrap; }
 .wabtn2 small { font-size: 13px; }
@@ -482,6 +489,9 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         </div>
         <p class="priv"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span><b>Privada.</b> La profesional no ve tu correo.</span></p>
         <div class="more" id="ask-more" hidden>
+          <div class="nm-almost" id="ask-almost" hidden><span class="ck"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span><span><b>Ya casi está.</b><span id="ask-almost-t">Solo falta tu correo para que te puedan responder.</span></span></div>
+          <label class="fld"><span class="sr">Tu correo</span><input id="ask-email" type="email" inputmode="email" autocomplete="email" placeholder="Tu correo, para la respuesta"></label>
+          <div class="topro" id="ask-topro" hidden><img id="ask-topro-img" src="" alt="" width="26" height="26"><span id="ask-topro-t"></span><button type="button" id="ask-topro-b">Cambiar</button></div>
           <fieldset class="picks">
             <legend>¿A quién se lo preguntas?</legend>
             <label class="pick"><input type="radio" name="to" value="gineco"><img src="portada/equipo/gonzalo.jpg?v=2" alt="" width="40" height="40"><span><b>Gonzalo</b><small>Ginecólogo</small></span><em>Sugerido</em></label>
@@ -490,8 +500,6 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
           </fieldset>
           <p class="hint" id="ask-hint" aria-live="polite"></p>
           <p class="urgent" id="ask-urgent" hidden>Si es algo urgente (sangrado abundante, pérdida de líquido, el bebé no se mueve, dolor muy fuerte), no esperes: llama al 112 o ve a urgencias.</p>
-          <div class="nm-almost" id="ask-almost" hidden><span class="ck"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span><span><b>Ya casi está.</b><span id="ask-almost-t">Solo falta tu correo para que te puedan responder.</span></span></div>
-          <label class="fld"><span class="sr">Tu correo</span><input id="ask-email" type="email" inputmode="email" autocomplete="email" placeholder="Tu correo, para la respuesta"></label>
           <div class="files" id="ask-files" hidden>
             <label class="file-add">Añadir foto o PDF<input id="ask-file" type="file" hidden multiple accept="image/*,application/pdf"></label>
             <ul id="ask-file-list"></ul>
@@ -855,7 +863,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
 
   const box = $('ask'), form = $('ask-form'), ta = $('duda'), more = $('ask-more'), send = $('ask-send'), err = $('ask-err'), done = $('ask-done'), email = $('ask-email');
   const radios = [...form.querySelectorAll('input[name=to]')];
-  let manual = false, opened = false, busy = false, lastEmail = '';
+  let manual = false, opened = false, busy = false, lastEmail = '', pickOpen = false;
   let chat = null; // consulta en formato chat (abajo); null = caja clásica
   email.value = store.get('hera-ask-email');
 
@@ -867,6 +875,13 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     const to = chosen();
     $('ask-hint').textContent = !manual && s.to && s.reason ? `Sugerido por tu duda sobre ${s.reason}. Puedes cambiarlo.` : '';
     $('ask-urgent').hidden = !s.urgent;
+    // La profesional en una línea («Para Lucía, pediatra · Cambiar»); sin ninguna elegida, las tres fichas
+    if (to) {
+      $('ask-topro-img').src = `portada/equipo/${PROS[to].img}.jpg?v=3`;
+      $('ask-topro-t').innerHTML = `Para <b>${esc(PROS[to].name)}</b>, ${esc(PROS[to].role)}${!manual && s.to ? ' <small>· sugerida por tu duda</small>' : ''}`;
+    }
+    $('ask-topro').hidden = !to;
+    box.classList.toggle('pickpro', pickOpen || !to);
     if (opened && !busy) $('ask-send-t').textContent = `Enviar${store.get('hera-free-left') === '0' || (to && (store.get('hera-free-pros') || '').split(',').includes(to)) ? '' : ' gratis'}${to ? ` a ${PROS[to].name}` : ' por correo'}`;
     chat?.sync();
   }
@@ -1010,6 +1025,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     send.disabled = busy;
   }
   ['input', 'change', 'keyup', 'blur'].forEach((e) => email.addEventListener(e, nmOk));
+  $('ask-topro-b').addEventListener('click', () => { pickOpen = true; box.classList.add('pickpro'); hit('clic:cambiar_profesional'); form.querySelector('.picks')?.scrollIntoView({ block: 'center', behavior: 'smooth' }); });
   form.addEventListener('click', (ev) => {
     const b = ev.target.closest('[data-nm-edit]');
     if (!b) return;

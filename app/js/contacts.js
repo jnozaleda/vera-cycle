@@ -13,6 +13,10 @@ const GROUPS = [
   ['la salud del bebé', 'pediatra', ['fiebre del bebe', 'mi bebe tiene fiebre', 'ictericia', 'amarillo', 'vomita', 'vomitos del bebe', 'diarrea', 'bronquiolitis', 'tos', 'mocos', 'dermatitis', 'costra lactea', 'panal', 'pañal', 'cacas', 'colicos', 'reflujo', 'estrenimiento del bebe', 'vacuna', 'vacunas', 'vitamina d', 'dentic', 'dientes', 'gateo', 'desarrollo del bebe', 'peso del bebe', 'percentil', 'pediatra']],
   ['la alimentación del bebé', 'pediatra', ['alimentacion complementaria', 'papilla', 'blw', 'empezar a comer', 'fruta', 'introducir alimentos', 'alergia', 'intolerancia']],
   ['el sueño del bebé', 'pediatra', ['sueno del bebe', 'duerme poco', 'despierta', 'no duerme']],
+  // 20 nov: dudas de bebé frecuentes en los anuncios y en las guías
+  ['la tripa del bebé', 'pediatra', ['no hace caca', 'hace caca', 'caca', 'popo', 'estren', 'colico', 'llora mucho', 'gases']],
+  ['la piel o los dientes del bebé', 'pediatra', ['granitos', 'sarpullido', 'denticion', 'dientes', 'le salen los dientes']],
+  ['la menopausia', 'gineco', ['menopausia', 'sofoco', 'perimenopausia', 'climaterio']],
   ['medicación o salud', 'gineco', ['medicacion', 'medicamento', 'pastilla', 'antibiotico', 'ibuprofeno', 'paracetamol', 'tiroides', 'diabetes', 'tension', 'preeclampsia', 'infeccion', 'flujo', 'picor', 'herpes', 'toxoplasmosis', 'listeria', 'rh negativo', 'anti-d']],
   ['pruebas y ecografías', 'gineco', ['ecografia', 'analitica', 'o sullivan', 'sullivan', 'amniocentesis', 'cribado', 'translucencia', 'resultado', 'monitor']],
   ['anticoncepción', 'gineco', ['anticoncep', 'diu', 'pildora', 'implante', 'preservativo', 'metodo anticonceptivo', 'ovulacion', 'fertil']],

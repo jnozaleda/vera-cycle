@@ -433,3 +433,45 @@ console.log('consultas: OK');
   assert.ok(!(await listWa(env)).some((w) => w.code === 'ABCD'), 'se puede quitar');
   console.log('WhatsApp: asignar y quitar: OK');
 }
+
+// Pasar una consulta a otra especialista (20 nov)
+{
+  const realFetch = globalThis.fetch;
+  const byId = new Map();
+  globalThis.fetch = async (u, o) => {
+    const m = /\/emails\/(r\d+)$/.exec(u);
+    if (m && (!o || !o.method || o.method === 'GET')) return new Response(JSON.stringify(byId.get(m[1]) || {}), { status: byId.has(m[1]) ? 200 : 404 });
+    const res = await realFetch(u, o);
+    if (o && o.method === 'POST' && /api\.resend\.com\/emails$/.test(u)) { const j = await res.clone().json(); byId.set(j.id, JSON.parse(o.body)); }
+    return res;
+  };
+  const before = sent.length;
+  const r = await call('/ask', { email: 'reasigna@example.com', to: 'gineco', text: 'Mi bebé no hace caca desde hace 3 días', context: '' });
+  assert.equal(r.s, 200);
+  const proMail = sent.slice(before).find((m) => m.to[0] === PROS.gineco.email);
+  const link = /https:\/\/[^\s"]+\/reasignar\?t=([a-z0-9]{8})&to=pediatra&s=([0-9a-f]{16})/.exec(proMail.text);
+  assert.ok(link, 'el correo de Gonzalo lleva «Pasársela a Lucía»');
+  assert.match(proMail.html, /Pasársela a Marina/);
+  const [, id, sig] = link;
+  const page = await worker.fetch(new Request(`https://w/reasignar?t=${id}&to=pediatra&s=${sig}`), env);
+  assert.match(await page.text(), /¿Pasar la consulta a Lucía\?/, 'el enlace solo enseña la pregunta (GET no reasigna)');
+  assert.equal((await loadThread(env, id)).p, 'gineco');
+  const bad = await worker.fetch(new Request(`https://w/reasignar?t=${id}&to=pediatra&s=0000000000000000`), env);
+  assert.match(await bad.text(), /no es válido/);
+  const n0 = sent.length;
+  const fd = new FormData(); fd.set('t', id); fd.set('to', 'pediatra'); fd.set('s', sig);
+  const done = await worker.fetch(new Request('https://w/reasignar', { method: 'POST', body: fd }), env);
+  assert.match(await done.text(), /ya le ha llegado a Lucía/);
+  const t = await loadThread(env, id);
+  assert.equal(t.p, 'pediatra'); assert.equal(t.ra.from, 'gineco');
+  const out = sent.slice(n0);
+  const toLucia = out.find((m) => m.to[0] === PROS.pediatra.email);
+  assert.ok(toLucia && /Gonzalo te ha pasado esta consulta/.test(toLucia.html) && /no hace caca/.test(toLucia.html), 'Lucía recibe la consulta');
+  assert.match(toLucia.html, /Nueva consulta para <b>Dra\. Lucía Carrascón<\/b>/);
+  assert.ok(!/Pasársela a Lucía/.test(toLucia.html) && /Pasársela a Gonzalo/.test(toLucia.html), 'sus enlaces son a las otras dos');
+  assert.ok(out.some((m) => m.to[0] === 'reasigna@example.com' && /la responderá Dra\. Lucía Carrascón/.test(m.text)), 'aviso a la usuaria');
+  const again = await worker.fetch(new Request('https://w/reasignar', { method: 'POST', body: fd }), env);
+  assert.match(await again.text(), /Ya es tuya|Ya se ha pasado/);
+  globalThis.fetch = realFetch;
+  console.log('Pasar consulta a otra especialista: OK');
+}

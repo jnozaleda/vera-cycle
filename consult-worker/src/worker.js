@@ -83,7 +83,15 @@ function shell(inner) {
 <p style="font-size:12px;color:#8A8A8E;margin-top:24px;border-top:1px solid #E5E1D8;padding-top:12px">Hera · Salud de la mujer, con profesionales · <a href="https://hera-gine.com" style="color:#45574C">hera-gine.com</a></p></div></div>`;
 }
 
-export function proEmail(pro, q, id = '', relay = true) {
+/** Enlaces «Pasársela a…» del correo de la profesional (firmados, de un solo uso) */
+async function reassignLinks(env, id, fromKey) {
+  const s = (await hmac(env.HASH_SALT, `reasignar:${id}`)).slice(0, 16);
+  return Object.values(PROS).filter((x) => x.key !== fromKey).map((x) => ({ short: x.short, role: x.role, url: `${WORKER_URL}/reasignar?t=${id}&to=${x.key}&s=${s}` }));
+}
+const reassignHtml = (links) => (links?.length ? `<!--ra--><p style="font-size:13px;color:#6E6C67;border-top:1px solid #EFECE4;padding-top:10px;margin-top:14px">¿No es de tu área? ${links.map((l) => `<a href="${l.url}" style="color:#45574C;font-weight:600">Pasársela a ${esc(l.short)} (${esc(l.role)})</a>`).join(' · ')}</p><!--/ra-->` : '');
+const reassignText = (links) => (links?.length ? `\n\n¿No es de tu área? ${links.map((l) => `Pasársela a ${l.short}: ${l.url}`).join(' · ')}` : '');
+
+export function proEmail(pro, q, id = '', relay = true, links = []) {
   const subject = `Consulta Hera${id ? ` #${id.toUpperCase()}` : ''}${q.context ? ` · ${q.context}` : ''}`;
   const html = shell(`<p>Nueva consulta para <b>${esc(pro.name)}</b>.</p>
 <div style="background:#F6E0E2;border-radius:10px;padding:14px;margin:12px 0">${nl2br(q.text)}</div>
@@ -91,8 +99,9 @@ ${q.context ? `<p style="font-size:13px;color:#6E6C67">Sobre: ${esc(q.context)}<
 ${q.situation ? `<p style="font-size:13px;color:#6E6C67">Situación: ${nl2br(q.situation)}</p>` : ''}
 ${q.files ? `<p style="font-size:13px;color:#6E6C67">Incluye ${q.files} ${q.files === 1 ? 'archivo adjunto' : 'archivos adjuntos'}. Hera no los guarda: solo están en este correo.</p>` : ''}
 ${relay ? `<p style="font-size:13px;color:#6E6C67"><b>Para contestar, responde a este correo</b> desde el móvil o el ordenador. Tu respuesta le llegará a la usuaria desde ${esc(pro.email)}: tu correo personal no se muestra. Si ella vuelve a escribir, te llegará en esta misma conversación. Plazo comprometido: 24 h.</p>`
-    : `<p style="font-size:13px;color:#6E6C67">Responde a este correo para contestar directamente a la usuaria (${esc(q.email)}). Plazo comprometido: 24 h.</p>`}`);
-  const text = `Nueva consulta para ${pro.name}\n\n${q.text}\n\n${q.context ? `Sobre: ${q.context}\n` : ''}${q.situation ? `Situación: ${q.situation}\n` : ''}\n${relay ? `Para contestar, responde a este correo: tu respuesta le llegará a la usuaria desde ${pro.email}, sin mostrar tu correo personal. Plazo: 24 h.` : `Responde a este correo para contestar a la usuaria (${q.email}).`}`;
+    : `<p style="font-size:13px;color:#6E6C67">Responde a este correo para contestar directamente a la usuaria (${esc(q.email)}). Plazo comprometido: 24 h.</p>`}${reassignHtml(links)}`);
+  const text0 = `Nueva consulta para ${pro.name}\n\n${q.text}\n\n${q.context ? `Sobre: ${q.context}\n` : ''}${q.situation ? `Situación: ${q.situation}\n` : ''}\n${relay ? `Para contestar, responde a este correo: tu respuesta le llegará a la usuaria desde ${pro.email}, sin mostrar tu correo personal. Plazo: 24 h.` : `Responde a este correo para contestar a la usuaria (${q.email}).`}`;
+  const text = text0 + reassignText(links);
   return { subject, html, text };
 }
 
@@ -488,6 +497,7 @@ const handler = {
     // Consulta por WhatsApp: abre el pago de Stripe (pide correo y móvil) y vuelve a hera-gine.com/whatsapp/
     // Precio de WhatsApp para esta visita (la web lo enseña): la mitad en Argentina
     if (request.method === 'GET' && url.pathname === '/precio') return reply(200, { wa: eurText(waEur(request)), ar: request.cf?.country === 'AR' });
+    if (url.pathname === '/reasignar') return reassign(env, request, url);
     if (request.method === 'GET' && url.pathname === '/wa/pagar') {
       const back = 'https://hera-gine.com/whatsapp/';
       if (!env.STRIPE_SECRET_KEY) return Response.redirect(`${back}?pago=error`, 303);
@@ -781,7 +791,7 @@ const handler = {
       const bcc = test ? undefined : env.COPY_TO || undefined; // COPY_TO (secreto): copia oculta de cada consulta mientras se prueba
       // RELAY="1": respuestas a través de Hera (necesita la regla catch-all → Worker en Email Routing). Las pruebas siempre lo usan.
       const relay = env.RELAY === '1' || !!test;
-      const pm = proEmail(pro, q, id, relay);
+      const pm = proEmail(pro, q, id, relay, relay && !test ? await reassignLinks(env, id, pro.key) : []);
       // Con adjuntos, la copia de control va aparte y sin los archivos: solo los recibe la profesional
       const proReply = relay ? await relayAddress(env, 'p', id) : q.email;
       const sent = await sendMail(env, { to: pro.email, replyTo: proReply, ...pm, attachments: files });
@@ -789,7 +799,7 @@ const handler = {
       // La consulta se guarda ya (antes de contadores y correos): si la usuaria sale de la página y la petición se corta,
       // la respuesta de la profesional igual le llega (B45WUAX3, 18 nov). Al final se vuelve a guardar completa.
       const baseThread = relay ? { id, p: pro.key || body.to, u: await sealEmail(env, q.email), uh: (await hmac(env.HASH_SALT, norm)).slice(0, 24),
-        sp: pm.subject, su: `Tu consulta a ${pro.short} · Hera #${id.toUpperCase()}`, rp: [], ru: [], c: Date.now(), a: 0, rem: false, n: 0, h, ...(body.follow === true ? { f: 1 } : {}) } : null;
+        sp: pm.subject, su: `Tu consulta a ${pro.short} · Hera #${id.toUpperCase()}`, rp: [], ru: [], c: Date.now(), a: 0, rem: false, n: 0, h, ...(sent.id ? { po: sent.id } : {}), ...(body.follow === true ? { f: 1 } : {}) } : null;
       if (baseThread) await saveThread(env, baseThread);
       const now = new Date().toISOString();
       // Primero se gastan las gratuitas y después las pagadas
@@ -1013,4 +1023,67 @@ export async function remindOverdue(env) {
     cursor = page.list_complete ? null : page.cursor;
   } while (cursor);
   return n;
+}
+
+
+// ── Pasar una consulta a otra especialista (20 nov) ──
+// El correo de la profesional lleva «Pasársela a…» (enlace firmado). GET enseña una página con un botón (los
+// antivirus del correo abren los enlaces solos); POST la reasigna: el correo original se recupera de Resend,
+// la nueva profesional lo recibe con su propio hilo de respuesta, la usuaria recibe un aviso, el plazo de 24 h
+// empieza de nuevo y su consulta gratis pasa a contar como de la nueva profesional.
+async function reassign(env, request, url) {
+  const page = (title, msg, form = '') => new Response(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>${esc(title)}</title><body style="font:16px/1.5 -apple-system,system-ui,sans-serif;max-width:520px;margin:48px auto;padding:0 20px;color:#2F3631"><h1 style="font:400 26px/1.2 Georgia,serif;color:#45574C">${esc(title)}</h1><p>${msg}</p>${form}</body>`, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'referrer-policy': 'no-referrer' } });
+  const f = request.method === 'POST' ? await request.formData().catch(() => null) : null;
+  const get = (k) => String((f ? f.get(k) : url.searchParams.get(k)) || '');
+  const id = get('t').toLowerCase(), to = get('to'), sig = get('s');
+  if (!/^[a-z0-9]{8}$/.test(id) || !PROS[to] || sig !== (await hmac(env.HASH_SALT, `reasignar:${id}`)).slice(0, 16)) return page('Enlace no válido', 'Este enlace no es válido. Si la consulta no es de tu área, escríbenos a contacto@hera-gine.com.');
+  const t = await loadThread(env, id);
+  if (!t) return page('Consulta no encontrada', `No encuentro la consulta #${id.toUpperCase()} (o tiene más de 30 días).`);
+  const from = PROS[t.p], target = PROS[to];
+  if (t.p === to) return page('Ya es tuya', `La consulta #${id.toUpperCase()} ya está asignada a ${esc(target.short)}.`);
+  if (t.ra) return page('Ya se ha pasado', `La consulta #${id.toUpperCase()} ya se pasó a ${esc((PROS[t.p] || {}).short || 'otra profesional')}. Solo se puede pasar una vez.`);
+  if (t.a) return page('Ya está respondida', `La consulta #${id.toUpperCase()} ya tiene respuesta, así que no se puede pasar.`);
+  if (request.method !== 'POST') {
+    return page(`¿Pasar la consulta a ${target.short}?`, `La consulta #${id.toUpperCase()} le llegará a <b>${esc(target.name)}</b> (${esc(target.role)}), que tendrá 24 h para responder. A la usuaria le avisamos de que la responderá ${esc(target.short)}. No se le cobra nada.`,
+      `<form method="post" action="/reasignar"><input type="hidden" name="t" value="${id}"><input type="hidden" name="to" value="${to}"><input type="hidden" name="s" value="${sig}"><button style="font:600 16px system-ui;background:#45574C;color:#fff;border:0;border-radius:10px;padding:14px 22px;cursor:pointer">Pasársela a ${esc(target.short)}</button></form>`);
+  }
+  // El correo original (texto de la consulta y adjuntos no: los adjuntos solo los tenía la primera profesional)
+  let orig = null;
+  if (t.po && (env.RESEND_READ_KEY || env.RESEND_API_KEY)) {
+    try { const r = await fetch(`https://api.resend.com/emails/${t.po}`, { headers: { Authorization: `Bearer ${env.RESEND_READ_KEY || env.RESEND_API_KEY}` } }); if (r.ok) orig = await r.json(); } catch { /* sin correo */ }
+  }
+  if (!orig || !(orig.html || orig.text)) {
+    await notify(env, `Error · no se pudo pasar la consulta #${id.toUpperCase()}`, `${from?.short || t.p} quería pasar la consulta #${id.toUpperCase()} a ${target.short}, pero no se ha podido recuperar el correo original. Reenvíasela a mano.`);
+    return page('No se ha podido pasar', 'No hemos podido recuperar la consulta para reenviarla. Ya hemos avisado al equipo de Hera, que se la pasará a mano. No hace falta que hagas nada más.');
+  }
+  const links = await reassignLinks(env, id, to);
+  const note = `<p style="font-size:13px;background:#FFF6D6;border-radius:8px;padding:8px 12px">${esc(from?.short || 'La profesional')} te ha pasado esta consulta: cree que es más de tu área. Tienes 24 h para responder.</p>`;
+  const oldName = from?.name || '';
+  let html = String(orig.html || '').replace(/<!--ra-->[\s\S]*?<!--\/ra-->/g, '');
+  html = html.replace(`Nueva consulta para <b>${esc(oldName)}</b>`, `Nueva consulta para <b>${esc(target.name)}</b>`);
+  html = html.includes('<p>Nueva consulta') ? html.replace('<p>Nueva consulta', `${note}<p>Nueva consulta`) : note + html;
+  if (html.includes('</body>')) html = html.replace('</body>', `${reassignHtml(links)}</body>`); else html += reassignHtml(links);
+  const text = `${from?.short || 'La profesional'} te ha pasado esta consulta: cree que es más de tu área. Tienes 24 h para responder.\n\n${String(orig.text || '').split('\n\n¿No es de tu área?')[0].replace(`Nueva consulta para ${oldName}`, `Nueva consulta para ${target.name}`)}${reassignText(links)}`;
+  const sent = await sendMail(env, { to: target.email, replyTo: await relayAddress(env, 'p', id), subject: orig.subject || t.sp, html, text });
+  if (!sent) return page('No se ha podido pasar', 'Ha fallado el envío. Prueba otra vez en un momento.');
+  // El hilo pasa a la nueva profesional; el plazo y el recordatorio empiezan de nuevo
+  Object.assign(t, { p: to, ra: { from: from?.key || t.p, at: Date.now() }, c: Date.now(), rem: false, rp: [], ...(sent.id ? { po: sent.id } : {}) });
+  await saveThread(env, t);
+  // Su consulta gratis cuenta ahora como de la nueva profesional
+  if (t.h) {
+    try {
+      const rec = JSON.parse((await env.KV.get(`c:${t.h}`)) || 'null');
+      if (rec && Array.isArray(rec.fp) && rec.fp.includes(from?.key)) { rec.fp = [...new Set(rec.fp.map((k) => (k === from.key ? to : k)))]; await env.KV.put(`c:${t.h}`, JSON.stringify(rec)); }
+    } catch { /* sin contador */ }
+  }
+  // Aviso a la usuaria, en el mismo hilo
+  try {
+    const userTo = await openEmail(env, t.u);
+    const msg = `Tu consulta #${id.toUpperCase()} la responderá ${target.name}, ${target.role}, que es quien mejor puede ayudarte con esto. Te responderá en menos de 24 h, en esta misma conversación.`;
+    const sentU = await sendMail(env, { to: userTo, replyTo: await relayAddress(env, 'u', id), subject: `Re: ${t.su}`, refs: t.ru, html: shell(`<p>Hola,</p><p>${esc(msg)}</p><p style="font-size:13px;color:#6E6C67">No tienes que hacer nada. Si quieres añadir algo, responde a este correo y le llegará a ${esc(target.short)}.</p>`), text: `Hola,\n\n${msg}\n\nNo tienes que hacer nada. Si quieres añadir algo, responde a este correo y le llegará a ${target.short}.` });
+    if (sentU?.id) { t.ou = [...(t.ou || []), sentU.id].slice(-10); await saveThread(env, t); }
+  } catch (e) { console.log(`reasignar aviso ${e.message}`); }
+  await bump(env, 'reasignada');
+  await notify(env, `Consulta reasignada · #${id.toUpperCase()} · ${from?.short || t.p} → ${target.short}`, `${from?.short || t.p} ha pasado la consulta #${id.toUpperCase()} a ${target.short}. A la usuaria se le ha avisado y el plazo de 24 h empieza de nuevo.`);
+  return page('Hecho', `La consulta #${id.toUpperCase()} ya le ha llegado a ${esc(target.short)}. A la usuaria le hemos avisado. Gracias.`);
 }

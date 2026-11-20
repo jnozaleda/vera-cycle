@@ -317,14 +317,20 @@ export async function panel(env, url, openThreads) {
   const lead = `${PERIOD} ${consultas === 1 ? 'llegó <b>1 consulta</b>' : `llegaron <b>${consultas} consultas</b>`}${respondidas ? ` y <b>${respondidas} ${respondidas === 1 ? 'ya tiene' : 'ya tienen'} respuesta</b>, en ${media} h de media` : ''}.${consultas ? ` ${fromAds === consultas ? (consultas === 1 ? 'Vino' : 'Todas vinieron') : `${fromAds} de ${consultas} ${fromAds === 1 ? 'vino' : 'vinieron'}`} de un anuncio.` : ''} ${nPagos ? `<b>${nPagos} ${nPagos === 1 ? 'pago' : 'pagos'}, ${eur} €.</b>` : '<b>Nadie ha pagado todavía.</b>'}`;
   const pendBy = PROS.filter(([k2]) => (open.pendientes || {})[k2]).map(([k2, nm]) => `${nm} ${(open.pendientes || {})[k2]}`);
   const late = PROS.reduce((a, [k2]) => a + ((open.fuera_plazo || {})[k2] || 0), 0);
-  const sinCorreo = g('clic:fallo_sin_correo'), errores = g('error_portada') + g('consulta_error');
+  // Pulsaron enviar sin correo y ese día no llegaron a enviar (persona del día; Noza, 20 nov)
+  const sinCorreo = (() => {
+    const byP = {};
+    for (const r of act) { if (!r.p) continue; const k3 = `${r.p}|${dayISO(r.ts)}`; const o = (byP[k3] ||= { miss: false, sent: false }); if (r.e === 'clic:fallo_sin_correo') o.miss = true; if (/^consulta:|^enviada_portada$/.test(r.e)) o.sent = true; }
+    return Object.values(byP).filter((o) => o.miss && !o.sent).length;
+  })();
+  const errores = g('error_portada') + g('consulta_error');
   const guardadas = Math.max(0, g('consulta_guardada') - g('guardada_pagada'));
   const bounced = fails.filter((x) => x.kind !== 'retrasado').length;
   const chips = [
     fails.length ? `<a class="chip red" href="#fallos" style="text-decoration:none">${fails.length === 1 ? '1 correo no ha llegado' : `${fails.length} correos no han llegado`}${bounced < fails.length ? ` (${fails.length - bounced} retrasado${fails.length - bounced === 1 ? '' : 's'})` : ''}</a>` : '',
     pendientes ? `<span class="chip warn">${pendientes} ${pendientes === 1 ? 'consulta esperando' : 'consultas esperando'} respuesta: ${pendBy.join(' · ')}</span>` : '<span class="chip ok">Ninguna consulta esperando respuesta</span>',
     late ? `<span class="chip red">${late} fuera de plazo (más de 24 h)</span>` : pendientes ? '<span class="chip ok">Ninguna fuera de plazo (24 h)</span>' : '',
-    sinCorreo ? `<span class="chip red">${sinCorreo} ${sinCorreo === 1 ? 'pulsó' : 'pulsaron'} enviar sin poner correo</span>` : '',
+    sinCorreo ? `<span class="chip red">${sinCorreo} ${sinCorreo === 1 ? 'pulsó' : 'pulsaron'} enviar sin correo y no llegaron a enviar</span>` : '',
     errores ? `<span class="chip red">${errores === 1 ? '1 envío falló' : `${errores} envíos fallaron`} (servicio o conexión)</span>` : '',
     guardadas ? `<span class="chip warn">${guardadas === 1 ? '1 consulta guardada' : `${guardadas} consultas guardadas`} sin pagar</span>` : '',
   ].join('');
@@ -477,7 +483,7 @@ table.wa-t td,table.wa-t th{white-space:nowrap;padding-left:8px}table.wa-t td:fi
 
 <div class="card"><p class="lead">${lead}</p><div class="chips">${chips}</div></div>
 ${failCard}
-${waAvisos.length ? `<div class="card" id="avisos-wa"><h2>Pidieron aviso cuando vuelva WhatsApp (${waAvisos.length})</h2><p class="mute" style="margin-bottom:8px">Su correo solo para ese aviso; se borra solo a los 12 meses.</p><table>${waAvisos.map((a) => `<tr><td>${madrid(a.at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td><td>${esc(a.email || '—')}</td><td class="mute">${a.src === 'whatsapp' ? 'página de WhatsApp' : 'portada'}</td></tr>`).join('')}</table></div>` : ''}
+${waAvisos.length ? `<div class="card" id="avisos-wa"><h2>Pidieron aviso cuando vuelva WhatsApp (${waAvisos.length})</h2><p class="mute" style="margin-bottom:8px">Su correo solo para ese aviso; se borra solo a los 12 meses.</p><table>${waAvisos.map((a) => `<tr><td>${madrid(a.at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td><td>${esc(a.email ? `${a.email.split('@')[0].slice(0, 3)}…@${a.email.split('@')[1]}` : '—')}</td><td class="mute">${a.src === 'whatsapp' ? 'página de WhatsApp' : 'portada'}</td></tr>`).join('')}</table></div>` : ''}
 ${holdCard}
 ${waCard}
 

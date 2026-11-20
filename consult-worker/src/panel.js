@@ -337,10 +337,12 @@ export async function panel(env, url, openThreads) {
   const splitTxt = (o) => (o.es || o.la ? `<span class="split"><span class="c-es">${o.es} anuncio</span>${o.la ? ` · <span class="c-la">${o.la} Latam</span>` : ''}</span>` : '<span class="split mute">0 de anuncio</span>');
   // Embudo con el origen en colores (ancho proporcional a la primera fila)
   const funRows = [['Visitaron la web', visTotal, vis], ['Empezaron a escribir', wrTotal, wr], ['Enviaron', consultas, cs], ['Tienen respuesta', respondidas, null], ['Pagaron', nPagos, null]];
-  const fun = funRows.map(([l, x, o]) => {
+  // % frente a la fila de arriba (Noza, 20 nov): 20 de 68 = 29,41 %
+  const pct = (a, b) => (b ? `${((a * 100) / b).toLocaleString('es-ES', { maximumFractionDigits: 2 })} %` : '');
+  const fun = funRows.map(([l, x, o], i) => {
     const w = visTotal ? Math.max(x ? 1.5 : 0, (x * 100) / visTotal) : 0;
     const seg = o && x ? ['es', 'la', 'ot'].map((s) => (o[s] ? `<i class="i-${s}" style="width:${((o[s] * 100) / x).toFixed(1)}%"></i>` : '')).join('') : x ? '<i class="i-ot" style="width:100%"></i>' : '';
-    return `<div class="fr"><span>${l}</span><div class="lane"><div class="track" style="width:${w.toFixed(1)}%">${seg}</div></div><b>${x}</b></div>`;
+    return `<div class="fr"><span>${l}</span><div class="lane"><div class="track" style="width:${w.toFixed(1)}%">${seg}</div></div><b>${x}</b><span class="pc">${i ? pct(x, funRows[i - 1][1]) : ''}</span></div>`;
   }).join('');
   const lostWrite = funnels[0][1].rows; // web: escribir → correo → enviar → enviaron
   const funNote = wrTotal ? `De ${wrTotal} que empezaron a escribir, enviaron ${consultas > wrTotal ? wrTotal : consultas}.${lostWrite[0].lost ? ` En la web, ${lostWrite[0].lost} se fueron antes de llegar al correo` : ''}${lostWrite[2].lost ? ` y ${lostWrite[2].lost} se quedaron en el botón de enviar` : ''}${lostWrite[0].lost || lostWrite[2].lost ? '.' : ''}` : '';
@@ -442,7 +444,7 @@ h1{font:500 28px/1.1 Georgia,serif;color:var(--plum);margin:4px 0 2px}h2{font-si
 .k{border-top:2px solid var(--plum);padding-top:8px}.k b{display:block;font:500 28px/1.05 Georgia,serif;color:var(--plum);font-variant-numeric:tabular-nums}.k>span{font-size:12.5px;color:var(--mute);display:block}
 .split{display:block;font-size:12px;margin-top:3px}.c-es{color:var(--es-t);font-weight:600}.c-la{color:var(--la-t);font-weight:600}
 .leg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--mute);margin-bottom:10px}.leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
-.fr{display:grid;grid-template-columns:140px minmax(0,1fr) 40px;gap:10px;align-items:center;font-size:14px;margin-bottom:7px}.fr b{text-align:right;font-variant-numeric:tabular-nums}
+.fr{display:grid;grid-template-columns:140px minmax(0,1fr) 40px 64px;gap:10px;align-items:center;font-size:14px;margin-bottom:7px}.fr b{text-align:right;font-variant-numeric:tabular-nums}.fr .pc{text-align:right;font-size:12.5px;color:var(--mute,#8A8A8E);font-variant-numeric:tabular-nums}
 .lane{background:var(--bar);border-radius:5px;height:20px;overflow:hidden}.track{display:flex;height:100%;border-radius:5px;overflow:hidden}.track i{display:block;height:100%}
 .i-es{background:var(--es)}.i-la{background:var(--la)}.i-ot{background:var(--plum)}
 .day{cursor:pointer}.day.on rect[fill="transparent"]{fill:var(--bar)}
@@ -475,7 +477,7 @@ table.wa-t td,table.wa-t th{white-space:nowrap;padding-left:8px}table.wa-t td:fi
 .wa-go{display:inline-block;background:#25803A;color:#fff;text-decoration:none;font-weight:600;font-size:13px;border-radius:999px;padding:5px 11px}.lnk2{font-size:12.5px;color:var(--plum)}
 #wa .lnk{background:none;border:0;padding:0;color:var(--plum);font:600 12.5px -apple-system,sans-serif;text-decoration:underline;cursor:pointer}
 .fail .lnk{background:none;border:0;padding:0;color:var(--mute);font:13px -apple-system,sans-serif;text-decoration:underline;cursor:pointer}
-@media(max-width:640px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.two{grid-template-columns:1fr}.fr{grid-template-columns:112px minmax(0,1fr) 34px}}
+@media(max-width:640px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.two{grid-template-columns:1fr}.fr{grid-template-columns:96px minmax(0,1fr) 30px 54px}}
 </style></head><body><div class="w">
 <p class="mute">HERA · sin el equipo (modo equipo)</p><h1>Panel</h1>
 <p class="mute">Actualizado ${madrid(now, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} (hora de Madrid). Datos anónimos, sin cookies.</p>

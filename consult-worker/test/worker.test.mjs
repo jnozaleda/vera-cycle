@@ -517,3 +517,13 @@ console.log('consultas: OK');
   assert.ok(sent.slice(s0).some((m) => m.to[0] === 'copia@example.com' && /prueba del equipo/.test(m.subject)), 'copia marcada');
   console.log('Copia en modo equipo: OK');
 }
+
+// País de la consulta: en el asunto de la copia y en los contadores
+{
+  const s0 = sent.length;
+  const req = new Request('https://w/ask', { method: 'POST', headers: { Origin: 'https://hera-gine.com', 'CF-Connecting-IP': '203.0.113.77' }, body: JSON.stringify({ email: 'pais-ar@example.com', to: 'pediatra', text: 'Duda de prueba desde Argentina', context: '' }) });
+  Object.defineProperty(req, 'cf', { value: { country: 'AR' } });
+  const r = await worker.fetch(req, env); assert.equal(r.status, 200);
+  assert.ok(sent.slice(s0).some((m) => m.to[0] === 'copia@example.com' && / · AR$/.test(m.subject)), 'país en el asunto');
+  console.log('País de la consulta: OK');
+}

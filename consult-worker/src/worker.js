@@ -649,6 +649,7 @@ const handler = {
     // Enlace de canal (?via=ig_marina…): solo letras, números y guion bajo
     const via = /^[a-z0-9_]{1,20}$/.test(String(body.via || '')) ? body.via : '';
     const viaName = LINK_NAME[via] || ''; // uno de nuestros enlaces (Noza, 19 nov: que se vea en los asuntos)
+    const cc = /^[A-Z]{2}$/.test(request.cf?.country || '') ? request.cf.country : ''; // país de la consulta (Noza, 20 nov)
     // Amigas que prueban Hera (enlace de Maite, 20 nov): más consultas gratis hasta una fecha y sin la regla de 1 por especialista
     const friend = FRIEND_LINKS[via] && Date.now() < Date.parse(FRIEND_LINKS[via].until) ? FRIEND_LINKS[via] : null;
     const limit = friend ? friend.free : Number(env.FREE_LIMIT || 2);
@@ -699,6 +700,8 @@ const handler = {
       await record(env, { e, d: isDevice(body.d) ? body.d : '', p }, sendMail, ctx);
       if (e === 'apertura') await countPerson(env, request, 'app');
       if (e === 'portada') await countPerson(env, request, 'portada');
+      // País (Noza, 20 nov): personas distintas por país y día (web o app), solo las 2 letras de Cloudflare
+      if ((e === 'portada' || e === 'apertura') && /^[A-Z]{2}$/.test(request.cf?.country || '')) await countPerson(env, request, `pais_${request.cf.country}`);
       if (e.startsWith('anuncio_visita')) await countPerson(env, request, /_latam$/.test(e) ? 'latam' : 'anuncio');
       return reply(200, { ok: true, p });
     }
@@ -797,7 +800,7 @@ const handler = {
           {
             if (env.COPY_TO) {
               const who = env.COPY_EMAIL === '1' ? `<p style="font-size:13px;color:#6E6C67">Correo de la usuaria: <b>${esc(q.email)}</b></p>` : '';
-              const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${hid.toUpperCase()} · PENDIENTE DE PAGO${viaName ? ` · desde ${viaName}` : ''}${body.team === true ? ' · prueba del equipo' : ''}`, intro: `Consulta guardada para <b>${esc(pro.name)}</b>. <b style="color:#B3261E">Aún no ha pagado</b>: a ${esc(pro.short)} no le ha llegado.`, body: q.text,
+              const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${hid.toUpperCase()} · PENDIENTE DE PAGO${viaName ? ` · desde ${viaName}` : ''}${cc ? ` · ${cc}` : ''}${body.team === true ? ' · prueba del equipo' : ''}`, intro: `Consulta guardada para <b>${esc(pro.name)}</b>. <b style="color:#B3261E">Aún no ha pagado</b>: a ${esc(pro.short)} no le ha llegado.`, body: q.text,
                 extra: `${who}<p style="font-size:13px;color:#6E6C67">Le hemos enviado el enlace de pago. Recordatorio a las 3 h si no paga. Se borra en ${HOLD_DAYS} días.${files.length ? ' Los adjuntos no se guardan: podrá enviarlos respondiendo al correo de la profesional.' : ''}</p>` });
               await sendMail(env, { to: env.COPY_TO, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc });
             }
@@ -850,6 +853,7 @@ const handler = {
           // Conversión para Google Ads: el código del clic (gclid, de esta misma visita) y la hora, 90 días; Google lo recoge del CSV
           if (fromAd && /^[\w-]{10,200}$/.test(String(body.gclid || ''))) await env.KV.put(`conv:${Date.now()}:${id}`, JSON.stringify({ g: body.gclid, n: 'Consulta enviada' }), { expirationTtl: 90 * 86400 });
           // Enlace de canal (?via=…, p. ej. ig_marina): cuántas consultas trae cada uno
+          if (cc) await bump(env, `consulta_pais:${cc}`);
           if (via) { await bump(env, `consulta_via:${via}`); await record(env, { e: `via_visita:${via}`, p: tag, note: 'envió una consulta' }, sendMail, ctx); }
         }
       }
@@ -866,7 +870,7 @@ const handler = {
         // COPY_EMAIL="1" (temporal, Noza 11 nov): la copia dice el correo de la usuaria, por si hay problemas
         const who = env.COPY_EMAIL === '1' ? `<p style="font-size:13px;color:#6E6C67">Correo de la usuaria: <b>${esc(q.email)}</b></p>` : '';
         const extra = `${who}${q.context ? `<p style="font-size:13px;color:#6E6C67">Sobre: ${esc(q.context)}</p>` : ''}${q.situation ? `<p style="font-size:13px;color:#6E6C67">Situación: ${nl2br(q.situation)}</p>` : ''}`;
-        const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${id.toUpperCase()}${files.length ? ` · ${files.length} ${files.length === 1 ? 'adjunto' : 'adjuntos'}` : ''}${body.src === 'ads' ? (/_latam$/.test(String(body.camp || '')) ? ' · desde anuncio (Latinoamérica)' : ' · desde anuncio') : ''}${via ? ` · desde ${viaName || via}` : ''}${paid ? ' · pagada' : ''}${nth > 1 ? ` · ${nth}.ª consulta` : ''}${body.team === true ? ' · prueba del equipo' : ''}`,
+        const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${id.toUpperCase()}${files.length ? ` · ${files.length} ${files.length === 1 ? 'adjunto' : 'adjuntos'}` : ''}${body.src === 'ads' ? (/_latam$/.test(String(body.camp || '')) ? ' · desde anuncio (Latinoamérica)' : ' · desde anuncio') : ''}${via ? ` · desde ${viaName || via}` : ''}${paid ? ' · pagada' : ''}${nth > 1 ? ` · ${nth}.ª consulta` : ''}${cc ? ` · ${cc}` : ''}${body.team === true ? ' · prueba del equipo' : ''}`,
           intro: `Nueva consulta para <b>${esc(pro.name)}</b>${body.src === 'ads' ? ' (llegó desde un anuncio)' : ''}.${nth > 1 ? ` <b>Es su ${nth}.ª consulta</b>${prevAt ? ` (la anterior, el ${new Date(prevAt).toLocaleDateString('es-ES', { timeZone: 'Europe/Madrid', day: 'numeric', month: 'short' })})` : ''}.` : ''}`, body: q.text, extra, nFiles: files.length, withFiles });
         await sendMail(env, { to: bcc, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc, ...(withFiles ? { attachments: files } : {}) });
       }

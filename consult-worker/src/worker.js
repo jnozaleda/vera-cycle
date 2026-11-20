@@ -727,6 +727,9 @@ const handler = {
         await env.KV.put(`wa_aviso:${h}`, JSON.stringify({ u: await sealEmail(env, norm), at: Date.now(), src: String(body.src || '').slice(0, 20) }), { expirationTtl: 365 * 86400 });
         await bump(env, 'whatsapp_avisame');
         await record(env, { e: 'whatsapp_avisame', p: await personTag(env, request, madridDay(), body.p) }, sendMail, ctx);
+        // Noza (20 nov): aviso al momento con el correo, para poder escribirle cuando vuelva WhatsApp
+        const job = notify(env, `Aviso de WhatsApp · ${norm}`, `Alguien ha pulsado «Avísame» de WhatsApp (${body.src === 'whatsapp' ? 'página de WhatsApp' : 'portada'}).\n\nCorreo: ${norm}\n\nEstá en el panel, en «Pidieron aviso cuando vuelva WhatsApp». Se borra solo a los 12 meses.`, sendMail);
+        if (ctx?.waitUntil) ctx.waitUntil(job); else await job;
       }
       return reply(200, { ok: true });
     }

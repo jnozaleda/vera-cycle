@@ -114,6 +114,15 @@ export async function panel(env, url, openThreads) {
   const act = actAll.filter((r) => dayISO(r.ts) >= from);
   const open = openThreads ? await openThreads(env) : { pendientes: {}, fuera_plazo: {} };
   const fails = await listFailures(env).catch(() => []);
+  // Quienes pidieron «Avísame» de WhatsApp (worker.js /avisame): fecha y correo, para avisarles cuando vuelva
+  const waAvisos = await (async () => {
+    const out = []; let cursor;
+    do {
+      const l = await env.KV.list({ prefix: 'wa_aviso:', cursor }); cursor = l.list_complete ? null : l.cursor;
+      for (const k of l.keys) { const v = await env.KV.get(k.name, 'json'); if (v) out.push({ at: v.at, src: v.src, email: await openEmail(env, v.u).catch(() => '') }); }
+    } while (cursor);
+    return out.sort((a, b) => b.at - a.at);
+  })().catch(() => []);
   // Consultas guardadas sin pagar (KV hold:, 7 días): solo el principio del correo, nunca el correo entero ni la duda
   const holds = [];
   try {
@@ -468,6 +477,7 @@ table.wa-t td,table.wa-t th{white-space:nowrap;padding-left:8px}table.wa-t td:fi
 
 <div class="card"><p class="lead">${lead}</p><div class="chips">${chips}</div></div>
 ${failCard}
+${waAvisos.length ? `<div class="card" id="avisos-wa"><h2>Pidieron aviso cuando vuelva WhatsApp (${waAvisos.length})</h2><p class="mute" style="margin-bottom:8px">Su correo solo para ese aviso; se borra solo a los 12 meses.</p><table>${waAvisos.map((a) => `<tr><td>${madrid(a.at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td><td>${esc(a.email || '—')}</td><td class="mute">${a.src === 'whatsapp' ? 'página de WhatsApp' : 'portada'}</td></tr>`).join('')}</table></div>` : ''}
 ${holdCard}
 ${waCard}
 

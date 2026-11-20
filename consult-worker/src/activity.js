@@ -124,7 +124,7 @@ export const OWN_LINKS = new Set(['ig_marina', 'reddit_gonzalo', 'x4d', 'p9t', '
 export const LINK_NAME = { ig_marina: 'Instagram de Marina', reddit_gonzalo: 'Reddit de Gonzalo', x4d: 'enlace de Gonzalo', p9t: 'enlace de Lucía', q7m: 'enlace de Maite', g8w: 'grupo de Maite', k2v: 'enlace de Noza' };
 const isImmediate = (e) => {
   const [name, value] = String(e).split(':');
-  if (name === 'via_visita') return OWN_LINKS.has(value);
+  if (name === 'via_visita') return false; // Noza, 20 nov: sin aviso por visitas de los enlaces (las consultas lo dicen en el asunto)
   return !!EVENTS[name]?.[1];
 };
 

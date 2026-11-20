@@ -921,7 +921,8 @@ const handler = {
   async scheduled(event, env) {
     await remindOverdue(env);
     await sendFeedbackDue(env, sendMail, PROS);
-    await hourlyDigest(env, sendMail);
+    // Resumen de actividad por correo: apagado (Noza, 20 nov). La actividad sigue en el panel.
+    // await hourlyDigest(env, sendMail);
     await remindHolds(env);
   },
 };

@@ -879,6 +879,8 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   const BF_END = Date.parse('2026-12-01T23:59:59+01:00');
   const AB = (() => {
     if (!adSrc().src || Date.now() >= BF_END) return '';
+    // Para verla a propósito: ?ab=bf o ?ab=gratis (junto con utm_medium=cpc) fija la versión en este dispositivo
+    const f = new URLSearchParams(location.search).get('ab'); if (f === 'bf' || f === 'gratis') store.set('hera-ab-bf', f);
     let v = store.get('hera-ab-bf');
     if (v !== 'bf' && v !== 'gratis') { v = Math.random() < 0.5 ? 'bf' : 'gratis'; store.set('hera-ab-bf', v); }
     hit(`ab_visita:${v}`);

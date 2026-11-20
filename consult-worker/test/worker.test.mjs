@@ -527,3 +527,43 @@ console.log('consultas: OK');
   assert.ok(sent.slice(s0).some((m) => m.to[0] === 'copia@example.com' && / · AR$/.test(m.subject)), 'país en el asunto');
   console.log('País de la consulta: OK');
 }
+
+// Oferta de pago en la primera respuesta, solo si la consulta vino de un anuncio
+{
+  const before = new Set([...store.keys()].filter((k) => k.startsWith('t:')));
+  const r = await call('/ask', { email: 'oferta-anuncio@example.com', to: 'gineco', text: 'Duda que llega desde un anuncio', context: '', src: 'ads', camp: 'gineco' });
+  assert.ok(r.j.ok, JSON.stringify(r.j));
+  const k2 = [...store.keys()].find((k) => k.startsWith('t:') && !before.has(k));
+  const t2 = await loadThread(env, k2.slice(2)); assert.equal(t2.ad, 1);
+  const s0 = sent.length;
+  const r2 = await relayIncoming(env, t2, 'p', mime(PROS.gineco.email, await relayAddress(env, 'p', t2.id), 'Respuesta de prueba.'));
+  assert.ok(r2.ok);
+  const toUser = sent.slice(s0).find((m) => m.to[0] === 'oferta-anuncio@example.com');
+  assert.match(toUser.html, /¿Quieres hablarlo con Gonzalo\?/); assert.match(toUser.html, /#llamada-gineco/); assert.match(toUser.html, /te queda 1 consulta gratis/);
+  assert.ok(!/Videollamada de 30 min con Gonzalo · 55 €/.test(toUser.html), 'sin la línea de antes');
+  const r3 = await relayIncoming(env, await loadThread(env, t2.id), 'p', mime(PROS.gineco.email, await relayAddress(env, 'p', t2.id), 'Segunda respuesta.'));
+  assert.ok(r3.ok); assert.ok(!/¿Quieres hablarlo/.test(sent.at(-1).html), 'solo en la primera respuesta');
+  console.log('Oferta tras la respuesta: OK');
+}
+
+// Prueba Black Friday: con ab=bf y de anuncio, la consulta se guarda hasta pagar 1 € (sin gastar gratis)
+{
+  const P0 = env.PAYMENTS, K0 = env.STRIPE_SECRET_KEY, R0 = env.RELAY;
+  env.PAYMENTS = 'on'; env.STRIPE_SECRET_KEY = 'sk_test_x'; env.RELAY = '1';
+  const DB0 = env.DB;
+  env.DB = { prepare: (sql) => { const st = DB0.prepare(sql); return { ...st, bind: (...a) => { const b = st.bind(...a); return Object.assign(Object.create(Object.getPrototypeOf(b) || Object.prototype), b, { first: b.first ? b.first.bind(b) : async () => null }); } }; } };
+  const s0 = sent.length;
+  const r = await call('/ask', { email: 'bf-prueba@example.com', to: 'matrona', text: 'Duda en la versión Black Friday', context: '', src: 'ads', camp: 'matrona', ab: 'bf' });
+  assert.ok(r.j.held && r.j.bf, JSON.stringify(r.j));
+  const m = sent.slice(s0).find((x) => x.to[0] === 'bf-prueba@example.com');
+  assert.match(m.html, /Pagar 1 € y enviarla/); assert.match(m.html, /plan=bf1/); assert.ok(!/WhatsApp/.test(m.html), 'sin WhatsApp');
+  const g = await call('/ask', { email: 'bf-gratis@example.com', to: 'matrona', text: 'Duda en la versión de siempre', context: '', src: 'ads', camp: 'matrona', ab: 'gratis' });
+  assert.ok(g.j.ok, 'la versión de siempre sigue gratis');
+  const nb = await call('/ask', { email: 'bf-sin-anuncio@example.com', to: 'matrona', text: 'Sin anuncio no hay prueba', context: '', ab: 'bf' });
+  assert.ok(nb.j.ok, 'sin anuncio, gratis');
+  env.PAYMENTS = P0; env.STRIPE_SECRET_KEY = K0; env.RELAY = R0; env.DB = DB0;
+  console.log('Prueba Black Friday: OK');
+}
+
+// Evento de la prueba Black Friday aceptado por /hit
+{ const r = await call('/hit', { e: 'ab_visita:bf', d: 'ios-web' }); assert.equal(r.s, 200); console.log('Evento de la prueba: OK'); }

@@ -165,6 +165,11 @@ section { padding: 64px 0; }
 .chor:before, .chor:after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .wabtn2 { display: grid; gap: 3px; justify-items: center; text-align: center; background: #F1F8F2; border: 1.5px solid #25803A; color: #1E6B30; border-radius: 8px; padding: 12px 14px; text-decoration: none; }
 .wabtn2:hover { background: #E4F2E7; }
+/* Prueba Black Friday (20 nov): caja de precio encima del botón */
+.pline { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 10px; background: #FBEDEC; border: 1px solid #F0CFCB; }
+.pline .l { display: flex; flex-direction: column; gap: 4px; min-width: 0; } .pline .tag { align-self: flex-start; white-space: nowrap; font: 600 10px/1 'Inter', sans-serif; letter-spacing: .05em; text-transform: uppercase; color: #fff; background: #B3261E; border-radius: 99px; padding: 4px 7px; }
+.pline .l span:last-child { font-size: 12.5px; color: #6E4A46; } .pline .r { white-space: nowrap; text-align: right; } .pline .r s { color: #8A8A8E; font-size: 14px; margin-right: 6px; } .pline .r b { font: 600 22px/1 'Inter', sans-serif; color: #2F3631; }
+.ask.needmail .pline { display: none; }
 /* WhatsApp «Próximamente» (19 nov): una franja con «Avísame» mientras se afina el WhatsApp de pago */
 .soon { border: 1.5px dashed #B9C7BC; border-radius: 8px; padding: 7px 7px 7px 12px; display: flex; align-items: center; gap: 8px; background: #FAFAF6; }
 .soon .t { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 7px; font: 600 14px/1.2 'Inter', sans-serif; color: #4F4E49; min-width: 0; } .soon .t svg { color: #1E6B30; flex: none; }
@@ -518,6 +523,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
           <input class="hp" id="ask-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
           <p class="err" id="ask-err" role="alert" hidden></p>
         </div>
+        <div class="pline" id="ask-bf" hidden><div class="l"><span class="tag">Black Friday</span><span>Cada consulta, hasta el 1 dic</span></div><div class="r"><s>9 €</s><b>1 €</b></div></div>
         <button class="btn btn-p" type="submit" id="ask-send"><span id="ask-send-t">Enviar gratis</span><small id="ask-send-s">Te responden por correo en menos de 24&nbsp;h</small></button>
         <ul class="perks" aria-label="Condiciones"><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin tarjeta de crédito</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin registro</li></ul>
         <button type="button" class="linkplans" id="ask-plans" hidden>Ver planes</button>
@@ -868,6 +874,23 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   // Si se envía una consulta en esta visita, el servicio se lo devuelve a Google para que sepa que el anuncio funcionó.
   const GCLID = (() => { const g = new URLSearchParams(location.search).get('gclid') || ''; return /^[\w-]{10,200}$/.test(g) ? g : ''; })();
   const adSrc = () => { try { const a = JSON.parse(store.get(AD_KEY) || 'null'); return a && Date.now() - a.at < 30 * 86400000 ? { src: 'ads', ...(a.c ? { camp: a.c } : {}), ...(GCLID ? { gclid: GCLID } : {}) } : {}; } catch { return {}; } };
+  // Prueba Black Friday (Noza, 20 nov): la mitad de quienes llegan por anuncio ve la consulta a 1 € (sin gratis), hasta el 1 dic.
+  // Cada dispositivo ve siempre la misma versión. El servicio solo la aplica a consultas de anuncio (ab + src=ads).
+  const BF_END = Date.parse('2026-12-01T23:59:59+01:00');
+  const AB = (() => {
+    if (!adSrc().src || Date.now() >= BF_END) return '';
+    let v = store.get('hera-ab-bf');
+    if (v !== 'bf' && v !== 'gratis') { v = Math.random() < 0.5 ? 'bf' : 'gratis'; store.set('hera-ab-bf', v); }
+    hit(`ab_visita:${v}`);
+    return v;
+  })();
+  const BF = AB === 'bf';
+  const abSrc = () => (AB ? { ab: AB } : {});
+  if (BF) {
+    const a = document.getElementById('annc-t'); if (a) a.innerHTML = 'Black Friday: consulta a 1 € · <u>Pregunta ahora</u>';
+    $('ask-bf').hidden = false;
+    const pk = document.querySelector('.perks li'); if (pk) pk.lastChild.textContent = 'Pago seguro';
+  }
   document.addEventListener('click', (ev) => { if (ev.target.closest?.('a[href^="mailto:"]')) hit('contacto'); }, true);
 
   const box = $('ask'), form = $('ask-form'), ta = $('duda'), more = $('ask-more'), send = $('ask-send'), err = $('ask-err'), done = $('ask-done'), email = $('ask-email');
@@ -891,8 +914,9 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     }
     $('ask-topro').hidden = !to;
     box.classList.toggle('pickpro', pickOpen || !to);
-    if (opened && !busy) $('ask-send-t').textContent = `Enviar${store.get('hera-free-left') === '0' || (to && !['q7m', 'k2v'].includes(viaSrc().via) && (store.get('hera-free-pros') || '').split(',').includes(to)) ? '' : ' gratis'}${to ? ` a ${PROS[to].name}` : ''}`;
-    if (opened && !busy) $('ask-send-s').textContent = `Te ${to ? 'responde' : 'responden'} por correo en menos de 24\u00a0h`;
+    if (opened && !busy && BF) { $('ask-send-t').textContent = `Enviar${to ? ` a ${PROS[to].name}` : ''}`; $('ask-send-s').textContent = 'Pagas 1 € al enviar'; }
+    if (opened && !busy && !BF) $('ask-send-t').textContent = `Enviar${store.get('hera-free-left') === '0' || (to && !['q7m', 'k2v'].includes(viaSrc().via) && (store.get('hera-free-pros') || '').split(',').includes(to)) ? '' : ' gratis'}${to ? ` a ${PROS[to].name}` : ''}`;
+    if (opened && !busy && !BF) $('ask-send-s').textContent = `Te ${to ? 'responde' : 'responden'} por correo en menos de 24\u00a0h`;
     chat?.sync();
   }
   function open() {
@@ -1079,7 +1103,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     lastEmail = email.value.trim(); store.set('hera-ask-email', lastEmail);
     try {
       const res = await fetch(`${API}/ask`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: lastEmail, to, text, context: '', situation: '', website: $('ask-hp').value, p: ptag, attachments: filesPayload(files), follow: $('ask-follow').checked, ...(isTeam() ? { team: true } : {}), ...adSrc(), ...refSrc(), ...viaSrc() }) });
+        body: JSON.stringify({ email: lastEmail, to, text, context: '', situation: '', website: $('ask-hp').value, p: ptag, attachments: filesPayload(files), follow: $('ask-follow').checked, ...(isTeam() ? { team: true } : {}), ...adSrc(), ...abSrc(), ...refSrc(), ...viaSrc() }) });
       const j = await res.json().catch(() => ({}));
       if (res.status === 429) throw new Error('Has enviado varias consultas seguidas. Espera unos minutos y vuelve a intentarlo.');
       if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');
@@ -1178,6 +1202,16 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   const PLANS = [['bono', 'Bono de 5 consultas', '7 € cada una · válido 12 meses', '35 €'], ['suelta', 'Consulta suelta', 'Solo esta pregunta', '9 €'],
     ['mensual', 'Ilimitado', 'Una consulta nueva al día · sin permanencia', '15 €/mes']];
   function showPlans(j, q) {
+    // Black Friday: la consulta ya está guardada; directo al pago de 1 € (sin elegir plan)
+    if (j.bf && j.held) {
+      swap('<h3>Abriendo el pago…</h3><p>Tu consulta está guardada. En cuanto pagues 1 €, se la enviamos a la profesional.</p>');
+      hit('pago_elegido:bf1');
+      store.set('hera-pay-draft', JSON.stringify({ to: q.to, manual: true, text: q.text, context: '', include: true, follow: q.follow, at: Date.now(), held: j.held }));
+      fetch(`${API}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: lastEmail, plan: 'bf1', back: 'web', ...adSrc(), hold: j.held }) })
+        .then((r) => r.json().then((k) => { if (!r.ok || !k.url) throw new Error(); location.href = k.url; }))
+        .catch(() => swap(`<h3>Tu consulta está guardada</h3><p>No se ha podido abrir el pago. Te hemos mandado un correo a <b>${esc(lastEmail)}</b> con el enlace para pagar 1 € y enviarla.</p>`));
+      return;
+    }
     swap(`${j.early ? `<h3>Bono o plan ilimitado</h3>
       <p>Si aún te quedan consultas gratuitas, se usan primero: lo que compres queda para después. Tu pregunta queda guardada y la envías al volver.</p>`
       : j.held ? `<h3>Tu consulta está guardada</h3>

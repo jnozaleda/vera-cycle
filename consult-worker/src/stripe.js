@@ -16,6 +16,8 @@
 
 export const PLANS = {
   suelta: { lookup: 'hera_suelta', mode: 'payment', credits: 1, label: 'Consulta suelta', eur: 9 },
+  // Black Friday (prueba A/B, hasta el 1 dic): consulta a 1 € para la mitad de las visitas de anuncio; solo para una consulta guardada
+  bf1: { lookup: 'hera_bf1', mode: 'payment', credits: 1, label: 'Consulta (Black Friday)', eur: 1 },
   bono: { lookup: 'hera_bono5', mode: 'payment', credits: 5, label: 'Bono de 5 consultas', eur: 35 },
   mensual: { lookup: 'hera_mensual', mode: 'subscription', credits: 0, label: 'Ilimitado mensual', eur: 15 },
   // Videollamadas (vera-backlog#86): no suman consultas; el pago dispara el correo con los pasos para elegir hora

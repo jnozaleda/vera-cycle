@@ -39,6 +39,7 @@ const PRICES = [
   { lookup: 'hera_video30', name: 'Videollamada de 30 min', desc: 'Videollamada por Google Meet con el ginecólogo, la matrona o la pediatra de Hera.', amount: 5500 },
   { lookup: 'hera_lactancia90', name: 'Asesoría de lactancia (1 h 30)', desc: 'Asesoría de lactancia por videollamada con Marina Fernández, matrona.', amount: 9900 },
   { lookup: 'hera_whatsapp9', name: 'Consulta por WhatsApp', desc: 'Una consulta a la profesional de Hera por WhatsApp, con respuesta por el mismo chat.', amount: 900 },
+  { lookup: 'hera_bf1', name: 'Consulta (Black Friday)', desc: 'Una consulta por escrito con una profesional de Hera. Oferta de Black Friday hasta el 1 de diciembre.', amount: 100 },
   { lookup: 'hera_llamada15', name: 'Llamada de 15 min', desc: 'Llamada de teléfono de 15 minutos con el ginecólogo, la matrona o la pediatra de Hera.', amount: 2500 },
 ];
 

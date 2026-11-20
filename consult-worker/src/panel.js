@@ -300,6 +300,10 @@ export async function panel(env, url, openThreads) {
     for (const pt of pts) if (pt) out.push(`<circle cx="${pt[0].toFixed(1)}" cy="${pt[1].toFixed(1)}" r="2.8" fill="var(--card)" stroke="var(--ink)" stroke-width="1.6"/>${n <= 7 ? `<text x="${pt[0].toFixed(1)}" y="${(pt[1] - 6).toFixed(1)}" text-anchor="middle" font-size="9" font-weight="600" fill="var(--ink)">${Math.round(pt[2])} %</text>` : ''}`);
     out.push('</svg>'); return out.join('');
   };
+  // Prueba Black Friday (20 nov – 1 dic): las dos versiones para quien llega por anuncio
+  const abPeople = (v) => new Set(act.filter((r) => r.e === `ab_visita:${v}` && r.p).map((r) => `${dayISO(r.ts)}:${r.p}`)).size;
+  const abRows = [['bf', 'Black Friday · 1 €'], ['gratis', 'La de siempre · 2 gratis']].map(([v, t]) => ({ v, t, pp: abPeople(v), cq: g(`consulta_ab:${v}`) }));
+  const abCard = abRows.some((r) => r.pp || r.cq) ? `<div class="card" id="prueba-bf"><h2>Prueba Black Friday (hasta el 1 dic)</h2><table><tr><th>Versión</th><th>Personas</th><th>Consultas</th><th>%</th><th>Pagos</th></tr>${abRows.map((r) => `<tr><td>${r.t}</td><td>${r.pp}</td><td>${r.cq}</td><td>${r.pp ? fmtPct(r.cq, r.pp) : '—'}</td><td>${r.v === 'bf' ? g('pago:bf1') : '—'}</td></tr>`).join('')}</table><p class="mute" style="margin-top:6px">Solo visitas de anuncio, repartidas al azar 50/50; cada dispositivo ve siempre la misma versión. En «Black Friday», cada consulta se envía al pagar 1 €. Guardadas sin pagar: ${g('bf_guardada') - g('pago:bf1') > 0 ? g('bf_guardada') - g('pago:bf1') : 0}.</p></div>` : '';
   const sumMode = (kind, mode) => dv.reduce((a, x) => a + tot3(x[kind][mode]), 0);
   const MODES = [['all', 'Todo'], ['web', 'Web'], ['app', 'App']];
   const dailyCard = `<div class="card" id="diario"><h2>Visitas y consultas por día</h2>
@@ -570,6 +574,7 @@ ${waCard}
 <div class="leg"><span><i class="i-es"></i>Anuncio España</span><span><i class="i-la"></i>Anuncio Latinoamérica</span><span><i class="i-ot"></i>Resto (Google, directo, enlaces)</span></div>
 ${fun}${funNote ? `<p class="mute" style="margin-top:6px">${funNote}</p>` : ''}</div>
 ${dailyCard}
+${abCard}
 
 <div class="card"><h2>De dónde vienen</h2>${srcTable}
 <p class="mute" style="margin-top:8px">Personas por día. Coste por consulta: lo gastado en cada grupo ÷ sus consultas. Enlaces propios: <b>?via=</b> (ig_marina, wa_guia…) e invitaciones (?r=).</p></div>

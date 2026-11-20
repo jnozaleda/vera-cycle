@@ -240,6 +240,57 @@ export async function panel(env, url, openThreads) {
   cchart.push('</svg>');
   const cSum = (f) => cDay.reduce((acc, x) => acc + x[f], 0);
 
+  // Visitas y consultas por día (Noza, 20 nov): mismos tres colores que el embudo (España, Latinoamérica, resto)
+  // y selector Todo / Web / App. Todo sale de la actividad (personas del día), así personas y consultas cuadran.
+  const dv = slots.map((ts) => ({ ts, iso: dayISO(ts), label: madrid(ts, { day: 'numeric', month: 'short' }).replace('.', ''),
+    v: { all: { es: 0, la: 0, ot: 0 }, web: { es: 0, la: 0, ot: 0 }, app: { es: 0, la: 0, ot: 0 } },
+    c: { all: { es: 0, la: 0, ot: 0 }, web: { es: 0, la: 0, ot: 0 }, app: { es: 0, la: 0, ot: 0 } } }));
+  const dvBy = new Map(dv.map((x) => [x.iso, x]));
+  for (const ent of byKeyAll) {
+    const [k2, v] = ent; const x = dvBy.get(k2.slice(0, 10)); if (!x) continue;
+    const o = isAd(ent) ? (isLatam(ent) ? 'la' : 'es') : 'ot';
+    const web = v.some((r) => r.e === 'portada'), app = v.some((r) => r.e === 'apertura');
+    if (web || app) x.v.all[o]++;
+    if (web) x.v.web[o]++;
+    if (app) x.v.app[o]++;
+    const nc = v.filter((r) => /^consulta:(gineco|matrona|pediatra)$/.test(r.e)).length;
+    if (nc) {
+      const onApp = !v.some((r) => r.e === 'enviada_portada' || r.e === 'pregunta_portada') && v.some((r) => /-app$/.test(r.d || '') || r.e === 'apertura');
+      x.c.all[o] += nc; x.c[onApp ? 'app' : 'web'][o] += nc;
+    }
+  }
+  const ORG = [['es', 'var(--es)'], ['la', 'var(--la)'], ['ot', 'var(--plum)']];
+  const tot3 = (o) => o.es + o.la + o.ot;
+  const fmtPct = (a, b) => (b ? `${Math.round((a * 100) / b)} %` : '');
+  const stack = (kind, mode, label) => {
+    const mx = Math.max(1, ...dv.map((x) => tot3(x[kind][mode])));
+    const bw2 = Math.min(26, gw * 0.6); const yk = (val) => TOP + CH - (CH * val) / mx;
+    const out = [`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${label}" style="display:block">`];
+    dv.forEach((x, i) => {
+      const o = x[kind][mode]; const t = tot3(o); const cx = i * gw + gw / 2; const x0 = cx - bw2 / 2;
+      const vis = tot3(x.v[mode]); const pc = kind === 'c' && t ? fmtPct(t, vis) : '';
+      const info = `${x.label} · ${t} ${kind === 'v' ? (t === 1 ? 'persona' : 'personas') : (t === 1 ? 'consulta' : 'consultas')}${pc ? ` (${pc} de las visitas)` : ''} · anuncio España ${o.es} · anuncio Latinoamérica ${o.la} · resto ${o.ot}`;
+      out.push(`<g class="day" data-t="${esc(info)}"><title>${esc(info)}</title><rect x="${(i * gw).toFixed(1)}" y="0" width="${gw.toFixed(1)}" height="${H}" fill="transparent"/>`);
+      let base = 0;
+      for (const [k3, fill] of ORG) { const val = o[k3]; if (!val) continue; const h = (CH * val) / mx; base += h; out.push(`<rect x="${x0.toFixed(1)}" y="${(TOP + CH - base).toFixed(1)}" width="${bw2.toFixed(1)}" height="${Math.max(h - 1, 1).toFixed(1)}" rx="2" fill="${fill}"/>`); }
+      if (!t) out.push(`<rect x="${x0.toFixed(1)}" y="${(TOP + CH - 1.5).toFixed(1)}" width="${bw2.toFixed(1)}" height="1.5" rx="1" fill="var(--line)"/>`);
+      if (n <= 7 || t === mx) out.push(`<text x="${cx.toFixed(1)}" y="${(yk(t) - 4).toFixed(1)}" text-anchor="middle" font-size="9.5" fill="var(--ink)" font-weight="600">${t}${pc && n <= 7 ? `<tspan fill="var(--la-t)" font-weight="500"> · ${pc}</tspan>` : ''}</text>`);
+      if (n <= 7 || madrid(x.ts, { weekday: 'short' }).startsWith('lun') || i === n - 1) {
+        const anc = i === n - 1 ? 'end' : i === 0 ? 'start' : 'middle'; const lx = i === n - 1 ? W : i === 0 ? 0 : cx;
+        out.push(`<text x="${lx.toFixed(1)}" y="${H - 8}" text-anchor="${anc}" font-size="9.5" fill="var(--mute)">${esc(x.label)}</text>`);
+      }
+      out.push('</g>');
+    });
+    out.push('</svg>'); return out.join('');
+  };
+  const sumMode = (kind, mode) => dv.reduce((a, x) => a + tot3(x[kind][mode]), 0);
+  const MODES = [['all', 'Todo'], ['web', 'Web'], ['app', 'App']];
+  const dailyCard = `<div class="card" id="diario"><h2>Visitas y consultas por día</h2>
+<div class="legend" style="margin:0 0 6px"><span><b style="background:var(--es)"></b>Anuncio España</span><span><b style="background:var(--la)"></b>Anuncio Latinoamérica</span><span><b style="background:var(--plum)"></b>Resto (Google, directo, enlaces)</span></div>
+${MODES.map(([m], i) => `<input type="radio" name="dmode" id="dm-${m}" class="dm"${i ? '' : ' checked'}>`).join('')}<div class="dchips">${MODES.map(([m, t]) => `<label for="dm-${m}">${t}</label>`).join('')}</div>
+${MODES.map(([m, t]) => `<div class="cv cv-${m}"><h3 class="fh">Personas · ${sumMode('v', m)}</h3>${stack('v', m, `Personas por día (${t})`)}<h3 class="fh" style="margin-top:10px">Consultas · ${sumMode('c', m)} · ${fmtPct(sumMode('c', m), sumMode('v', m)) || '0 %'} de las visitas</h3>${stack('c', m, `Consultas por día (${t})`)}<p class="mute dayinfo" style="margin-top:6px">Toca o pasa el ratón por un día para ver sus cifras.</p></div>`).join('')}
+<p class="mute" style="margin-top:4px">Personas distintas por día. Junto a cada barra de consultas, el % de las visitas de ese día que consultó. Sin el equipo ni pruebas; no incluye WhatsApp.</p></div>`;
+
   // Dispositivos (personas distintas por día y dispositivo, de la actividad)
   const dev = new Map();
   for (const r of act) if (r.d && r.p) { const k = deviceText(r.d); (dev.get(k) || dev.set(k, new Set()).get(k)).add(`${dayISO(r.ts)}:${r.p}`); }
@@ -448,6 +499,7 @@ h1{font:500 28px/1.1 Georgia,serif;color:var(--plum);margin:4px 0 2px}h2{font-si
 .lane{background:var(--bar);border-radius:5px;height:20px;overflow:hidden}.track{display:flex;height:100%;border-radius:5px;overflow:hidden}.track i{display:block;height:100%}
 .i-es{background:var(--es)}.i-la{background:var(--la)}.i-ot{background:var(--plum)}
 .day{cursor:pointer}.day.on rect[fill="transparent"]{fill:var(--bar)}
+.dm{position:absolute;opacity:0;pointer-events:none}.dchips{display:flex;gap:6px;margin:4px 0 10px}.dchips label{font-size:12.5px;padding:5px 12px;border-radius:99px;border:1px solid var(--line);color:var(--mute);cursor:pointer}.cv{display:none}#dm-all:checked~.cv-all,#dm-web:checked~.cv-web,#dm-app:checked~.cv-app{display:block}#dm-all:checked~.dchips label[for=dm-all],#dm-web:checked~.dchips label[for=dm-web],#dm-app:checked~.dchips label[for=dm-app]{background:var(--plum);border-color:var(--plum);color:var(--bg);font-weight:600}
 .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--mute);margin-top:8px}.legend b{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
 .adn{display:block;font-size:11.5px;color:var(--plum);font-weight:600;margin-top:1px}.adn.zero,.adp.zero{color:var(--mute);font-weight:400}
 .adp{font-size:12px;color:var(--plum);font-weight:600;white-space:nowrap}.bars li i.ad{background:var(--adbar)}
@@ -500,6 +552,7 @@ ${waCard}
 <div class="card"><h2>De la visita al pago</h2>
 <div class="leg"><span><i class="i-es"></i>Anuncio España</span><span><i class="i-la"></i>Anuncio Latinoamérica</span><span><i class="i-ot"></i>Resto (Google, directo, enlaces)</span></div>
 ${fun}${funNote ? `<p class="mute" style="margin-top:6px">${funNote}</p>` : ''}</div>
+${dailyCard}
 
 <div class="card"><h2>De dónde vienen</h2>${srcTable}
 <p class="mute" style="margin-top:8px">Personas por día. Coste por consulta: lo gastado en cada grupo ÷ sus consultas. Enlaces propios: <b>?via=</b> (ig_marina, wa_guia…) e invitaciones (?r=).</p></div>
@@ -538,12 +591,6 @@ ${opFeed || opRows ? `<div class="card"><h2>Opiniones tras la consulta</h2>${opR
 <label class="mute">Solo para consultas de antes del 15 de noviembre: identificadores de Resend de los correos rebotados (abre cada uno en Resend y copia el código de la dirección, uno por línea)<textarea name="ids" rows="2" placeholder="p. ej. 4ef9a417-02e9-4d39-ad75-9611e0fcc33c" style="display:block;width:100%;margin-top:4px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font:13px ui-monospace,Menlo,monospace;background:var(--bg);color:var(--ink)"></textarea></label>
 <button type="submit" style="padding:10px;border:0;border-radius:8px;background:var(--plum);color:var(--bg);font:600 15px -apple-system,sans-serif;cursor:pointer">Cambiar el correo y reenviar</button></form></div></details>
 <details class="more"><summary>Más detalle</summary><div class="in">
-<div class="card"><h2>Personas por día</h2>${chart.join('')}
-<div class="legend"><span><b style="background:var(--plum)"></b>App · ${sumOf('a')}</span><span><b style="background:var(--web)"></b>Web · ${sumOf('w')}</span><span><b style="background:var(--ad)"></b>Parte que vino de anuncio (España): app ${sumOf('aa')} · web ${sumOf('aw')}</span></div>
-<p class="mute dayinfo" style="margin-top:6px">Toca o pasa el ratón por un día para ver sus cifras.</p></div>
-<div class="card"><h2>Consultas por día</h2>${cchart.join('')}
-<div class="legend"><span><b style="background:var(--plum)"></b>Orgánico · ${cSum('org')}</span><span><b style="background:var(--es)"></b>Anuncio España · ${cSum('es')}</span><span><b style="background:var(--la)"></b>Anuncio Latinoamérica · ${cSum('la')}</span></div>
-<p class="mute dayinfo" style="margin-top:6px">Toca o pasa el ratón por un día para ver sus cifras. Consultas por la web y la app (gratis y pagadas); no incluye WhatsApp.</p></div>
 <div class="card"><h2>Dónde se caen, paso a paso</h2><p class="mute">Personas distintas por día; entre paréntesis, las de anuncio en España. En la app, desde el 1 de noviembre.</p>${funnels.map(funnelCard).join('')}${(() => { const why = [['Sin correo', g('clic:fallo_sin_correo')], ['Correo mal escrito', g('clic:fallo_correo_mal')], ['Duda demasiado corta', g('clic:fallo_texto_corto')], ['Sin elegir profesional', g('clic:fallo_sin_profesional')], ['Error al enviar (servicio o conexión)', g('error_portada')], ['Agotó las gratuitas', g('limite_portada')]]; return why.some(([, n]) => n) ? `<h3 class="fh">En la web, por qué no se envió al pulsar</h3>${bars(why)}` : ''; })()}${opensCard}${lostFeed ? `<h3 class="fh">Últimas caídas</h3><ul class="feed">${lostFeed}</ul>` : ''}</div>
 <div class="card"><h2>Qué hacen quienes llegan por un anuncio (España)</h2>${adPeople.length ? bars(adSteps) : '<p class="mute">Nada todavía.</p>'}
 <p class="mute" style="margin-top:8px">Ingresos de anuncios: España ${g('anuncio_eur')} € · Latinoamérica ${g('latam_eur')} € (sin restar reembolsos). Instalaciones de anuncio: en Android, exacto; en iPhone, aproximado.</p></div>
@@ -558,5 +605,5 @@ ${opFeed || opRows ? `<div class="card"><h2>Opiniones tras la consulta</h2>${opR
 <div class="card"><h2>Dispositivos</h2>${bars(devices)}</div>
 </div></details>
 <p class="mute" style="margin-top:14px">«Persona XXXX» es una etiqueta anónima que cambia cada día; «personas» suma días, así que una misma persona cuenta una vez por cada día que entra. La actividad detallada se guarda 31 días.</p>
-</div><script>document.querySelectorAll('.day').forEach((g)=>{const f=()=>{g.closest('.card').querySelectorAll('.day.on').forEach((x)=>x.classList.remove('on'));g.classList.add('on');g.closest('.card').querySelector('.dayinfo').textContent=g.dataset.t;};g.addEventListener('click',f);g.addEventListener('mouseenter',f);});</script></body></html>`;
+</div><script>document.querySelectorAll('.day').forEach((g)=>{const f=()=>{(g.closest('.cv')||g.closest('.card')).querySelectorAll('.day.on').forEach((x)=>x.classList.remove('on'));g.classList.add('on');(g.closest('.cv')||g.closest('.card')).querySelector('.dayinfo').textContent=g.dataset.t;};g.addEventListener('click',f);g.addEventListener('mouseenter',f);});</script></body></html>`;
 }

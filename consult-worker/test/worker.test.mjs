@@ -500,7 +500,9 @@ console.log('consultas: OK');
 // WhatsApp «Próximamente»: «Avísame» guarda el correo cifrado una sola vez
 {
   const bad = await call('/avisame', { email: 'no-es-correo' }); assert.equal(bad.s, 400);
+  env.ALERTS = '1'; const s0 = sent.length;
   const a = await call('/avisame', { email: 'Aviso-WA@Example.com', src: 'portada' }); assert.equal(a.s, 200);
+  assert.ok(sent.slice(s0).some((m) => /Pidió aviso cuando vuelva WhatsApp/.test(m.subject)), 'aviso al momento'); env.ALERTS = '0';
   const b = await call('/avisame', { email: 'aviso-wa@example.com' }); assert.equal(b.s, 200);
   const keys = [...store.keys()].filter((k) => k.startsWith('wa_aviso:'));
   assert.equal(keys.length, 1, 'una sola entrada por correo'); assert.ok(!store.get(keys[0]).includes('aviso-wa@'), 'correo cifrado');

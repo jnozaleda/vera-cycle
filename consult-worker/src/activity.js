@@ -73,7 +73,7 @@ export const EVENTS = {
   whatsapp_pagina: ['Vio la página de consulta por WhatsApp', false],
   whatsapp_pagar: ['Pulsó pagar una consulta por WhatsApp', true],
   via_visita: ['Visita desde', false],
-  whatsapp_avisame: ['Pidió aviso cuando vuelva WhatsApp', false],
+  whatsapp_avisame: ['Pidió aviso cuando vuelva WhatsApp', true],
   guia_compartir: ['Compartió una guía por WhatsApp', false],
   consulta_invitada: ['Envió su primera consulta con una invitación', true],
   consulta_anuncio: ['La consulta vino de un anuncio', false],

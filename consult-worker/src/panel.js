@@ -274,7 +274,7 @@ export async function panel(env, url, openThreads) {
       let base = 0;
       for (const [k3, fill] of ORG) { const val = o[k3]; if (!val) continue; const h = (CH * val) / mx; base += h; out.push(`<rect x="${x0.toFixed(1)}" y="${(TOP + CH - base).toFixed(1)}" width="${bw2.toFixed(1)}" height="${Math.max(h - 1, 1).toFixed(1)}" rx="2" fill="${fill}"/>`); }
       if (!t) out.push(`<rect x="${x0.toFixed(1)}" y="${(TOP + CH - 1.5).toFixed(1)}" width="${bw2.toFixed(1)}" height="1.5" rx="1" fill="var(--line)"/>`);
-      if (n <= 7 || t === mx) out.push(`<text x="${cx.toFixed(1)}" y="${(yk(t) - 4).toFixed(1)}" text-anchor="middle" font-size="9.5" fill="var(--ink)" font-weight="600">${t}${pc && n <= 7 ? `<tspan fill="var(--la-t)" font-weight="500"> · ${pc}</tspan>` : ''}</text>`);
+      if (n <= 7 || t === mx) out.push(`<text x="${cx.toFixed(1)}" y="${(yk(t) - 4).toFixed(1)}" text-anchor="middle" font-size="9.5" fill="var(--ink)" font-weight="600">${t}</text>`);
       if (n <= 7 || madrid(x.ts, { weekday: 'short' }).startsWith('lun') || i === n - 1) {
         const anc = i === n - 1 ? 'end' : i === 0 ? 'start' : 'middle'; const lx = i === n - 1 ? W : i === 0 ? 0 : cx;
         out.push(`<text x="${lx.toFixed(1)}" y="${H - 8}" text-anchor="${anc}" font-size="9.5" fill="var(--mute)">${esc(x.label)}</text>`);
@@ -283,13 +283,30 @@ export async function panel(env, url, openThreads) {
     });
     out.push('</svg>'); return out.join('');
   };
+  // Línea del % de visitas que consultó (Noza, 20 nov): franja propia encima de las consultas, mismos días
+  const pctBand = (mode) => {
+    const PH = 56, PT = 16, HB = PT + PH + 8;
+    const ps = dv.map((x) => { const vv = tot3(x.v[mode]); return vv ? (tot3(x.c[mode]) * 100) / vv : null; });
+    const pmx = Math.max(20, Math.ceil(Math.max(0, ...ps.filter((q) => q != null)) / 10) * 10);
+    const yq = (q) => PT + PH - (PH * q) / pmx;
+    const out = [`<svg viewBox="0 0 ${W} ${HB}" width="100%" role="img" aria-label="% de visitas que consultó" style="display:block">`];
+    for (const q of [0, pmx / 2, pmx]) out.push(`<line x1="0" x2="${W}" y1="${yq(q).toFixed(1)}" y2="${yq(q).toFixed(1)}" stroke="var(--line)"${q ? ' stroke-dasharray="3 4"' : ''}/><text x="${W}" y="${(yq(q) - 3).toFixed(1)}" text-anchor="end" font-size="8.5" fill="var(--mute)">${q} %</text>`);
+    const pts = ps.map((q, i) => (q == null ? null : [i * gw + gw / 2, yq(q), q]));
+    let seg = [];
+    const segs = [];
+    for (const pt of pts) { if (pt) seg.push(pt); else { if (seg.length) segs.push(seg); seg = []; } }
+    if (seg.length) segs.push(seg);
+    for (const sg of segs) if (sg.length > 1) out.push(`<polyline fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linejoin="round" points="${sg.map(([x, y2]) => `${x.toFixed(1)},${y2.toFixed(1)}`).join(' ')}"/>`);
+    for (const pt of pts) if (pt) out.push(`<circle cx="${pt[0].toFixed(1)}" cy="${pt[1].toFixed(1)}" r="2.8" fill="var(--card)" stroke="var(--ink)" stroke-width="1.6"/>${n <= 7 ? `<text x="${pt[0].toFixed(1)}" y="${(pt[1] - 6).toFixed(1)}" text-anchor="middle" font-size="9" font-weight="600" fill="var(--ink)">${Math.round(pt[2])} %</text>` : ''}`);
+    out.push('</svg>'); return out.join('');
+  };
   const sumMode = (kind, mode) => dv.reduce((a, x) => a + tot3(x[kind][mode]), 0);
   const MODES = [['all', 'Todo'], ['web', 'Web'], ['app', 'App']];
   const dailyCard = `<div class="card" id="diario"><h2>Visitas y consultas por día</h2>
 <div class="legend" style="margin:0 0 6px"><span><b style="background:var(--es)"></b>Anuncio España</span><span><b style="background:var(--la)"></b>Anuncio Latinoamérica</span><span><b style="background:var(--plum)"></b>Resto (Google, directo, enlaces)</span></div>
 ${MODES.map(([m], i) => `<input type="radio" name="dmode" id="dm-${m}" class="dm"${i ? '' : ' checked'}>`).join('')}<div class="dchips">${MODES.map(([m, t]) => `<label for="dm-${m}">${t}</label>`).join('')}</div>
-${MODES.map(([m, t]) => `<div class="cv cv-${m}"><h3 class="fh">Personas · ${sumMode('v', m)}</h3>${stack('v', m, `Personas por día (${t})`)}<h3 class="fh" style="margin-top:10px">Consultas · ${sumMode('c', m)} · ${fmtPct(sumMode('c', m), sumMode('v', m)) || '0 %'} de las visitas</h3>${stack('c', m, `Consultas por día (${t})`)}<p class="mute dayinfo" style="margin-top:6px">Toca o pasa el ratón por un día para ver sus cifras.</p></div>`).join('')}
-<p class="mute" style="margin-top:4px">Personas distintas por día. Junto a cada barra de consultas, el % de las visitas de ese día que consultó. Sin el equipo ni pruebas; no incluye WhatsApp.</p></div>`;
+${MODES.map(([m, t]) => `<div class="cv cv-${m}"><h3 class="fh">Personas · ${sumMode('v', m)}</h3>${stack('v', m, `Personas por día (${t})`)}<h3 class="fh" style="margin-top:10px">Consultas · ${sumMode('c', m)} · ${fmtPct(sumMode('c', m), sumMode('v', m)) || '0 %'} de las visitas</h3><p class="mute" style="font-size:11.5px;margin:2px 0 0">% de visitas que consultó cada día</p>${pctBand(m)}${stack('c', m, `Consultas por día (${t})`)}<p class="mute dayinfo" style="margin-top:6px">Toca o pasa el ratón por un día para ver sus cifras.</p></div>`).join('')}
+<p class="mute" style="margin-top:4px">Personas distintas por día. Encima de las consultas, la línea con el % de las visitas de cada día que consultó. Sin el equipo ni pruebas; no incluye WhatsApp.</p></div>`;
 
   // Dispositivos (personas distintas por día y dispositivo, de la actividad)
   const dev = new Map();

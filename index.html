@@ -899,6 +899,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     const pk = document.querySelector('.perks li'); if (pk) pk.lastChild.textContent = 'Pago seguro';
     $('ask-send-t').textContent = 'Continuar al pago · 1 €'; $('ask-send-s').textContent = 'No se cobra nada hasta que lo confirmes';
     $('ask-steps').hidden = false;
+    $('ask-soon').hidden = true; // sin WhatsApp «Próximamente» en Black Friday: menos cosas que llamen la atención (Noza, 21 nov)
     // Arriba: «Preguntar · 1 €» en vez de «Abrir la app» (lleva al formulario)
     const to0 = $('top-open'); if (to0) { to0.textContent = 'Preguntar · 1 €'; to0.href = '#ask'; to0.dataset.goask = ''; to0.dataset.cta = 'clic:top_preguntar_bf'; }
     // Que nada más en la página diga «gratis» para las consultas (Noza, 21 nov)

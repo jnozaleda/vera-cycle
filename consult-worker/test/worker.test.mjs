@@ -567,3 +567,24 @@ console.log('consultas: OK');
 
 // Evento de la prueba Black Friday aceptado por /hit
 { const r = await call('/hit', { e: 'ab_visita:bf', d: 'ios-web' }); assert.equal(r.s, 200); console.log('Evento de la prueba: OK'); }
+
+// Consulta prioritaria: campaña «prioritaria», 29 €, plazo de 6 h
+{
+  const { proEmail, reminderEmail } = await import('../src/worker.js');
+  const pe = proEmail(PROS.gineco, { text: 'Duda', context: '', prio: true }, 'abcd2345');
+  assert.match(pe.subject, /^PRIORITARIA · responder antes de las \d\d:\d\d · Consulta Hera #ABCD2345/); assert.match(pe.html, /plazo de 6 h/);
+  assert.match(reminderEmail(PROS.gineco, 'abcd2345', true).text, /lleva 4 horas.*plazo: 6 h/);
+  assert.match(confirmEmail(PROS.gineco, { text: 'Duda', prio: true }, 0, 'abcd2345').text, /menos de 6 h/);
+  const P0 = env.PAYMENTS, K0 = env.STRIPE_SECRET_KEY, R0 = env.RELAY, DB0 = env.DB;
+  env.PAYMENTS = 'on'; env.STRIPE_SECRET_KEY = 'sk_test_x'; env.RELAY = '1';
+  env.DB = { prepare: (sql) => { const st = DB0.prepare(sql); return { ...st, bind: (...a) => { const b = st.bind(...a); return Object.assign(Object.create(Object.getPrototypeOf(b) || Object.prototype), b, { first: b.first ? b.first.bind(b) : async () => null }); } }; } };
+  const s0 = sent.length;
+  const r = await call('/ask', { email: 'prio-prueba@example.com', to: 'gineco', text: 'Duda prioritaria de prueba', context: '', src: 'ads', camp: 'prioritaria', ab: 'prio' });
+  assert.ok(r.j.held && r.j.prio, JSON.stringify(r.j));
+  const m = sent.slice(s0).find((x) => x.to[0] === 'prio-prueba@example.com');
+  assert.match(m.html, /Pagar 29 € y enviarla/); assert.match(m.html, /plan=prio29/);
+  const otra = await call('/ask', { email: 'prio-otra@example.com', to: 'gineco', text: 'Otra campaña no es prioritaria', context: '', src: 'ads', camp: 'gineco', ab: 'prio' });
+  assert.ok(otra.j.ok, 'sin la campaña prioritaria, gratis');
+  env.PAYMENTS = P0; env.STRIPE_SECRET_KEY = K0; env.RELAY = R0; env.DB = DB0;
+  console.log('Consulta prioritaria: OK');
+}

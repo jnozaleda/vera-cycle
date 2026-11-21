@@ -35,7 +35,7 @@ const is = (e, names) => names.some((n) => e === n || e.startsWith(`${n}:`));
 const pct = (a, t) => (t ? `${Math.round((a * 100) / t)} %` : '—');
 // Marcas de anuncio: la visita desde el anuncio y lo que la app o el servicio apuntan después con la marca guardada (30 días)
 const AD_MARK = ['anuncio_visita', 'consulta_anuncio', 'instalada_anuncio', 'vuelta_anuncio'];
-const AD_GROUPS = [['matrona', 'Matrona'], ['gineco', 'Ginecólogo'], ['pediatra', 'Pediatra'], ['lactancia', 'Lactancia'], ['gineco_latam', 'Ginecólogo · Argentina'], ['pediatra_latam', 'Pediatra · Argentina'], ['gineco_resto_latam', 'Ginecólogo · México, Chile y Colombia'], ['pediatra_resto_latam', 'Pediatra · México, Chile y Colombia'], ['matrona_resto_latam', 'Matrona · México, Chile y Colombia'], ['', 'Sin grupo (enlace de sitio u otro)']];
+const AD_GROUPS = [['prioritaria', 'Consulta prioritaria (29 €)'], ['matrona', 'Matrona'], ['gineco', 'Ginecólogo'], ['pediatra', 'Pediatra'], ['lactancia', 'Lactancia'], ['gineco_latam', 'Ginecólogo · Argentina'], ['pediatra_latam', 'Pediatra · Argentina'], ['gineco_resto_latam', 'Ginecólogo · México, Chile y Colombia'], ['pediatra_resto_latam', 'Pediatra · México, Chile y Colombia'], ['matrona_resto_latam', 'Matrona · México, Chile y Colombia'], ['', 'Sin grupo (enlace de sitio u otro)']];
 const TABS = [['today', 'Hoy'], ['diary', 'Diario'], ['care', 'Cuidados'], ['guide', 'Dudas'], ['baby', 'Tu bebé'], ['cycle', 'Ciclo'], ['trends', 'Patrones']];
 const DIARY = [['sintoma', 'Síntomas'], ['animo', 'Ánimo'], ['regla', 'Regla'], ['dato', 'Peso, sueño o temperatura'], ['flujo', 'Flujo'], ['estres', 'Estrés'], ['intimidad', 'Relaciones'], ['ovulacion', 'Test de ovulación']];
 
@@ -302,8 +302,8 @@ export async function panel(env, url, openThreads) {
   };
   // Prueba Black Friday (20 nov – 1 dic): las dos versiones para quien llega por anuncio
   const abPeople = (v) => new Set(act.filter((r) => r.e === `ab_visita:${v}` && r.p).map((r) => `${dayISO(r.ts)}:${r.p}`)).size;
-  const abRows = [['bf', 'Black Friday · 1 €'], ['gratis', 'La de siempre · 2 gratis']].map(([v, t]) => ({ v, t, pp: abPeople(v), cq: g(`consulta_ab:${v}`) }));
-  const abCard = abRows.some((r) => r.pp || r.cq) ? `<div class="card" id="prueba-bf"><h2>Prueba Black Friday (hasta el 1 dic)</h2><table><tr><th>Versión</th><th>Personas</th><th>Consultas</th><th>%</th><th>Pagos</th></tr>${abRows.map((r) => `<tr><td>${r.t}</td><td>${r.pp}</td><td>${r.cq}</td><td>${r.pp ? fmtPct(r.cq, r.pp) : '—'}</td><td>${r.v === 'bf' ? g('pago:bf1') : '—'}</td></tr>`).join('')}</table><p class="mute" style="margin-top:6px">Solo visitas de anuncio, repartidas al azar 50/50; cada dispositivo ve siempre la misma versión. En «Black Friday», cada consulta se envía al pagar 1 €. Guardadas sin pagar: ${g('bf_guardada') - g('pago:bf1') > 0 ? g('bf_guardada') - g('pago:bf1') : 0}.</p></div>` : '';
+  const abRows = [['bf', 'Black Friday · 1 €'], ['gratis', 'La de siempre · 2 gratis'], ['prio', 'Prioritaria · 29 € (campaña propia)']].map(([v, t]) => ({ v, t, pp: abPeople(v), cq: g(`consulta_ab:${v}`) }));
+  const abCard = abRows.some((r) => r.pp || r.cq) ? `<div class="card" id="prueba-bf"><h2>Pruebas de precio</h2><table><tr><th>Versión</th><th>Personas</th><th>Consultas</th><th>%</th><th>Pagos</th></tr>${abRows.map((r) => `<tr><td>${r.t}</td><td>${r.pp}</td><td>${r.cq}</td><td>${r.pp ? fmtPct(r.cq, r.pp) : '—'}</td><td>${r.v === 'bf' ? g('pago:bf1') : r.v === 'prio' ? g('pago:prio29') : '—'}</td></tr>`).join('')}</table><p class="mute" style="margin-top:6px">Black Friday y la de siempre: visitas de anuncio repartidas al azar 50/50 hasta el 1 dic (cada dispositivo ve siempre la misma). Prioritaria: solo la campaña «prioritaria». En las de pago, la consulta se envía al pagar. Guardadas sin pagar: ${g('bf_guardada') - g('pago:bf1') > 0 ? g('bf_guardada') - g('pago:bf1') : 0}.</p></div>` : '';
   const sumMode = (kind, mode) => dv.reduce((a, x) => a + tot3(x[kind][mode]), 0);
   const MODES = [['all', 'Todo'], ['web', 'Web'], ['app', 'App']];
   const dailyCard = `<div class="card" id="diario"><h2>Visitas y consultas por día</h2>
@@ -466,7 +466,7 @@ ${MODES.map(([m, t]) => `<div class="cv cv-${m}"><h3 class="fh">Personas · ${su
     const txt = steps.length ? `${steps.join(' → ')}${sent ? '' : ' → se fue'}${tail ? ` · ${tail}` : ''}` : `entró${tail ? ` · ${tail}` : ''} y se fue`;
     const dv = seq.find((r) => r.d)?.d; const [sl, sc] = SRC_LABEL(p);
     // Prueba Black Friday (20 nov): qué versión vio
-    const abv = has(p.v, ['ab_visita:bf']) ? '<span class="tagk bad">Black Friday 1 €</span>' : has(p.v, ['ab_visita:gratis']) ? '<span class="tagk ok2">2 gratis</span>' : '';
+    const abv = has(p.v, ['ab_visita:prio']) ? '<span class="tagk warn">Prioritaria 29 €</span>' : has(p.v, ['ab_visita:bf']) ? '<span class="tagk bad">Black Friday 1 €</span>' : has(p.v, ['ab_visita:gratis']) ? '<span class="tagk ok2">2 gratis</span>' : '';
     return { sent, ts: seq[0].ts, html: `<li><time>${madrid(seq[0].ts, days === 1 ? { hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</time><div><span class="tag">${esc(seq[0].p)}</span> ${dv ? esc(deviceText(dv)) : ''} <span class="src s-${sc}">${esc(sl)}</span>${abv ? ` ${abv}` : ''}<br><span class="steps">${txt}</span></div></li>` };
   }).sort((a, b) => b.ts - a.ts);
   const tripsHtml = trips.slice(0, 15).map((t) => t.html).join('');

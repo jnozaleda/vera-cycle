@@ -95,15 +95,17 @@ const reassignHtml = (links) => (links?.length ? `<!--ra--><p style="font-size:1
 const reassignText = (links) => (links?.length ? `\n\n¿No es de tu área? ${links.map((l) => `Pasársela a ${l.short}: ${l.url}`).join(' · ')}` : '');
 
 export function proEmail(pro, q, id = '', relay = true, links = []) {
-  const subject = `Consulta Hera${id ? ` #${id.toUpperCase()}` : ''}${q.context ? ` · ${q.context}` : ''}${q.via ? ` · vía ${q.via}` : ''}`;
-  const html = shell(`<p>Nueva consulta para <b>${esc(pro.name)}</b>.${q.via ? ` Llegó desde ${esc(q.via)}.` : ''}</p>
+  // Prioritaria: plazo de 6 h, con la hora límite (Madrid) en el asunto
+  const due = q.prio ? new Date(Date.now() + 6 * 3600000).toLocaleTimeString('es-ES', { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit' }) : '';
+  const subject = `${q.prio ? `PRIORITARIA · responder antes de las ${due} · ` : ''}Consulta Hera${id ? ` #${id.toUpperCase()}` : ''}${q.context ? ` · ${q.context}` : ''}${q.via ? ` · vía ${q.via}` : ''}`;
+  const html = shell(`<p>Nueva consulta para <b>${esc(pro.name)}</b>.${q.via ? ` Llegó desde ${esc(q.via)}.` : ''}</p>${q.prio ? `<p style="background:#FFF6D6;border-radius:8px;padding:8px 12px;font-size:14px"><b>Consulta prioritaria (29 €): responde antes de las ${due}</b> (plazo de 6 h). Si te adjunta analíticas o informes, revísalos y dile qué pruebas pedir y cuándo ir a consulta.</p>` : ''}
 <div style="background:#F6E0E2;border-radius:10px;padding:14px;margin:12px 0">${nl2br(q.text)}</div>
 ${q.context ? `<p style="font-size:13px;color:#6E6C67">Sobre: ${esc(q.context)}</p>` : ''}
 ${q.situation ? `<p style="font-size:13px;color:#6E6C67">Situación: ${nl2br(q.situation)}</p>` : ''}
 ${q.files ? `<p style="font-size:13px;color:#6E6C67">Incluye ${q.files} ${q.files === 1 ? 'archivo adjunto' : 'archivos adjuntos'}. Hera no los guarda: solo están en este correo.</p>` : ''}
 ${relay ? `<p style="font-size:13px;color:#6E6C67"><b>Para contestar, responde a este correo</b> desde el móvil o el ordenador. Tu respuesta le llegará a la usuaria desde ${esc(pro.email)}: tu correo personal no se muestra. Si ella vuelve a escribir, te llegará en esta misma conversación. Plazo comprometido: 24 h.</p>`
     : `<p style="font-size:13px;color:#6E6C67">Responde a este correo para contestar directamente a la usuaria (${esc(q.email)}). Plazo comprometido: 24 h.</p>`}${reassignHtml(links)}`);
-  const text0 = `Nueva consulta para ${pro.name}\n\n${q.text}\n\n${q.context ? `Sobre: ${q.context}\n` : ''}${q.situation ? `Situación: ${q.situation}\n` : ''}\n${relay ? `Para contestar, responde a este correo: tu respuesta le llegará a la usuaria desde ${pro.email}, sin mostrar tu correo personal. Plazo: 24 h.` : `Responde a este correo para contestar a la usuaria (${q.email}).`}`;
+  const text0 = `${q.prio ? `CONSULTA PRIORITARIA (29 €): responde antes de las ${due} (plazo de 6 h).\n\n` : ''}Nueva consulta para ${pro.name}\n\n${q.text}\n\n${q.context ? `Sobre: ${q.context}\n` : ''}${q.situation ? `Situación: ${q.situation}\n` : ''}\n${relay ? `Para contestar, responde a este correo: tu respuesta le llegará a la usuaria desde ${pro.email}, sin mostrar tu correo personal. Plazo: 24 h.` : `Responde a este correo para contestar a la usuaria (${q.email}).`}`;
   const text = text0 + reassignText(links);
   return { subject, html, text };
 }
@@ -113,13 +115,13 @@ export function confirmEmail(pro, q, remaining, id = '', unlimited = false, left
   const left = leftText || (unlimited ? 'Tienes consultas ilimitadas' : remaining === 0 ? 'Era tu última consulta gratuita' : `Te ${remaining === 1 ? 'queda 1 consulta gratuita' : `quedan ${remaining} consultas gratuitas`}`);
   const subject = `Tu consulta a ${pro.short} · Hera${id ? ` #${id.toUpperCase()}` : ''}`;
   const html = shell(`<p>Hola,</p>
-<p>Tu consulta ha llegado a <b>${esc(pro.name)}, ${esc(pro.role)}</b>. Te responderá en esta misma conversación en menos de 24 h.</p>
+<p>Tu consulta ha llegado a <b>${esc(pro.name)}, ${esc(pro.role)}</b>. Te responderá en esta misma conversación en menos de ${q.prio ? '6' : '24'} h.</p>
 <div style="background:#F6E0E2;border-radius:10px;padding:12px;margin:12px 0;font-size:14px;color:#2F3631">«${esc(excerpt)}»${q.context ? `<br><span style="color:#6E6C67">Sobre: ${esc(q.context)}</span>` : ''}</div>
 <p><span style="display:inline-block;background:#ffffff;color:#45574C;border:1.5px solid #45574C;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600">${left}</span></p>
 <p style="font-size:13px;color:#6E6C67">¿Quieres añadir algo o enviar una foto? Responde a este correo y le llegará a ${esc(pro.short)}.</p>
 <p style="font-size:13px;color:#6E6C67">No es un servicio de urgencias. Si algo no va bien, llama al 112 o acude a tu centro de salud.</p>
 <p style="font-size:12px;color:#8A8A8E">¿No has escrito tú esta consulta? Escríbenos a contacto@hera-gine.com y la borramos.</p>`);
-  const text = `Tu consulta ha llegado a ${pro.name}, ${pro.role}. Te responderá en esta misma conversación en menos de 24 h.\n\n«${excerpt}»\n\n${left}.\n\n¿Quieres añadir algo o enviar una foto? Responde a este correo y le llegará a ${pro.short}.\n\nNo es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.\n¿No has escrito tú esta consulta? Escríbenos a contacto@hera-gine.com y la borramos.`;
+  const text = `Tu consulta ha llegado a ${pro.name}, ${pro.role}. Te responderá en esta misma conversación en menos de ${q.prio ? '6' : '24'} h.\n\n«${excerpt}»\n\n${left}.\n\n¿Quieres añadir algo o enviar una foto? Responde a este correo y le llegará a ${pro.short}.\n\nNo es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.\n¿No has escrito tú esta consulta? Escríbenos a contacto@hera-gine.com y la borramos.`;
   return { subject, html, text };
 }
 
@@ -217,24 +219,25 @@ const WORKER_URL = 'https://hera-consultas.tempcheck-app.workers.dev';
 const HOLD_DAYS = 7;
 export const BF_END = Date.parse('2026-12-01T23:59:59+01:00');
 const holdSig = async (env, id) => (await hmac(env.HASH_SALT, `hold:${id}`)).slice(0, 16);
-const holdLinks = async (env, id) => { const s = await holdSig(env, id); return ({ ...Object.fromEntries(['suelta', 'bono', 'mensual', 'bf1'].map((p) => [p, `${WORKER_URL}/pagar?c=${id}&s=${s}&plan=${p}`])) }); };
+const holdLinks = async (env, id) => { const s = await holdSig(env, id); return ({ ...Object.fromEntries(['suelta', 'bono', 'mensual', 'bf1', 'prio29'].map((p) => [p, `${WORKER_URL}/pagar?c=${id}&s=${s}&plan=${p}`])) }); };
 
-export function holdEmail(pro, text, links, reminder = false, others = '', bf = false) {
+export function holdEmail(pro, text, links, reminder = false, others = '', offer = '') {
+  const bf = offer === 'bf' || offer === true; const prio = offer === 'prio';
   // others: la gratis que le queda es con otra especialista (1 gratis por especialista)
   // bf: prueba Black Friday (consulta a 1 € hasta el 1 dic). WhatsApp está en «Próximamente» desde el 19 nov: ya no se ofrece aquí
-  const why = bf ? 'Con la oferta de Black Friday, cada consulta cuesta 1 € hasta el 1 de diciembre' : others ? `Tu consulta gratis con ${pro.short} ya la usaste (la que te queda es para ${others})` : 'Ya has usado tus consultas gratis';
-  const price = bf ? '1 €' : '9 €'; const link = bf ? links.bf1 : links.suelta;
+  const why = prio ? 'Has elegido la consulta prioritaria (respuesta en menos de 6 h)' : bf ? 'Con la oferta de Black Friday, cada consulta cuesta 1 € hasta el 1 de diciembre' : others ? `Tu consulta gratis con ${pro.short} ya la usaste (la que te queda es para ${others})` : 'Ya has usado tus consultas gratis';
+  const price = prio ? '29 €' : bf ? '1 €' : '9 €'; const link = prio ? links.prio29 : bf ? links.bf1 : links.suelta;
   const excerpt = text.length > 220 ? `${text.slice(0, 220).trim()}…` : text;
   const btn = `<p style="margin:16px 0"><a href="${link}" style="display:inline-block;background:#45574C;color:#ffffff;text-decoration:none;font-weight:600;border-radius:8px;padding:12px 20px">Pagar ${price} y enviarla</a></p>`;
   const quote = `<div style="background:#F6E0E2;border-radius:10px;padding:12px;margin:12px 0;font-size:14px">«${esc(excerpt)}»</div>`;
   const subject = reminder ? `¿Seguimos con tu consulta a ${pro.short}?` : `Tu consulta a ${pro.short} está guardada · falta el pago`;
-  const more = bf ? '' : `<p style="font-size:14px">¿Vas a preguntar más veces? <a href="${links.bono}" style="color:#45574C;font-weight:600">Bono de 5 consultas por 35 €</a> o <a href="${links.mensual}" style="color:#45574C;font-weight:600">ilimitado por 15 € al mes</a>.</p>`;
+  const more = bf || prio ? '' : `<p style="font-size:14px">¿Vas a preguntar más veces? <a href="${links.bono}" style="color:#45574C;font-weight:600">Bono de 5 consultas por 35 €</a> o <a href="${links.mensual}" style="color:#45574C;font-weight:600">ilimitado por 15 € al mes</a>.</p>`;
   const html = reminder
-    ? shell(`<p>Hola,</p><p>Tu consulta para ${esc(pro.short)} sigue guardada y esperando el pago${bf ? ' (1 €, oferta de Black Friday hasta el 1 de diciembre)' : ''}:</p>${quote}${btn}<p style="font-size:14px">¿Te quedó alguna duda antes de pagar? Responde a este correo y te contestamos.</p><p style="font-size:13px;color:#6E6C67">Es el único recordatorio. Si no pagas, la borramos en ${HOLD_DAYS} días.</p>`)
-    : shell(`<p>Hola,</p><p>${esc(why)}, así que hemos <b>guardado tu consulta</b> para ${esc(pro.name)}, ${esc(pro.role)}:</p>${quote}<p>Para que le llegue, solo falta el pago. En cuanto pagues, se la enviamos y te responde en menos de 24 h; no tienes que volver a escribirla.</p>${btn}${more}<p style="font-size:13px;color:#6E6C67">Si no pagas en ${HOLD_DAYS} días, borramos tu consulta. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.</p>`);
+    ? shell(`<p>Hola,</p><p>Tu consulta para ${esc(pro.short)} sigue guardada y esperando el pago${bf ? ' (1 €, oferta de Black Friday hasta el 1 de diciembre)' : prio ? ' (consulta prioritaria, 29 €)' : ''}:</p>${quote}${btn}<p style="font-size:14px">¿Te quedó alguna duda antes de pagar? Responde a este correo y te contestamos.</p><p style="font-size:13px;color:#6E6C67">Es el único recordatorio. Si no pagas, la borramos en ${HOLD_DAYS} días.</p>`)
+    : shell(`<p>Hola,</p><p>${esc(why)}, así que hemos <b>guardado tu consulta</b> para ${esc(pro.name)}, ${esc(pro.role)}:</p>${quote}<p>Para que le llegue, solo falta el pago. En cuanto pagues, se la enviamos y te responde en menos de ${prio ? '6' : '24'} h; no tienes que volver a escribirla.</p>${btn}${more}<p style="font-size:13px;color:#6E6C67">Si no pagas en ${HOLD_DAYS} días, borramos tu consulta. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.</p>`);
   const text2 = reminder
     ? `Hola,\n\nTu consulta para ${pro.short} sigue guardada y esperando el pago:\n\n«${excerpt}»\n\nPagar ${price} y enviarla: ${link}\n\n¿Te quedó alguna duda antes de pagar? Responde a este correo.\nEs el único recordatorio. Si no pagas, la borramos en ${HOLD_DAYS} días.`
-    : `Hola,\n\n${why}, así que hemos guardado tu consulta para ${pro.name}, ${pro.role}:\n\n«${excerpt}»\n\nPara que le llegue, solo falta el pago. En cuanto pagues, se la enviamos; no tienes que volver a escribirla.\n\nPagar ${price} y enviarla: ${link}${bf ? '' : `\nBono de 5 por 35 €: ${links.bono}\nIlimitado por 15 € al mes: ${links.mensual}`}\n\nSi no pagas en ${HOLD_DAYS} días, borramos tu consulta. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.`;
+    : `Hola,\n\n${why}, así que hemos guardado tu consulta para ${pro.name}, ${pro.role}:\n\n«${excerpt}»\n\nPara que le llegue, solo falta el pago. En cuanto pagues, se la enviamos; no tienes que volver a escribirla.\n\nPagar ${price} y enviarla: ${link}${bf || prio ? '' : `\nBono de 5 por 35 €: ${links.bono}\nIlimitado por 15 € al mes: ${links.mensual}`}\n\nSi no pagas en ${HOLD_DAYS} días, borramos tu consulta. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.`;
   return { subject, html, text: text2 };
 }
 
@@ -262,7 +265,7 @@ export async function remindHolds(env) {
       const id = k.name.slice(5);
       const held = JSON.parse(await openEmail(env, raw.x));
       const pro = PROS[held.to] || PROS.gineco;
-      await sendMail(env, { to: held.email, replyTo: 'contacto@hera-gine.com', ...holdEmail(pro, held.text, await holdLinks(env, id), true, '', !!raw.bf) });
+      await sendMail(env, { to: held.email, replyTo: 'contacto@hera-gine.com', ...holdEmail(pro, held.text, await holdLinks(env, id), true, '', raw.bf ? 'bf' : raw.prio ? 'prio' : '') });
       const left = Math.max(60, Math.floor((raw.at + HOLD_DAYS * 86400000 - Date.now()) / 1000));
       await env.KV.put(k.name, JSON.stringify({ ...raw, rem: 1 }), { expirationTtl: left });
       await bump(env, 'guardada_recordatorio');
@@ -326,10 +329,11 @@ export function relayEmail(pro, role, id, body, nAttach, rate = null, invite = n
 }
 
 /** Aviso al profesional cuando una consulta lleva 16 h sin respuesta */
-export function reminderEmail(pro, id) {
-  const html = shell(`<p>Hola, ${esc(pro.short)}:</p><p>La consulta <b>#${id.toUpperCase()}</b> lleva 16 horas sin respuesta y el plazo que damos a las usuarias es de 24 h.</p>
+export function reminderEmail(pro, id, prio = false) {
+  const [h, plazo] = prio ? [4, 6] : [16, 24];
+  const html = shell(`<p>Hola, ${esc(pro.short)}:</p><p>La consulta${prio ? ' <b>prioritaria</b>' : ''} <b>#${id.toUpperCase()}</b> lleva ${h} horas sin respuesta y el plazo que damos a las usuarias es de ${plazo} h.</p>
 <p>Puedes responder a este mismo correo y le llegará a ella.</p>`);
-  return { html, text: `Hola, ${pro.short}: la consulta #${id.toUpperCase()} lleva 16 horas sin respuesta (plazo: 24 h). Puedes responder a este mismo correo y le llegará a la usuaria.` };
+  return { html, text: `Hola, ${pro.short}: la consulta${prio ? ' prioritaria' : ''} #${id.toUpperCase()} lleva ${h} horas sin respuesta (plazo: ${plazo} h). Puedes responder a este mismo correo y le llegará a la usuaria.` };
 }
 
 // MARK: - Medición de uso
@@ -506,6 +510,7 @@ const handler = {
       const id = String(url.searchParams.get('c') || ''); const plan = String(url.searchParams.get('plan') || 'suelta');
       const raw = /^[a-z0-9]{8}$/.test(id) && PLANS[plan] && !PLANS[plan].video && url.searchParams.get('s') === await holdSig(env, id) ? await env.KV.get(`hold:${id}`, 'json') : null;
       if (!raw || !env.STRIPE_SECRET_KEY) return new Response(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body style="font:16px/1.5 -apple-system,sans-serif;max-width:32em;margin:40px auto;padding:0 18px;color:#2F3631"><h1 style="font:400 28px Georgia,serif">Esta consulta ya no está pendiente</h1><p>O ya se ha enviado, o han pasado más de ${HOLD_DAYS} días y se ha borrado. Puedes escribirla de nuevo en <a href="https://hera-gine.com/#ask" style="color:#45574C">hera-gine.com</a>.</p></body>`, { status: 404, headers: { 'content-type': 'text/html; charset=utf-8' } });
+      if (plan === 'prio29' && !raw.prio) return Response.redirect(`${WORKER_URL}/pagar?c=${id}&s=${url.searchParams.get('s')}&plan=suelta`, 303);
       if (plan === 'bf1' && (!raw.bf || Date.now() >= BF_END)) return Response.redirect(`${WORKER_URL}/pagar?c=${id}&s=${url.searchParams.get('s')}&plan=suelta`, 303);
       const held = JSON.parse(await openEmail(env, raw.x));
       try {
@@ -671,7 +676,9 @@ const handler = {
     const friend = FRIEND_LINKS[via] && Date.now() < Date.parse(FRIEND_LINKS[via].until) ? FRIEND_LINKS[via] : null;
     // Prueba Black Friday (Noza, 20 nov): la mitad de las visitas de anuncio ve la consulta a 1 € (sin gratis), hasta el 1 dic
     const bf = !friend && body.ab === 'bf' && body.src === 'ads' && Date.now() < BF_END;
-    const limit = friend ? friend.free : bf ? 0 : Number(env.FREE_LIMIT || 2);
+    // Consulta prioritaria (Noza, 21 nov): campaña propia «prioritaria», sin gratis, 29 € y respuesta en menos de 6 h
+    const prio = !friend && body.ab === 'prio' && body.src === 'ads' && String(body.camp || '') === 'prioritaria';
+    const limit = friend ? friend.free : bf || prio ? 0 : Number(env.FREE_LIMIT || 2);
 
     if (url.pathname === '/admin/reset') {
       if (!env.ADMIN_TOKEN || request.headers.get('Authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return reply(401, { error: 'unauthorized' });
@@ -730,6 +737,7 @@ const handler = {
       const norm = normalizeEmail(body.email);
       if (!norm) return reply(400, { error: 'bad_email' });
       if (!PLANS[body.plan]) return reply(400, { error: 'bad_plan' });
+      if (body.plan === 'prio29' && (!/^[a-z0-9]{8}$/.test(String(body.hold || '')) || !(await env.KV.get(`hold:${body.hold}`, 'json'))?.prio)) return reply(400, { error: 'bad_plan' });
       if (body.plan === 'bf1' && (!/^[a-z0-9]{8}$/.test(String(body.hold || '')) || Date.now() >= BF_END || !(await env.KV.get(`hold:${body.hold}`, 'json'))?.bf)) return reply(400, { error: 'bad_plan' });
       const vpro = body.plan === 'lactancia' ? 'matrona' : PLANS[body.plan].video ? body.pro : '';
       if (PLANS[body.plan].video && !VIDEO_PROS.includes(vpro)) return reply(400, { error: 'bad_pro' });
@@ -804,7 +812,7 @@ const handler = {
       const samePro = !test && !friend && rec.n < limit && fp.includes(body.to);
       const others = samePro ? Object.values(PROS).filter((x) => !fp.includes(x.key)).map((x) => x.short).join(' o ') : '';
       if (!test && !unlimited && (rec.n >= limit || samePro) && credits <= 0) {
-        if (body.team !== true && !bf) {
+        if (body.team !== true && !bf && !prio) {
           if (body.src === 'ads') await bump(env, /_latam$/.test(String(body.camp || '')) ? 'latam_limite' : 'anuncio_limite');
           await bump(env, 'gratuitas_agotadas');
           await record(env, { e: 'gratuitas_agotadas', p: await personTag(env, request, madridDay(), body.p) }, sendMail, ctx);
@@ -812,20 +820,20 @@ const handler = {
         // Pendiente de pago: se guarda cifrada y se le manda el enlace (no llega a la profesional hasta que pague)
         if (pay && env.RELAY === '1' && body.held !== true) {
           const hid = newThreadId();
-          const held = { email: q.email, to: body.to, text: q.text, context: q.context, situation: q.situation, follow: body.follow === true, src: body.src, camp: body.camp, ref: body.ref, p: body.p, team: body.team === true, ...(bf ? { ab: 'bf' } : {}) };
-          await env.KV.put(`hold:${hid}`, JSON.stringify({ x: await sealEmail(env, JSON.stringify(held)), at: Date.now(), h, to: body.to, rem: 0, ...(bf ? { bf: 1 } : {}) }), { expirationTtl: HOLD_DAYS * 86400 });
+          const held = { email: q.email, to: body.to, text: q.text, context: q.context, situation: q.situation, follow: body.follow === true, src: body.src, camp: body.camp, ref: body.ref, p: body.p, team: body.team === true, ...(bf ? { ab: 'bf' } : prio ? { ab: 'prio' } : {}) };
+          await env.KV.put(`hold:${hid}`, JSON.stringify({ x: await sealEmail(env, JSON.stringify(held)), at: Date.now(), h, to: body.to, rem: 0, ...(bf ? { bf: 1 } : {}), ...(prio ? { prio: 1 } : {}) }), { expirationTtl: HOLD_DAYS * 86400 });
           const links = await holdLinks(env, hid);
-          await sendMail(env, { to: q.email, replyTo: 'contacto@hera-gine.com', ...holdEmail(pro, q.text, links, false, others, bf) });
-          if (body.team !== true) await bump(env, bf ? 'bf_guardada' : 'consulta_guardada');
+          await sendMail(env, { to: q.email, replyTo: 'contacto@hera-gine.com', ...holdEmail(pro, q.text, links, false, others, bf ? 'bf' : prio ? 'prio' : '') });
+          if (body.team !== true) await bump(env, bf ? 'bf_guardada' : prio ? 'prio_guardada' : 'consulta_guardada');
           {
             if (env.COPY_TO) {
               const who = env.COPY_EMAIL === '1' ? `<p style="font-size:13px;color:#6E6C67">Correo de la usuaria: <b>${esc(q.email)}</b></p>` : '';
-              const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${hid.toUpperCase()} · PENDIENTE DE PAGO${bf ? ' · Black Friday 1 €' : ''}${viaName ? ` · desde ${viaName}` : ''}${cc ? ` · ${cc}` : ''}${body.team === true ? ' · prueba del equipo' : ''}`, intro: `Consulta guardada para <b>${esc(pro.name)}</b>. <b style="color:#B3261E">Aún no ha pagado</b>: a ${esc(pro.short)} no le ha llegado.`, body: q.text,
+              const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${hid.toUpperCase()} · PENDIENTE DE PAGO${bf ? ' · Black Friday 1 €' : prio ? ' · Prioritaria 29 €' : ''}${viaName ? ` · desde ${viaName}` : ''}${cc ? ` · ${cc}` : ''}${body.team === true ? ' · prueba del equipo' : ''}`, intro: `Consulta guardada para <b>${esc(pro.name)}</b>. <b style="color:#B3261E">Aún no ha pagado</b>: a ${esc(pro.short)} no le ha llegado.`, body: q.text,
                 extra: `${who}<p style="font-size:13px;color:#6E6C67">Le hemos enviado el enlace de pago. Recordatorio a las 3 h si no paga. Se borra en ${HOLD_DAYS} días.${files.length ? ' Los adjuntos no se guardan: podrá enviarlos respondiendo al correo de la profesional.' : ''}</p>` });
               await sendMail(env, { to: env.COPY_TO, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc });
             }
           }
-          return reply(200, { limit: true, used: rec.n, freeLimit: limit, pay: true, held: hid, ...(bf ? { bf: true } : {}), ...(samePro ? { same: others } : {}) });
+          return reply(200, { limit: true, used: rec.n, freeLimit: limit, pay: true, held: hid, ...(bf ? { bf: true } : {}), ...(prio ? { prio: true } : {}), ...(samePro ? { same: others } : {}) });
         }
         return reply(200, { limit: true, used: rec.n, freeLimit: limit, ...(pay ? { pay: true } : {}), ...(samePro ? { same: others } : {}) });
       }
@@ -836,7 +844,7 @@ const handler = {
       const bcc = test ? undefined : env.COPY_TO || undefined; // COPY_TO (secreto): copia oculta de cada consulta mientras se prueba
       // RELAY="1": respuestas a través de Hera (necesita la regla catch-all → Worker en Email Routing). Las pruebas siempre lo usan.
       const relay = env.RELAY === '1' || !!test;
-      const pm = proEmail(pro, { ...q, via: viaName }, id, relay, relay && !test ? await reassignLinks(env, id, pro.key) : []);
+      const pm = proEmail(pro, { ...q, via: viaName, prio }, id, relay, relay && !test ? await reassignLinks(env, id, pro.key) : []);
       // Con adjuntos, la copia de control va aparte y sin los archivos: solo los recibe la profesional
       const proReply = relay ? await relayAddress(env, 'p', id) : q.email;
       const sent = await sendMail(env, { to: pro.email, replyTo: proReply, ...pm, attachments: files });
@@ -844,7 +852,7 @@ const handler = {
       // La consulta se guarda ya (antes de contadores y correos): si la usuaria sale de la página y la petición se corta,
       // la respuesta de la profesional igual le llega (B45WUAX3, 18 nov). Al final se vuelve a guardar completa.
       const baseThread = relay ? { id, p: pro.key || body.to, u: await sealEmail(env, q.email), uh: (await hmac(env.HASH_SALT, norm)).slice(0, 24),
-        sp: pm.subject, su: `Tu consulta a ${pro.short} · Hera #${id.toUpperCase()}`, rp: [], ru: [], c: Date.now(), a: 0, rem: false, n: 0, h, ...(body.src === 'ads' ? { ad: 1 } : {}), ...(bf ? { bf: 1 } : {}), ...(sent.id ? { po: sent.id } : {}), ...(body.follow === true ? { f: 1 } : {}) } : null;
+        sp: pm.subject, su: `Tu consulta a ${pro.short} · Hera #${id.toUpperCase()}`, rp: [], ru: [], c: Date.now(), a: 0, rem: false, n: 0, h, ...(body.src === 'ads' ? { ad: 1 } : {}), ...(bf ? { bf: 1 } : {}), ...(prio ? { pr: 1 } : {}), ...(sent.id ? { po: sent.id } : {}), ...(body.follow === true ? { f: 1 } : {}) } : null;
       if (baseThread) await saveThread(env, baseThread);
       const now = new Date().toISOString();
       // Primero se gastan las gratuitas y después las pagadas
@@ -875,7 +883,7 @@ const handler = {
           // Enlace de canal (?via=…, p. ej. ig_marina): cuántas consultas trae cada uno
           if (cc) await bump(env, `consulta_pais:${cc}`);
           // Prueba Black Friday: consultas enviadas por cada versión (bf = pagada a 1 €; gratis = la de siempre)
-          if (body.src === 'ads' && (body.ab === 'bf' || body.ab === 'gratis')) await bump(env, `consulta_ab:${body.ab}`);
+          if (body.src === 'ads' && ['bf', 'gratis', 'prio'].includes(body.ab)) await bump(env, `consulta_ab:${body.ab}`);
           if (via) { await bump(env, `consulta_via:${via}`); await record(env, { e: `via_visita:${via}`, p: tag, note: 'envió una consulta' }, sendMail, ctx); }
         }
       }
@@ -892,7 +900,7 @@ const handler = {
         // COPY_EMAIL="1" (temporal, Noza 11 nov): la copia dice el correo de la usuaria, por si hay problemas
         const who = env.COPY_EMAIL === '1' ? `<p style="font-size:13px;color:#6E6C67">Correo de la usuaria: <b>${esc(q.email)}</b></p>` : '';
         const extra = `${who}${q.context ? `<p style="font-size:13px;color:#6E6C67">Sobre: ${esc(q.context)}</p>` : ''}${q.situation ? `<p style="font-size:13px;color:#6E6C67">Situación: ${nl2br(q.situation)}</p>` : ''}`;
-        const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${id.toUpperCase()}${files.length ? ` · ${files.length} ${files.length === 1 ? 'adjunto' : 'adjuntos'}` : ''}${body.src === 'ads' ? (/_latam$/.test(String(body.camp || '')) ? ' · desde anuncio (Latinoamérica)' : ' · desde anuncio') : ''}${via ? ` · desde ${viaName || via}` : ''}${paid ? ' · pagada' : ''}${nth > 1 ? ` · ${nth}.ª consulta` : ''}${cc ? ` · ${cc}` : ''}${body.team === true ? ' · prueba del equipo' : ''}`,
+        const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${id.toUpperCase()}${files.length ? ` · ${files.length} ${files.length === 1 ? 'adjunto' : 'adjuntos'}` : ''}${body.src === 'ads' ? (/_latam$/.test(String(body.camp || '')) ? ' · desde anuncio (Latinoamérica)' : ' · desde anuncio') : ''}${via ? ` · desde ${viaName || via}` : ''}${paid ? ' · pagada' : ''}${nth > 1 ? ` · ${nth}.ª consulta` : ''}${prio ? ' · PRIORITARIA 6 h' : ''}${cc ? ` · ${cc}` : ''}${body.team === true ? ' · prueba del equipo' : ''}`,
           intro: `Nueva consulta para <b>${esc(pro.name)}</b>${body.src === 'ads' ? ' (llegó desde un anuncio)' : ''}.${nth > 1 ? ` <b>Es su ${nth}.ª consulta</b>${prevAt ? ` (la anterior, el ${new Date(prevAt).toLocaleDateString('es-ES', { timeZone: 'Europe/Madrid', day: 'numeric', month: 'short' })})` : ''}.` : ''}`, body: q.text, extra, nFiles: files.length, withFiles });
         await sendMail(env, { to: bcc, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc, ...(withFiles ? { attachments: files } : {}) });
       }
@@ -901,7 +909,7 @@ const handler = {
         ? (creditsLeft === 0 ? 'Era la última consulta de tu saldo' : `Te ${creditsLeft === 1 ? 'queda 1 consulta' : `quedan ${creditsLeft} consultas`} en tu saldo`) : '';
       const usedPros = test ? fp : (!unlimited && !paid && !fp.includes(body.to) ? [...fp, body.to] : fp);
       const nextWith = !friend && remaining > 0 && usedPros.length ? Object.values(PROS).filter((x) => !usedPros.includes(x.key)).map((x) => x.short).join(' o ') : '';
-      const cm = confirmEmail(pro, q, remaining, id, unlimited, subscriber ? 'Tienes el plan ilimitado: una consulta nueva al día' : paidLeft || (nextWith && remaining === 1 ? `Te queda 1 consulta gratuita, con ${nextWith}` : ''));
+      const cm = confirmEmail(pro, { ...q, prio }, remaining, id, unlimited, subscriber ? 'Tienes el plan ilimitado: una consulta nueva al día' : paidLeft || (nextWith && remaining === 1 ? `Te queda 1 consulta gratuita, con ${nextWith}` : ''));
       const sentU = await sendMail(env, { to: q.email, replyTo: relay ? await relayAddress(env, 'u', id) : pro.email, ...cm });
       // Sin relay no hay hilo que seguir (ni recordatorios): no se guarda nada más
       if (relay) {
@@ -1067,7 +1075,8 @@ export async function remindOverdue(env) {
     const page = await env.KV.list({ prefix: 't:', cursor });
     for (const k of page.keys) {
       const m = k.metadata || {};
-      if (!m.p || m.a || m.r || Date.now() - m.c < 16 * 3600000) continue;
+      // Prioritaria: recordatorio a las 4 h (plazo de 6 h); el resto, a las 16 h (plazo de 24 h)
+      if (!m.p || m.a || m.r || Date.now() - m.c < (m.pr ? 4 : 16) * 3600000) continue;
       const t = await loadThread(env, k.name.slice(2));
       if (!t || t.a || t.rem) continue;
       const pro = PROS[t.p] || (t.p === 'prueba' && env.COPY_TO ? { short: 'Prueba', email: env.COPY_TO } : null);
@@ -1075,7 +1084,7 @@ export async function remindOverdue(env) {
       // La misma usuaria hizo otra consulta a la misma profesional y esa ya está respondida después de esta:
       // casi siempre es la misma duda enviada dos veces (la profesional contestó en el otro hilo). Sin recordatorio.
       if (await answeredTwin(env, t)) { t.rem = true; await saveThread(env, t); await bump(env, 'recordatorio_omitido'); continue; }
-      const { html, text } = reminderEmail(pro, t.id);
+      const { html, text } = reminderEmail(pro, t.id, !!t.pr);
       const sent = await sendMail(env, { to: pro.email, replyTo: await relayAddress(env, 'p', t.id), subject: `Re: ${t.sp}`, refs: t.rp, html, text });
       if (sent) { t.rem = true; await saveThread(env, t); if (t.p !== 'prueba') await bump(env, `recordatorio:${t.p}`); n++; }
     }

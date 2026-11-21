@@ -16,6 +16,12 @@ registro de cambios publicados, el más reciente primero. Sin datos personales n
 ## Registro
 
 ### 2026-11-21
+- **Modo equipo y pagos**: abrir el pago de Stripe desde un dispositivo del equipo ya no cuenta en «Fueron a Stripe».
+  Limpieza de datos: borrada una consulta Black Friday de prueba (guardada sin pagar) y su «fue a Stripe», y dos
+  eventos de comprobación del despliegue. Worker desplegado (versión 47ac6c71). (sesión en la nube; publicado)
+- **Google Ads**: campaña nueva «Hera | Guías | España» (2 €/día, tope 0,40 €/clic) hacia las guías de menopausia y
+  lactancia; España baja a 5 €/día sin «dudas menopausia» ni «dudas lactancia»; Argentina sube a 10 €/día; topes de
+  clic en España (1,50 €) y México/Chile/Colombia (1 €); palabras negativas. Todo aprobado por Noza.
 - **Coordinación entre sesiones**: este archivo y `CLAUDE.md` en `.claude/` (no se publican en la web).
 - **Guías desde anuncios**: el logo e «Inicio» también llevan el código del clic a la portada; en el panel, grupo
   «Google Ads · a una guía» en «De dónde vienen». (7a268fd, publicado)

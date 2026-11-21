@@ -588,3 +588,6 @@ console.log('consultas: OK');
   env.PAYMENTS = P0; env.STRIPE_SECRET_KEY = K0; env.RELAY = R0; env.DB = DB0;
   console.log('Consulta prioritaria: OK');
 }
+
+// Cifras públicas de la portada
+{ const r = await worker.fetch(new Request('https://w/cifras', { headers: { Origin: 'https://hera-gine.com' } }), env); assert.equal(r.status, 200); const j = await r.json(); assert.ok('n' in j && 'r' in j && 'h' in j); console.log('Cifras: OK'); }

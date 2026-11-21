@@ -521,6 +521,18 @@ const handler = {
     }
     // Consulta por WhatsApp: abre el pago de Stripe (pide correo y móvil) y vuelve a hera-gine.com/whatsapp/
     // Precio de WhatsApp para esta visita (la web lo enseña): la mitad en Argentina
+    // Cifras públicas de la portada (Noza, 21 nov): consultas y respondidas en 30 días y horas de media. Sin datos personales.
+    if (request.method === 'GET' && url.pathname === '/cifras') {
+      let out = { n: 0, r: 0, h: 0 };
+      try {
+        const from = madridDay(new Date(Date.now() - 29 * 86400000));
+        const rows = (await env.DB.prepare("SELECT k, SUM(n) n FROM counts WHERE day >= ?1 AND (k LIKE 'consulta:%' OR k LIKE 'respondida:%' OR k LIKE 'resp_horas:%') GROUP BY k").bind(from).all()).results || [];
+        const sum = (pre) => rows.filter((x) => new RegExp(`^${pre}:(gineco|matrona|pediatra)$`).test(x.k)).reduce((a, x) => a + x.n, 0);
+        const n = sum('consulta'), r = Math.min(sum('respondida'), n), hs = sum('resp_horas');
+        out = { n, r, h: r ? Math.max(1, Math.round(hs / r)) : 0 };
+      } catch (e) { console.log(`cifras ${e.message}`); }
+      return new Response(JSON.stringify(out), { headers: { ...cors, 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=3600' } });
+    }
     if (request.method === 'GET' && url.pathname === '/precio') return reply(200, { wa: eurText(waEur(request)), ar: request.cf?.country === 'AR' });
     if (url.pathname === '/reasignar') return reassign(env, request, url);
     if (request.method === 'GET' && url.pathname === '/wa/pagar') {

@@ -375,6 +375,10 @@ section { padding: 64px 0; }
 
 /* Precio */
 .price { display: grid; gap: 16px; margin-top: 28px; }
+/* Opinión real junto al botón (copy, 21 nov) */
+.quote1 { margin: 0; padding: 10px 12px; border-left: 3px solid #E8C9CC; background: #FBF5F5; border-radius: 0 8px 8px 0; }
+.quote1 blockquote { margin: 0; font: italic 400 15px/1.45 'Newsreader', Georgia, serif; color: var(--ink); } .quote1 figcaption { margin-top: 4px; font-size: 12px; color: var(--muted); }
+.ask.needmail .quote1 { display: none; }
 /* Comprar bono o ilimitado desde Precios, sin saltar al formulario (21 nov) */
 .buybox { display: grid; gap: 10px; max-width: 30em; margin-top: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
 .buybox input { width: 100%; font: inherit; font-size: 16px; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 10px; background: #FAF9F4; color: var(--ink); } .buybtns { display: grid; gap: 8px; } .buybtns .btn { width: 100%; }
@@ -496,8 +500,8 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   <div class="hero">
     <div>
       <p class="eyebrow">Regla · Embarazo · Bebé · Menopausia</p>
-      <h1>Tus dudas de salud, <em>resueltas por profesionales</em></h1>
-      <p class="lead">Ginecólogo, matrona y pediatra con nombre y apellido. Leen tu caso y te responden por escrito en menos de 24 h.</p>
+      <h1>Tu duda, <em>leída y respondida</em> por tu ginecólogo, matrona o pediatra</h1>
+      <p class="lead">Gonzalo, Marina y Lucía leen tu caso entero y te responden por escrito, a ti. Sin cita, sin desplazarte y <span id="cf-lead">en menos de 24 h</span>.</p>
 
       <div class="askwrap">
       <div class="ask" id="ask">
@@ -505,13 +509,13 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         <div class="who"><span class="who-faces"><img src="portada/equipo/gonzalo.jpg?v=2" alt="" width="30" height="30"><img src="portada/equipo/marina.jpg?v=2" alt="" width="30" height="30"><img src="portada/equipo/lucia.jpg?v=3" alt="" width="30" height="30"></span><span>Te responde <a class="who-link" href="equipo.html"><b>Gonzalo, Marina o Lucía</b></a></span></div>
         <div class="nm-sum" id="ask-sum" hidden><div class="nm-row"><span><small>Tu duda</small><span id="ask-sum-t"></span></span><button type="button" data-nm-edit="duda">Editar</button></div><div class="nm-row"><img id="ask-sum-img" src="" alt="" width="26" height="26"><span id="ask-sum-pro"></span><button type="button" data-nm-edit="pro">Cambiar</button></div></div>
         <label for="duda" class="sr">Tu duda</label>
-        <textarea id="duda" name="duda" maxlength="2000" placeholder="Escribe tu duda con tus palabras…"></textarea>
+        <textarea id="duda" name="duda" maxlength="2000" placeholder="Cuéntalo como en la consulta: qué te pasa y desde cuándo."></textarea>
         <div class="eg" id="ask-eg" aria-label="Dudas de ejemplo">
           <button type="button">Tengo un sangrado y no sé si es normal</button>
           <button type="button">Mi bebé tiene fiebre, ¿qué hago?</button>
           <button type="button">Mi bebé no hace caca desde hace 2 días</button>
         </div>
-        <p class="priv"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span><b>Privada.</b> La profesional no ve tu correo.</span></p>
+        <p class="priv"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span><b>Solo la lee tu profesional.</b> No ve tu correo y no lo compartimos con nadie.</span></p>
         <div class="more" id="ask-more" hidden>
           <div class="nm-almost" id="ask-almost" hidden><span class="ck"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span><span><b>Ya casi está.</b><span id="ask-almost-t">Solo falta tu correo para que te puedan responder.</span></span></div>
           <label class="fld"><span class="sr">Tu correo</span><input id="ask-email" type="email" inputmode="email" autocomplete="email" placeholder="Tu correo, para la respuesta"></label>
@@ -539,6 +543,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         <div class="steps3" id="ask-steps" hidden><div class="on"><i>1</i>Envía tu duda</div><div><i>2</i>Confirma el pago</div><div><i>3</i>Te respondemos</div></div>
         <button class="btn btn-p" type="submit" id="ask-send"><span id="ask-send-t">Enviar gratis</span><small id="ask-send-s">Te responden por correo en menos de 24&nbsp;h</small></button>
         <ul class="perks" aria-label="Condiciones"><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin tarjeta de crédito</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin registro</li></ul>
+        <figure class="quote1" id="ask-quote"><blockquote>«La respuesta llegó en apenas una hora y me ayudó a quedarme tranquila con una duda urgente sobre mi embarazo.»</blockquote><figcaption>Irene · respondida por Marina, matrona</figcaption></figure>
         <button type="button" class="linkplans" id="ask-plans" hidden>Ver planes</button>
         <div class="soon" id="ask-soon"><span class="t"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5 5 16a8.5 8.5 0 1 1 3.2 3.1z"/></svg>WhatsApp<span class="pill">Próximamente</span></span><button type="button" id="ask-soon-b"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Avísame</button></div>
         <p class="churg2">Si es urgente, ve a urgencias.</p>
@@ -552,8 +557,8 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         <span class="appstrip-txt"><b>Y gratis, la app de Hera</b><span>Tu regla, tu embarazo semana a semana, el posparto y tu bebé. Sin cuenta. Desde la app también puedes preguntarles.</span><em>Abrir la app →</em></span>
       </a>
       <div class="facts" aria-label="Hera en cifras">
-        <div><b>24 h</b><span>como máximo</span></div>
-        <div><b>Por escrito</b><span>para releerla</span></div>
+        <div id="cf-a"><b>24 h</b><span>como máximo</span></div>
+        <div id="cf-b"><b>Por escrito</b><span>para releerla</span></div>
         <div><b>Sin anuncios</b><span>ni cookies</span></div>
       </div>
     </div>
@@ -908,6 +913,17 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   const BF = AB === 'bf';
   // Consulta prioritaria (Noza, 21 nov): quien llega por la campaña «prioritaria» ve la consulta a 29 € (sin gratis, respuesta en 6 h)
   const PRIO = adSrc().camp === 'prioritaria';
+  // Cifras reales (servicio /cifras: 30 días): «79 de 84 respondidas este mes» y horas de media
+  const CIFRAS = { h: 0 };
+  fetch(`${API}/cifras`).then((r) => r.json()).then((j) => {
+    if (!j || !j.n || j.n < 10) return;
+    CIFRAS.h = j.h;
+    // Con datos: «R de N · respondidas este mes», «H h · de media en responder», «Por escrito»; sin datos se queda lo de siempre
+    const a = $('cf-a'), b = $('cf-b'), c = b?.nextElementSibling;
+    if (a) a.innerHTML = `<b>${j.r} de ${j.n}</b><span>respondidas este mes</span>`;
+    if (j.h && b) { b.innerHTML = `<b>${j.h} h</b><span>de media en responder</span>`; if (c) c.innerHTML = '<b>Por escrito</b><span>para releerla</span>'; }
+    const l = $('cf-lead'); if (l && j.h && !PRIO) l.textContent = `en ${j.h} h de media`;
+  }).catch(() => {});
   const abSrc = () => (PRIO ? { ab: 'prio' } : AB ? { ab: AB } : {});
   if (PRIO) {
     hit('ab_visita:prio');
@@ -1236,8 +1252,8 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     if (chat) { chat.sent(to, j); return; }
     const total = j.freeLimit || 2, rem = j.remaining ?? 0, p = PROS[to];
     swap(`<img src="portada/equipo/${p.img}.jpg?v=3" alt="" width="64" height="64">
-      <h3>Consulta enviada</h3>
-      <p>${p.name} te responderá en menos de 24 h a <b>${esc(lastEmail)}</b>. Te hemos mandado una copia.</p>
+      <h3>${p.name} ya tiene tu consulta</h3>
+      <p>La leerá entera y te escribirá a <b>${esc(lastEmail)}</b>. Sueles tener respuesta en unas ${CIFRAS.h || 9} h; como mucho, 24 h. Te hemos mandado una copia.</p>
       ${j.unlimited ? '<p class="small">Tienes consultas ilimitadas.</p>' : `<span class="dots" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i < total - rem ? 'on' : ''}"></i>`).join('')}</span>
       <p class="small">${rem === 0 ? 'Era tu última consulta gratuita.' : `Te ${rem === 1 ? `queda 1 consulta gratuita${j.next ? `, con ${esc(j.next)}` : ''}` : `quedan ${rem} consultas gratuitas`}.`}</p>`}
       ${j.dryRun ? '<p class="small">Modo ensayo: no se ha enviado ningún correo.</p>' : ''}

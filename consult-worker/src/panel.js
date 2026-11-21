@@ -442,6 +442,14 @@ ${MODES.map(([m, t]) => `<div class="cv cv-${m}"><h3 class="fh">Personas · ${su
   const otRow = rowOf(people.filter((p) => p.src === 'ot'), 'Google, directo y otros');
   if (esRows.length) srcRows.push(['Google Ads · España', esRows]);
   if (laRows.length) srcRows.push(['Google Ads · Latinoamérica', laRows]);
+  // Anuncios que llevan a una guía (anuncio_guia:<campaña>, 21 nov): quién entró en la guía y qué hizo después (mismo día)
+  const guideCamps = [...new Set(people.flatMap((p) => p.v.filter((r) => r.e.startsWith('anuncio_guia:')).map((r) => r.e.slice(13))))];
+  const gdRows = guideCamps.map((c2) => {
+    const ps = people.filter((p) => has(p.v, [`anuncio_guia:${c2}`]));
+    const [, , w2, c3, pg] = rowOf(ps, '');
+    return [`${(AD_GROUPS.find(([k3]) => k3 === c2) || [])[1] || c2} → guía`, ps.length, w2, c3, pg];
+  }).sort((a, b) => b[1] - a[1]);
+  if (gdRows.length) srcRows.push(['Google Ads · a una guía', gdRows]);
   srcRows.push(['Enlaces propios', ownRows], ['Sin etiqueta', [otRow]]);
   const td = (x) => `<td${x ? '' : ' class="zero"'}>${x}</td>`;
   const srcTable = `<div style="overflow-x:auto"><table class="src-t"><tr><th></th><th>Personas</th><th>Escrib.</th><th>Consult.</th><th>Pagos</th></tr>${srcRows.map(([h, rs]) => `<tr class="grp"><td colspan="5">${esc(h)}</td></tr>${rs.map(([l, ...v]) => `<tr><td>${esc(l)}</td>${v.map(td).join('')}</tr>`).join('')}`).join('')}</table></div>`;

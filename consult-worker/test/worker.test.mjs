@@ -629,3 +629,6 @@ console.log('consultas: OK');
   env.PAYMENTS = P0; env.STRIPE_SECRET_KEY = K0; env.STRIPE_WEBHOOK_SECRET = W0; env.DASH_KEY = D0;
   console.log('Embudo del pago: OK');
 }
+
+// Visitas de anuncio a una guía: el servicio las acepta y las guarda en la actividad (el panel las agrupa en «De dónde vienen»)
+{ const hr = await call('/hit', { e: 'anuncio_guia:lactancia' }, { 'CF-Connecting-IP': '6.6.6.6', 'User-Agent': 'guia' }); assert.equal(hr.s, 200); assert.ok(activity.some((x) => x.e === 'anuncio_guia:lactancia')); console.log('Anuncio a guía: OK'); }

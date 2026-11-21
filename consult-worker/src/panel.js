@@ -465,7 +465,9 @@ ${MODES.map(([m, t]) => `<div class="cv cv-${m}"><h3 class="fh">Personas · ${su
     const sent = nCons(p.v) > 0 || has(p.v, ['pago_hecho']);
     const txt = steps.length ? `${steps.join(' → ')}${sent ? '' : ' → se fue'}${tail ? ` · ${tail}` : ''}` : `entró${tail ? ` · ${tail}` : ''} y se fue`;
     const dv = seq.find((r) => r.d)?.d; const [sl, sc] = SRC_LABEL(p);
-    return { sent, ts: seq[0].ts, html: `<li><time>${madrid(seq[0].ts, days === 1 ? { hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</time><div><span class="tag">${esc(seq[0].p)}</span> ${dv ? esc(deviceText(dv)) : ''} <span class="src s-${sc}">${esc(sl)}</span><br><span class="steps">${txt}</span></div></li>` };
+    // Prueba Black Friday (20 nov): qué versión vio
+    const abv = has(p.v, ['ab_visita:bf']) ? '<span class="tagk bad">Black Friday 1 €</span>' : has(p.v, ['ab_visita:gratis']) ? '<span class="tagk ok2">2 gratis</span>' : '';
+    return { sent, ts: seq[0].ts, html: `<li><time>${madrid(seq[0].ts, days === 1 ? { hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</time><div><span class="tag">${esc(seq[0].p)}</span> ${dv ? esc(deviceText(dv)) : ''} <span class="src s-${sc}">${esc(sl)}</span>${abv ? ` ${abv}` : ''}<br><span class="steps">${txt}</span></div></li>` };
   }).sort((a, b) => b.ts - a.ts);
   const tripsHtml = trips.slice(0, 15).map((t) => t.html).join('');
   const opTotal = sum('opinion:');

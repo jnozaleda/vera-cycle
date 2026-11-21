@@ -528,7 +528,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
           <p class="err" id="ask-err" role="alert" hidden></p>
         </div>
         <div class="pline" id="ask-bf" hidden><div class="l"><span class="tag">Black Friday</span><span>Cada consulta, hasta el 1 dic</span></div><div class="r"><s>9 €</s><b>1 €</b></div></div>
-        <div class="steps3" id="ask-steps" hidden><div class="dn"><i><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></i>Escribes tu duda</div><div class="on"><i>2</i>Confirmas el pago de 1 € en página segura</div><div><i>3</i><span id="ask-step3">Te responden en menos de 24 h</span></div></div>
+        <div class="steps3" id="ask-steps" hidden><div class="on"><i>1</i>Envía tu duda</div><div><i>2</i>Confirma el pago</div><div><i>3</i>Te respondemos</div></div>
         <button class="btn btn-p" type="submit" id="ask-send"><span id="ask-send-t">Enviar gratis</span><small id="ask-send-s">Te responden por correo en menos de 24&nbsp;h</small></button>
         <ul class="perks" aria-label="Condiciones"><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin tarjeta de crédito</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin registro</li></ul>
         <button type="button" class="linkplans" id="ask-plans" hidden>Ver planes</button>
@@ -936,7 +936,6 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     }
     $('ask-topro').hidden = !to;
     box.classList.toggle('pickpro', pickOpen || !to);
-    if (BF) $('ask-step3').textContent = `${to ? `${PROS[to].name} te responde` : 'Te responden'} en menos de 24 h`;
     if (opened && !busy && !BF) $('ask-send-t').textContent = `Enviar${store.get('hera-free-left') === '0' || (to && !['q7m', 'k2v'].includes(viaSrc().via) && (store.get('hera-free-pros') || '').split(',').includes(to)) ? '' : ' gratis'}${to ? ` a ${PROS[to].name}` : ''}`;
     if (opened && !busy && !BF) $('ask-send-s').textContent = `Te ${to ? 'responde' : 'responden'} por correo en menos de 24\u00a0h`;
     chat?.sync();

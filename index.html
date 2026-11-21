@@ -892,6 +892,18 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     const a = document.getElementById('annc-t'); if (a) a.innerHTML = 'Black Friday: consulta a 1 € · <u>Pregunta ahora</u>';
     $('ask-bf').hidden = false;
     const pk = document.querySelector('.perks li'); if (pk) pk.lastChild.textContent = 'Pago seguro';
+    $('ask-send-t').textContent = 'Enviar'; $('ask-send-s').textContent = 'Pagas 1 € al enviar';
+    // Que nada más en la página diga «gratis» para las consultas (Noza, 21 nov)
+    const pr = document.getElementById('precio');
+    if (pr) {
+      pr.querySelector('h2').textContent = 'Black Friday: consulta a 1 €';
+      pr.querySelector('.sub').textContent = 'El contenido de cada semana es gratis siempre. Hasta el 1 de diciembre, cada consulta por escrito cuesta 1 €.';
+      const main = pr.querySelector('.plan.main'); if (main) main.innerHTML = '<span class="k">Black Friday · hasta el 1 dic</span><span class="v">1 € <small>· antes 9 €</small></span><p>Por consulta, a quien quieras de las tres. Sin registro.</p>';
+      const suelta = [...pr.querySelectorAll('.plan')].find((x) => /Consulta suelta/.test(x.textContent)); if (suelta) suelta.remove();
+    }
+    document.querySelectorAll('#preguntas summary').forEach((x) => { if (/consultas gratis/.test(x.textContent)) { x.textContent = '¿Cuánto cuesta una consulta?'; const p2 = x.nextElementSibling; if (p2) p2.textContent = 'Hasta el 1 de diciembre, 1 € por consulta (Black Friday). Después, 9 € la consulta suelta, 35 € el bono de 5 o 15 € al mes para preguntar sin límite. Pagas con tarjeta, Apple Pay o Google Pay.'; } });
+    document.querySelectorAll('a.btn[data-goask]').forEach((x) => { x.textContent = x.textContent.replace(/ gratis$/, ''); });
+    document.querySelectorAll('p.sub').forEach((x) => { x.textContent = x.textContent.replace('Tus dos primeras consultas, gratis.', 'Black Friday: cada consulta a 1 €.'); });
   }
   document.addEventListener('click', (ev) => { if (ev.target.closest?.('a[href^="mailto:"]')) hit('contacto'); }, true);
 

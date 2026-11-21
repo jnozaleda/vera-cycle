@@ -1,0 +1,41 @@
+# Hera · estado y registro compartido
+
+Lo leen y lo actualizan todas las sesiones de Claude (ver `CLAUDE.md`). Arriba, lo que está en marcha; debajo, el
+registro de cambios publicados, el más reciente primero. Sin datos personales ni secretos.
+
+## En marcha
+
+| Qué | Detalle | Hasta / cuándo | Dónde |
+|---|---|---|---|
+| Prueba Black Friday | Visitas de anuncio repartidas 50/50 (fijo por dispositivo): «Black Friday · 1 €» (sin gratis, pago al enviar) o «La de siempre · 2 gratis». Ver una versión a propósito: `?utm_medium=cpc&utm_campaign=prueba&ab=bf` (o `ab=gratis`) | Hasta el 1 dic (`BF_END`). Leer resultados el 2 dic en el panel, «Pruebas de precio» | `index.html` (AB/BF), `worker.js` (`bf`, plan `bf1`) |
+| Consulta prioritaria | Campaña propia `utm_campaign=prioritaria`: 29 €, sin gratis, respuesta en menos de 6 h, aviso con hora límite y recordatorio a las 4 h | Desde el 2 dic, cuando Noza cree la campaña y las profesionales confirmen el plazo | `index.html` (PRIO), `worker.js` (`prio`, plan `prio29`) |
+| WhatsApp | En «Próximamente · Avísame» (pago desactivado); la lista de avisos está en el panel | Hasta que Noza decida volver a encenderlo (`SOON = false` en `tools/build-whatsapp.mjs`) | `tools/build-whatsapp.mjs`, `index.html` |
+| Enlaces propios | `?via=` de las profesionales, enlaces de amigas (5 gratis hasta el 31 dic) y del grupo (2 gratis) | 31 dic | `worker.js` (`FRIEND_LINKS`), `panel.js` (`VIA_NAME`) |
+| Pendientes | Backlog de producto | — | Issues de `jnozaleda/vera-backlog` |
+
+## Registro
+
+### 2026-11-21
+- **Coordinación entre sesiones**: este archivo y `CLAUDE.md` en `.claude/` (no se publican en la web).
+- **Guías desde anuncios**: el logo e «Inicio» también llevan el código del clic a la portada; en el panel, grupo
+  «Google Ads · a una guía» en «De dónde vienen». (7a268fd, publicado)
+- **Embudo del pago con Stripe**: «fue a Stripe», «volvió sin pagar» y «a medias», con tarjeta en el panel; el total de
+  pagos ya cuenta 1 € y 29 €. (8c8e5e0, sesión en la nube; publicado)
+- **Guías como destino de anuncios** y dos guías nuevas de lactancia revisadas por Marina. (648e5d8, b8b3ab8; publicado)
+- **Copy común de la portada**: título y subtítulo con los nombres, cifras reales (`GET /cifras`, 30 días), texto de
+  ayuda, privacidad, opinión publicable de una usuaria y pantalla «X ya tiene tu consulta». (c488866, publicado)
+- **Precios**: «Comprar un bono o el ilimitado» abre ahí mismo correo + plan y va al pago. (7499068, publicado)
+- **Consulta prioritaria (29 €)** lista para la campaña del 2 dic. (bacb323, publicado)
+- **Black Friday**: pasos «1 Envía tu duda · 2 Confirma el pago · 3 Te respondemos», botón «Continuar al pago · 1 €»,
+  «Preguntar · 1 €» arriba, sin WhatsApp ni «gratis» en esa versión. (publicado)
+- **Panel**: país de visitas y consultas, versión vista en «Últimas visitas», «Visitas y consultas por día» con
+  selector Todo / Web / App y línea del % que consulta.
+
+### 2026-11-20
+- **Prueba Black Friday 1 €** (50/50 en anuncios) y **oferta de llamada, videollamada o consulta nueva** en la primera
+  respuesta de las consultas de anuncio. (55ecf1f)
+- **Portada** sin desplazamiento lateral en móviles de 375 px. (5767aec)
+- Avisos al equipo: sin resumen por hora ni avisos de visitas; aviso con correo cuando alguien pide «Avísame» de WhatsApp.
+
+### Antes
+- Historial anterior: `git log` y los issues cerrados de `jnozaleda/vera-backlog`.

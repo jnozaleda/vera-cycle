@@ -610,6 +610,10 @@ console.log('consultas: OK');
   const tag = made.get('metadata[p]'); assert.match(tag, /^[0-9A-F]{4}$/, 'la etiqueta del día viaja con el pago');
   assert.ok(activity.some((x) => x.e === 'pago_abierto:suelta' && x.p === tag), 'fue a Stripe, en su recorrido');
   assert.equal(cnt('pago_inicio:suelta') >= 1, true);
+  // Modo equipo: abre el pago igual, pero no cuenta
+  const antes = cnt('pago_inicio:bono');
+  const eq = await call('/checkout', { email: 'equipo@example.com', plan: 'bono', back: 'web', team: true });
+  assert.equal(eq.s, 200); assert.equal(cnt('pago_inicio:bono'), antes, 'el equipo no cuenta en «Fueron a Stripe»');
   // Vuelve de Stripe sin pagar: la web manda pago_cancelado:<plan>
   assert.equal((await call('/hit', { e: 'pago_cancelado:suelta', d: 'ios-web' })).s, 200);
   // Stripe la da por perdida: checkout.session.expired (firmado)

@@ -146,7 +146,7 @@ const body = `${STYLE}<div class="w vc">
       send.disabled = true; send.textContent = 'Abriendo el pago…';
       hit('video_pago:' + pro);
       try {
-        const r = await fetch(API + '/checkout', { method: 'POST', body: JSON.stringify({ email: email.value.trim(), plan, pro, back: 'video', ...(fromAd() ? { src: 'ads' } : {}) }) });
+        const r = await fetch(API + '/checkout', { method: 'POST', body: JSON.stringify({ email: email.value.trim(), plan, pro, back: 'video', ...(isTeam() ? { team: true } : {}), ...(fromAd() ? { src: 'ads' } : {}) }) });
         const j = await r.json();
         if (!j.url) throw new Error();
         location.href = j.url;

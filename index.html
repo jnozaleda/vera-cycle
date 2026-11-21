@@ -1281,7 +1281,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       swap(`<h3>Abriendo el pago…</h3><p>Tu consulta está guardada. En cuanto pagues ${price}, se la enviamos a la profesional.</p>`);
       hit(`pago_elegido:${plan}`);
       store.set('hera-pay-draft', JSON.stringify({ to: q.to, manual: true, text: q.text, context: '', include: true, follow: q.follow, at: Date.now(), held: j.held }));
-      fetch(`${API}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: lastEmail, plan, back: 'web', ...adSrc(), hold: j.held }) })
+      fetch(`${API}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: lastEmail, plan, back: 'web', ...(isTeam() ? { team: true } : {}), ...adSrc(), hold: j.held }) })
         .then((r) => r.json().then((k) => { if (!r.ok || !k.url) throw new Error(); location.href = k.url; }))
         .catch(() => swap(`<h3>Tu consulta está guardada</h3><p>No se ha podido abrir el pago. Te hemos mandado un correo a <b>${esc(lastEmail)}</b> con el enlace para pagar ${price} y enviarla.</p>`));
       return;
@@ -1309,7 +1309,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       hit(`pago_elegido:${plan}`);
       store.set('hera-pay-draft', JSON.stringify({ to: q.to, manual: true, text: q.text, context: '', include: true, follow: q.follow, at: Date.now(), ...(j.held ? { held: j.held } : {}) }));
       try {
-        const r = await fetch(`${API}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: lastEmail, plan, back: 'web', ...adSrc(), ...(j.held ? { hold: j.held } : {}) }) });
+        const r = await fetch(`${API}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: lastEmail, plan, back: 'web', ...(isTeam() ? { team: true } : {}), ...adSrc(), ...(j.held ? { hold: j.held } : {}) }) });
         const k = await r.json().catch(() => ({}));
         if (!r.ok || !k.url) throw new Error();
         location.href = k.url;
@@ -1341,7 +1341,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     document.querySelectorAll('[data-buyplan]').forEach((x) => { x.disabled = true; }); btn.textContent = 'Abriendo el pago…';
     hit(`pago_elegido:${plan}`); store.set('hera-ask-email', v);
     try {
-      const r = await fetch(`${API}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: v, plan, back: 'web', ...adSrc() }) });
+      const r = await fetch(`${API}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: v, plan, back: 'web', ...(isTeam() ? { team: true } : {}), ...adSrc() }) });
       const k = await r.json().catch(() => ({})); if (!r.ok || !k.url) throw new Error(); location.href = k.url;
     } catch { e.textContent = 'No se ha podido abrir el pago. Inténtalo de nuevo en un rato.'; e.hidden = false; document.querySelectorAll('[data-buyplan]').forEach((x) => { x.disabled = false; }); btn.textContent = t0; }
   }));

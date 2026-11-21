@@ -66,6 +66,7 @@ export const EVENTS = {
   respondida: ['Respondida una consulta por', false], // sin aviso al momento: ya llega la copia de la respuesta (sale en el resumen de 3 h)
   gratuitas_agotadas: ['Intentó consultar con las gratuitas agotadas', true],
   anuncio_visita: ['Llegó desde un anuncio', false],
+  anuncio_guia: ['Llegó a una guía desde un anuncio', false],
   invitacion_vista: ['Vio su enlace para invitar (tras valorar «Sí, mucho»)', false],
   invitacion_whatsapp: ['Compartió su enlace por WhatsApp', false],
   invitacion_copiar: ['Copió su enlace para invitar', false],

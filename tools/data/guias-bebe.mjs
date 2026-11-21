@@ -1,6 +1,8 @@
 // Guías solo para la web (12 nov 2026): dudas del bebé (grupo de anuncios «Pediatra · dudas del bebé») y de lactancia
 // (búsquedas del grupo Matrona). Publicadas ANTES de la revisión clínica a petición de Noza; las revisan Lucía (bebé) y
 // Marina (lactancia). Mientras tanto firman «Equipo de Hera».
+// 21 nov: «qué puedo comer y tomar en la lactancia» y «tengo poca leche», de las búsquedas de los anuncios («dudas lactancia»),
+// para llevar ahí ese tráfico en vez de a la portada. También pendientes de revisar por Marina.
 // Cada guía: page = [pregunta, slug, título, profesional, grupo, resumen] · a = respuesta (como en app/js/guide.js) · x = ampliación
 // (preguntas frecuentes) · v = formato visual (como en guias-visual.mjs).
 
@@ -145,7 +147,7 @@ export const BABY_WEB = [
       tiles: [['15–20 días', 'La primera, lo habitual'], ['6–7 semanas', 'La segunda'], ['3 meses', 'La más larga'], ['A demanda', 'Lo que más ayuda']],
       sem: { g: ['Es normal', 'Pide mucho más unos días, pero moja pañales y gana peso.'], a: ['Consulta', 'No gana peso, moja menos pañales, te duele el pecho o tienes grietas, o el pecho está rojo y con fiebre.'], r: ['Ve a urgencias', 'El bebé está muy dormido y no se despierta para comer, o tiene fiebre con menos de 3 meses.'] },
       chart: { title: 'Cuándo suelen llegar', track: [['15–20 días', 2, P], ['', 3, L], ['6–7 sem.', 2, P], ['', 4, L], ['3 meses', 3, P]], ticks: ['Nacer', '3 semanas', '7 semanas', '3 meses'], legend: 'Orientativo: cada bebé tiene su ritmo.' },
-      links: [['/videollamada/#lactancia', 'Asesoría de lactancia con Marina'], ['/guias/subida-de-la-leche/', 'La subida de la leche'], ['/bebe/mes-1/', 'Bebé de 1 mes'], ['/bebe/mes-3/', 'Bebé de 3 meses']],
+      links: [['/videollamada/#lactancia', 'Asesoría de lactancia con Marina'], ['/guias/tengo-poca-leche/', '¿Tengo poca leche?'], ['/guias/subida-de-la-leche/', 'La subida de la leche'], ['/bebe/mes-3/', 'Bebé de 3 meses']],
     },
   },
   {
@@ -165,6 +167,54 @@ export const BABY_WEB = [
       tiles: [['Día 2–4', 'Cuando suele subir'], ['8–12 tomas', 'Al día, lo que más ayuda'], ['Hasta 7–10 %', 'Peso que puede perder al principio'], ['~2 semanas', 'Cuando recupera su peso']],
       sem: { g: ['Es normal', 'Pecho lleno y caliente entre los días 2 y 4; el bebé moja pañales.'], a: ['Consulta', 'No ha subido al quinto día, pierde más del 10 % de peso, moja pocos pañales o tienes una zona roja y dura.'], r: ['Ve a urgencias', 'El bebé está muy dormido, no come, tiene la boca seca o está muy amarillo y decaído.'] },
       links: [['/videollamada/#lactancia', 'Asesoría de lactancia con Marina'], ['/guias/crisis-de-lactancia/', 'Crisis de lactancia'], ['/guias/cuanto-dura-el-sangrado-despues-del-parto/', 'Sangrado después del parto'], ['/bebe/mes-1/', 'Bebé de 1 mes']],
+    },
+  },
+  {
+    page: ['¿Qué puedo comer, tomar o hacer durante la lactancia?', 'que-puedo-comer-y-tomar-en-la-lactancia', 'Lactancia: qué puedo comer, tomar y hacer (café, tinte, medicamentos…)', 'matrona', 'Posparto', 'No hay alimentos prohibidos. Qué conviene limitar y cómo saber si un medicamento es compatible.'],
+    a: [
+      'Durante la lactancia puedes comer de todo: no hay alimentos prohibidos. Lo que comes no hace que tu leche sea peor, y no hace falta una dieta especial para tener más.',
+      'Lo que sí conviene tener en cuenta:',
+      ['Alcohol: lo más seguro es no beber. Si un día tomas una copa, espera unas 2 o 3 horas antes de la siguiente toma.', 'Café, té y refrescos de cola: con moderación, hasta unas 2 tazas de café al día. Si notas al bebé más inquieto, reduce.', 'Pescado: sí, 3 o 4 veces por semana, pero evita el pez espada, el atún rojo, el tiburón (cazón) y el lucio, que tienen más mercurio.', 'Yodo: en España se suele recomendar un suplemento mientras das el pecho. Pregúntale a tu matrona.', 'Si eres vegana, necesitas un suplemento de vitamina B12.'],
+      'La mayoría de los medicamentos, como el paracetamol o el ibuprofeno, son compatibles con la lactancia. Antes de tomar otro, pregunta en la farmacia o a tu médico, o búscalo en e-lactancia.org, una web de pediatras que dice si cada medicamento o producto es compatible.',
+      'Consulta con tu pediatra si el bebé tiene sangre en la caca, vomita a menudo o tiene eccema en la piel: a veces es una alergia a la proteína de la leche de vaca, y entonces sí habría que cambiar algo de lo que comes, siempre con su pediatra.',
+    ],
+    x: { updated: '2026-11-21', desc: 'Durante la lactancia puedes comer de todo. Qué limitar (alcohol, café, algunos pescados), si puedes teñirte el pelo y cómo saber si un medicamento o un anticonceptivo es compatible.', h: 'Más dudas frecuentes', qa: [
+      ['¿Me puedo teñir el pelo?', 'Sí. El tinte apenas pasa a la sangre, así que no llega a la leche. Lo mismo con las mechas o la permanente. Hazlo en un sitio ventilado. Si es un alisado con formol, mejor evítalo por los vapores.'],
+      ['¿Puedo pintarme las uñas o ponerme uñas de gel?', 'Sí. Ventila bien la habitación mientras se secan.'],
+      ['¿Qué anticonceptivo puedo tomar si doy el pecho?', 'Los que no llevan estrógenos: la minipíldora (solo con gestágeno), el DIU, el implante o el preservativo. Las pastillas combinadas, con estrógenos, se suelen evitar en los primeros meses porque pueden bajar la producción de leche. Tu ginecólogo te dirá cuál te conviene.'],
+      ['¿Hay alimentos que dan cólicos al bebé?', 'En general, no. No hace falta dejar la coliflor, las legumbres o el picante «por si acaso». Solo si su pediatra sospecha una alergia te pedirá retirar algo, normalmente los lácteos.'],
+      ['¿Hay alimentos para tener más leche?', 'No hay ninguno que lo haya demostrado: ni la avena, ni la cerveza, ni beber mucha leche. Lo que hace que tengas más leche es que el bebé mame a menudo y con buen agarre. Bebe según tengas sed.'],
+      ['¿Puedo tomar vitamina C u otros suplementos?', 'La vitamina C, el hierro o el ácido fólico a las dosis habituales, sí. Con las hierbas y los suplementos «naturales» ten más cuidado: no todos son seguros. Consúltalo antes.'],
+      ['¿Puedo vacunarme?', 'Sí. Las vacunas, como la de la gripe o la de la tosferina, son compatibles con la lactancia.'],
+      ['¿Y si fumo?', 'Lo mejor es dejarlo, y no fumar nunca cerca del bebé. Pero aunque fumes, darle el pecho sigue siendo mejor que no dárselo.'],
+    ] },
+    v: {
+      tiles: [['De todo', 'No hay alimentos prohibidos'], ['Sin alcohol', 'Lo más seguro'], ['2 cafés', 'Al día, como mucho'], ['La mayoría', 'De los medicamentos son compatibles']],
+      sem: { g: ['Sin problema', 'Comer de todo, teñirte el pelo, pintarte las uñas, el paracetamol o el ibuprofeno, y las vacunas.'], a: ['Consulta antes', 'Otros medicamentos, hierbas o un anticonceptivo con estrógenos. Y si el bebé tiene sangre en la caca o eccema.'], r: ['Ve a urgencias', 'Tras una toma, el bebé tiene hinchados los labios o la cara, ronchas por todo el cuerpo o le cuesta respirar.'] },
+      links: [['/guias/tengo-poca-leche/', '¿Tengo poca leche?'], ['/guias/crisis-de-lactancia/', 'Crisis de lactancia'], ['/guias/subida-de-la-leche/', 'La subida de la leche'], ['/videollamada/#lactancia', 'Asesoría de lactancia con Marina']],
+    },
+  },
+  {
+    page: ['¿Tengo poca leche? ¿Cómo sé si mi bebé come suficiente?', 'tengo-poca-leche', '¿Tengo poca leche? Cómo saber si tu bebé come suficiente', 'matrona', 'Posparto', 'Las señales que sí sirven, las que engañan y qué hacer para tener más leche.'],
+    a: [
+      'La mayoría de las madres tienen leche suficiente. La mejor forma de saberlo no es cómo notas el pecho, sino cómo está el bebé.',
+      'Come suficiente si:',
+      ['A partir del quinto día moja unos 5 o 6 pañales al día, con pis claro.', 'Hace caca a menudo las primeras semanas; hacia el quinto día ya es amarilla.', 'Recupera su peso de nacimiento hacia las 2 semanas y después sigue ganando peso en las revisiones.', 'Durante la toma se le oye tragar, y al terminar se suelta solo y está tranquilo.'],
+      'Hay señales que engañan: que pida muy a menudo, que el pecho se note blando (es normal pasadas las primeras semanas) o lo poco que te sacas con el sacaleches. Ninguna quiere decir que tengas poca leche.',
+      'Si quieres tener más, lo que de verdad funciona es que mame más: ofrécele el pecho a demanda, unas 8 a 12 veces al día al principio, de los dos lados, y cuida que el agarre sea bueno. Los biberones de fórmula «por si acaso» hacen que mame menos y que acabes teniendo menos leche; si te preocupa, consulta antes.',
+      'Consulta con tu matrona o tu pediatra si moja pocos pañales, no ha recuperado su peso a las 2 semanas o deja de ganar peso, o si te duele al darle el pecho.',
+    ],
+    x: { updated: '2026-11-21', desc: 'Si moja 5 o 6 pañales al día y gana peso, tu bebé come suficiente. Las señales que engañan, cómo tener más leche y cuándo consultar con tu matrona.', h: 'Más dudas frecuentes', qa: [
+      ['¿Cómo sé si el agarre es bueno?', 'Tiene la boca muy abierta, los labios hacia fuera y la barbilla pegada al pecho; se ve más areola por encima de su labio que por debajo; las mejillas están redondas, no hundidas, y a ti no te duele. Si duele, sepáralo con cuidado metiendo un dedo en la comisura de su boca y vuelve a intentarlo.'],
+      ['¿Cuánto peso debe ganar?', 'Después de recuperar el peso de nacimiento, en los primeros meses suelen ganar unos 150 a 250 gramos por semana. Cada bebé tiene su curva: lo que importa es que siga la suya.'],
+      ['¿Hay alimentos para tener más leche?', 'No hay ninguno que lo haya demostrado. Lo que funciona es que el bebé mame a menudo y bien. Bebe según tengas sed.'],
+      ['¿Sirve el sacaleches para saber cuánta leche tengo?', 'No. El bebé saca mucha más leche que el sacaleches, así que lo que te sacas no dice lo que toma.'],
+      ['¿Y si necesito darle algún biberón?', 'Se puede hacer manteniendo el pecho: es la lactancia mixta. Tu matrona te ayudará a hacerlo sin que baje tu producción.'],
+    ] },
+    v: {
+      tiles: [['5–6 pañales', 'Mojados al día, desde el 5.º día'], ['~2 semanas', 'Para recuperar su peso'], ['8–12 tomas', 'Al día, al principio'], ['Sin dolor', 'Señal de buen agarre']],
+      sem: { g: ['Va bien', 'Moja 5 o 6 pañales, hace caca y gana peso, aunque pida muy a menudo.'], a: ['Consulta', 'Moja pocos pañales, no ha recuperado su peso a las 2 semanas, deja de ganar peso o te duele al darle el pecho.'], r: ['Ve a urgencias', 'Está muy dormido y no se despierta para comer, tiene la boca seca y apenas moja pañales, o está muy amarillo y decaído.'] },
+      links: [['/guias/que-puedo-comer-y-tomar-en-la-lactancia/', 'Qué puedo comer y tomar'], ['/guias/crisis-de-lactancia/', 'Crisis de lactancia'], ['/guias/subida-de-la-leche/', 'La subida de la leche'], ['/videollamada/#lactancia', 'Asesoría de lactancia con Marina']],
     },
   },
 ];

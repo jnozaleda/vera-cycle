@@ -82,6 +82,8 @@ const VCSS = `<style>.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap
 .track{display:flex;height:36px;border-radius:8px;overflow:hidden;font-size:12.5px;font-weight:700;color:#fff}.track div{display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.1;padding:0 4px;min-width:0}
 .ticks{display:flex;justify-content:space-between;font-size:12px;color:#6E6C67;margin-top:6px}.sec .cleg{font-size:13.5px;line-height:1.45;color:#6E6C67;margin-top:10px}
 .rng{display:flex;flex-direction:column;gap:12px}.rr span{display:block;font-size:14px;margin-bottom:5px}.rr div{position:relative;height:14px;background:#EFECE4;border-radius:7px}.rr i{position:absolute;top:0;bottom:0;border-radius:7px;background:#8A7045}.rr em{position:absolute;top:-1px;font-style:normal;font-size:12.5px;font-weight:700;color:#45574C;white-space:nowrap}
+.adask{display:flex;align-items:center;gap:14px;background:#fff;border:1px solid #D9D3C3;border-radius:12px;padding:16px 18px;margin:-14px 0 24px}.adask[hidden]{display:none}.adask img{width:48px;height:48px;border-radius:50%;flex:none}.adask div{flex:1;font-size:14.5px;line-height:1.4;color:#4F4E49}.adask b{display:block;font-size:16px;color:#45574C}.adask a{flex:none;background:#45574C;color:#fff;border-radius:999px;padding:10px 16px;font-weight:600;text-decoration:none;white-space:nowrap}.adask a:hover{background:#384A3F}
+@media(max-width:560px){.adask{flex-wrap:wrap}.adask a{width:100%;text-align:center}}
 .lnk{display:flex;flex-wrap:wrap;gap:8px}.lnk a{font-size:14px;font-weight:600;color:#45574C;text-decoration:none;border:1px solid #D9D3C3;background:#F3F1EA;border-radius:999px;padding:7px 13px}.lnk a:hover{border-color:#8A7045}
 
 @media(max-width:760px){.tiles{grid-template-columns:1fr 1fr}.tile b{font-size:22px}}</style>`;
@@ -105,6 +107,8 @@ function visual(p) {
   const stick = stickyAsk([p.proKey], '¿Tu caso es distinto?');
   return { tiles, sem, chart, links, rev, stick };
 }
+// Solo para quien llega desde un anuncio (lo enseña SITE_JS): la respuesta está aquí, y preguntar a la profesional, a un clic
+const adAsk = (p) => `<div class="adask" data-adask hidden>${face(p.pro)}<div><b>¿Prefieres que ${p.pro.name} vea tu caso?</b>Escríbele tu duda y te responde por escrito en menos de 24 h.</div><a href="/#preguntar-${p.proKey}">Preguntar a ${p.pro.name}</a></div>`;
 const card = (p) => `<a class="gc" href="/guias/${p.slug}/"><h3>${esc(p.title)}</h3><p>${esc(p.sum)}</p><span class="by">${face(p.pro)}<span>${p.pro.name} · ${p.pro.role}</span></span></a>`;
 
 for (const p of pages) {
@@ -119,7 +123,7 @@ for (const p of pages) {
   mkdirSync(`guias/${p.slug}`, { recursive: true });
   writeFileSync(`guias/${p.slug}/index.html`, shell({ title: `${p.title} · Hera`, desc: p.desc, path, ld, body: `
 ${VCSS}<div class="w"><div class="band" style="background:${TINT[p.group]}"><p class="ey">${esc(p.group)}</p><h1>${esc(p.title)}</h1>${v.rev || '<p class="m">Equipo de Hera</p>'}${v.tiles}</div>
-<div class="art"><article class="secs">${v.sem}${v.chart}<section class="sec"><h2>La respuesta</h2>${answer(p.a)}</section>${extra}${v.links}
+${adAsk(p)}<div class="art"><article class="secs">${v.sem}${v.chart}<section class="sec"><h2>La respuesta</h2>${answer(p.a)}</section>${extra}${v.links}
 <p class="urg"><b>Si es urgente, llama al 112 o ve a urgencias.</b> Esta información es general y no sustituye la valoración de un profesional.</p>
 <p style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;font-size:15px;color:#4F4E49">¿Conoces a alguien con esta duda? <a data-share href="https://wa.me/?text=${encodeURIComponent(`Te paso esta guía de Hera: ${p.title}. ${SITE}${path}?via=wa_guia`)}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:7px;background:#45574C;color:#fff;text-decoration:none;font-weight:600;border-radius:999px;padding:8px 14px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5 5 16a8.5 8.5 0 1 1 3.2 3.1z"/></svg>Enviar por WhatsApp</a></p></article>
 ${askBox('¿Tu caso es distinto?', askFor(p))}</div>

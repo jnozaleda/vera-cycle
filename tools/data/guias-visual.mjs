@@ -5,7 +5,11 @@
 const R = '#B3261E', A = '#D69A2D', G = '#3E8E63', P = '#8A7045', L = '#D2C3A6';
 
 // Quien ha revisado cada guía: solo se muestra «Revisado por» cuando esté de verdad. Ej.: 'bebe-con-fiebre-que-hago': 'pediatra'
-export const REVIEWED = {};
+export const REVIEWED = {
+  // 21 nov 2026: aprobadas por Marina
+  'que-puedo-comer-y-tomar-en-la-lactancia': 'matrona',
+  'tengo-poca-leche': 'matrona',
+};
 
 export const VISUAL = {
   'manchar-al-principio-del-embarazo': {

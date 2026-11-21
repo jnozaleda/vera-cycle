@@ -2,7 +2,7 @@
 // (búsquedas del grupo Matrona). Publicadas ANTES de la revisión clínica a petición de Noza; las revisan Lucía (bebé) y
 // Marina (lactancia). Mientras tanto firman «Equipo de Hera».
 // 21 nov: «qué puedo comer y tomar en la lactancia» y «tengo poca leche», de las búsquedas de los anuncios («dudas lactancia»),
-// para llevar ahí ese tráfico en vez de a la portada. También pendientes de revisar por Marina.
+// para llevar ahí ese tráfico en vez de a la portada. Revisadas y aprobadas por Marina (21 nov): firman «Revisado por Marina».
 // Cada guía: page = [pregunta, slug, título, profesional, grupo, resumen] · a = respuesta (como en app/js/guide.js) · x = ampliación
 // (preguntas frecuentes) · v = formato visual (como en guias-visual.mjs).
 

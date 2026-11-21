@@ -3,7 +3,7 @@
 export const SITE = 'https://hera-gine.com';
 export const PRO = {
   gineco: { name: 'Gonzalo', role: 'ginecólogo', photo: 'gonzalo.jpg?v=2' },
-  matrona: { name: 'Marina', role: 'matrona', photo: 'marina.jpg?v=2' },
+  matrona: { name: 'Marina', full: 'Marina Fernández', role: 'matrona', photo: 'marina.jpg?v=2' },
   pediatra: { name: 'Lucía', role: 'pediatra', photo: 'lucia.jpg?v=3' },
 };
 export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));

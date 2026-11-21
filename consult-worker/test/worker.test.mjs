@@ -636,3 +636,35 @@ console.log('consultas: OK');
 
 // Visitas de anuncio a una guía: el servicio las acepta y las guarda en la actividad (el panel las agrupa en «De dónde vienen»)
 { const hr = await call('/hit', { e: 'anuncio_guia:lactancia' }, { 'CF-Connecting-IP': '6.6.6.6', 'User-Agent': 'guia' }); assert.equal(hr.s, 200); assert.ok(activity.some((x) => x.e === 'anuncio_guia:lactancia')); console.log('Anuncio a guía: OK'); }
+
+// Recordatorios de pago pendiente (21 nov): el 1.º a la hora, el 2.º (último) a las 24 h, y ninguno más
+{
+  const { remindHolds } = await import('../src/worker.js');
+  const P0 = env.PAYMENTS, K0 = env.STRIPE_SECRET_KEY;
+  env.PAYMENTS = 'on'; env.STRIPE_SECRET_KEY = 'sk_test_x';
+  const DB0 = env.DB;
+  env.DB = { prepare: (sql) => { const st = DB0.prepare(sql); return { ...st, bind: (...a) => { const b = st.bind(...a); return Object.assign(Object.create(Object.getPrototypeOf(b) || Object.prototype), b, { first: b.first ? b.first.bind(b) : async () => null }); } }; } };
+  const r = await call('/ask', { email: 'recordar@example.com', to: 'gineco', text: 'Duda para los recordatorios', context: '', src: 'ads', camp: 'gineco', ab: 'bf' });
+  assert.ok(r.j.held, JSON.stringify(r.j));
+  const key = [...store.keys()].filter((k) => k.startsWith('hold:')).sort((a, b) => JSON.parse(store.get(b)).at - JSON.parse(store.get(a)).at)[0];
+  for (const k of [...store.keys()].filter((k) => k.startsWith('hold:') && k !== key)) store.delete(k); // solo esta
+  const set = (o) => store.set(key, JSON.stringify({ ...JSON.parse(store.get(key)), ...o }));
+  const mails = () => sent.filter((m) => m.to[0] === 'recordar@example.com');
+  const n0 = mails().length;
+  await remindHolds(env); assert.equal(mails().length, n0, 'nada antes de la hora');
+  set({ at: Date.now() - 61 * 60000 });
+  await remindHolds(env);
+  assert.equal(mails().length, n0 + 1); assert.match(mails().at(-1).subject, /^¿Seguimos con tu consulta a /);
+  assert.match(mails().at(-1).html, /Apple Pay/); assert.match(mails().at(-1).html, /una vez más mañana/);
+  assert.equal(JSON.parse(store.get(key)).rem, 1);
+  await remindHolds(env); assert.equal(mails().length, n0 + 1, 'el 2.º no sale enseguida');
+  set({ at: Date.now() - 25 * 3600000, r1: Date.now() - 13 * 3600000 });
+  await remindHolds(env);
+  assert.equal(mails().length, n0 + 2); assert.match(mails().at(-1).subject, /^Último aviso: tu consulta a /); assert.match(mails().at(-1).html, /Es el último recordatorio/);
+  await remindHolds(env); assert.equal(mails().length, n0 + 2, 'nunca más de dos');
+  assert.equal(cnt('guardada_recordatorio2'), 1);
+  // El cron de cada 15 min solo hace los recordatorios
+  const { default: h } = await import('../src/worker.js'); await h.scheduled({ cron: '*/15 * * * *', scheduledTime: Date.UTC(2026, 10, 21, 20, 30) }, env);
+  env.PAYMENTS = P0; env.STRIPE_SECRET_KEY = K0; env.DB = DB0;
+  console.log('Recordatorios de pago: OK');
+}

@@ -221,7 +221,9 @@ export const BF_END = Date.parse('2026-12-01T23:59:59+01:00');
 const holdSig = async (env, id) => (await hmac(env.HASH_SALT, `hold:${id}`)).slice(0, 16);
 const holdLinks = async (env, id) => { const s = await holdSig(env, id); return ({ ...Object.fromEntries(['suelta', 'bono', 'mensual', 'bf1', 'prio29'].map((p) => [p, `${WORKER_URL}/pagar?c=${id}&s=${s}&plan=${p}`])) }); };
 
+// reminder: false (correo al guardar), 1 (primer recordatorio, 1 h) o 2 (último, 24 h). true cuenta como 1.
 export function holdEmail(pro, text, links, reminder = false, others = '', offer = '') {
+  const last = reminder === 2; const daysLeft = (d) => `${d} ${d === 1 ? 'día' : 'días'}`;
   const bf = offer === 'bf' || offer === true; const prio = offer === 'prio';
   // others: la gratis que le queda es con otra especialista (1 gratis por especialista)
   // bf: prueba Black Friday (consulta a 1 € hasta el 1 dic). WhatsApp está en «Próximamente» desde el 19 nov: ya no se ofrece aquí
@@ -230,13 +232,17 @@ export function holdEmail(pro, text, links, reminder = false, others = '', offer
   const excerpt = text.length > 220 ? `${text.slice(0, 220).trim()}…` : text;
   const btn = `<p style="margin:16px 0"><a href="${link}" style="display:inline-block;background:#45574C;color:#ffffff;text-decoration:none;font-weight:600;border-radius:8px;padding:12px 20px">Pagar ${price} y enviarla</a></p>`;
   const quote = `<div style="background:#F6E0E2;border-radius:10px;padding:12px;margin:12px 0;font-size:14px">«${esc(excerpt)}»</div>`;
-  const subject = reminder ? `¿Seguimos con tu consulta a ${pro.short}?` : `Tu consulta a ${pro.short} está guardada · falta el pago`;
+  const subject = last ? `Último aviso: tu consulta a ${pro.short} sigue guardada` : reminder ? `¿Seguimos con tu consulta a ${pro.short}?` : `Tu consulta a ${pro.short} está guardada · falta el pago`;
+  // Noza, 21 nov: recordatorios que resuelven dudas (cómo se paga, qué hacer si falla), no solo insisten
+  const how = '<p style="font-size:14px">Se paga en un momento con tarjeta, Apple Pay o Google Pay. Todavía no ha llegado a nadie: en cuanto pagues, se la enviamos.</p>';
+  const help = `<p style="font-size:14px">¿Te quedó alguna duda antes de pagar o has tenido algún problema con el pago? Responde a este correo y lo resolvemos.</p>`;
+  const foot = last ? `Es el último recordatorio. Si no pagas, la borramos en ${daysLeft(HOLD_DAYS - 1)}.` : `Te lo recordaremos una vez más mañana. Si no pagas, la borramos en ${daysLeft(HOLD_DAYS)}.`;
   const more = bf || prio ? '' : `<p style="font-size:14px">¿Vas a preguntar más veces? <a href="${links.bono}" style="color:#45574C;font-weight:600">Bono de 5 consultas por 35 €</a> o <a href="${links.mensual}" style="color:#45574C;font-weight:600">ilimitado por 15 € al mes</a>.</p>`;
   const html = reminder
-    ? shell(`<p>Hola,</p><p>Tu consulta para ${esc(pro.short)} sigue guardada y esperando el pago${bf ? ' (1 €, oferta de Black Friday hasta el 1 de diciembre)' : prio ? ' (consulta prioritaria, 29 €)' : ''}:</p>${quote}${btn}<p style="font-size:14px">¿Te quedó alguna duda antes de pagar? Responde a este correo y te contestamos.</p><p style="font-size:13px;color:#6E6C67">Es el único recordatorio. Si no pagas, la borramos en ${HOLD_DAYS} días.</p>`)
+    ? shell(`<p>Hola,</p><p>Tu consulta para ${esc(pro.short)} sigue guardada y esperando el pago${bf ? ' (1 €, oferta de Black Friday hasta el 1 de diciembre)' : prio ? ' (consulta prioritaria, 29 €)' : ''}:</p>${quote}${btn}${how}${help}<p style="font-size:13px;color:#6E6C67">${foot}</p>`)
     : shell(`<p>Hola,</p><p>${esc(why)}, así que hemos <b>guardado tu consulta</b> para ${esc(pro.name)}, ${esc(pro.role)}:</p>${quote}<p>Para que le llegue, solo falta el pago. En cuanto pagues, se la enviamos y te responde en menos de ${prio ? '6' : '24'} h; no tienes que volver a escribirla.</p>${btn}${more}<p style="font-size:13px;color:#6E6C67">Si no pagas en ${HOLD_DAYS} días, borramos tu consulta. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.</p>`);
   const text2 = reminder
-    ? `Hola,\n\nTu consulta para ${pro.short} sigue guardada y esperando el pago:\n\n«${excerpt}»\n\nPagar ${price} y enviarla: ${link}\n\n¿Te quedó alguna duda antes de pagar? Responde a este correo.\nEs el único recordatorio. Si no pagas, la borramos en ${HOLD_DAYS} días.`
+    ? `Hola,\n\nTu consulta para ${pro.short} sigue guardada y esperando el pago:\n\n«${excerpt}»\n\nPagar ${price} y enviarla: ${link}\n\nSe paga en un momento con tarjeta, Apple Pay o Google Pay. Todavía no ha llegado a nadie: en cuanto pagues, se la enviamos.\n¿Te quedó alguna duda antes de pagar o has tenido algún problema con el pago? Responde a este correo y lo resolvemos.\n\n${foot}`
     : `Hola,\n\n${why}, así que hemos guardado tu consulta para ${pro.name}, ${pro.role}:\n\n«${excerpt}»\n\nPara que le llegue, solo falta el pago. En cuanto pagues, se la enviamos; no tienes que volver a escribirla.\n\nPagar ${price} y enviarla: ${link}${bf || prio ? '' : `\nBono de 5 por 35 €: ${links.bono}\nIlimitado por 15 € al mes: ${links.mensual}`}\n\nSi no pagas en ${HOLD_DAYS} días, borramos tu consulta. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.`;
   return { subject, html, text: text2 };
 }
@@ -249,26 +255,34 @@ async function deliverHold(env, id, ctx) {
   const held = JSON.parse(await openEmail(env, raw.x));
   const res = await handler.fetch(new Request(`${WORKER_URL}/ask`, { method: 'POST', headers: { Origin: 'https://hera-gine.com', 'Content-Type': 'application/json' }, body: JSON.stringify({ ...held, held: true }) }), env, ctx);
   const j = await res.json().catch(() => ({}));
-  if (j.ok) await bump(env, 'guardada_pagada');
+  if (j.ok) { await bump(env, 'guardada_pagada'); await bump(env, `guardada_pagada_tras:${raw.rem === true ? 1 : Number(raw.rem) || 0}`); }
   else console.log(`hold ${id}: no se pudo enviar ${JSON.stringify(j)}`);
   return !!j.ok;
 }
 
-/** Cron: un único recordatorio a las 3 h a quien aún no ha pagado su consulta guardada */
+/** Cron (cada 15 min): dos recordatorios a quien no ha pagado su consulta guardada (Noza, 21 nov; antes, uno a las 3 h).
+ *  1.º a la hora (cuando más se recupera: la duda sigue fresca) y 2.º y último a las 24 h. Nunca más de dos. */
 export async function remindHolds(env) {
   let cursor;
   do {
     const page = await env.KV.list({ prefix: 'hold:', cursor });
     for (const k of page.keys) {
       const raw = await env.KV.get(k.name, 'json');
-      if (!raw || raw.rem || Date.now() - raw.at < 3 * 3600000) continue;
+      if (!raw) continue;
+      const stage = raw.rem === true ? 1 : Number(raw.rem) || 0;
+      const age = Date.now() - raw.at;
+      // El 2.º, a las 24 h y al menos 12 h después del 1.º (por si el 1.º salió tarde, p. ej. consultas de antes del cambio)
+      const next = stage === 0 && age >= 3600000 ? 1 : stage === 1 && age >= 24 * 3600000 && Date.now() - (raw.r1 || 0) >= 12 * 3600000 ? 2 : 0;
+      if (!next) continue;
       const id = k.name.slice(5);
       const held = JSON.parse(await openEmail(env, raw.x));
       const pro = PROS[held.to] || PROS.gineco;
-      await sendMail(env, { to: held.email, replyTo: 'contacto@hera-gine.com', ...holdEmail(pro, held.text, await holdLinks(env, id), true, '', raw.bf ? 'bf' : raw.prio ? 'prio' : '') });
+      // Pasado Black Friday, el enlace de 1 € lleva a la consulta suelta: el correo ya no dice «1 €»
+      const offer = raw.bf && Date.now() < BF_END ? 'bf' : raw.prio ? 'prio' : '';
+      await sendMail(env, { to: held.email, replyTo: 'contacto@hera-gine.com', ...holdEmail(pro, held.text, await holdLinks(env, id), next, '', offer) });
       const left = Math.max(60, Math.floor((raw.at + HOLD_DAYS * 86400000 - Date.now()) / 1000));
-      await env.KV.put(k.name, JSON.stringify({ ...raw, rem: 1 }), { expirationTtl: left });
-      await bump(env, 'guardada_recordatorio');
+      await env.KV.put(k.name, JSON.stringify({ ...raw, rem: next, ...(next === 1 ? { r1: Date.now() } : {}) }), { expirationTtl: left });
+      await bump(env, next === 1 ? 'guardada_recordatorio' : 'guardada_recordatorio2');
     }
     cursor = page.list_complete ? null : page.cursor;
   } while (cursor);
@@ -987,6 +1001,10 @@ const handler = {
 
   /** Cada hora: recordatorio al profesional si una consulta lleva 16 h sin respuesta */
   async scheduled(event, env) {
+    // Un solo cron cada 15 min (el plan gratis de Cloudflare permite 5 por cuenta y ya están usados):
+    // los recordatorios de pago, siempre; lo demás, una vez por hora (en la pasada de los :15)
+    const min = event?.scheduledTime ? new Date(event.scheduledTime).getUTCMinutes() : 15;
+    if (min !== 15) { await remindHolds(env); return; }
     await remindOverdue(env);
     await sendFeedbackDue(env, sendMail, PROS);
     // Resumen de actividad por correo: apagado (Noza, 20 nov). La actividad sigue en el panel.

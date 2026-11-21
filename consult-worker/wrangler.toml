@@ -33,7 +33,7 @@ database_id = "7d34d415-4d8b-46f6-9def-d9b2986ed3f8"
 
 # Cada hora: recordatorio al profesional si una consulta lleva 40 h sin respuesta
 [triggers]
-crons = ["17 * * * *"]
+crons = ["*/15 * * * *"]  # cada 15 min: recordatorios de pago pendiente (1 h y 24 h); lo horario, a los :15 (worker.js, scheduled)
 
 # Avisos de actividad al equipo por correo (solo a direcciones verificadas en Email Routing; gratis)
 [[send_email]]

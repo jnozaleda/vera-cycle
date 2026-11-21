@@ -16,6 +16,7 @@ registro de cambios publicados, el más reciente primero. Sin datos personales n
 ## Registro
 
 ### 2026-11-21
+- **Recordatorios de pago pendiente**: dos en vez de uno, a la hora y a las 24 h (antes, uno a las 3–4 h), con cómo se paga y «si has tenido un problema, responde». El servicio revisa cada 15 min con un solo cron (el plan gratis de Cloudflare ya tiene los 5 usados); lo horario va a los :15. En el panel, tras qué recordatorio pagan. Worker b6dfc0ac. (publicado)
 - **Anuncios «Black Friday · 1 €»** (aprobados por Noza): 8 anuncios, uno por grupo de ginecólogo, matrona y pediatra en España, Argentina y México/Chile/Colombia, con `utm_content=bf`. Pausa programada el 2 dic a las 00:05 (en esta sesión).
 - **Black Friday sin engañar**: los anuncios prometen «2 consultas gratis», así que la portada ya no enseña la versión de 1 € a quien llega por ellos; solo el anuncio de 1 € (`utm_content=bf`) lleva a ella. Nota del panel actualizada. Pausadas «dudas embarazo» (España y México/Chile/Colombia) y «dudas menopausia» (México/Chile/Colombia); nuevas palabras clave (chat ginecologo, ginecologa gratis, ginecologa virtual, pediatra virtual) y negativas (foro, posiciones, calcular, creatina). (publicado)
 - **Modo equipo y pagos**: abrir el pago de Stripe desde un dispositivo del equipo ya no cuenta en «Fueron a Stripe».

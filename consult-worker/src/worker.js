@@ -849,6 +849,26 @@ const handler = {
       const bal = env.STRIPE_SECRET_KEY ? await getBalance(env, h) : { credits: 0, sub: false, day: null };
       const subscriber = !beta && bal.sub;
       const unlimited = beta || subscriber;
+      // Se le olvidó algo (Noza, 21 nov): si vuelve a escribir al mismo profesional en 30 min y aún no le han respondido,
+      // se añade a su consulta (misma conversación) en vez de abrir otra y gastar otra consulta.
+      if (!test && env.RELAY === '1' && body.held !== true && rec.lt?.to === body.to && Date.now() - rec.lt.at < Number(env.ADD_WINDOW_MIN ?? 30) * 60000 && /^[a-z0-9]{8}$/.test(String(rec.lt.id || ''))) {
+        const t = await loadThread(env, rec.lt.id);
+        if (t && !t.a && t.p === body.to) {
+          const mins = Math.max(1, Math.round((Date.now() - t.c) / 60000));
+          const { html, text: txt } = relayEmail(pro, 'u', t.id, `${text}\n\n(La usuaria lo añadió ${mins} min después de enviar la consulta.)`, files.length);
+          const sentP = await sendMail(env, { to: pro.email, from: `Consulta #${t.id.toUpperCase()} · Hera <consultas@hera-gine.com>`, replyTo: await relayAddress(env, 'p', t.id), subject: `Re: ${t.sp}`, refs: t.rp, html, text: txt, attachments: files });
+          if (!sentP) return reply(502, { error: 'send' });
+          if (env.COPY_TO) {
+            const tc = teamCopy({ subject: `Consulta · #${t.id.toUpperCase()} · la usuaria añadió algo${files.length ? ` · ${files.length} ${files.length === 1 ? 'adjunto' : 'adjuntos'}` : ''}${body.team === true ? ' · prueba del equipo' : ''}`,
+              intro: `La usuaria de la consulta #${t.id.toUpperCase()} ha vuelto a escribir a <b>${esc(pro.short)}</b> a los ${mins} min. Se ha añadido a la misma conversación (no cuenta como consulta nueva):`,
+              body: text, nFiles: files.length, withFiles: false, extra: '' });
+            await sendMail(env, { to: env.COPY_TO, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc });
+          }
+          t.n = (t.n || 0) + 1; await saveThread(env, t);
+          if (body.team !== true) { await bump(env, `consulta_anadida:${body.to}`); await record(env, { e: `consulta_anadida:${body.to}`, p: await personTag(env, request, madridDay(), body.p) }, sendMail, ctx); }
+          return reply(200, { ok: true, added: true, id: t.id, remaining: Math.max(0, limit - rec.n), freeLimit: limit, ...(unlimited ? { unlimited: true } : {}) });
+        }
+      }
       const pay = paymentsOn(env, body) && !!env.STRIPE_SECRET_KEY;
       if (!test && subscriber && bal.day === madridDay()) return reply(200, { limit: true, daily: true, freeLimit: limit, ...(env.STRIPE_PORTAL_URL ? { portal: env.STRIPE_PORTAL_URL } : {}) });
       const credits = unlimited ? 0 : bal.credits;
@@ -874,7 +894,7 @@ const handler = {
             if (env.COPY_TO) {
               const who = env.COPY_EMAIL === '1' ? `<p style="font-size:13px;color:#6E6C67">Correo de la usuaria: <b>${esc(q.email)}</b></p>` : '';
               const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${hid.toUpperCase()} · PENDIENTE DE PAGO${bf ? ' · Black Friday 1 €' : prio ? ' · Prioritaria 29 €' : ''}${viaName ? ` · desde ${viaName}` : ''}${cc ? ` · ${cc}` : ''}${body.team === true ? ' · prueba del equipo' : ''}`, intro: `Consulta guardada para <b>${esc(pro.name)}</b>. <b style="color:#B3261E">Aún no ha pagado</b>: a ${esc(pro.short)} no le ha llegado.`, body: q.text,
-                extra: `${who}<p style="font-size:13px;color:#6E6C67">Le hemos enviado el enlace de pago. Recordatorio a las 3 h si no paga. Se borra en ${HOLD_DAYS} días.${files.length ? ' Los adjuntos no se guardan: podrá enviarlos respondiendo al correo de la profesional.' : ''}</p>` });
+                extra: `${who}<p style="font-size:13px;color:#6E6C67">Le hemos enviado el enlace de pago. Si no paga, recordatorios a la hora y a las 24 h. Se borra en ${HOLD_DAYS} días.${files.length ? ' Los adjuntos no se guardan: podrá enviarlos respondiendo al correo de la profesional.' : ''}</p>` });
               await sendMail(env, { to: env.COPY_TO, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc });
             }
           }
@@ -910,7 +930,7 @@ const handler = {
       if (!test) {
         if (paid) creditsLeft = await spendCredit(env, h);
         const fpNext = !unlimited && !paid && !fp.includes(body.to) ? [...fp, body.to] : fp;
-        await env.KV.put(key, JSON.stringify({ n, first: rec.first || now, last: now, all: nth, ...(fpNext.length ? { fp: fpNext } : {}) }));
+        await env.KV.put(key, JSON.stringify({ n, first: rec.first || now, last: now, all: nth, ...(fpNext.length ? { fp: fpNext } : {}), ...(relay ? { lt: { id, to: body.to, at: Date.now() } } : {}) }));
         if (subscriber) await markDay(env, h, madridDay());
         // Dispositivos del equipo (modo equipo en la app): la consulta se envía igual, pero no cuenta en métricas ni avisos
         if (body.team !== true) {

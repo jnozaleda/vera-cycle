@@ -995,8 +995,13 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     }
     $('ask-topro').hidden = !to;
     box.classList.toggle('pickpro', pickOpen || !to);
-    if (opened && !busy && !BF && !PRIO) $('ask-send-t').textContent = `Enviar${store.get('hera-free-left') === '0' || (to && !['q7m', 'k2v'].includes(viaSrc().via) && (store.get('hera-free-pros') || '').split(',').includes(to)) ? '' : ' gratis'}${to ? ` a ${PROS[to].name}` : ''}`;
-    if (opened && !busy && !BF && !PRIO) $('ask-send-s').textContent = `Te ${to ? 'responde' : 'responden'} por correo en menos de 24\u00a0h`;
+    // A quién va, también en las versiones de pago (Noza, 21 nov: alguna consulta se envió a la profesional equivocada)
+    if (opened && !busy && (BF || PRIO) && to) $('ask-send-s').textContent = `Para ${PROS[to].name} · No se cobra nada hasta que lo confirmes`;
+    // En los 30 min siguientes a enviar, a la misma profesional se añade a su consulta (worker.js, ADD_WINDOW)
+    const lastSent = (() => { try { const x = JSON.parse(store.get('hera-last-sent') || 'null'); return x && Date.now() - x.at < 29 * 60000 ? x : null; } catch { return null; } })();
+    if (opened && !busy && to && lastSent?.to === to) { $('ask-send-t').textContent = `Añadir a tu consulta a ${PROS[to].name}`; $('ask-send-s').textContent = 'No gastas otra consulta'; }
+    else if (opened && !busy && !BF && !PRIO) $('ask-send-t').textContent = `Enviar${store.get('hera-free-left') === '0' || (to && !['q7m', 'k2v'].includes(viaSrc().via) && (store.get('hera-free-pros') || '').split(',').includes(to)) ? '' : ' gratis'}${to ? ` a ${PROS[to].name}` : ''}`;
+    if (opened && !busy && !BF && !PRIO && !(to && lastSent?.to === to)) $('ask-send-s').textContent = `Te ${to ? 'responde' : 'responden'} por correo en menos de 24\u00a0h`;
     chat?.sync();
   }
   function open() {
@@ -1191,7 +1196,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       if (!res.ok && !j.limit) throw new Error('No se ha podido enviar. Inténtalo de nuevo en un rato.');
       if (j.limit && !j.same) store.set('hera-free-left', '0'); else if (j.ok && j.remaining != null) store.set('hera-free-left', String(j.remaining));
       if (j.ok && j.fp) store.set('hera-free-pros', j.fp.join(','));
-      if (j.limit) { hit('limite_portada'); showLimit(j, { to, text, follow: $('ask-follow').checked }); } else { hit('enviada_portada'); if (j.id) addConsult({ id: j.id, to, text }); showDone(to, j); }
+      if (j.limit) { hit('limite_portada'); showLimit(j, { to, text, follow: $('ask-follow').checked }); } else { hit(j.added ? 'anadida_portada' : 'enviada_portada'); if (j.id && !j.added) { addConsult({ id: j.id, to, text }); store.set('hera-last-sent', JSON.stringify({ to, at: Date.now() })); } showDone(to, j); }
     } catch (e) {
       // Sin respuesta del servicio (conexión cortada o página cerrada al enviar): puede que sí haya llegado
       const net = e instanceof TypeError;
@@ -1258,9 +1263,19 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   function showDone(to, j) {
     if (chat) { chat.sent(to, j); return; }
     const total = j.freeLimit || 2, rem = j.remaining ?? 0, p = PROS[to];
+    // Se le olvidó algo y volvió a escribir (worker.js, ADD_WINDOW): se añadió a la misma consulta
+    if (j.added) {
+      swap(`<img src="portada/equipo/${p.img}.jpg?v=3" alt="" width="64" height="64">
+      <h3>Lo hemos añadido a tu consulta</h3>
+      <p>${p.name} lo recibe en la misma conversación, junto a lo que ya le habías escrito. No gastas otra consulta.</p>
+      <button type="button" class="linkbtn" data-again>Añadir algo más</button>`);
+      done.querySelector('[data-again]').addEventListener('click', () => { ta.value = ''; done.hidden = true; form.hidden = false; refresh(); ta.focus(); });
+      return;
+    }
     swap(`<img src="portada/equipo/${p.img}.jpg?v=3" alt="" width="64" height="64">
       <h3>${p.name} ya tiene tu consulta</h3>
       <p>La leerá entera y te escribirá a <b>${esc(lastEmail)}</b>. Sueles tener respuesta en unas ${CIFRAS.h || 9} h; como mucho, 24 h. Te hemos mandado una copia.</p>
+      <p class="forgot" style="background:#F6E0E2;border-radius:10px;padding:10px 12px;font-size:14.5px;line-height:1.45">¿Se te ha olvidado algo? <button type="button" class="linkbtn" data-add style="display:inline;padding:0;font:inherit;text-decoration:underline">Escríbelo aquí</button> en los próximos 30 minutos y se lo añadimos a ${PROS[to].name}, o responde al correo que te acabamos de mandar. No gastas otra consulta.</p>
       ${j.unlimited ? '<p class="small">Tienes consultas ilimitadas.</p>' : `<span class="dots" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i < total - rem ? 'on' : ''}"></i>`).join('')}</span>
       <p class="small">${rem === 0 ? 'Era tu última consulta gratuita.' : `Te ${rem === 1 ? `queda 1 consulta gratuita${j.next ? `, con ${esc(j.next)}` : ''}` : `quedan ${rem} consultas gratuitas`}.`}</p>`}
       ${j.dryRun ? '<p class="small">Modo ensayo: no se ha enviado ningún correo.</p>' : ''}
@@ -1268,7 +1283,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       ${shareCard(j)}
       <p>Mientras esperas, Hera te cuenta qué es lo normal en tu semana o a la edad de tu bebé.</p>
       <a class="btn btn-p" href="app/" data-open>Abre Hera, es gratis</a>
-      <button type="button" class="linkbtn" data-again>Escribir otra pregunta</button>`);
+      <button type="button" class="linkbtn" data-again style="font-size:13px;opacity:.8">Hacer una pregunta nueva</button>`);
     done.querySelector('[data-open]').addEventListener('click', () => hit('abrir_portada'));
     done.querySelector('[data-share]')?.addEventListener('click', async (ev) => {
       const { url, msg } = shareLink(j); hit('clic:compartir_tras_enviar');
@@ -1277,6 +1292,8 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     });
     done.querySelector('[data-guide]')?.addEventListener('click', (ev) => hit(`clic:guia_tras_enviar:${ev.currentTarget.dataset.guide}`));
     done.querySelector('[data-again]').addEventListener('click', () => { ta.value = ''; manual = false; done.hidden = true; form.hidden = false; refresh(); ta.focus(); });
+    // «Escríbelo aquí»: misma profesional elegida; el servicio lo añade a la consulta si es dentro de 30 min
+    done.querySelector('[data-add]')?.addEventListener('click', () => { hit('clic:anadir_consulta'); ta.value = ''; manual = true; radios.forEach((r) => { r.checked = r.value === to; }); done.hidden = true; form.hidden = false; refresh(); ta.focus(); });
   }
   // Pagos (vera-backlog#56): elegir plan → Stripe → vuelve a la app, que recupera la pregunta (sin adjuntos) de este dispositivo
   const PLANS = [['bono', 'Bono de 5 consultas', '7 € cada una · válido 12 meses', '35 €'], ['suelta', 'Consulta suelta', 'Solo esta pregunta', '9 €'],
@@ -1504,10 +1521,19 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     function sent(to, j) {
       step = 'hecho';
       const rem = j.remaining ?? 0;
+      // Se le olvidó algo y volvió a escribir (worker.js, ADD_WINDOW): se añadió a la misma consulta
+      if (j.added) {
+        hera(`<b>Lo hemos añadido a tu consulta para ${PROS[to].name}.</b> Le llega en la misma conversación. No gastas otra consulta.`);
+        $('cx-bar').hidden = true; $('cx-foot').hidden = true;
+        $('cx-links').innerHTML = `<button type="button" id="cx-again">Añadir algo más</button>`;
+        $('cx-again').addEventListener('click', reset);
+        return;
+      }
       hera(`<b>Enviada a ${PROS[to].name}.</b> Te responderá a <b>${esc(lastEmail)}</b> en menos de 24 h. Mira también en promociones o spam.${j.unlimited ? '' : ` ${rem === 0 ? 'Era tu última consulta gratis.' : `Te ${rem === 1 ? `queda <b>1 consulta gratis</b>${j.next ? `, con ${esc(j.next)}` : ''}` : `quedan <b>${rem} consultas gratis</b>`}.`}`}${j.dryRun ? '<small>Modo ensayo: no se ha enviado ningún correo.</small>' : ''}`);
       add(`<p class="cx-urg">No es para urgencias: si algo no va bien, ${EMERG} o acude a tu centro de salud.</p>`);
+      hera(`¿Se te ha olvidado algo? Escríbelo aquí en los próximos 30 minutos y se lo añadimos a ${PROS[to].name}, o responde al correo que te acabamos de mandar. No gastas otra consulta.`);
       $('cx-bar').hidden = true; $('cx-foot').hidden = true;
-      $('cx-links').innerHTML = `<button type="button" id="cx-again">Hacer otra pregunta</button><a href="videollamada/?de=web#reservar-${to}">Videollamada con ${PROS[to].name}</a><a href="app/" id="cx-app">Abre la app de Hera, es gratis</a>`;
+      $('cx-links').innerHTML = `<button type="button" id="cx-again">Añadir algo a mi consulta</button><a href="videollamada/?de=web#reservar-${to}">Videollamada con ${PROS[to].name}</a><a href="app/" id="cx-app">Abre la app de Hera, es gratis</a>`;
       $('cx-app').addEventListener('click', () => hit('abrir_portada'));
       $('cx-again').addEventListener('click', reset);
     }

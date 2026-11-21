@@ -19,6 +19,7 @@ export const EVENTS = {
   elige_pro: ['Cambió de profesional en la web', false],
   correo_portada: ['Llegó al campo de correo en la web', false],
   enviada_portada: ['Envió una consulta desde la web', false],
+  anadida_portada: ['Añadió algo a su consulta desde la web', false],
   abrir_portada: ['Pulsó «Abrir Hera» en la web', false],
   intento_portada: ['Pulsó enviar en la web', false],
   error_portada: ['Falló el envío en la web', false],
@@ -64,6 +65,7 @@ export const EVENTS = {
   // Solo del servicio
   consulta: ['Envió una consulta a', false], // el equipo ya recibe la copia «Consulta · …» con el texto entero
   respondida: ['Respondida una consulta por', false], // sin aviso al momento: ya llega la copia de la respuesta (sale en el resumen de 3 h)
+  consulta_anadida: ['Añadió algo a su consulta (dentro de los 30 min) para', false],
   gratuitas_agotadas: ['Intentó consultar con las gratuitas agotadas', true],
   anuncio_visita: ['Llegó desde un anuncio', false],
   anuncio_guia: ['Llegó a una guía desde un anuncio', false],

@@ -25,7 +25,7 @@ const DB = { prepare(sql) { return { bind(...a) { return { async run() {
   if (sql.startsWith('INSERT OR IGNORE')) { const k = a.join('|'); if (visitors.has(k)) return { meta: { changes: 0 } }; visitors.add(k); return { meta: { changes: 1 } }; }
   return { meta: { changes: 0 } }; },
   async all() { if (sql.includes('FROM opiniones')) return { results: opiniones }; if (sql.includes('FROM activity')) return { results: activity.filter((r) => r.ts > a[0] && r.ts <= a[1]) }; return { results: [...counts].map(([k, n]) => ({ day: k.split('|')[0], k: k.split('|')[1], n })) }; } }; } }; } };
-const env = { KV, DB, PANEL_CODE: 'panel', COPY_TO: 'copia@example.com', HASH_SALT: 'sal', ADMIN_TOKEN: 'adm', ALLOWED_ORIGINS: 'https://hera-gine.com', FROM: 'Hera <consultas@hera-gine.com>', FREE_LIMIT: '2', DRY_RUN: '0', RELAY: '1', RESEND_API_KEY: 'k' };
+const env = { KV, DB, PANEL_CODE: 'panel', COPY_TO: 'copia@example.com', HASH_SALT: 'sal', ADMIN_TOKEN: 'adm', ALLOWED_ORIGINS: 'https://hera-gine.com', FROM: 'Hera <consultas@hera-gine.com>', FREE_LIMIT: '2', DRY_RUN: '0', RELAY: '1', RESEND_API_KEY: 'k', ADD_WINDOW_MIN: '0' }; // 0: sin «añadir a la consulta» salvo en su prueba
 let rid = 0;
 globalThis.fetch = async (u, o) => {
   if (!o || o.method !== 'POST') return new Response(JSON.stringify({ message_id: `<m${u.split('/').pop()}@resend>` }), { status: 200 });
@@ -667,4 +667,30 @@ console.log('consultas: OK');
   const { default: h } = await import('../src/worker.js'); await h.scheduled({ cron: '*/15 * * * *', scheduledTime: Date.UTC(2026, 10, 21, 20, 30) }, env);
   env.PAYMENTS = P0; env.STRIPE_SECRET_KEY = K0; env.DB = DB0;
   console.log('Recordatorios de pago: OK');
+}
+
+// Se le olvidó algo (21 nov): al mismo profesional en 30 min y sin respuesta → se añade a su consulta, sin gastar otra
+{
+  const R0 = env.RELAY; env.RELAY = '1'; env.ADD_WINDOW_MIN = '30';
+  const em = 'olvido@example.com';
+  const first = await call('/ask', { email: em, to: 'pediatra', text: 'Mi bebé tiene fiebre', context: '' });
+  assert.ok(first.j.ok && !first.j.added, JSON.stringify(first.j));
+  const nThreads = [...store.keys()].filter((k) => k.startsWith('t:')).length;
+  const s0 = sent.length;
+  const again = await call('/ask', { email: em, to: 'pediatra', text: 'Se me olvidó: tiene 8 meses', context: '' });
+  assert.ok(again.j.ok && again.j.added, JSON.stringify(again.j));
+  assert.equal(again.j.id, first.j.id ?? again.j.id);
+  assert.equal(again.j.remaining, first.j.remaining, 'no gasta otra consulta');
+  assert.equal([...store.keys()].filter((k) => k.startsWith('t:')).length, nThreads, 'no abre otra consulta');
+  const toPro = sent.slice(s0).find((m) => /^Re: /.test(m.subject) && /ha escrito/.test(m.html));
+  assert.ok(toPro, 'le llega al profesional en la misma conversación'); assert.match(toPro.text, /tiene 8 meses/); assert.match(toPro.text, /lo añadió \d+ min después/);
+  // A otro profesional: consulta nueva
+  const other = await call('/ask', { email: em, to: 'matrona', text: 'Y otra duda de lactancia', context: '' });
+  assert.ok(other.j.ok && !other.j.added);
+  // Pasados 30 min: consulta nueva
+  for (const k of [...store.keys()].filter((k) => k.startsWith('c:'))) { const v = JSON.parse(store.get(k)); if (v.lt) { v.lt.at -= 31 * 60000; store.set(k, JSON.stringify(v)); } }
+  const late = await call('/ask', { email: em, to: 'matrona', text: 'Otra cosa, una hora después', context: '' });
+  assert.ok(!late.j.added, 'fuera de los 30 min no se añade');
+  env.RELAY = R0; env.ADD_WINDOW_MIN = '0';
+  console.log('Añadir a la consulta: OK');
 }

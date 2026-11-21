@@ -375,6 +375,9 @@ section { padding: 64px 0; }
 
 /* Precio */
 .price { display: grid; gap: 16px; margin-top: 28px; }
+/* Comprar bono o ilimitado desde Precios, sin saltar al formulario (21 nov) */
+.buybox { display: grid; gap: 10px; max-width: 30em; margin-top: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.buybox input { width: 100%; font: inherit; font-size: 16px; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 10px; background: #FAF9F4; color: var(--ink); } .buybtns { display: grid; gap: 8px; } .buybtns .btn { width: 100%; }
 @media (min-width: 640px) { .price { grid-template-columns: 1fr 1fr; } }
 @media (min-width: 1000px) { .price { grid-template-columns: repeat(4, 1fr); } }
 .plan .v small { font-family: 'Inter', sans-serif; font-size: 15px; color: var(--muted); font-weight: 500; }
@@ -722,7 +725,13 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <div class="plan"><span class="k">Bono de 5 consultas</span><span class="v">35 € <small>· 7 € cada una</small></span><p>Para cuando necesites preguntar más de una vez.</p></div>
       <div class="plan"><span class="k">Ilimitado</span><span class="v">15 € <small>/ mes</small></span><p>Pregunta cuando lo necesites, sin permanencia. Uso razonable: hasta una consulta nueva al día.</p></div>
     </div>
-    <p style="margin-top:14px"><a href="#ask" data-goplans style="color:var(--plum);font-weight:600">Comprar un bono o el ilimitado →</a></p>
+    <p style="margin-top:14px"><a href="#comprar" data-buy style="color:var(--plum);font-weight:600">Comprar un bono o el ilimitado →</a></p>
+    <div class="buybox" id="buybox" hidden>
+      <label class="fld"><span class="sr">Tu correo</span><input id="buy-email" type="email" inputmode="email" autocomplete="email" placeholder="Tu correo (el plan va a su nombre)"></label>
+      <div class="buybtns"><button type="button" class="btn btn-p" data-buyplan="bono">Bono de 5 consultas · 35 €</button><button type="button" class="btn btn-o" data-buyplan="mensual">Ilimitado · 15 € al mes</button></div>
+      <p class="err" id="buy-err" hidden></p>
+      <p style="margin:0;font-size:13px;color:var(--muted)">Pagas con tarjeta, Apple Pay o Google Pay en una página segura. Luego escribes tu duda y la envías sin gastar nada más.</p>
+    </div>
     <p class="price-k">Por teléfono o videollamada</p>
     <div class="price two">
       <div class="plan"><span class="k">Llamada</span><span class="v">25 € <small>· 15 min</small></span><p>Con Gonzalo, Marina o Lucía, por teléfono y sin cámara. Te llaman a la hora que elijas.</p><a class="go" href="videollamada/">Reservar →</a></div>
@@ -1303,6 +1312,23 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     showPlans({ freeLimit: 2, early: true }, { to: chosen(), text: ta.value.trim(), follow: $('ask-follow').checked });
   }
   $('ask-plans').addEventListener('click', openPlans);
+  // «Comprar un bono o el ilimitado»: se compra ahí mismo (correo + plan → Stripe); antes saltaba arriba, al formulario
+  document.querySelectorAll('[data-buy]').forEach((a) => a.addEventListener('click', (ev) => {
+    ev.preventDefault(); const b = $('buybox'); b.hidden = false; hit('clic:comprar_planes');
+    const be = $('buy-email'); if (!be.value) be.value = email.value || store.get('hera-ask-email') || '';
+    b.scrollIntoView({ block: 'center', behavior: 'smooth' }); setTimeout(() => be.focus({ preventScroll: true }), 300);
+  }));
+  document.querySelectorAll('[data-buyplan]').forEach((btn) => btn.addEventListener('click', async () => {
+    const be = $('buy-email'), e = $('buy-err'); const v = be.value.trim();
+    if (!isEmail(v)) { e.textContent = 'Escribe tu correo: el plan va a su nombre.'; e.hidden = false; be.focus(); return; }
+    e.hidden = true; const plan = btn.dataset.buyplan; const t0 = btn.textContent;
+    document.querySelectorAll('[data-buyplan]').forEach((x) => { x.disabled = true; }); btn.textContent = 'Abriendo el pago…';
+    hit(`pago_elegido:${plan}`); store.set('hera-ask-email', v);
+    try {
+      const r = await fetch(`${API}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: v, plan, back: 'web', ...adSrc() }) });
+      const k = await r.json().catch(() => ({})); if (!r.ok || !k.url) throw new Error(); location.href = k.url;
+    } catch { e.textContent = 'No se ha podido abrir el pago. Inténtalo de nuevo en un rato.'; e.hidden = false; document.querySelectorAll('[data-buyplan]').forEach((x) => { x.disabled = false; }); btn.textContent = t0; }
+  }));
   document.querySelectorAll('[data-goplans]').forEach((a) => a.addEventListener('click', (ev) => { ev.preventDefault(); chat?.off(); goAsk(); if (isEmail(email.value)) openPlans(); else { open(); $('ask-plans').hidden = false; showErr('Escribe tu correo y toca «Ver planes»: el plan va a su nombre.'); } }));
   function showLimit(j, q = {}) {
     if (j.pay) { showPlans(j, q); return; }

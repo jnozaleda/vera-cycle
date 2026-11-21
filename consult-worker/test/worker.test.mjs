@@ -591,3 +591,41 @@ console.log('consultas: OK');
 
 // Cifras públicas de la portada
 { const r = await worker.fetch(new Request('https://w/cifras', { headers: { Origin: 'https://hera-gine.com' } }), env); assert.equal(r.status, 200); const j = await r.json(); assert.ok('n' in j && 'r' in j && 'h' in j); console.log('Cifras: OK'); }
+
+// Embudo del pago (21 nov): «fue a Stripe» por persona, «volvió sin pagar» y «lo dejó a medias» (caducado)
+{
+  const P0 = env.PAYMENTS, K0 = env.STRIPE_SECRET_KEY, W0 = env.STRIPE_WEBHOOK_SECRET, D0 = env.DASH_KEY;
+  env.PAYMENTS = 'on'; env.STRIPE_SECRET_KEY = 'sk_test_x'; env.STRIPE_WEBHOOK_SECRET = 'whsec_prueba'; env.DASH_KEY = 'dk';
+  const realFetch = globalThis.fetch; let made = null;
+  globalThis.fetch = async (u, o) => {
+    if (String(u).startsWith('https://api.stripe.com/v1/prices')) return new Response(JSON.stringify({ data: [{ id: 'price_x' }] }), { status: 200 });
+    if (String(u) === 'https://api.stripe.com/v1/checkout/sessions') { made = new URLSearchParams(o.body); return new Response(JSON.stringify({ id: 'cs_test_embudo', url: 'https://checkout.stripe.com/c/pay/cs_test_embudo' }), { status: 200 }); }
+    return realFetch(u, o);
+  };
+  const mismo = { 'CF-Connecting-IP': '7.7.7.7', 'User-Agent': 'prueba-embudo' };
+  await call('/hit', { e: 'portada', d: 'ios-web' }, mismo);
+  const r = await call('/checkout', { email: 'embudo@example.com', plan: 'suelta', back: 'web' }, mismo);
+  assert.equal(r.s, 200, JSON.stringify(r.j)); assert.match(r.j.url, /checkout\.stripe\.com/);
+  assert.equal(made.get('cancel_url'), 'https://hera-gine.com/?web=1&pago=no&plan=suelta');
+  const tag = made.get('metadata[p]'); assert.match(tag, /^[0-9A-F]{4}$/, 'la etiqueta del día viaja con el pago');
+  assert.ok(activity.some((x) => x.e === 'pago_abierto:suelta' && x.p === tag), 'fue a Stripe, en su recorrido');
+  assert.equal(cnt('pago_inicio:suelta') >= 1, true);
+  // Vuelve de Stripe sin pagar: la web manda pago_cancelado:<plan>
+  assert.equal((await call('/hit', { e: 'pago_cancelado:suelta', d: 'ios-web' })).s, 200);
+  // Stripe la da por perdida: checkout.session.expired (firmado)
+  const raw = JSON.stringify({ type: 'checkout.session.expired', data: { object: { id: 'cs_test_embudo', livemode: false, metadata: { plan: 'suelta', p: tag, h: 'a'.repeat(64) } } } });
+  const t = Math.floor(Date.now() / 1000);
+  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode('whsec_prueba'), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  const v1 = [...new Uint8Array(await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(`${t}.${raw}`)))].map((b) => b.toString(16).padStart(2, '0')).join('');
+  const wh = await worker.fetch(new Request('https://w/stripe/webhook', { method: 'POST', headers: { 'Stripe-Signature': `t=${t},v1=${v1}` }, body: raw }), env);
+  assert.equal(wh.status, 200);
+  assert.equal(cnt('pago_caducado:suelta'), 1);
+  assert.ok(activity.some((x) => x.e === 'pago_caducado:suelta' && x.p === tag), 'a medias, en el recorrido de la misma persona');
+  // El panel lo enseña
+  const html = await (await worker.fetch(new Request('https://w/panel?k=dk&d=30'), env)).text();
+  assert.match(html, /Pago con Stripe, paso a paso/);
+  assert.match(html, /<td>Consulta suelta<\/td><td>\d+<\/td><td>1<\/td><td><b>0<\/b>[^<]*<span class="mute">0 %<\/span><\/td><td>1<\/td><td>1<\/td>/, 'fila: fue 1 vez a Stripe, 0 pagos, 1 volvió sin pagar, 1 a medias');
+  globalThis.fetch = realFetch;
+  env.PAYMENTS = P0; env.STRIPE_SECRET_KEY = K0; env.STRIPE_WEBHOOK_SECRET = W0; env.DASH_KEY = D0;
+  console.log('Embudo del pago: OK');
+}

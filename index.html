@@ -1057,7 +1057,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       note.style.cssText = 'background:#F6E0E2;border-radius:12px;padding:12px 14px;margin:0 0 12px;line-height:1.45';
       form.prepend(note);
       const say = (html) => { note.innerHTML = html; };
-      if (pago === 'no') say('No se ha hecho ningún pago. Tu pregunta sigue aquí.');
+      if (pago === 'no') { say('No se ha hecho ningún pago. Tu pregunta sigue aquí.'); const pl = (qs.get('plan') || '').toLowerCase(); hit(/^[a-z0-9]{1,24}$/.test(pl) ? `pago_cancelado:${pl}` : 'pago_cancelado'); }
       else {
         say('Comprobando el pago…');
         fetch(`${API}/checkout/status?cs=${encodeURIComponent(qs.get('cs') || '')}`).then((r) => r.json()).then((j) => {

@@ -304,6 +304,11 @@ export async function panel(env, url, openThreads) {
   const abPeople = (v) => new Set(act.filter((r) => r.e === `ab_visita:${v}` && r.p).map((r) => `${dayISO(r.ts)}:${r.p}`)).size;
   const abRows = [['bf', 'Black Friday · 1 €'], ['gratis', 'La de siempre · 2 gratis'], ['prio', 'Prioritaria · 29 € (campaña propia)']].map(([v, t]) => ({ v, t, pp: abPeople(v), cq: g(`consulta_ab:${v}`) }));
   const abCard = abRows.some((r) => r.pp || r.cq) ? `<div class="card" id="prueba-bf"><h2>Pruebas de precio</h2><table><tr><th>Versión</th><th>Personas</th><th>Consultas</th><th>%</th><th>Pagos</th></tr>${abRows.map((r) => `<tr><td>${r.t}</td><td>${r.pp}</td><td>${r.cq}</td><td>${r.pp ? fmtPct(r.cq, r.pp) : '—'}</td><td>${r.v === 'bf' ? g('pago:bf1') : r.v === 'prio' ? g('pago:prio29') : '—'}</td></tr>`).join('')}</table><p class="mute" style="margin-top:6px">Black Friday y la de siempre: visitas de anuncio repartidas al azar 50/50 hasta el 1 dic (cada dispositivo ve siempre la misma). Prioritaria: solo la campaña «prioritaria». En las de pago, la consulta se envía al pagar. Guardadas sin pagar: ${g('bf_guardada') - g('pago:bf1') > 0 ? g('bf_guardada') - g('pago:bf1') : 0}.</p></div>` : '';
+  // Embudo del pago (21 nov): eligió pagar → fue a Stripe → pagó, o volvió sin pagar / lo dejó a medias (caduca a las 24 h; videollamadas, 2 h).
+  // Stripe no avisa de quién «ve» su pantalla: «Fueron a Stripe» son las veces que se le mandó allí (justo después de pulsar pagar).
+  const payRows = Object.keys(PLANS).map((k2) => ({ k2, t: PLANS[k2].label, el: g(`pago_elegido:${k2}`), st: g(`pago_inicio:${k2}`), ok: g(`pago:${k2}`), no: g(`pago_cancelado:${k2}`), cad: g(`pago_caducado:${k2}`) }))
+    .filter((r) => r.el || r.st || r.ok || r.no || r.cad).sort((a, b) => b.st - a.st);
+  const payCard = payRows.length ? `<div class="card" id="embudo-pago"><h2>Pago con Stripe, paso a paso</h2><div style="overflow-x:auto"><table><tr><th>Plan</th><th>Eligieron pagar</th><th>Fueron a Stripe</th><th>Pagaron</th><th>Volvieron sin pagar</th><th>A medias</th></tr>${payRows.map((r) => `<tr><td>${esc(r.t)}</td><td>${r.el}</td><td>${r.st}</td><td><b>${r.ok}</b>${r.st ? ` <span class="mute">${fmtPct(r.ok, r.st)}</span>` : ''}</td><td>${r.no}</td><td>${r.cad}</td></tr>`).join('')}</table></div><p class="mute" style="margin-top:6px">«Fueron a Stripe»: veces que se abrió la pantalla de pago (Stripe no dice si la llegaron a mirar). «Volvieron sin pagar»: pulsaron atrás en Stripe. «A medias»: la dejaron abierta sin pagar y Stripe la dio por perdida (a las 24 h; videollamadas, a las 2 h). «Eligieron pagar» solo cuenta la web, no el enlace del correo. Estos tres últimos se cuentan desde el 21 nov.</p></div>` : '';
   const sumMode = (kind, mode) => dv.reduce((a, x) => a + tot3(x[kind][mode]), 0);
   const MODES = [['all', 'Todo'], ['web', 'Web'], ['app', 'App']];
   const dailyCard = `<div class="card" id="diario"><h2>Visitas y consultas por día</h2>
@@ -361,7 +366,8 @@ ${MODES.map(([m, t]) => `<div class="cv cv-${m}"><h3 class="fh">Personas · ${su
 
   // ── Vista nueva (vera-backlog#90): resumen, lo que pide atención, 5 cifras, un embudo, de dónde vienen y visitas por persona
   const PLAN_EUR = Object.fromEntries(Object.entries(PLANS).map(([k2, p]) => [k2, p.eur]));
-  const pagos = Object.entries(tot).filter(([k2]) => /^pago:[a-z]+$/.test(k2) && PLAN_EUR[k2.slice(5)]);
+  // [a-z0-9]: también bf1 y prio29 (antes se quedaban fuera del total)
+  const pagos = Object.entries(tot).filter(([k2]) => /^pago:[a-z0-9]+$/.test(k2) && PLAN_EUR[k2.slice(5)]);
   // Sin las devoluciones (pago:devuelto_<plan>)
   const net = (k2, x) => Math.max(0, x - g(`pago:devuelto_${k2.slice(5)}`));
   const nPagos = pagos.reduce((a, [k2, x]) => a + net(k2, x), 0);
@@ -446,7 +452,7 @@ ${MODES.map(([m, t]) => `<div class="cv cv-${m}"><h3 class="fh">Personas · ${su
     if (n2 === 'consulta' && PRO_NAME[v2]) return `<b>envió a ${PRO_NAME[v2]}</b>`;
     return ({ pregunta_portada: 'escribió', consulta_escribe: 'escribió', ejemplo_duda: 'tocó un ejemplo', consulta_ejemplo: 'tocó un ejemplo', correo_portada: 'puso el correo', consulta_correo: 'puso el correo',
       adjunto_portada: 'adjuntó un archivo', consulta_adjunto: 'adjuntó un archivo', elige_pro: 'cambió de profesional', intento_portada: 'pulsó enviar', consulta_intento: 'pulsó enviar',
-      consulta_abierta: 'abrió la consulta en la app', apertura: 'abrió la app', instalada: 'instaló la app', video_pagina: 'vio la videollamada', video_reserva: 'pulsó reservar videollamada', pago_hecho: '<b>pagó</b>',
+      consulta_abierta: 'abrió la consulta en la app', apertura: 'abrió la app', instalada: 'instaló la app', video_pagina: 'vio la videollamada', video_reserva: 'pulsó reservar videollamada', pago_hecho: '<b>pagó</b>', pago_elegido: 'eligió pagar', pago_abierto: '<b>fue a Stripe</b>', pago_cancelado: 'volvió de Stripe sin pagar', pago_caducado: 'dejó el pago a medias',
       limite_portada: 'agotó las gratuitas', consulta_limite: 'agotó las gratuitas', planes_abiertos: 'vio los planes', invitacion_vista: 'vio su enlace para invitar' })[n2]
       || (n2 === 'clic' && v2.startsWith('fallo_sin_correo') ? '<b>sin correo</b>' : n2 === 'seccion' && v2 === 'precio' ? 'vio precios' : n2 === 'seccion' && v2 === 'equipo' ? 'vio el equipo' : '');
   };
@@ -577,6 +583,7 @@ ${waCard}
 ${fun}${funNote ? `<p class="mute" style="margin-top:6px">${funNote}</p>` : ''}</div>
 ${dailyCard}
 ${abCard}
+${payCard}
 
 <div class="card"><h2>De dónde vienen</h2>${srcTable}
 <p class="mute" style="margin-top:8px">Personas por día. Coste por consulta: lo gastado en cada grupo ÷ sus consultas. Enlaces propios: <b>?via=</b> (ig_marina, wa_guia…) e invitaciones (?r=).</p></div>

@@ -70,7 +70,7 @@ export async function waCode(sessionId) {
 }
 
 /** Crea la sesión de pago y devuelve su URL */
-export async function createCheckout(env, { email, plan, h, origin, back, ad, pro, camp, hold, country }) {
+export async function createCheckout(env, { email, plan, h, origin, back, ad, pro, camp, hold, country, p: who }) {
   const p = PLANS[plan];
   // Vuelve al mismo sitio desde el que se pagó (la web real, o localhost en pruebas)
   // back = 'web': desde la portada, vuelve a la portada (?web=1 evita que salte a la app instalada)
@@ -85,11 +85,14 @@ export async function createCheckout(env, { email, plan, h, origin, back, ad, pr
     ...(p.wa ? { 'phone_number_collection[enabled]': 'true' } : {}),
     locale: 'es',
     success_url: `${ret}pago=ok&cs={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${ret}pago=no`,
+    // El plan vuelve en la dirección para contar «volvió de Stripe sin pagar» (pago_cancelado:plan)
+    cancel_url: `${ret}pago=no&plan=${plan}`,
     'metadata[h]': h,
     // Videollamadas: el pago caduca a las 2 h; entonces Stripe avisa (checkout.session.expired) y va un único correo
     ...(p.video ? { expires_at: String(Math.floor(Date.now() / 1000) + 2 * 3600) } : {}),
     'metadata[plan]': plan,
+    // Etiqueta anónima del día (activity.js): si caduca sin pagar, «Dejó el pago a medias» sale en su recorrido del panel
+    ...(/^[0-9A-F]{4}$/.test(String(who || '')) ? { 'metadata[p]': who } : {}),
     ...(ad ? { 'metadata[src]': 'ads' } : {}),
     ...(pro ? { 'metadata[pro]': pro } : {}),
     ...(ad && camp ? { 'metadata[camp]': camp } : {}),
@@ -196,8 +199,10 @@ export async function handleWebhook(env, request, hooks) {
         if (/^[a-f0-9]{64}$/.test(sub.metadata?.h || '') && sub.status === 'active') await setSubscription(env, sub.metadata.h, sub);
       }
     } else if (ev.type === 'checkout.session.expired') {
-      // Videollamada a medias (vera-backlog#86): un único correo por persona, plan y profesional (30 días)
       const plan = o.metadata?.plan; const h = o.metadata?.h;
+      // Cualquier pago que caduca sin pagar (Stripe lo da por perdido a las 24 h; las videollamadas, a las 2 h)
+      if (PLANS[plan]) await hooks?.expired?.(plan, o);
+      // Videollamada a medias (vera-backlog#86): un único correo por persona, plan y profesional (30 días)
       if (PLANS[plan]?.video && /^[a-f0-9]{64}$/.test(h || '') && (o.customer_details?.email || o.customer_email)) {
         const key = `medias:${h.slice(0, 24)}:${plan}:${o.metadata?.pro || ''}`;
         if (!(await env.KV.get(key))) { await env.KV.put(key, '1', { expirationTtl: 30 * 86400 }); await hooks?.abandoned?.(plan, o); }

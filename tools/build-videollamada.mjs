@@ -165,6 +165,7 @@ const body = `${STYLE}<div class="w vc">
   }
   // Vuelta de Stripe
   const pago = q.get('pago');
+  if (pago === 'no') { const pl = (q.get('plan') || '').toLowerCase(); hit(/^[a-z0-9]{1,24}$/.test(pl) ? 'pago_cancelado:' + pl : 'pago_cancelado'); }
   if (pago) {
     history.replaceState(null, '', location.pathname);
     if (pago === 'no') say('<b>No se ha hecho ningún pago</b>Puedes volver a intentarlo cuando quieras. ¿Prefieres preguntarlo antes por escrito? <a href="#gratis" style="color:#2D4A3A;font-weight:600">Es gratis</a>.');

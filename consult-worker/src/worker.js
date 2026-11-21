@@ -490,6 +490,12 @@ const handler = {
           `${PLANS[plan].label}: ${PLANS[plan].eur} €${s.livemode ? '' : ' (modo de prueba, sin dinero real)'}\n${hora}\n\nVer en Stripe: ${dash}`, sendMail);
       },
       cancelled: async () => { await bump(env, 'pago:baja_mensual'); },
+      // Pago que caduca sin pagar: cuenta para el embudo y sale en el recorrido de esa persona (si se sabe quién era)
+      expired: async (plan, s) => {
+        await bump(env, `pago_caducado:${plan}`);
+        const who = /^[0-9A-F]{4}$/.test(String(s.metadata?.p || '')) ? s.metadata.p : '';
+        await record(env, { e: `pago_caducado:${plan}`, p: who, note: s.livemode ? '' : 'modo de prueba' }, sendMail, ctx);
+      },
       abandoned: async (plan, s) => {
         const pro = PROS[s.metadata?.pro] || PROS.matrona;
         const to = s.customer_details?.email || s.customer_email;
@@ -514,8 +520,10 @@ const handler = {
       if (plan === 'bf1' && (!raw.bf || Date.now() >= BF_END)) return Response.redirect(`${WORKER_URL}/pagar?c=${id}&s=${url.searchParams.get('s')}&plan=suelta`, 303);
       const held = JSON.parse(await openEmail(env, raw.x));
       try {
-        const u = await createCheckout(env, { email: held.email, plan, h: raw.h, origin: 'https://hera-gine.com', back: 'web', ad: held.src === 'ads', camp: /^[a-z0-9_]{1,24}$/.test(String(held.camp || '')) ? held.camp : '', hold: id, pro: PROS[raw.to] ? raw.to : '' });
+        const who = await personTag(env, request, madridDay());
+        const u = await createCheckout(env, { email: held.email, plan, h: raw.h, origin: 'https://hera-gine.com', back: 'web', ad: held.src === 'ads', camp: /^[a-z0-9_]{1,24}$/.test(String(held.camp || '')) ? held.camp : '', hold: id, pro: PROS[raw.to] ? raw.to : '', p: who });
         await bump(env, `pago_inicio:${plan}`);
+        await record(env, { e: `pago_abierto:${plan}`, p: who, note: 'desde el correo de la consulta guardada' }, sendMail, ctx);
         return Response.redirect(u, 303);
       } catch (e) { console.log(e.message); return new Response('No se ha podido abrir el pago. Inténtalo en un rato.', { status: 502 }); }
     }
@@ -542,11 +550,13 @@ const handler = {
       try {
         const h = [...crypto.getRandomValues(new Uint8Array(32))].map((b) => b.toString(16).padStart(2, '0')).join('');
         const camp = /^[a-z0-9_]{1,24}$/.test(url.searchParams.get('camp') || '') ? url.searchParams.get('camp') : '';
-        const to = await createCheckout(env, { email: '', plan: 'whatsapp', h, origin: 'https://hera-gine.com', back: 'wa', ad: url.searchParams.get('src') === 'ads', camp, country: request.cf?.country || '' });
+        const who = await personTag(env, request, madridDay(), url.searchParams.get('p') || '');
+        const to = await createCheckout(env, { email: '', plan: 'whatsapp', h, origin: 'https://hera-gine.com', back: 'wa', ad: url.searchParams.get('src') === 'ads', camp, country: request.cf?.country || '', p: who });
         if (url.searchParams.get('t') !== '1') {
           await bump(env, 'pago_inicio:whatsapp');
           if (url.searchParams.get('de') === 'recordatorio') await bump(env, 'wa_desde_recordatorio');
-          await record(env, { e: 'whatsapp_pagar', p: await personTag(env, request, madridDay(), url.searchParams.get('p') || '') }, sendMail, ctx);
+          await record(env, { e: 'whatsapp_pagar', p: who }, sendMail, ctx);
+          await record(env, { e: 'pago_abierto:whatsapp', p: who }, sendMail, ctx);
         }
         return Response.redirect(to, 303);
       } catch (e) { console.log(e.message); return Response.redirect(`${back}?pago=error`, 303); }
@@ -755,8 +765,11 @@ const handler = {
       if (PLANS[body.plan].video && !VIDEO_PROS.includes(vpro)) return reply(400, { error: 'bad_pro' });
       if (await rateLimited(env, request.headers.get('CF-Connecting-IP'))) return reply(429, { error: 'rate' });
       try {
-        const checkoutUrl = await createCheckout(env, { email: String(body.email).trim(), plan: body.plan, h: await hmac(env.HASH_SALT, norm), origin, back: ['web', 'video'].includes(body.back) ? body.back : 'app', ad: body.src === 'ads', pro: vpro, camp: /^[a-z0-9_]{1,24}$/.test(String(body.camp || '')) ? body.camp : '', hold: /^[a-z0-9]{8}$/.test(String(body.hold || '')) && await env.KV.get(`hold:${body.hold}`) ? body.hold : '' });
+        // Quién va a Stripe (vera-backlog: embudo de pago): la misma etiqueta anónima del día que sus otros eventos
+        const who = await personTag(env, request, madridDay(), body.p);
+        const checkoutUrl = await createCheckout(env, { email: String(body.email).trim(), plan: body.plan, h: await hmac(env.HASH_SALT, norm), origin, back: ['web', 'video'].includes(body.back) ? body.back : 'app', ad: body.src === 'ads', pro: vpro, camp: /^[a-z0-9_]{1,24}$/.test(String(body.camp || '')) ? body.camp : '', hold: /^[a-z0-9]{8}$/.test(String(body.hold || '')) && await env.KV.get(`hold:${body.hold}`) ? body.hold : '', p: who });
         await bump(env, `pago_inicio:${body.plan}`);
+        if (body.team !== true) await record(env, { e: `pago_abierto:${body.plan}`, p: who }, sendMail, ctx);
         return reply(200, { url: checkoutUrl });
       } catch (e) { console.log(e.message); return reply(502, { error: 'stripe' }); }
     }

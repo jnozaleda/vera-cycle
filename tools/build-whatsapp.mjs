@@ -117,6 +117,7 @@ ${SOON ? '' : `<h2>Cómo funciona</h2>
   const note = document.getElementById('wa-note');
   const say = (html) => { note.innerHTML = html; note.hidden = false; note.scrollIntoView({ block: 'center' }); };
   const pago = q.get('pago');
+  if (pago === 'no') { const pl = (q.get('plan') || '').toLowerCase(); hit(/^[a-z0-9]{1,24}$/.test(pl) ? 'pago_cancelado:' + pl : 'pago_cancelado'); }
   if (pago) {
     history.replaceState(null, '', location.pathname);
     if (pago === 'no') say('<b class="t">No se ha hecho ningún pago</b><span>Puedes intentarlo otra vez cuando quieras.</span>');

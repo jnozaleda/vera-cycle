@@ -16,6 +16,7 @@ registro de cambios publicados, el más reciente primero. Sin datos personales n
 ## Registro
 
 ### 2026-11-21
+- **Anuncios «Black Friday · 1 €»** (aprobados por Noza): 8 anuncios, uno por grupo de ginecólogo, matrona y pediatra en España, Argentina y México/Chile/Colombia, con `utm_content=bf`. Pausa programada el 2 dic a las 00:05 (en esta sesión).
 - **Black Friday sin engañar**: los anuncios prometen «2 consultas gratis», así que la portada ya no enseña la versión de 1 € a quien llega por ellos; solo el anuncio de 1 € (`utm_content=bf`) lleva a ella. Nota del panel actualizada. Pausadas «dudas embarazo» (España y México/Chile/Colombia) y «dudas menopausia» (México/Chile/Colombia); nuevas palabras clave (chat ginecologo, ginecologa gratis, ginecologa virtual, pediatra virtual) y negativas (foro, posiciones, calcular, creatina). (publicado)
 - **Modo equipo y pagos**: abrir el pago de Stripe desde un dispositivo del equipo ya no cuenta en «Fueron a Stripe».
   Limpieza de datos: borrada una consulta Black Friday de prueba (guardada sin pagar) y su «fue a Stripe», y dos

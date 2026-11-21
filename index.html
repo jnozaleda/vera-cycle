@@ -903,10 +903,17 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   const BF_END = Date.parse('2026-12-01T23:59:59+01:00');
   const AB = (() => {
     if (!adSrc().src || Date.now() >= BF_END || adSrc().camp === 'prioritaria') return '';
+    // Noza, 21 nov: ya no se reparte al azar. Los anuncios de siempre prometen «2 consultas gratis», así que quien llega por
+    // ellos ve la versión gratis; solo el anuncio «Black Friday · 1 €» (utm_content=bf) lleva a la de 1 €. Nadie ve un precio
+    // distinto del que le prometió su anuncio. Si vuelve sin anuncio, ve la última versión que vio.
     // Para verla a propósito: ?ab=bf o ?ab=gratis (junto con utm_medium=cpc) fija la versión en este dispositivo
-    const f = new URLSearchParams(location.search).get('ab'); if (f === 'bf' || f === 'gratis') store.set('hera-ab-bf', f);
+    const q1 = new URLSearchParams(location.search);
+    const f = q1.get('ab');
+    const nowAd = q1.has('gclid') || /^(cpc|ppc|paid)$/i.test(q1.get('utm_medium') || '');
+    if (f === 'bf' || f === 'gratis') store.set('hera-ab-bf', f);
+    else if (nowAd) store.set('hera-ab-bf', q1.get('utm_content') === 'bf' ? 'bf' : 'gratis');
     let v = store.get('hera-ab-bf');
-    if (v !== 'bf' && v !== 'gratis') { v = Math.random() < 0.5 ? 'bf' : 'gratis'; store.set('hera-ab-bf', v); }
+    if (v !== 'bf' && v !== 'gratis') { v = 'gratis'; store.set('hera-ab-bf', v); }
     hit(`ab_visita:${v}`);
     return v;
   })();

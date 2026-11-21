@@ -7,7 +7,7 @@ registro de cambios publicados, el más reciente primero. Sin datos personales n
 
 | Qué | Detalle | Hasta / cuándo | Dónde |
 |---|---|---|---|
-| Prueba Black Friday | Visitas de anuncio repartidas 50/50 (fijo por dispositivo): «Black Friday · 1 €» (sin gratis, pago al enviar) o «La de siempre · 2 gratis». Ver una versión a propósito: `?utm_medium=cpc&utm_campaign=prueba&ab=bf` (o `ab=gratis`) | Hasta el 1 dic (`BF_END`). Leer resultados el 2 dic en el panel, «Pruebas de precio» | `index.html` (AB/BF), `worker.js` (`bf`, plan `bf1`) |
+| Prueba Black Friday | Desde el 21 nov, sin reparto al azar: quien llega por un anuncio de «2 consultas gratis» ve la versión gratis; solo el anuncio «Black Friday · 1 €» (`utm_content=bf`) lleva a la de 1 € (sin gratis, pago al enviar). Antes, 50/50 al azar. Ver una versión a propósito: `?utm_medium=cpc&utm_campaign=prueba&ab=bf` (o `ab=gratis`) | Hasta el 1 dic (`BF_END`). Leer resultados el 2 dic en el panel, «Pruebas de precio» | `index.html` (AB/BF), `worker.js` (`bf`, plan `bf1`) |
 | Consulta prioritaria | Campaña propia `utm_campaign=prioritaria`: 29 €, sin gratis, respuesta en menos de 6 h, aviso con hora límite y recordatorio a las 4 h | Desde el 2 dic, cuando Noza cree la campaña y las profesionales confirmen el plazo | `index.html` (PRIO), `worker.js` (`prio`, plan `prio29`) |
 | WhatsApp | En «Próximamente · Avísame» (pago desactivado); la lista de avisos está en el panel | Hasta que Noza decida volver a encenderlo (`SOON = false` en `tools/build-whatsapp.mjs`) | `tools/build-whatsapp.mjs`, `index.html` |
 | Enlaces propios | `?via=` de las profesionales, enlaces de amigas (5 gratis hasta el 31 dic) y del grupo (2 gratis) | 31 dic | `worker.js` (`FRIEND_LINKS`), `panel.js` (`VIA_NAME`) |
@@ -16,6 +16,7 @@ registro de cambios publicados, el más reciente primero. Sin datos personales n
 ## Registro
 
 ### 2026-11-21
+- **Black Friday sin engañar**: los anuncios prometen «2 consultas gratis», así que la portada ya no enseña la versión de 1 € a quien llega por ellos; solo el anuncio de 1 € (`utm_content=bf`) lleva a ella. Nota del panel actualizada. Pausadas «dudas embarazo» (España y México/Chile/Colombia) y «dudas menopausia» (México/Chile/Colombia); nuevas palabras clave (chat ginecologo, ginecologa gratis, ginecologa virtual, pediatra virtual) y negativas (foro, posiciones, calcular, creatina). (publicado)
 - **Modo equipo y pagos**: abrir el pago de Stripe desde un dispositivo del equipo ya no cuenta en «Fueron a Stripe».
   Limpieza de datos: borrada una consulta Black Friday de prueba (guardada sin pagar) y su «fue a Stripe», y dos
   eventos de comprobación del despliegue. Worker desplegado (versión 47ac6c71). (sesión en la nube; publicado)

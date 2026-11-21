@@ -169,7 +169,11 @@ section { padding: 64px 0; }
 .pline { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 10px; background: #FBEDEC; border: 1px solid #F0CFCB; }
 .pline .l { display: flex; flex-direction: column; gap: 4px; min-width: 0; } .pline .tag { align-self: flex-start; white-space: nowrap; font: 600 10px/1 'Inter', sans-serif; letter-spacing: .05em; text-transform: uppercase; color: #fff; background: #B3261E; border-radius: 99px; padding: 4px 7px; }
 .pline .l span:last-child { font-size: 12.5px; color: #6E4A46; } .pline .r { white-space: nowrap; text-align: right; } .pline .r s { color: #8A8A8E; font-size: 14px; margin-right: 6px; } .pline .r b { font: 600 22px/1 'Inter', sans-serif; color: #2F3631; }
-.ask.needmail .pline { display: none; }
+.ask.needmail .pline, .ask.needmail .steps3 { display: none; }
+.steps3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.steps3 div { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 4px; font-size: 11.5px; line-height: 1.25; color: #4F4E49; }
+.steps3 i { font-style: normal; width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 600 11px/1 'Inter', sans-serif; background: #EFECE4; color: #45574C; }
+.steps3 .on i { background: #45574C; color: #fff; } .steps3 .dn i { background: #E4F2E7; color: #1E6B30; }
 /* WhatsApp «Próximamente» (19 nov): una franja con «Avísame» mientras se afina el WhatsApp de pago */
 .soon { border: 1.5px dashed #B9C7BC; border-radius: 8px; padding: 7px 7px 7px 12px; display: flex; align-items: center; gap: 8px; background: #FAFAF6; }
 .soon .t { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 7px; font: 600 14px/1.2 'Inter', sans-serif; color: #4F4E49; min-width: 0; } .soon .t svg { color: #1E6B30; flex: none; }
@@ -524,6 +528,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
           <p class="err" id="ask-err" role="alert" hidden></p>
         </div>
         <div class="pline" id="ask-bf" hidden><div class="l"><span class="tag">Black Friday</span><span>Cada consulta, hasta el 1 dic</span></div><div class="r"><s>9 €</s><b>1 €</b></div></div>
+        <div class="steps3" id="ask-steps" hidden><div class="dn"><i><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></i>Escribes tu duda</div><div class="on"><i>2</i>Confirmas el pago de 1 € en página segura</div><div><i>3</i><span id="ask-step3">Te responden en menos de 24 h</span></div></div>
         <button class="btn btn-p" type="submit" id="ask-send"><span id="ask-send-t">Enviar gratis</span><small id="ask-send-s">Te responden por correo en menos de 24&nbsp;h</small></button>
         <ul class="perks" aria-label="Condiciones"><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin tarjeta de crédito</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin registro</li></ul>
         <button type="button" class="linkplans" id="ask-plans" hidden>Ver planes</button>
@@ -892,7 +897,10 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     const a = document.getElementById('annc-t'); if (a) a.innerHTML = 'Black Friday: consulta a 1 € · <u>Pregunta ahora</u>';
     $('ask-bf').hidden = false;
     const pk = document.querySelector('.perks li'); if (pk) pk.lastChild.textContent = 'Pago seguro';
-    $('ask-send-t').textContent = 'Enviar'; $('ask-send-s').textContent = 'Pagas 1 € al enviar';
+    $('ask-send-t').textContent = 'Continuar al pago · 1 €'; $('ask-send-s').textContent = 'No se cobra nada hasta que lo confirmes';
+    $('ask-steps').hidden = false;
+    // Arriba: «Preguntar · 1 €» en vez de «Abrir la app» (lleva al formulario)
+    const to0 = $('top-open'); if (to0) { to0.textContent = 'Preguntar · 1 €'; to0.href = '#ask'; to0.dataset.goask = ''; to0.dataset.cta = 'clic:top_preguntar_bf'; }
     // Que nada más en la página diga «gratis» para las consultas (Noza, 21 nov)
     const pr = document.getElementById('precio');
     if (pr) {
@@ -928,7 +936,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     }
     $('ask-topro').hidden = !to;
     box.classList.toggle('pickpro', pickOpen || !to);
-    if (opened && !busy && BF) { $('ask-send-t').textContent = `Enviar${to ? ` a ${PROS[to].name}` : ''}`; $('ask-send-s').textContent = 'Pagas 1 € al enviar'; }
+    if (BF) $('ask-step3').textContent = `${to ? `${PROS[to].name} te responde` : 'Te responden'} en menos de 24 h`;
     if (opened && !busy && !BF) $('ask-send-t').textContent = `Enviar${store.get('hera-free-left') === '0' || (to && !['q7m', 'k2v'].includes(viaSrc().via) && (store.get('hera-free-pros') || '').split(',').includes(to)) ? '' : ' gratis'}${to ? ` a ${PROS[to].name}` : ''}`;
     if (opened && !busy && !BF) $('ask-send-s').textContent = `Te ${to ? 'responde' : 'responden'} por correo en menos de 24\u00a0h`;
     chat?.sync();

@@ -40,7 +40,7 @@ const eurText = (eur) => `${Number(eur).toFixed(2).replace('.', ',').replace(/,0
 const WA_PRICE = eurText(PLANS.whatsapp.eur);
 /** Precio de WhatsApp para quien visita: la mitad en Argentina (por la IP) */
 const waEur = (request) => (request.cf?.country === 'AR' && PLANS.whatsapp.ar ? PLANS.whatsapp.ar.eur : PLANS.whatsapp.eur);
-import { PLANS, VIDEO_PROS, paymentsOn, createCheckout, sessionStatus, handleWebhook, getBalance, spendCredit, markDay, waCode } from './stripe.js';
+import { PLANS, VIDEO_PROS, paymentsOn, createCheckout, sessionStatus, handleWebhook, getBalance, spendCredit, markDay, waCode, isAcomp } from './stripe.js';
 import { newThreadId, relayAddress, parseRelayAddress, sealEmail, openEmail, saveThread, loadThread, parseIncoming, isAutomatic } from './relay.js';
 
 /** Enlaces de amigas: consultas gratis y hasta cuándo (Noza, 20 nov) */
@@ -100,14 +100,14 @@ export function proEmail(pro, q, id = '', relay = true, links = []) {
   // Prioritaria: plazo de 6 h, con la hora límite (Madrid) en el asunto
   const due = q.prio ? new Date(Date.now() + 6 * 3600000).toLocaleTimeString('es-ES', { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit' }) : '';
   const subject = `${q.prio ? `PRIORITARIA · responder antes de las ${due} · ` : ''}Consulta Hera${id ? ` #${id.toUpperCase()}` : ''}${q.context ? ` · ${q.context}` : ''}${q.via ? ` · vía ${q.via}` : ''}`;
-  const html = shell(`<p>Nueva consulta para <b>${esc(pro.name)}</b>.${q.via ? ` Llegó desde ${esc(q.via)}.` : ''}</p>${q.prio ? `<p style="background:#FFF6D6;border-radius:8px;padding:8px 12px;font-size:14px"><b>Consulta prioritaria (29 €): responde antes de las ${due}</b> (plazo de 6 h). Si te adjunta analíticas o informes, revísalos y dile qué pruebas pedir y cuándo ir a consulta.</p>` : ''}
+  const html = shell(`<p>Nueva consulta para <b>${esc(pro.name)}</b>.${q.via ? ` Llegó desde ${esc(q.via)}.` : ''}</p>${q.prio ? `<p style="background:#FFF6D6;border-radius:8px;padding:8px 12px;font-size:14px"><b>${q.acomp ? 'Acompañamiento mensual' : 'Consulta prioritaria (29 €)'}: responde antes de las ${due}</b> (plazo de 6 h). Si te adjunta analíticas o informes, revísalos y dile qué pruebas pedir y cuándo ir a consulta.</p>` : ''}
 <div style="background:#F6E0E2;border-radius:10px;padding:14px;margin:12px 0">${nl2br(q.text)}</div>
 ${q.context ? `<p style="font-size:13px;color:#6E6C67">Sobre: ${esc(q.context)}</p>` : ''}
 ${q.situation ? `<p style="font-size:13px;color:#6E6C67">Situación: ${nl2br(q.situation)}</p>` : ''}
 ${q.files ? `<p style="font-size:13px;color:#6E6C67">Incluye ${q.files} ${q.files === 1 ? 'archivo adjunto' : 'archivos adjuntos'}. Hera no los guarda: solo están en este correo.</p>` : ''}
 ${relay ? `<p style="font-size:13px;color:#6E6C67"><b>Para contestar, responde a este correo</b> desde el móvil o el ordenador. Tu respuesta le llegará a la usuaria desde ${esc(pro.email)}: tu correo personal no se muestra. Si ella vuelve a escribir, te llegará en esta misma conversación. Plazo comprometido: 24 h.</p>`
     : `<p style="font-size:13px;color:#6E6C67">Responde a este correo para contestar directamente a la usuaria (${esc(q.email)}). Plazo comprometido: 24 h.</p>`}${reassignHtml(links)}`);
-  const text0 = `${q.prio ? `CONSULTA PRIORITARIA (29 €): responde antes de las ${due} (plazo de 6 h).\n\n` : ''}Nueva consulta para ${pro.name}\n\n${q.text}\n\n${q.context ? `Sobre: ${q.context}\n` : ''}${q.situation ? `Situación: ${q.situation}\n` : ''}\n${relay ? `Para contestar, responde a este correo: tu respuesta le llegará a la usuaria desde ${pro.email}, sin mostrar tu correo personal. Plazo: 24 h.` : `Responde a este correo para contestar a la usuaria (${q.email}).`}`;
+  const text0 = `${q.prio ? `${q.acomp ? 'ACOMPAÑAMIENTO MENSUAL' : 'CONSULTA PRIORITARIA (29 €)'}: responde antes de las ${due} (plazo de 6 h).\n\n` : ''}Nueva consulta para ${pro.name}\n\n${q.text}\n\n${q.context ? `Sobre: ${q.context}\n` : ''}${q.situation ? `Situación: ${q.situation}\n` : ''}\n${relay ? `Para contestar, responde a este correo: tu respuesta le llegará a la usuaria desde ${pro.email}, sin mostrar tu correo personal. Plazo: 24 h.` : `Responde a este correo para contestar a la usuaria (${q.email}).`}`;
   const text = text0 + reassignText(links);
   return { subject, html, text };
 }
@@ -156,6 +156,22 @@ export function videoPaidEmail(pro, plan, invite = null) {
 <p style="font-size:13px;color:#6E6C67;margin-top:16px">Puedes cambiarla o cancelarla hasta 1 hora antes y te devolvemos el dinero entero. La llamada no se graba.</p>
 <p style="font-size:13px;color:#6E6C67">No es un servicio de urgencias. Si algo no va bien, llama al 112 o acude a tu centro de salud.</p>${invite ? invite.html : ''}`);
   const text = `Hola,\n\nHemos recibido el pago de tu ${what} con ${pro.name}, ${pro.role} (${plan.eur} €).\n\nSIGUIENTE PASO: responde a este correo con 3 franjas que te vengan bien en los próximos días (por ejemplo: «martes por la tarde, jueves de 10 a 12, viernes a primera hora»). Si quieres, añade una línea sobre lo que quieres consultar.\n\nDespués:\n1. En menos de 24 h laborables te proponemos día y hora.\n2. Te enviamos el enlace de Google Meet.\n3. A la hora acordada, entra en el enlace (en el ordenador, en el navegador; en el móvil, con la app de Google Meet).\n\nPuedes cambiarla o cancelarla hasta 1 hora antes y te devolvemos el dinero entero. La llamada no se graba.\nNo es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.${invite ? `\n\n${invite.text}` : ''}`;
+  return { subject, html, text };
+}
+
+/** Acompañamiento mensual (22 nov): bienvenida, qué incluye y cómo pedir la videollamada del mes */
+export function acompPaidEmail(pro, plan) {
+  const subject = `Bienvenida al acompañamiento con ${pro.short}`;
+  const item = (t, d) => `<tr><td style="vertical-align:top;padding:7px 10px 7px 0;color:#45574C;font-weight:700">✓</td><td style="padding:7px 0;font-size:14px;color:#2F3631"><b>${t}</b><br><span style="color:#4F4E49">${d}</span></td></tr>`;
+  const html = shell(`<p>Hola,</p>
+<p>Ya tienes el <b>acompañamiento mensual</b> con <b>${esc(pro.name)}, ${esc(pro.role)}</b> (${plan.eur} € al mes, sin permanencia).</p>
+<table style="border-collapse:collapse;margin:8px 0 4px">${item('Consultas por escrito, con respuesta en menos de 6 h', 'Escríbelas como siempre en hera-gine.com con este mismo correo: ya van marcadas como prioritarias.')}${item('Una videollamada de 30 minutos al mes', 'Responde a este correo con 3 franjas que te vengan bien y te proponemos día y hora en menos de 24 h laborables.')}${item(`WhatsApp con ${esc(pro.short)}`, 'En menos de 24 h te escribimos desde el número de Hera para que lo guardes. Para dudas rápidas, de 9:00 a 21:00 (hora de España).')}</table>
+<div style="background:#F6E0E2;border-radius:10px;padding:14px 16px;margin:14px 0">
+<p style="margin:0 0 6px;font-family:Georgia,serif;font-size:19px;color:#45574C">Siguiente paso: responde a este correo</p>
+<p style="margin:0;font-size:14px">Dinos <b>3 franjas</b> para tu videollamada de este mes y, si quieres, una línea sobre tu momento (embarazo, posparto, menopausia…).</p></div>
+<p style="font-size:13px;color:#6E6C67;margin-top:16px">Sin permanencia: lo dejas cuando quieras respondiendo a este correo. Si no quedas satisfecha, te devolvemos el dinero.</p>
+<p style="font-size:13px;color:#6E6C67">No es un servicio de urgencias. Si algo no va bien, llama al 112 o acude a tu centro de salud.</p>`);
+  const text = `Hola,\n\nYa tienes el acompañamiento mensual con ${pro.name}, ${pro.role} (${plan.eur} € al mes, sin permanencia).\n\nQué incluye:\n- Consultas por escrito, con respuesta en menos de 6 h. Escríbelas como siempre en hera-gine.com con este mismo correo.\n- Una videollamada de 30 minutos al mes. Responde a este correo con 3 franjas y te proponemos día y hora en menos de 24 h laborables.\n- WhatsApp con ${pro.short}: en menos de 24 h te escribimos desde el número de Hera. Para dudas rápidas, de 9:00 a 21:00 (hora de España).\n\nSIGUIENTE PASO: responde a este correo con 3 franjas para tu videollamada de este mes.\n\nSin permanencia: lo dejas cuando quieras respondiendo a este correo. Si no quedas satisfecha, te devolvemos el dinero.\nNo es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.`;
   return { subject, html, text };
 }
 
@@ -223,7 +239,7 @@ export const BF_END = Date.parse('2026-12-01T23:59:59+01:00');
 // Noza, 22 nov: el 1 € deja de ofrecerse hoy (ver BF_OFFER_END_MS para pruebas). Las consultas guardadas antes lo mantienen hasta BF_END
 export const BF_OFFER_END = Date.parse('2026-11-22T20:15:00+01:00');
 const holdSig = async (env, id) => (await hmac(env.HASH_SALT, `hold:${id}`)).slice(0, 16);
-const holdLinks = async (env, id) => { const s = await holdSig(env, id); return ({ ...Object.fromEntries(['suelta', 'bono', 'mensual', 'bf1', 'prio29'].map((p) => [p, `${WORKER_URL}/pagar?c=${id}&s=${s}&plan=${p}`])) }); };
+const holdLinks = async (env, id) => { const s = await holdSig(env, id); return ({ ...Object.fromEntries(['suelta', 'bono', 'mensual', 'acomp', 'bf1', 'prio29'].map((p) => [p, `${WORKER_URL}/pagar?c=${id}&s=${s}&plan=${p}`])) }); };
 
 // reminder: false (correo al guardar), 1 (primer recordatorio, 1 h) o 2 (último, 24 h). true cuenta como 1.
 export function holdEmail(pro, text, links, reminder = false, others = '', offer = '') {
@@ -241,13 +257,13 @@ export function holdEmail(pro, text, links, reminder = false, others = '', offer
   const how = '<p style="font-size:14px">Se paga en un momento con tarjeta, Apple Pay o Google Pay. Todavía no ha llegado a nadie: en cuanto pagues, se la enviamos.</p>';
   const help = `<p style="font-size:14px">¿Te quedó alguna duda antes de pagar o has tenido algún problema con el pago? Responde a este correo y lo resolvemos.</p>`;
   const foot = last ? `Es el último recordatorio. Si no pagas, la borramos en ${daysLeft(HOLD_DAYS - 1)}.` : `Te lo recordaremos una vez más mañana. Si no pagas, la borramos en ${daysLeft(HOLD_DAYS)}.`;
-  const more = bf || prio ? '' : `<p style="font-size:14px">¿Vas a preguntar más veces? <a href="${links.bono}" style="color:#45574C;font-weight:600">Bono de 5 consultas por 35 €</a> o <a href="${links.mensual}" style="color:#45574C;font-weight:600">ilimitado por 15 € al mes</a>.</p>`;
+  const more = bf || prio ? '' : `<p style="font-size:14px">¿Vas a preguntar más veces? <a href="${links.bono}" style="color:#45574C;font-weight:600">Bono de 5 consultas por 35 €</a> o <a href="${links.acomp}" style="color:#45574C;font-weight:600">acompañamiento mensual por 99 €</a> (respuesta en menos de 6 h, videollamada y WhatsApp).</p>`;
   const html = reminder
     ? shell(`<p>Hola,</p><p>Tu consulta para ${esc(pro.short)} sigue guardada y esperando el pago${bf ? ' (1 €, oferta de Black Friday hasta el 1 de diciembre)' : prio ? ' (consulta prioritaria, 29 €)' : ''}:</p>${quote}${btn}${how}${help}<p style="font-size:13px;color:#6E6C67">${foot}</p>`)
     : shell(`<p>Hola,</p><p>${esc(why)}, así que hemos <b>guardado tu consulta</b> para ${esc(pro.name)}, ${esc(pro.role)}:</p>${quote}<p>Para que le llegue, solo falta el pago. En cuanto pagues, se la enviamos y te responde en menos de ${prio ? '6' : '24'} h; no tienes que volver a escribirla.</p>${btn}${more}<p style="font-size:13px;color:#6E6C67">Si no pagas en ${HOLD_DAYS} días, borramos tu consulta. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.</p>`);
   const text2 = reminder
     ? `Hola,\n\nTu consulta para ${pro.short} sigue guardada y esperando el pago:\n\n«${excerpt}»\n\nPagar ${price} y enviarla: ${link}\n\nSe paga en un momento con tarjeta, Apple Pay o Google Pay. Todavía no ha llegado a nadie: en cuanto pagues, se la enviamos.\n¿Te quedó alguna duda antes de pagar o has tenido algún problema con el pago? Responde a este correo y lo resolvemos.\n\n${foot}`
-    : `Hola,\n\n${why}, así que hemos guardado tu consulta para ${pro.name}, ${pro.role}:\n\n«${excerpt}»\n\nPara que le llegue, solo falta el pago. En cuanto pagues, se la enviamos; no tienes que volver a escribirla.\n\nPagar ${price} y enviarla: ${link}${bf || prio ? '' : `\nBono de 5 por 35 €: ${links.bono}\nIlimitado por 15 € al mes: ${links.mensual}`}\n\nSi no pagas en ${HOLD_DAYS} días, borramos tu consulta. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.`;
+    : `Hola,\n\n${why}, así que hemos guardado tu consulta para ${pro.name}, ${pro.role}:\n\n«${excerpt}»\n\nPara que le llegue, solo falta el pago. En cuanto pagues, se la enviamos; no tienes que volver a escribirla.\n\nPagar ${price} y enviarla: ${link}${bf || prio ? '' : `\nBono de 5 por 35 €: ${links.bono}\nAcompañamiento mensual por 99 € (respuesta en menos de 6 h, videollamada y WhatsApp): ${links.acomp}`}\n\nSi no pagas en ${HOLD_DAYS} días, borramos tu consulta. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.`;
   return { subject, html, text: text2 };
 }
 
@@ -486,6 +502,18 @@ const handler = {
             `Consulta por WhatsApp pagada (${priceTxt}${s.livemode ? '' : ', modo de prueba'}).\n\nCódigo: ${code}\nMóvil: ${tel ? maskPhone(tel) : 'no lo dio'}\n\nYa está en el panel («Consultas por WhatsApp», Pagada · ${code}). Cuando te escriba con ese código, pásale la duda a la profesional que elija.`, sendMail);
           return;
         }
+        if (PLANS[plan].acomp) {
+          const pro = PROS[s.metadata?.pro] || PROS.gineco;
+          const to = s.customer_details?.email || s.customer_email;
+          const tel = normalizePhone(s.customer_details?.phone || '');
+          if (to) await sendMail(env, { to, replyTo: 'contacto@hera-gine.com', ...acompPaidEmail(pro, PLANS[plan]) });
+          if (s.metadata?.src === 'ads') { const ak = /_latam$/.test(String(s.metadata?.camp || '')) ? 'latam' : 'anuncio'; await bump(env, `${ak}_pago:${plan}`); await bump(env, `${ak}_eur`, madridDay(), PLANS[plan].eur); }
+          if (/^[a-z0-9]{8}$/.test(String(s.metadata?.hold || ''))) await deliverHold(env, s.metadata.hold, ctx);
+          const dash = `https://dashboard.stripe.com/${s.livemode ? '' : 'test/'}${s.subscription ? `subscriptions/${typeof s.subscription === 'string' ? s.subscription : s.subscription.id}` : 'subscriptions'}`;
+          await notify(env, `Pago · Acompañamiento mensual con ${pro.short} · ${PLANS[plan].eur} €/mes${s.metadata?.src === 'ads' ? ' · desde anuncio' : ''}${s.livemode ? '' : ' · prueba'}`,
+            `Nueva suscripción al acompañamiento mensual con ${pro.name} (${PLANS[plan].eur} € al mes${s.livemode ? '' : ', modo de prueba'}).\n\nMóvil: ${tel ? maskPhone(tel) : 'no lo dio'} (completo en Stripe)\n\nQué toca:\n1. Escribirle por WhatsApp desde el número de Hera en menos de 24 h para que lo guarde (de 9:00 a 21:00).\n2. Cuando responda al correo de bienvenida con 3 franjas, cuadrar la videollamada de este mes con ${pro.short} y mandarle el enlace de Meet.\n3. Sus consultas por escrito ya llegan marcadas con respuesta en menos de 6 h.\n\nSi pide que le devolvamos el dinero: reembolso del pago y cancelar la suscripción, las dos cosas en Stripe.\n\nVer en Stripe: ${dash}`, sendMail);
+          return;
+        }
         if (PLANS[plan].video) {
           const pro = PROS[s.metadata?.pro] || PROS.matrona;
           const to = s.customer_details?.email || s.customer_email;
@@ -507,7 +535,7 @@ const handler = {
         await notify(env, `Pago · ${PLANS[plan].label} · ${PLANS[plan].eur} €${s.metadata?.src === 'ads' ? ' · desde anuncio' : ''}${s.livemode ? '' : ' · prueba'}`,
           `${PLANS[plan].label}: ${PLANS[plan].eur} €${s.livemode ? '' : ' (modo de prueba, sin dinero real)'}\n${hora}\n\nVer en Stripe: ${dash}`, sendMail);
       },
-      cancelled: async () => { await bump(env, 'pago:baja_mensual'); },
+      cancelled: async (plan) => { await bump(env, plan === 'acomp' ? 'pago:baja_acomp' : 'pago:baja_mensual'); },
       // Pago que caduca sin pagar: cuenta para el embudo y sale en el recorrido de esa persona (si se sabe quién era)
       expired: async (plan, s) => {
         await bump(env, `pago_caducado:${plan}`);
@@ -723,7 +751,7 @@ const handler = {
     const noFree = env.NO_FREE === '1' && !friend && !freeVia;
     // Consulta prioritaria (Noza, 21 nov): campaña propia «prioritaria», sin gratis, 29 € y respuesta en menos de 6 h
     // y prueba de precio 9 € / 29 € (PRICE_AB="1", Noza 22 nov; apagada hasta que las profesionales confirmen las 6 h)
-    const prio = !friend && body.ab === 'prio' && ((body.src === 'ads' && String(body.camp || '') === 'prioritaria') || (env.PRICE_AB === '1' && !freeVia));
+    let prio = !friend && body.ab === 'prio' && ((body.src === 'ads' && String(body.camp || '') === 'prioritaria') || (env.PRICE_AB === '1' && !freeVia));
     // Black Friday (hasta el 1 dic): 1 € por consulta. Con NO_FREE, para todos; antes, solo la prueba de anuncios (ab=bf)
     const bf = !friend && !freeVia && !prio && Date.now() < Math.min(BF_END, Number(env.BF_OFFER_END_MS) || BF_OFFER_END) && (noFree || (body.ab === 'bf' && body.src === 'ads'));
     const limit = friend ? friend.free : bf || prio || noFree ? 0 : Number(env.FREE_LIMIT || 2);
@@ -787,13 +815,13 @@ const handler = {
       if (!PLANS[body.plan]) return reply(400, { error: 'bad_plan' });
       if (body.plan === 'prio29' && (!/^[a-z0-9]{8}$/.test(String(body.hold || '')) || !(await env.KV.get(`hold:${body.hold}`, 'json'))?.prio)) return reply(400, { error: 'bad_plan' });
       if (body.plan === 'bf1' && (!/^[a-z0-9]{8}$/.test(String(body.hold || '')) || Date.now() >= BF_END || !(await env.KV.get(`hold:${body.hold}`, 'json'))?.bf)) return reply(400, { error: 'bad_plan' });
-      const vpro = body.plan === 'lactancia' ? 'matrona' : PLANS[body.plan].video ? body.pro : '';
-      if (PLANS[body.plan].video && !VIDEO_PROS.includes(vpro)) return reply(400, { error: 'bad_pro' });
+      const vpro = body.plan === 'lactancia' ? 'matrona' : PLANS[body.plan].video || PLANS[body.plan].acomp ? body.pro : '';
+      if ((PLANS[body.plan].video || PLANS[body.plan].acomp) && !VIDEO_PROS.includes(vpro)) return reply(400, { error: 'bad_pro' });
       if (await rateLimited(env, request.headers.get('CF-Connecting-IP'))) return reply(429, { error: 'rate' });
       try {
         // Quién va a Stripe (vera-backlog: embudo de pago): la misma etiqueta anónima del día que sus otros eventos
         const who = await personTag(env, request, madridDay(), body.p);
-        const checkoutUrl = await createCheckout(env, { email: String(body.email).trim(), plan: body.plan, h: await hmac(env.HASH_SALT, norm), origin, back: ['web', 'video'].includes(body.back) ? body.back : 'app', ad: body.src === 'ads', pro: vpro, camp: /^[a-z0-9_]{1,24}$/.test(String(body.camp || '')) ? body.camp : '', hold: /^[a-z0-9]{8}$/.test(String(body.hold || '')) && await env.KV.get(`hold:${body.hold}`) ? body.hold : '', p: who });
+        const checkoutUrl = await createCheckout(env, { email: String(body.email).trim(), plan: body.plan, h: await hmac(env.HASH_SALT, norm), origin, back: ['web', 'video', 'consultas'].includes(body.back) ? body.back : 'app', ad: body.src === 'ads', pro: vpro, camp: /^[a-z0-9_]{1,24}$/.test(String(body.camp || '')) ? body.camp : '', hold: /^[a-z0-9]{8}$/.test(String(body.hold || '')) && await env.KV.get(`hold:${body.hold}`) ? body.hold : '', p: who });
         // Modo equipo: el pago se abre igual, pero no cuenta en métricas (antes sumaba en «Fueron a Stripe»)
         if (body.team !== true) {
           await bump(env, `pago_inicio:${body.plan}`);
@@ -857,6 +885,9 @@ const handler = {
       // Lo pagado (stripe.js). Ilimitado de pago: uso razonable, una consulta nueva al día (las de beta no tienen tope)
       const bal = env.STRIPE_SECRET_KEY ? await getBalance(env, h) : { credits: 0, sub: false, day: null };
       const subscriber = !beta && bal.sub;
+      // Acompañamiento mensual (22 nov): sus consultas van con respuesta en menos de 6 h y sin el tope de una al día
+      const acomp = subscriber && await isAcomp(env, h);
+      if (acomp) prio = true;
       const unlimited = beta || subscriber;
       // Se le olvidó algo (Noza, 21 nov): si vuelve a escribir al mismo profesional en 30 min y aún no le han respondido,
       // se añade a su consulta (misma conversación) en vez de abrir otra y gastar otra consulta.
@@ -879,7 +910,7 @@ const handler = {
         }
       }
       const pay = paymentsOn(env, body) && !!env.STRIPE_SECRET_KEY;
-      if (!test && subscriber && bal.day === madridDay()) return reply(200, { limit: true, daily: true, freeLimit: limit, ...(env.STRIPE_PORTAL_URL ? { portal: env.STRIPE_PORTAL_URL } : {}) });
+      if (!test && subscriber && !acomp && bal.day === madridDay()) return reply(200, { limit: true, daily: true, freeLimit: limit, ...(env.STRIPE_PORTAL_URL ? { portal: env.STRIPE_PORTAL_URL } : {}) });
       const credits = unlimited ? 0 : bal.credits;
       // 2 gratis en total, como mucho 1 por especialista (Noza, 16 nov). fp = especialistas ya usadas gratis (los registros antiguos no lo tienen)
       const fp = Array.isArray(rec.fp) ? rec.fp : [];
@@ -912,13 +943,16 @@ const handler = {
         return reply(200, { limit: true, used: rec.n, freeLimit: limit, ...(pay ? { pay: true } : {}), ...(samePro ? { same: others } : {}) });
       }
       if (!test && await rateLimited(env, request.headers.get('CF-Connecting-IP'))) return reply(429, { error: 'rate' });
+      // La marca de 6 h solo va con lo pagado como prioritaria (la guardada de 29 €, al llegar tras el pago) o con el acompañamiento;
+      // quien ve la versión de 29 € pero envía con su bono o su ilimitado va con el plazo normal de 24 h
+      if (!acomp && body.held !== true) prio = false;
 
       // Hilo: el profesional y la usuaria se responden a través de direcciones de Hera de un solo uso
       const id = newThreadId();
       const bcc = test ? undefined : env.COPY_TO || undefined; // COPY_TO (secreto): copia oculta de cada consulta mientras se prueba
       // RELAY="1": respuestas a través de Hera (necesita la regla catch-all → Worker en Email Routing). Las pruebas siempre lo usan.
       const relay = env.RELAY === '1' || !!test;
-      const pm = proEmail(pro, { ...q, via: viaName, prio }, id, relay, relay && !test ? await reassignLinks(env, id, pro.key) : []);
+      const pm = proEmail(pro, { ...q, via: viaName, prio, acomp }, id, relay, relay && !test ? await reassignLinks(env, id, pro.key) : []);
       // Con adjuntos, la copia de control va aparte y sin los archivos: solo los recibe la profesional
       const proReply = relay ? await relayAddress(env, 'p', id) : q.email;
       const sent = await sendMail(env, { to: pro.email, replyTo: proReply, ...pm, attachments: files });
@@ -984,7 +1018,7 @@ const handler = {
         ? (creditsLeft === 0 ? 'Era la última consulta de tu saldo' : `Te ${creditsLeft === 1 ? 'queda 1 consulta' : `quedan ${creditsLeft} consultas`} en tu saldo`) : '';
       const usedPros = test ? fp : (!unlimited && !paid && !fp.includes(body.to) ? [...fp, body.to] : fp);
       const nextWith = !friend && remaining > 0 && usedPros.length ? Object.values(PROS).filter((x) => !usedPros.includes(x.key)).map((x) => x.short).join(' o ') : '';
-      const cm = confirmEmail(pro, { ...q, prio }, remaining, id, unlimited, subscriber ? 'Tienes el plan ilimitado: una consulta nueva al día' : paidLeft || (nextWith && remaining === 1 ? `Te queda 1 consulta gratuita, con ${nextWith}` : ''));
+      const cm = confirmEmail(pro, { ...q, prio }, remaining, id, unlimited, acomp ? 'Tienes el acompañamiento mensual: te responden en menos de 6 h' : subscriber ? 'Tienes el plan ilimitado: una consulta nueva al día' : paidLeft || (nextWith && remaining === 1 ? `Te queda 1 consulta gratuita, con ${nextWith}` : ''));
       const sentU = await sendMail(env, { to: q.email, replyTo: relay ? await relayAddress(env, 'u', id) : pro.email, ...cm });
       // Sin relay no hay hilo que seguir (ni recordatorios): no se guarda nada más
       if (relay) {
@@ -992,7 +1026,7 @@ const handler = {
       }
       // «Envíaselo a alguien» en la pantalla de enviada: su enlace personal (invite.js), si quien llega pregunta, 1 consulta para ella
       const invite = relay && !test && body.team !== true ? await inviteCode(env, h, baseThread.u).catch(() => '') : '';
-      return reply(200, { ok: true, ...(invite ? { invite } : {}), remaining, freeLimit: limit, ...(nextWith ? { next: nextWith, fp: usedPros } : {}), ...(unlimited ? { unlimited: true } : {}), ...(paid || credits > 0 ? { credits: creditsLeft } : {}), ...(relay ? { id } : {}), dryRun: env.DRY_RUN === '1' });
+      return reply(200, { ok: true, ...(invite ? { invite } : {}), remaining, freeLimit: limit, ...(nextWith ? { next: nextWith, fp: usedPros } : {}), ...(unlimited ? { unlimited: true } : {}), ...(acomp ? { acomp: true } : {}), ...(paid || credits > 0 ? { credits: creditsLeft } : {}), ...(relay ? { id } : {}), dryRun: env.DRY_RUN === '1' });
     }
     return reply(404, { error: 'not_found' });
   },

@@ -760,3 +760,43 @@ console.log('consultas: OK');
   globalThis.fetch = realFetch; env.PAYMENTS = P0; env.STRIPE_SECRET_KEY = K0;
   console.log('Precio de 29 € creado si falta: OK');
 }
+
+// Acompañamiento mensual (22 nov): precio mensual de 99 € creado si falta, con la profesional y el móvil en el pago
+{
+  const P0 = env.PAYMENTS, K0 = env.STRIPE_SECRET_KEY;
+  env.PAYMENTS = 'on'; env.STRIPE_SECRET_KEY = 'sk_test_x';
+  const realFetch = globalThis.fetch; const calls = []; let sess = null;
+  globalThis.fetch = async (u, o) => {
+    const url = String(u);
+    if (url.startsWith('https://api.stripe.com/v1/prices?')) return new Response(JSON.stringify({ data: [] }), { status: 200 });
+    if (url === 'https://api.stripe.com/v1/products') return new Response(JSON.stringify({ id: 'prod_a' }), { status: 200 });
+    if (url === 'https://api.stripe.com/v1/prices') { const b = new URLSearchParams(o.body); calls.push(`${b.get('unit_amount')}/${b.get('recurring[interval]')}`); return new Response(JSON.stringify({ id: 'price_acomp' }), { status: 200 }); }
+    if (url === 'https://api.stripe.com/v1/checkout/sessions') { sess = new URLSearchParams(o.body); return new Response(JSON.stringify({ id: 'cs_a', url: 'https://checkout.stripe.com/a' }), { status: 200 }); }
+    return realFetch(u, o);
+  };
+  const r = await call('/checkout', { email: 'acomp@example.com', plan: 'acomp', pro: 'matrona', back: 'consultas' });
+  assert.match(r.j.url || '', /checkout\.stripe\.com/, JSON.stringify(r.j));
+  assert.deepEqual(calls, ['9900/month']);
+  assert.equal(sess.get('mode'), 'subscription'); assert.equal(sess.get('subscription_data[metadata][pro]'), 'matrona');
+  assert.equal(sess.get('phone_number_collection[enabled]'), 'true'); assert.match(sess.get('success_url'), /\/consultas\/\?pago=ok/);
+  const bad = await call('/checkout', { email: 'acomp@example.com', plan: 'acomp', back: 'consultas' });
+  assert.equal(bad.j.error, 'bad_pro', 'sin profesional no hay acompañamiento');
+  globalThis.fetch = realFetch; env.PAYMENTS = P0; env.STRIPE_SECRET_KEY = K0;
+  console.log('Acompañamiento: pago mensual: OK');
+}
+
+// Con el acompañamiento en vigor, la consulta llega a la profesional como prioritaria (6 h) y sin el tope de una al día
+{
+  const K0 = env.STRIPE_SECRET_KEY; env.STRIPE_SECRET_KEY = 'sk_test_x';
+  const DB0 = env.DB, KV0 = env.KV;
+  const future = new Date(Date.now() + 20 * 86400000).toISOString();
+  env.DB = { prepare: (sql) => { const st = DB0.prepare(sql); return { ...st, bind: (...a) => { const b = st.bind(...a); return Object.assign(Object.create(Object.getPrototypeOf(b) || Object.prototype), b, { first: sql.startsWith('SELECT n, until, sub_until') ? async () => ({ n: 0, until: null, sub_until: future, day: '2000-01-01' }) : b.first ? b.first.bind(b) : async () => null }); } }; } };
+  env.KV = Object.assign(Object.create(Object.getPrototypeOf(KV0) || Object.prototype), KV0, { get: (k, t) => (String(k).startsWith('acomp:') ? Promise.resolve('matrona') : KV0.get(k, t)) });
+  const s0 = sent.length;
+  const a = await call('/ask', { email: 'socia@example.com', to: 'matrona', text: 'Duda del acompañamiento', context: '' });
+  assert.ok(a.j.ok && a.j.unlimited, JSON.stringify(a.j));
+  const pm = sent.slice(s0).find((x) => /PRIORITARIA/.test(x.subject || ''));
+  assert.ok(pm, 'el correo a la profesional va como prioritario'); assert.match(pm.html, /Acompañamiento mensual/);
+  env.DB = DB0; env.KV = KV0; env.STRIPE_SECRET_KEY = K0;
+  console.log('Acompañamiento: consulta prioritaria: OK');
+}

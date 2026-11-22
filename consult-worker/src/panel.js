@@ -464,7 +464,7 @@ ${MODES.map(([m, t]) => `<div class="cv cv-${m}"><h3 class="fh">Personas · ${su
     if (n2 === 'consulta_guardada' && PRO_NAME[v2]) return `<b>envió a ${PRO_NAME[v2]} sin pagar</b>`;
     return ({ pregunta_portada: 'escribió', consulta_escribe: 'escribió', ejemplo_duda: 'tocó un ejemplo', consulta_ejemplo: 'tocó un ejemplo', correo_portada: 'puso el correo', consulta_correo: 'puso el correo',
       adjunto_portada: 'adjuntó un archivo', consulta_adjunto: 'adjuntó un archivo', elige_pro: 'cambió de profesional', intento_portada: 'pulsó enviar', consulta_intento: 'pulsó enviar',
-      consulta_abierta: 'abrió la consulta en la app', apertura: 'abrió la app', instalada: 'instaló la app', video_pagina: 'vio la videollamada', video_reserva: 'pulsó reservar videollamada', pago_hecho: '<b>pagó</b>', pago_elegido: 'eligió pagar', pago_abierto: '<b>fue a Stripe</b>', pago_cancelado: 'volvió de Stripe sin pagar', pago_caducado: 'dejó el pago a medias',
+      consulta_abierta: 'abrió la consulta en la app', apertura: 'abrió la app', instalada: 'instaló la app', video_pagina: 'vio la videollamada', consultas_pagina: 'vio la página de consultas', video_reserva: 'pulsó reservar videollamada', pago_hecho: '<b>pagó</b>', pago_elegido: 'eligió pagar', pago_abierto: '<b>fue a Stripe</b>', pago_cancelado: 'volvió de Stripe sin pagar', pago_caducado: 'dejó el pago a medias',
       limite_portada: 'agotó las gratuitas', consulta_limite: 'agotó las gratuitas', planes_abiertos: 'vio los planes', invitacion_vista: 'vio su enlace para invitar' })[n2]
       || (n2 === 'clic' && v2.startsWith('fallo_sin_correo') ? '<b>sin correo</b>' : n2 === 'seccion' && v2 === 'precio' ? 'vio precios' : n2 === 'seccion' && v2 === 'equipo' ? 'vio el equipo' : '');
   };
@@ -474,7 +474,7 @@ ${MODES.map(([m, t]) => `<div class="cv cv-${m}"><h3 class="fh">Personas · ${su
     if (p.src === 'inv') return ['Invitación', 'own'];
     return ['Sin etiqueta', 'ot'];
   };
-  const trips = people.filter((p) => has(p.v, ['portada', 'apertura', 'video_pagina'])).map((p) => {
+  const trips = people.filter((p) => has(p.v, ['portada', 'apertura', 'video_pagina', 'consultas_pagina'])).map((p) => {
     const seq = [...p.v].reverse();
     const steps = []; for (const r of seq) { const s2 = STEP(r.e); if (s2 && steps[steps.length - 1] !== s2) steps.push(s2); }
     const secs = Math.max(0, ...seq.filter((r) => r.e.startsWith('tiempo:')).map((r) => Number(r.e.slice(7)) || 0));

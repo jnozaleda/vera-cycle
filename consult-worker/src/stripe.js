@@ -21,7 +21,11 @@ export const PLANS = {
   // Consulta prioritaria (campaña propia «prioritaria», desde el 2 dic): 29 €, respuesta en menos de 6 h; solo para una consulta guardada
   prio29: { lookup: 'hera_prio29', mode: 'payment', credits: 1, label: 'Consulta prioritaria', eur: 29 },
   bono: { lookup: 'hera_bono5', mode: 'payment', credits: 5, label: 'Bono de 5 consultas', eur: 35 },
+  // Ya no se ofrece (22 nov): lo sustituye el acompañamiento. Se mantiene para quien lo tenga contratado
   mensual: { lookup: 'hera_mensual', mode: 'subscription', credits: 0, label: 'Ilimitado mensual', eur: 15 },
+  // Acompañamiento mensual (Noza, 22 nov): consultas por escrito con respuesta en menos de 6 h, una videollamada de 30 min al mes
+  // y WhatsApp con la profesional elegida (9:00–21:00, número de Hera). Sin permanencia; si no le convence, se le devuelve el dinero
+  acomp: { lookup: 'hera_acomp99', mode: 'subscription', credits: 0, label: 'Acompañamiento mensual', eur: 99, acomp: true },
   // Videollamadas (vera-backlog#86): no suman consultas; el pago dispara el correo con los pasos para elegir hora
   video: { lookup: 'hera_video30', mode: 'payment', credits: 0, label: 'Videollamada de 30 min', eur: 55, video: true },
   lactancia: { lookup: 'hera_lactancia90', mode: 'payment', credits: 0, label: 'Asesoría de lactancia (1 h 30)', eur: 99, video: true },
@@ -54,7 +58,10 @@ async function api(env, method, path, params) {
 }
 
 // Precios que el servicio crea solo si faltan en Stripe (mismos datos que tools/stripe-setup.mjs)
-const AUTO_PRICES = { hera_prio29: { name: 'Consulta prioritaria', desc: 'Una consulta por escrito con una profesional de Hera, con respuesta en menos de 6 horas.', amount: 2900 } };
+const AUTO_PRICES = {
+  hera_prio29: { name: 'Consulta prioritaria', desc: 'Una consulta por escrito con una profesional de Hera, con respuesta en menos de 6 horas.', amount: 2900 },
+  hera_acomp99: { name: 'Acompañamiento mensual', desc: 'Consultas por escrito con respuesta en menos de 6 horas, una videollamada de 30 minutos al mes y WhatsApp con tu profesional. Sin permanencia.', amount: 9900, month: true },
+};
 const priceCache = {};
 async function priceId(env, lookup) {
   if (priceCache[lookup]) return priceCache[lookup];
@@ -64,7 +71,7 @@ async function priceId(env, lookup) {
   const def = AUTO_PRICES[lookup];
   if (!id && def) {
     const product = await api(env, 'POST', 'products', { name: def.name, description: def.desc });
-    id = (await api(env, 'POST', 'prices', { product: product.id, currency: 'eur', unit_amount: String(def.amount), lookup_key: lookup, tax_behavior: 'inclusive' })).id;
+    id = (await api(env, 'POST', 'prices', { product: product.id, currency: 'eur', unit_amount: String(def.amount), lookup_key: lookup, tax_behavior: 'inclusive', ...(def.month ? { 'recurring[interval]': 'month' } : {}) })).id;
     console.log(`stripe: creado el precio ${lookup}`);
   }
   if (!id) throw new Error(`stripe: falta el precio ${lookup} (ejecuta tools/stripe-setup.mjs)`);
@@ -84,14 +91,14 @@ export async function createCheckout(env, { email, plan, h, origin, back, ad, pr
   // Vuelve al mismo sitio desde el que se pagó (la web real, o localhost en pruebas)
   // back = 'web': desde la portada, vuelve a la portada (?web=1 evita que salte a la app instalada)
   const root = origin && origin !== 'https://hera-gine.com' ? origin : APP_URL.replace(/\/app\/$/, '');
-  const ret = back === 'wa' ? `${root}/whatsapp/?` : back === 'video' ? `${root}/videollamada/?` : back === 'web' ? `${root}/?web=1&` : `${root}/app/?`;
+  const ret = back === 'wa' ? `${root}/whatsapp/?` : back === 'video' ? `${root}/videollamada/?` : back === 'consultas' ? `${root}/consultas/?` : back === 'web' ? `${root}/?web=1&` : `${root}/app/?`;
   const params = {
     mode: p.mode,
     'line_items[0][price]': await priceId(env, country === 'AR' && p.ar ? p.ar.lookup : p.lookup),
     ...(country === 'AR' && p.ar ? { 'metadata[pais]': 'AR' } : {}),
     'line_items[0][quantity]': '1',
     ...(email ? { customer_email: email } : {}),
-    ...(p.wa ? { 'phone_number_collection[enabled]': 'true' } : {}),
+    ...(p.wa || p.acomp ? { 'phone_number_collection[enabled]': 'true' } : {}),
     locale: 'es',
     success_url: `${ret}pago=ok&cs={CHECKOUT_SESSION_ID}`,
     // El plan vuelve en la dirección para contar «volvió de Stripe sin pagar» (pago_cancelado:plan)
@@ -107,7 +114,7 @@ export async function createCheckout(env, { email, plan, h, origin, back, ad, pr
     ...(ad && camp ? { 'metadata[camp]': camp } : {}),
     ...(hold ? { 'metadata[hold]': hold } : {}),
   };
-  if (p.mode === 'subscription') { params['subscription_data[metadata][h]'] = h; params['subscription_data[metadata][plan]'] = plan; }
+  if (p.mode === 'subscription') { params['subscription_data[metadata][h]'] = h; params['subscription_data[metadata][plan]'] = plan; if (pro) params['subscription_data[metadata][pro]'] = pro; }
   const s = await api(env, 'POST', 'checkout/sessions', params);
   return s.url;
 }
@@ -120,7 +127,12 @@ async function setSubscription(env, h, sub) {
   const until = new Date((periodEnd(sub) + SUB_GRACE_DAYS * 86400) * 1000).toISOString();
   await ensure(env, h);
   await env.DB.prepare('UPDATE saldo SET sub = ?2, sub_until = ?3 WHERE h = ?1').bind(h, sub.id, until).run();
+  // Acompañamiento: sus consultas van con respuesta en menos de 6 h (marca en KV hasta el fin del periodo pagado)
+  if (sub.metadata?.plan === 'acomp' && env.KV) await env.KV.put(acompKey(h), sub.metadata?.pro || '1', { expiration: Math.floor(Date.parse(until) / 1000) });
 }
+export const acompKey = (h) => `acomp:${h.slice(0, 24)}`;
+/** ¿Tiene el acompañamiento en vigor? */
+export const isAcomp = async (env, h) => !!(env.KV && await env.KV.get(acompKey(h)));
 
 /** Lo que tiene pagado esa huella: {credits, sub (ilimitado vigente), day} */
 export async function getBalance(env, h) {
@@ -176,6 +188,7 @@ export async function sessionStatus(env, cs, hooks) {
   if (PLANS[g.plan].wa) { out.wa = true; out.code = await waCode(s.id); }
   if (s.metadata?.hold) { out.held = true; out.pro = s.metadata?.pro || ''; }
   if (PLANS[g.plan].mode === 'subscription') { out.unlimited = true; if (env.STRIPE_PORTAL_URL) out.portal = env.STRIPE_PORTAL_URL; }
+  if (PLANS[g.plan].acomp) { out.acomp = true; out.pro = s.metadata?.pro || ''; }
   return out;
 }
 
@@ -233,7 +246,8 @@ export async function handleWebhook(env, request, hooks) {
       const h = o.metadata?.h;
       if (/^[a-f0-9]{64}$/.test(h || '')) {
         const r = await env.DB.prepare('UPDATE saldo SET sub_until = ?3 WHERE h = ?1 AND sub = ?2').bind(h, o.id, new Date().toISOString()).run();
-        if (r.meta?.changes) await hooks?.cancelled?.();
+        if (o.metadata?.plan === 'acomp' && env.KV) await env.KV.delete(acompKey(h));
+        if (r.meta?.changes) await hooks?.cancelled?.(o.metadata?.plan);
       }
     }
   } catch (e) { console.log(`webhook ${ev.type} ${e.message}`); return 500; }

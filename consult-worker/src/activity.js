@@ -65,6 +65,8 @@ export const EVENTS = {
   // Solo del servicio
   consulta: ['Envió una consulta a', false], // el equipo ya recibe la copia «Consulta · …» con el texto entero
   respondida: ['Respondida una consulta por', false], // sin aviso al momento: ya llega la copia de la respuesta (sale en el resumen de 3 h)
+  consultas_pagina: ['Vio la página de consultas y planes', false],
+  enviada_consultas: ['Envió una consulta desde la página de consultas', false],
   consulta_guardada: ['Envió la consulta y aún no ha pagado, para', false],
   consulta_anadida: ['Añadió algo a su consulta (dentro de los 30 min) para', false],
   gratuitas_agotadas: ['Intentó consultar con las gratuitas agotadas', true],

@@ -1303,7 +1303,7 @@ const NO_FREE = true;
 const PLANS_UI = [
   { k: 'bono', name: 'Bono de 5 consultas', price: '35 €', note: '7 € cada una · válido 12 meses' },
   { k: 'suelta', name: 'Consulta suelta', price: '9 €', note: 'Solo esta pregunta' },
-  { k: 'mensual', name: 'Ilimitado', price: '15 € / mes', note: 'Una consulta nueva al día · sin permanencia' },
+  { k: 'acomp', name: 'Acompañamiento mensual', price: '99 € / mes', note: 'Respuesta en menos de 6 h · videollamada y WhatsApp · sin permanencia' },
 ];
 
 /** Pantalla B con pagos: elegir plan; la pregunta escrita se guarda para enviarla al volver */
@@ -1313,7 +1313,7 @@ function askPayView(a) {
     <div class="limit-card stack-8">
       ${consultPair('sm')}
       ${a.result.early
-        ? `<div class="t-15 w-500 c-deep">Bono o plan ilimitado</div>
+        ? `<div class="t-15 w-500 c-deep">Bono o acompañamiento</div>
       <p class="t-13 lh-4 c-deep">Si aún te quedan consultas gratuitas, se usan primero: lo que compres queda para después. Tu pregunta queda guardada y la envías al volver.</p>`
         : a.result.held ? `<div class="t-15 w-500 c-deep">Tu consulta está guardada</div>
       <p class="t-13 lh-4 c-deep">${a.result.bf ? 'Con la oferta de Black Friday, cada consulta cuesta 1 € hasta el 1 de diciembre' : NO_FREE ? 'Cada consulta por escrito cuesta 9 € (con el bono, 7 €)' : `Ya has usado tus ${a.result.freeLimit || 2} consultas gratis`}. En cuanto pagues, se la enviamos a ${esc((CONSULTS[a.sentTo] || CONSULTS.gineco).short)}: no tienes que volver a escribirla. También te hemos enviado el enlace por correo; si no pagas en 7 días, la borramos.</p>`
@@ -1367,7 +1367,7 @@ function askLimitView(a) {
     <div class="limit-card stack-8">
       ${consultPair('sm')}
       <div class="t-15 w-500 c-deep">Has usado tus ${a.result.freeLimit || 2} consultas gratuitas</div>
-      <p class="t-13 lh-4 c-deep">Muy pronto podrás seguir preguntando a Gonzalo, Marina y Lucía: 9 € por consulta, bono de 5 por 35 € o ilimitado por 15 € al mes.</p>
+      <p class="t-13 lh-4 c-deep">Muy pronto podrás seguir preguntando a Gonzalo, Marina y Lucía: 9 € por consulta, bono de 5 por 35 € o acompañamiento mensual por 99 €.</p>
     </div>
     <p class="t-13 lh-4">Para seguir con una consulta anterior, responde al correo de la profesional: <b>no gasta consultas</b>.</p>
     ${notify}
@@ -1429,7 +1429,7 @@ function askSheet() {
   const paidBanner = !pd ? '' : pd.checking ? '<div class="pay-ok t-13">Comprobando el pago…</div>'
     : pd.error ? `<div class="pay-ok is-warn t-13 lh-4">No hemos podido confirmar el pago todavía. Si te han cobrado, envía la consulta en unos minutos o escríbenos a ${esc(CONTACT_EMAIL)}.</div>`
     : pd.held ? `<div class="pay-ok t-13 lh-4"><b>Pago hecho. Tu consulta ya ha llegado a ${esc((CONSULTS[pd.pro] || CONSULTS[a.to] || CONSULTS.gineco).short)}.</b> Te responderá por correo en menos de 24 h.</div>`
-    : `<div class="pay-ok t-13 lh-4"><b>Pago hecho.</b> ${pd.unlimited ? 'Tienes el plan ilimitado: una consulta nueva al día.' : `Tienes ${pd.credits === 1 ? '1 consulta pagada' : `${pd.credits} consultas pagadas`}.`} ${a.text ? 'Tu pregunta está aquí: revísala y envíala.' : 'Escribe tu pregunta y envíala.'}${pd.unlimited && pd.portal ? ` <a href="${esc(pd.portal)}" target="_blank" rel="noopener">Gestionar suscripción</a>` : ''}</div>`;
+    : `<div class="pay-ok t-13 lh-4"><b>Pago hecho.</b> ${pd.acomp ? 'Ya tienes el acompañamiento mensual: te responden en menos de 6 h. Mira tu correo para reservar la videollamada del mes.' : pd.unlimited ? 'Tienes el plan ilimitado: una consulta nueva al día.' : `Tienes ${pd.credits === 1 ? '1 consulta pagada' : `${pd.credits} consultas pagadas`}.`} ${a.text ? 'Tu pregunta está aquí: revísala y envíala.' : 'Escribe tu pregunta y envíala.'}${pd.unlimited && pd.portal ? ` <a href="${esc(pd.portal)}" target="_blank" rel="noopener">Gestionar suscripción</a>` : ''}</div>`;
   const EG = {
     cycle: ['Se me ha retrasado la regla, ¿qué hago?', 'Tengo mucho dolor con la regla, ¿es normal?', '¿Qué anticonceptivo me conviene?'],
     pregnancy: ['¿Qué puedo tomar para el ardor?', 'Tengo un pequeño sangrado, ¿es normal?', '¿Puedo comer jamón?'],
@@ -1463,7 +1463,7 @@ function askSheet() {
     ${consultFormOn() ? `<label class="ask-check"><input type="checkbox" data-ask-follow ${a.follow ? 'checked' : ''}><span class="t-13 lh-4">Quiero seguimiento si la respuesta no me sirve.</span></label>` : ''}
     ${askVideoCard(to)}
     <div class="ask-more t-12 soft lh-4">
-      <a class="link-deep" href="../equipo.html">Conoce al equipo</a> · <button class="inline-link" data-action="ask-pay-preview">Ver bono e ilimitado</button>${to?.whatsapp ? ' · <button class="inline-link" data-action="ask-send" data-v="whatsapp">Escribir por WhatsApp</button>' : ''}
+      <a class="link-deep" href="../equipo.html">Conoce al equipo</a> · <button class="inline-link" data-action="ask-pay-preview">Ver bono y acompañamiento</button>${to?.whatsapp ? ' · <button class="inline-link" data-action="ask-send" data-v="whatsapp">Escribir por WhatsApp</button>' : ''}
     </div>
     ${mine.length ? `<details class="my-consults" data-id="my-consults" ${ui.openDetails.has('my-consults') ? 'open' : ''}><summary>Tus consultas (${mine.length})</summary>${consultList(10)}</details>` : ''}
     <p class="t-11 c-rose lh-3">Si es urgente, ve a urgencias.</p>
@@ -2906,7 +2906,7 @@ const actions = {
     try { localStorage.setItem(PAY_DRAFT_KEY, JSON.stringify({ to: a.sentTo || a.to, manual: a.manual, text: a.text, context: a.context, include: a.include, follow: !!a.follow, at: Date.now(), ...(a.result?.held ? { held: a.result.held } : {}) })); } catch { /* sin almacenamiento */ }
     try {
       const res = await fetch(`${CONSULT_API}/checkout`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: a.email.trim(), plan, ...(payTest() ? { payTest: true } : {}), ...adSrc(), ...(a.result?.held ? { hold: a.result.held } : {}) }) });
+        body: JSON.stringify({ email: a.email.trim(), plan, ...(plan === 'acomp' ? { pro: ['gineco', 'matrona', 'pediatra'].includes(a.sentTo || a.to) ? (a.sentTo || a.to) : 'gineco' } : {}), ...(payTest() ? { payTest: true } : {}), ...adSrc(), ...(a.result?.held ? { hold: a.result.held } : {}) }) });
       const j = await res.json().catch(() => ({}));
       if (!res.ok || !j.url) throw new Error();
       location.href = j.url;

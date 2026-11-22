@@ -1,7 +1,6 @@
 // Página de consultas y planes: /consultas/ (Noza, 22 nov; borrador aprobado)
 // Cada tarjeta se rellena y se paga ahí mismo, como en /videollamada/:
 //   · Una consulta: profesional + duda + correo → se guarda (POST /ask) → pago de 9 € (o 29 € en la prueba de precio) → llega a la profesional
-//   · Bono de 5: correo → pago → vuelve aquí con 5 consultas para usar
 //   · Acompañamiento mensual: profesional + correo → suscripción de 99 €/mes (plan «acomp» del servicio)
 // La prueba 9 € / 29 € es la misma que en la portada (localStorage «hera-ab-precio»).
 //
@@ -34,7 +33,7 @@ const STYLE = `<style>
 .cq-team{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px;margin-top:22px}
 .cq-p{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid #E5E1D8;border-radius:12px;padding:12px 14px;text-decoration:none}
 .cq-p img{width:48px;height:48px;border-radius:50%;object-fit:cover;flex:none}.cq-p b{display:block;font-size:15px}.cq-p span{display:block;font-size:13px;color:#6E6C67;line-height:1.4}
-.cq-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px;margin-top:26px;align-items:start}
+.cq-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));max-width:860px;gap:14px;margin-top:26px;align-items:start}
 .cq-card{background:#fff;border:1.5px solid #E8DCD6;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px;scroll-margin-top:20px}
 .cq-card.cq-top{border-color:#45574C}
 .cq-k{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#8A7045}.cq-card.cq-top .cq-k{color:#45574C}
@@ -82,17 +81,6 @@ const body = `${STYLE}<div class="w cq">
     <button type="button" class="cq-btn" data-open="consulta">Escribir mi consulta</button>
   </article>
 
-  <article class="cq-card" id="bono">
-    <div><p class="cq-k">Por escrito</p><h2>Bono de 5</h2></div>
-    <div class="cq-pr"><strong>35 €</strong><span>7 € cada consulta</span></div>
-    <ul class="cq-l">
-      <li>${tick}<span>5 consultas con quien quieras de las tres</span></li>
-      <li>${tick}<span>Válido 12 meses</span></li>
-      <li>${tick}<span>Seguimiento por correo incluido en cada una</span></li>
-    </ul>
-    <button type="button" class="cq-btn cq-btn2" data-open="bono">Comprar el bono</button>
-  </article>
-
   <article class="cq-card cq-top" id="acompanamiento">
     <div><p class="cq-k">Lo más completo</p><h2>Acompañamiento mensual</h2></div>
     <div class="cq-pr"><strong>99 €</strong><span>al mes · sin permanencia</span></div>
@@ -137,12 +125,6 @@ const body = `${STYLE}<div class="w cq">
   <button class="cq-btn" type="submit"></button>
   <p class="cq-err" hidden></p>
   <small>No se cobra nada hasta que lo confirmas. Tarjeta, Apple Pay o Google Pay. Si no quedas satisfecha, te devolvemos el dinero.</small>
-</form></template>
-<template id="t-bono"><form class="cq-form" novalidate>
-  ${mailField}
-  <button class="cq-btn" type="submit">Pagar 35 €</button>
-  <p class="cq-err" hidden></p>
-  <small>El bono va a nombre de este correo: úsalo siempre al preguntar. Tarjeta, Apple Pay o Google Pay.</small>
 </form></template>
 <template id="t-acomp"><form class="cq-form" novalidate>
   ${pick('pro')}
@@ -243,7 +225,7 @@ const body = `${STYLE}<div class="w cq">
   }
   document.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', () => openForm(b)));
   // Enlaces directos desde la portada: /consultas/#bono, #acompanamiento, #consulta
-  const direct = { '#consulta': 'consulta', '#bono': 'bono', '#acompanamiento': 'acomp' }[location.hash];
+  const direct = { '#consulta': 'consulta', '#bono': 'consulta', '#acompanamiento': 'acomp' }[location.hash];
   if (direct && !q.get('pago')) { const b = document.querySelector('[data-open=' + direct + ']'); if (b) { b.closest('.cq-card').scrollIntoView({ block: 'start' }); openForm(b, true); } }
   // Vuelta de Stripe
   const pago = q.get('pago');
@@ -268,10 +250,10 @@ const body = `${STYLE}<div class="w cq">
 
 const html = shell({
   title: 'Consultas con ginecólogo, matrona o pediatra · Hera',
-  desc: 'Pregunta por escrito a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra) y recibe una respuesta personal. Consulta, bono de 5 o acompañamiento mensual con videollamada y WhatsApp.',
+  desc: 'Pregunta por escrito a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra) y recibe una respuesta personal. Consulta suelta o acompañamiento mensual con videollamada y WhatsApp.',
   path: '/consultas/',
   ld: { '@context': 'https://schema.org', '@type': 'Service', name: 'Consultas por escrito con profesionales de Hera', provider: { '@type': 'Organization', name: 'Hera', url: 'https://hera-gine.com' },
-    offers: [{ '@type': 'Offer', name: 'Una consulta por escrito', price: '9', priceCurrency: 'EUR' }, { '@type': 'Offer', name: 'Bono de 5 consultas', price: '35', priceCurrency: 'EUR' }, { '@type': 'Offer', name: 'Acompañamiento mensual', price: '99', priceCurrency: 'EUR' }] },
+    offers: [{ '@type': 'Offer', name: 'Una consulta por escrito', price: '9', priceCurrency: 'EUR' }, { '@type': 'Offer', name: 'Acompañamiento mensual', price: '99', priceCurrency: 'EUR' }] },
   body,
 });
 fs.mkdirSync(new URL('consultas/', ROOT), { recursive: true });

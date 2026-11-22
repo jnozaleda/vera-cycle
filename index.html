@@ -584,7 +584,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
             <p class="err" id="ask-file-err" hidden></p>
             <p class="fine" id="ask-file-note"></p>
           </div>
-          <label class="fld-ck"><input type="checkbox" id="ask-follow"><span>Quiero seguimiento si la respuesta no me sirve.</span></label>
+          <input type="checkbox" id="ask-follow" hidden><!-- 23 nov: el seguimiento va siempre incluido (se responde al mismo correo); ya no hay casilla -->
           <input class="hp" id="ask-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
           <p class="err" id="ask-err" role="alert" hidden></p>
         </div>
@@ -626,16 +626,13 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
       <p class="letter-s"><img src="portada/equipo/marina.jpg?v=2" alt="" width="34" height="34" loading="lazy"><span><b>Marina Fernández</b>Matrona · Clínica Universidad de Navarra</span></p>
     </div>
   </div>
-  <div class="wrap">
-    <figure class="quote1" id="ask-quote"><blockquote>«La respuesta llegó en apenas una hora y me ayudó a quedarme tranquila con una duda urgente sobre mi embarazo.»</blockquote><figcaption>Irene · respondida por Marina, matrona</figcaption></figure>
-  </div>
 </section>
 
 <section class="brief" id="precio" aria-label="Precios">
   <div class="wrap brief-in">
     <a class="brief-row" href="consultas/" data-cta="clic:linea_precios">
       <span class="brief-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></span>
-      <span class="brief-t"><b id="brief-price">Consulta 9 € · Bono de 5, 35 € · Acompañamiento, 99 €/mes</b><small>Si no quedas satisfecha, te devolvemos el dinero</small></span>
+      <span class="brief-t"><b id="brief-price">Consulta 9 € · Acompañamiento mensual, 99 €</b><small>Si no quedas satisfecha, te devolvemos el dinero</small></span>
       <span class="brief-go">Precios<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
     </a>
   </div>
@@ -808,8 +805,8 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     CIFRAS.h = j.h;
     const a = $('pf-n'), b = $('pf-h');
     if (a) a.innerHTML = `<b>${j.r} de ${j.n}</b><span>consultas respondidas en los últimos 30 días</span>`;
-    if (j.h && b) b.innerHTML = `<b>${j.h} h</b><span>de media en responder</span>`;
-    const l = $('cf-lead'); if (l && j.h && !PRIO) l.textContent = `en ${j.h} h de media`;
+    // Plazos (Noza, 23 nov): 24 h en general y 6 h en la prioritaria; ya no se enseña la media de horas
+    if (b && PRIO) b.innerHTML = '<b>6 h</b><span>como máximo para responder</span>';
   }).catch(() => {});
   const abSrc = () => (PRIO ? { ab: 'prio' } : AB ? { ab: AB } : {});
   if (PRIO) {
@@ -817,10 +814,11 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     const a = document.getElementById('annc-t'); if (a) a.innerHTML = 'Consulta prioritaria en menos de 6 h · <u>Pregunta</u>';
     const lead = document.querySelector('.hero .lead'); if (lead) lead.textContent = 'Una respuesta personal de tu ginecólogo, matrona o pediatra, sin desplazarte y en menos de 6 h.';
     $('ask-prem').hidden = false; $('ask-steps').hidden = false;
-    $('ask-send-t').textContent = 'Continuar al pago · 29 €'; $('ask-send-s').textContent = 'No se cobra nada hasta que lo confirmes';
+    $('ask-send-t').textContent = 'Empezar mi consulta · 29 €'; $('ask-send-s').textContent = 'No se cobra nada hasta que lo confirmes';
     const pk = document.querySelector('.perks li'); if (pk) pk.lastChild.textContent = 'Pago seguro';
     const to0 = $('top-open'); if (to0) { to0.textContent = 'Preguntar'; to0.href = '#ask'; to0.dataset.goask = ''; to0.dataset.cta = 'clic:top_preguntar_prio'; }
-    const bp = $('brief-price'); if (bp) bp.textContent = 'Consulta prioritaria 29 € · Bono de 5, 35 € · Acompañamiento, 99 €/mes';
+    const bp = $('brief-price'); if (bp) bp.textContent = 'Consulta prioritaria 29 € · Acompañamiento mensual, 99 €';
+    const ph = $('pf-h'); if (ph) ph.innerHTML = '<b>6 h</b><span>como máximo para responder</span>';
     const pr = document.getElementById('precio');
     if (pr?.querySelector('h2')) {
       pr.querySelector('h2').textContent = 'Consulta prioritaria: 29 €';
@@ -836,7 +834,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     const a = document.getElementById('annc-t'); if (a) a.innerHTML = 'Black Friday: consulta a 1 € · <u>Pregunta ahora</u>';
     $('ask-bf').hidden = false;
     const pk = document.querySelector('.perks li'); if (pk) pk.lastChild.textContent = 'Pago seguro';
-    $('ask-send-t').textContent = 'Continuar al pago · 1 €'; $('ask-send-s').textContent = 'No se cobra nada hasta que lo confirmes';
+    $('ask-send-t').textContent = 'Empezar mi consulta · 1 €'; $('ask-send-s').textContent = 'No se cobra nada hasta que lo confirmes';
     $('ask-steps').hidden = false;
     // Arriba: «Preguntar · 1 €» en vez de «Abrir la app» (lleva al formulario)
     const to0 = $('top-open'); if (to0) { to0.textContent = 'Preguntar · 1 €'; to0.href = '#ask'; to0.dataset.goask = ''; to0.dataset.cta = 'clic:top_preguntar_bf'; }
@@ -855,13 +853,13 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
   if (PAGO) {
     const a = document.getElementById('annc-t'); if (a) a.innerHTML = 'Consulta por escrito: 9 € · <u>Pregunta ahora</u>';
     const pk = document.querySelector('.perks li'); if (pk) pk.lastChild.textContent = 'Pago seguro';
-    $('ask-send-t').textContent = 'Continuar al pago · 9 €'; $('ask-send-s').textContent = 'No se cobra nada hasta que lo confirmes';
+    $('ask-send-t').textContent = 'Empezar mi consulta · 9 €'; $('ask-send-s').textContent = 'No se cobra nada hasta que lo confirmes';
     $('ask-steps').hidden = false;
     const to0 = $('top-open'); if (to0) { to0.textContent = 'Preguntar'; to0.href = '#ask'; to0.dataset.goask = ''; to0.dataset.cta = 'clic:top_preguntar_pago'; }
     const pr = document.getElementById('precio');
     if (pr?.querySelector('h2')) {
       pr.querySelector('h2').textContent = 'Precio';
-      pr.querySelector('.sub').textContent = 'El contenido de cada semana es gratis siempre. Cada consulta por escrito cuesta 9 €; con el bono, 7 €.';
+      pr.querySelector('.sub').textContent = 'El contenido de cada semana es gratis siempre. Cada consulta por escrito cuesta 9 €.';
     }
     document.querySelectorAll('#faq-precio').forEach((x) => { { x.textContent = '¿Cuánto cuesta una consulta?'; const p2 = x.nextElementSibling; if (p2) p2.textContent = '9 € la consulta suelta, 35 € el bono de 5 (7 € cada una) o 99 € al mes el acompañamiento (respuesta en menos de 6 h, videollamada y WhatsApp). Si no quedas satisfecha, te devolvemos el dinero. Pagas con tarjeta, Apple Pay o Google Pay, y no se cobra nada hasta que lo confirmas.'; } });
     document.querySelectorAll('a.btn[data-goask]').forEach((x) => { x.textContent = x.textContent.replace(/ gratis$/, ''); });
@@ -922,6 +920,8 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     // En los 30 min siguientes a enviar, a la misma profesional se añade a su consulta (worker.js, ADD_WINDOW)
     const lastSent = (() => { try { const x = JSON.parse(store.get('hera-last-sent') || 'null'); return x && Date.now() - x.at < 29 * 60000 ? x : null; } catch { return null; } })();
     if (opened && !busy && to && lastSent?.to === to) { $('ask-send-t').textContent = `Añadir a tu consulta a ${PROS[to].name}`; $('ask-send-s').textContent = 'No gastas otra consulta'; }
+    // El botón dice lo que pasa (23 nov): «Empezar mi consulta» abre el formulario; ya abierto, «Ir al pago»
+    else if (opened && !busy && (BF || PRIO || PAGO)) $('ask-send-t').textContent = `Ir al pago · ${PRIO ? '29' : BF ? '1' : '9'} €`;
     else if (opened && !busy && !BF && !PRIO && !PAGO) $('ask-send-t').textContent = `Enviar${store.get('hera-free-left') === '0' || (to && !['q7m', 'k2v'].includes(viaSrc().via) && (store.get('hera-free-pros') || '').split(',').includes(to)) ? '' : ' gratis'}${to ? ` a ${PROS[to].name}` : ''}`;
     if (opened && !busy && !BF && !PRIO && !PAGO && !(to && lastSent?.to === to)) $('ask-send-s').textContent = `Te ${to ? 'responde' : 'responden'} por correo en menos de 24\u00a0h`;
     chat?.sync();
@@ -1201,7 +1201,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     }
     swap(`<img src="portada/equipo/${p.img}.jpg?v=3" alt="" width="64" height="64">
       <h3>${p.name} ya tiene tu consulta</h3>
-      <p>La leerá entera y te escribirá a <b>${esc(lastEmail)}</b>. Sueles tener respuesta en unas ${CIFRAS.h || 9} h; como mucho, 24 h. Te hemos mandado una copia.</p>
+      <p>La leerá entera y te escribirá a <b>${esc(lastEmail)}</b>. Te responderá en menos de ${PRIO ? 6 : 24} h. Te hemos mandado una copia.</p>
       <p class="forgot" style="background:#F6E0E2;border-radius:10px;padding:10px 12px;font-size:14.5px;line-height:1.45">¿Se te ha olvidado algo? <button type="button" class="linkbtn" data-add style="display:inline;padding:0;font:inherit;text-decoration:underline">Escríbelo aquí</button> en los próximos 30 minutos y se lo añadimos a ${PROS[to].name}, o responde al correo que te acabamos de mandar. No gastas otra consulta.</p>
       ${j.unlimited ? '<p class="small">Tienes consultas ilimitadas.</p>' : `<span class="dots" aria-hidden="true">${Array.from({ length: total }, (_, i) => `<i class="${i < total - rem ? 'on' : ''}"></i>`).join('')}</span>
       <p class="small">${rem === 0 ? 'Era tu última consulta gratuita.' : `Te ${rem === 1 ? `queda 1 consulta gratuita${j.next ? `, con ${esc(j.next)}` : ''}` : `quedan ${rem} consultas gratuitas`}.`}</p>`}
@@ -1223,7 +1223,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     done.querySelector('[data-add]')?.addEventListener('click', () => { hit('clic:anadir_consulta'); ta.value = ''; manual = true; radios.forEach((r) => { r.checked = r.value === to; }); done.hidden = true; form.hidden = false; refresh(); ta.focus(); });
   }
   // Pagos (vera-backlog#56): elegir plan → Stripe → vuelve a la app, que recupera la pregunta (sin adjuntos) de este dispositivo
-  const PLANS = [['bono', 'Bono de 5 consultas', '7 € cada una · válido 12 meses', '35 €'], ['suelta', 'Consulta suelta', 'Solo esta pregunta', '9 €'],
+  const PLANS = [['suelta', 'Consulta suelta', 'Solo esta pregunta', '9 €'],
     ['acomp', 'Acompañamiento mensual', 'Respuesta en menos de 6 h · videollamada y WhatsApp · sin permanencia', '99 €/mes']];
   function showPlans(j, q) {
     // Black Friday: la consulta ya está guardada; directo al pago de 1 € (sin elegir plan)
@@ -1237,10 +1237,10 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
         .catch(() => swap(`<h3>Tu consulta está guardada</h3><p>No se ha podido abrir el pago. Te hemos mandado un correo a <b>${esc(lastEmail)}</b> con el enlace para pagar ${price} y enviarla.</p>`));
       return;
     }
-    swap(`${j.early ? `<h3>Bono o acompañamiento</h3>
+    swap(`${j.early ? `<h3>Acompañamiento mensual</h3>
       <p>Si aún te quedan consultas gratuitas, se usan primero: lo que compres queda para después. Tu pregunta queda guardada y la envías al volver.</p>`
       : j.held ? `<h3>Tu consulta está guardada</h3>
-      <p>${j.same ? `Tu consulta gratis con ${esc(PROS[q.to]?.name || 'esta profesional')} ya la usaste (la que te queda es para ${esc(j.same)})` : PAGO ? 'Cada consulta por escrito cuesta 9 € (con el bono, 7 €)' : `Ya has usado tus ${j.freeLimit || 2} consultas gratis`}. En cuanto pagues, se la enviamos a ${esc(PROS[q.to]?.name || 'la profesional')}: no tienes que volver a escribirla. También te hemos enviado el enlace por correo; si no pagas en 7 días, la borramos.</p>`
+      <p>${j.same ? `Tu consulta gratis con ${esc(PROS[q.to]?.name || 'esta profesional')} ya la usaste (la que te queda es para ${esc(j.same)})` : PAGO ? 'Cada consulta por escrito cuesta 9 €' : `Ya has usado tus ${j.freeLimit || 2} consultas gratis`}. En cuanto pagues, se la enviamos a ${esc(PROS[q.to]?.name || 'la profesional')}: no tienes que volver a escribirla. También te hemos enviado el enlace por correo; si no pagas en 7 días, la borramos.</p>`
       : `<h3>Has usado tus ${j.freeLimit || 2} consultas gratuitas</h3>
       <p>Para seguir preguntando a Gonzalo, Marina y Lucía, elige cómo. Tu pregunta queda guardada y la envías al volver.</p>`}
       <div style="display:grid;gap:8px;max-width:30em;margin:0 auto;text-align:left">
@@ -1301,7 +1301,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
   function showLimit(j, q = {}) {
     if (j.pay) { showPlans(j, q); return; }
     swap(`<h3>Has usado tus ${j.freeLimit || 2} consultas gratuitas</h3>
-      <p>Muy pronto podrás seguir preguntando a Gonzalo, Marina y Lucía: 9 € por consulta, bono de 5 por 35 € o acompañamiento mensual por 99 €.</p>
+      <p>Muy pronto podrás seguir preguntando a Gonzalo, Marina y Lucía: 9 € por consulta o acompañamiento mensual por 99 €.</p>
       <p>Para seguir con una consulta anterior, responde al correo de la profesional: <b>no gasta consultas</b>.</p>
       <div id="notify" style="display:grid;gap:10px;max-width:30em">
         <label><input type="checkbox" id="notify-ok"><span>Acepto que Hera guarde mi correo (${esc(lastEmail)}) solo para avisarme cuando haya consultas de pago. Puedo pedir que lo borren escribiendo a contacto@hera-gine.com.</span></label>

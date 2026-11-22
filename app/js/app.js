@@ -1301,7 +1301,6 @@ const payTest = () => { try { return localStorage.getItem(PAY_TEST_KEY) === '1';
 // Sin consultas gratis (Noza, 22 nov; en el servicio, NO_FREE): 1 € hasta el 1 dic (Black Friday) y 9 € después
 const NO_FREE = true;
 const PLANS_UI = [
-  { k: 'bono', name: 'Bono de 5 consultas', price: '35 €', note: '7 € cada una · válido 12 meses' },
   { k: 'suelta', name: 'Consulta suelta', price: '9 €', note: 'Solo esta pregunta' },
   { k: 'acomp', name: 'Acompañamiento mensual', price: '99 € / mes', note: 'Respuesta en menos de 6 h · videollamada y WhatsApp · sin permanencia' },
 ];
@@ -1313,10 +1312,10 @@ function askPayView(a) {
     <div class="limit-card stack-8">
       ${consultPair('sm')}
       ${a.result.early
-        ? `<div class="t-15 w-500 c-deep">Bono o acompañamiento</div>
+        ? `<div class="t-15 w-500 c-deep">Acompañamiento mensual</div>
       <p class="t-13 lh-4 c-deep">Si aún te quedan consultas gratuitas, se usan primero: lo que compres queda para después. Tu pregunta queda guardada y la envías al volver.</p>`
         : a.result.held ? `<div class="t-15 w-500 c-deep">Tu consulta está guardada</div>
-      <p class="t-13 lh-4 c-deep">${a.result.bf ? 'Con la oferta de Black Friday, cada consulta cuesta 1 € hasta el 1 de diciembre' : NO_FREE ? 'Cada consulta por escrito cuesta 9 € (con el bono, 7 €)' : `Ya has usado tus ${a.result.freeLimit || 2} consultas gratis`}. En cuanto pagues, se la enviamos a ${esc((CONSULTS[a.sentTo] || CONSULTS.gineco).short)}: no tienes que volver a escribirla. También te hemos enviado el enlace por correo; si no pagas en 7 días, la borramos.</p>`
+      <p class="t-13 lh-4 c-deep">${a.result.bf ? 'Con la oferta de Black Friday, cada consulta cuesta 1 € hasta el 1 de diciembre' : NO_FREE ? 'Cada consulta por escrito cuesta 9 €' : `Ya has usado tus ${a.result.freeLimit || 2} consultas gratis`}. En cuanto pagues, se la enviamos a ${esc((CONSULTS[a.sentTo] || CONSULTS.gineco).short)}: no tienes que volver a escribirla. También te hemos enviado el enlace por correo; si no pagas en 7 días, la borramos.</p>`
         : `<div class="t-15 w-500 c-deep">Has usado tus ${a.result.freeLimit || 2} consultas gratuitas</div>
       <p class="t-13 lh-4 c-deep">Para seguir preguntando a Gonzalo, Marina y Lucía, elige cómo. Tu pregunta queda guardada y la envías al volver.</p>`}
     </div>
@@ -1367,7 +1366,7 @@ function askLimitView(a) {
     <div class="limit-card stack-8">
       ${consultPair('sm')}
       <div class="t-15 w-500 c-deep">Has usado tus ${a.result.freeLimit || 2} consultas gratuitas</div>
-      <p class="t-13 lh-4 c-deep">Muy pronto podrás seguir preguntando a Gonzalo, Marina y Lucía: 9 € por consulta, bono de 5 por 35 € o acompañamiento mensual por 99 €.</p>
+      <p class="t-13 lh-4 c-deep">Muy pronto podrás seguir preguntando a Gonzalo, Marina y Lucía: 9 € por consulta o acompañamiento mensual por 99 €.</p>
     </div>
     <p class="t-13 lh-4">Para seguir con una consulta anterior, responde al correo de la profesional: <b>no gasta consultas</b>.</p>
     ${notify}
@@ -1463,7 +1462,7 @@ function askSheet() {
     ${consultFormOn() ? `<label class="ask-check"><input type="checkbox" data-ask-follow ${a.follow ? 'checked' : ''}><span class="t-13 lh-4">Quiero seguimiento si la respuesta no me sirve.</span></label>` : ''}
     ${askVideoCard(to)}
     <div class="ask-more t-12 soft lh-4">
-      <a class="link-deep" href="../equipo.html">Conoce al equipo</a> · <button class="inline-link" data-action="ask-pay-preview">Ver bono y acompañamiento</button>${to?.whatsapp ? ' · <button class="inline-link" data-action="ask-send" data-v="whatsapp">Escribir por WhatsApp</button>' : ''}
+      <a class="link-deep" href="../equipo.html">Conoce al equipo</a> · <button class="inline-link" data-action="ask-pay-preview">Ver el acompañamiento</button>${to?.whatsapp ? ' · <button class="inline-link" data-action="ask-send" data-v="whatsapp">Escribir por WhatsApp</button>' : ''}
     </div>
     ${mine.length ? `<details class="my-consults" data-id="my-consults" ${ui.openDetails.has('my-consults') ? 'open' : ''}><summary>Tus consultas (${mine.length})</summary>${consultList(10)}</details>` : ''}
     <p class="t-11 c-rose lh-3">Si es urgente, ve a urgencias.</p>

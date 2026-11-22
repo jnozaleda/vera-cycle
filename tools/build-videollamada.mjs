@@ -12,13 +12,13 @@ const tick = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke
 const CARDS = [
   { k: 'gineco', name: 'Dr. Gonzalo Nozaleda', role: 'Ginecólogo', photo: 'gonzalo.jpg?v=2', short: 'Gonzalo',
     topics: ['Regla, ciclo y anticoncepción', 'Revisar un informe o una analítica', 'Embarazo y menopausia'],
-    offers: [['video', 'Videollamada · 30 min', 55, 'Reservar con Gonzalo'], ['llamada', 'Llamada · 15 min', 25, 'Llamada con Gonzalo']] },
+    offers: [['video', 'Videollamada · 30 min', 55, 'Solicitar cita con Gonzalo'], ['llamada', 'Llamada · 15 min', 25, 'Solicitar llamada con Gonzalo']] },
   { k: 'matrona', name: 'Marina Fernández', role: 'Matrona y asesora de lactancia', photo: 'marina.jpg?v=2', short: 'Marina',
     topics: ['Lactancia: agarre, dolor, crisis, sacaleches', 'Preparar el parto', 'Posparto y recuperación'],
-    offers: [['video', 'Videollamada · 30 min', 55, 'Reservar con Marina'], ['llamada', 'Llamada · 15 min', 25, 'Llamada con Marina'], ['lactancia', 'Asesoría de lactancia · 1 h 30', 99, 'Reservar asesoría de lactancia']] },
+    offers: [['video', 'Videollamada · 30 min', 55, 'Solicitar cita con Marina'], ['llamada', 'Llamada · 15 min', 25, 'Solicitar llamada con Marina'], ['lactancia', 'Asesoría de lactancia · 1 h 30', 99, 'Solicitar asesoría de lactancia']] },
   { k: 'pediatra', name: 'Dra. Lucía Carrascón', role: 'Pediatra', photo: 'lucia.jpg?v=3', short: 'Lucía',
     topics: ['Sueño, alimentación y tomas', 'Piel, granitos, cólicos', 'Desarrollo del bebé'],
-    offers: [['video', 'Videollamada · 30 min', 55, 'Reservar con Lucía'], ['llamada', 'Llamada · 15 min', 25, 'Llamada con Lucía']] },
+    offers: [['video', 'Videollamada · 30 min', 55, 'Solicitar cita con Lucía'], ['llamada', 'Llamada · 15 min', 25, 'Solicitar llamada con Lucía']] },
 ];
 
 const card = (c) => `<article class="vc-card" id="${c.k}">
@@ -28,6 +28,7 @@ const card = (c) => `<article class="vc-card" id="${c.k}">
     <div class="vc-p"><span>${dur}</span><strong>${eur} €</strong></div>
     <button type="button" class="vc-btn${plan !== 'video' ? ' vc-btn2' : ''}" data-plan="${plan}" data-pro="${c.k}" data-eur="${eur}" data-who="${c.short}">${label}</button>
   </div>`).join('')}
+  <p class="vc-when">La hora no se elige al pagar: después del pago te proponemos día y hora en menos de 24 h laborables.</p>
 </article>`;
 
 const STYLE = `<style>
@@ -41,7 +42,7 @@ const STYLE = `<style>
 .vc-o{display:flex;flex-direction:column;gap:10px;border-top:1px solid #E5E1D8;padding-top:12px}
 .vc-p{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:14px;color:#6E6C67}.vc-p strong{font:600 22px/1 Inter,sans-serif;color:#2F3631}
 .vc-btn{font:600 15px/1 Inter,sans-serif;color:#fff;background:#45574C;border:0;border-radius:6px;padding:14px;cursor:pointer}.vc-btn:hover{background:#384A3F}
-.vc-btn2{background:#fff;color:#45574C;border:1.5px solid #45574C}.vc-btn2:hover{background:#F6E0E2}
+.vc-when{font-size:12.5px;color:#6E6C67;margin:0;line-height:1.45}.vc-btn2{background:#fff;color:#45574C;border:1.5px solid #45574C}.vc-btn2:hover{background:#F6E0E2}
 .vc-form{display:grid;gap:10px;background:#FAF9F4;border-radius:10px;padding:14px}.vc-form label{font-size:13.5px;color:#4F4E49;display:grid;gap:6px}
 .vc-form input{width:100%;border:1px solid #E5E1D8;border-radius:6px;padding:11px 12px;font:400 16px/1.4 Inter,sans-serif;background:#fff;color:#2F3631}
 .vc-form input:focus{outline:none;border-color:#45574C;box-shadow:0 0 0 3px rgba(69,87,76,.18)}

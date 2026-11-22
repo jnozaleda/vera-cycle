@@ -905,7 +905,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   const BF_END = Date.parse('2026-12-01T23:59:59+01:00');
   // Noza, 22 nov: el 1 € deja de ofrecerse hoy; después, 9 € (o la prueba 9 € / 29 € si PRICE_AB)
   const BF_OFFER_END = Date.parse('2026-11-22T20:15:00+01:00');
-  const PRICE_AB = false; // encender junto con PRICE_AB="1" en el servicio, cuando las profesionales confirmen las 6 h
+  const PRICE_AB = true; // con PRICE_AB="1" en el servicio (Noza, 22 nov: las profesionales confirman las 6 h)
   // Sin consultas gratis (Noza, 22 nov; en el servicio, NO_FREE): todos ven la consulta a 1 € hasta el 1 dic (Black Friday)
   // y a 9 € después ('pago'). Salvo los enlaces de amigas y de las profesionales, que siguen con las 2 gratis.
   const NO_FREE = true;

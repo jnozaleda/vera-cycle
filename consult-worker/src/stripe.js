@@ -53,11 +53,20 @@ async function api(env, method, path, params) {
   return j;
 }
 
+// Precios que el servicio crea solo si faltan en Stripe (mismos datos que tools/stripe-setup.mjs)
+const AUTO_PRICES = { hera_prio29: { name: 'Consulta prioritaria', desc: 'Una consulta por escrito con una profesional de Hera, con respuesta en menos de 6 horas.', amount: 2900 } };
 const priceCache = {};
 async function priceId(env, lookup) {
   if (priceCache[lookup]) return priceCache[lookup];
   const j = await api(env, 'GET', 'prices', { 'lookup_keys[]': lookup, active: 'true' });
-  const id = j.data?.[0]?.id;
+  let id = j.data?.[0]?.id;
+  // Si falta un precio que sabemos crear (22 nov: la prueba 9 € / 29 € no puede fallar por no haber ejecutado stripe-setup), se crea aquí
+  const def = AUTO_PRICES[lookup];
+  if (!id && def) {
+    const product = await api(env, 'POST', 'products', { name: def.name, description: def.desc });
+    id = (await api(env, 'POST', 'prices', { product: product.id, currency: 'eur', unit_amount: String(def.amount), lookup_key: lookup, tax_behavior: 'inclusive' })).id;
+    console.log(`stripe: creado el precio ${lookup}`);
+  }
   if (!id) throw new Error(`stripe: falta el precio ${lookup} (ejecuta tools/stripe-setup.mjs)`);
   return (priceCache[lookup] = id);
 }

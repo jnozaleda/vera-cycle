@@ -894,7 +894,7 @@ const handler = {
         // Pendiente de pago: se guarda cifrada y se le manda el enlace (no llega a la profesional hasta que pague)
         if (pay && env.RELAY === '1' && body.held !== true) {
           const hid = newThreadId();
-          const held = { email: q.email, to: body.to, text: q.text, context: q.context, situation: q.situation, follow: body.follow === true, src: body.src, camp: body.camp, ref: body.ref, p: body.p, team: body.team === true, ...(bf ? { ab: 'bf' } : prio ? { ab: 'prio' } : {}) };
+          const held = { email: q.email, to: body.to, text: q.text, context: q.context, situation: q.situation, follow: body.follow === true, src: body.src, camp: body.camp, ref: body.ref, p: body.p, team: body.team === true, ...(bf ? { ab: 'bf' } : prio ? { ab: 'prio' } : noFree ? { ab: 'pago' } : {}) };
           await env.KV.put(`hold:${hid}`, JSON.stringify({ x: await sealEmail(env, JSON.stringify(held)), at: Date.now(), h, to: body.to, rem: 0, ...(bf ? { bf: 1 } : {}), ...(prio ? { prio: 1 } : {}) }), { expirationTtl: HOLD_DAYS * 86400 });
           const links = await holdLinks(env, hid);
           await sendMail(env, { to: q.email, replyTo: 'contacto@hera-gine.com', ...holdEmail(pro, q.text, links, false, others, bf ? 'bf' : prio ? 'prio' : noFree ? 'pago' : '') });
@@ -957,7 +957,8 @@ const handler = {
           // Enlace de canal (?via=…, p. ej. ig_marina): cuántas consultas trae cada uno
           if (cc) await bump(env, `consulta_pais:${cc}`);
           // Prueba Black Friday: consultas enviadas por cada versión (bf = pagada a 1 €; gratis = la de siempre)
-          if (body.src === 'ads' && ['bf', 'gratis', 'prio'].includes(body.ab)) await bump(env, `consulta_ab:${body.ab}`);
+          // Pruebas de precio (desde el 22 nov, para todas las visitas, no solo anuncios): pago = 9 €, prio = 29 €
+          if ((body.src === 'ads' || ['pago', 'prio'].includes(body.ab)) && ['bf', 'gratis', 'prio', 'pago'].includes(body.ab)) await bump(env, `consulta_ab:${body.ab}`);
           if (via) { await bump(env, `consulta_via:${via}`); await record(env, { e: `via_visita:${via}`, p: tag, note: 'envió una consulta' }, sendMail, ctx); }
         }
       }

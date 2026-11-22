@@ -121,6 +121,8 @@ let latam=false;try{if(/_latam$/.test((new URLSearchParams(location.search).get(
 if(latam){const u=$('m-urg');if(u)u.textContent='Si es urgente, llama al número de emergencias de tu país (911 en México, 107 en Argentina, 131 en Chile, 123 en Colombia) o ve a urgencias.';const t=$('m-t51');if(t)t.innerHTML='<b>40–45</b><span>Cuando suelen empezar los cambios</span>'}
 // Precio de la consulta por escrito: 1 € hasta el 1 dic (Black Friday), 9 € después
 if(Date.now()>=Date.parse('2026-11-22T20:15:00+01:00')){const p=$('m-price');if(p)p.textContent='9 €'}
+// Prueba de precio (portada, «hera-ab-precio»): a quien le tocó la prioritaria, 29 € y menos de 6 h
+try{if(localStorage.getItem('hera-ab-precio')==='prio'){const p=$('m-price');if(p){p.textContent='29 €';const s=p.previousElementSibling?.querySelector('span');if(s)s.textContent='Prioritaria: te responde en menos de 6 h'}}}catch(e){}
 update();
 })()</script>`;
 

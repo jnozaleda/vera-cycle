@@ -738,3 +738,25 @@ console.log('consultas: OK');
   delete env.PRICE_AB; delete env.NO_FREE; env.BF_OFFER_END_MS = B0; env.PAYMENTS = P0; env.STRIPE_SECRET_KEY = K0; env.RELAY = R0; env.DB = DB0;
   console.log('Fin del 1 € y prueba de precio: OK');
 }
+
+// Precio de 29 € que falta en Stripe: el servicio lo crea solo (22 nov)
+{
+  const P0 = env.PAYMENTS, K0 = env.STRIPE_SECRET_KEY;
+  env.PAYMENTS = 'on'; env.STRIPE_SECRET_KEY = 'sk_test_x';
+  const realFetch = globalThis.fetch; const calls = [];
+  globalThis.fetch = async (u, o) => {
+    const url = String(u);
+    if (url.startsWith('https://api.stripe.com/v1/prices?')) return new Response(JSON.stringify({ data: [] }), { status: 200 });
+    if (url === 'https://api.stripe.com/v1/products') { calls.push('product'); return new Response(JSON.stringify({ id: 'prod_x' }), { status: 200 }); }
+    if (url === 'https://api.stripe.com/v1/prices') { calls.push('price:' + new URLSearchParams(o.body).get('unit_amount')); return new Response(JSON.stringify({ id: 'price_prio' }), { status: 200 }); }
+    if (url === 'https://api.stripe.com/v1/checkout/sessions') return new Response(JSON.stringify({ id: 'cs_x', url: 'https://checkout.stripe.com/x' }), { status: 200 });
+    return realFetch(u, o);
+  };
+  const id = 'prio1234';
+  await env.KV.put(`hold:${id}`, JSON.stringify({ x: 'x', at: Date.now(), h: 'h', to: 'gineco', rem: 0, prio: 1 }));
+  const { createCheckout } = await import('../src/stripe.js');
+  const u = await createCheckout(env, { email: 'p@example.com', plan: 'prio29', h: 'a'.repeat(64), origin: 'https://hera-gine.com', back: 'web', hold: id });
+  assert.match(u, /checkout\.stripe\.com/); assert.deepEqual(calls, ['product', 'price:2900']);
+  globalThis.fetch = realFetch; env.PAYMENTS = P0; env.STRIPE_SECRET_KEY = K0;
+  console.log('Precio de 29 € creado si falta: OK');
+}

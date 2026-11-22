@@ -1321,7 +1321,7 @@ function askPayView(a) {
       <p class="t-13 lh-4 c-deep">Para seguir preguntando a Gonzalo, Marina y Lucía, elige cómo. Tu pregunta queda guardada y la envías al volver.</p>`}
     </div>
     <div class="stack-8">
-      ${(a.result.bf && a.result.held ? [{ k: 'bf1', name: 'Consulta (Black Friday)', note: 'Solo esta pregunta · hasta el 1 dic', price: '1 €' }] : PLANS_UI).map((p) => `<button class="plan-pick" data-action="ask-buy" data-v="${p.k}" ${busy ? 'disabled' : ''}>
+      ${(a.result.bf && a.result.held ? [{ k: 'bf1', name: 'Consulta (Black Friday)', note: 'Solo esta pregunta · hasta el 1 dic', price: '1 €' }] : a.result.prio && a.result.held ? [{ k: 'prio29', name: 'Consulta prioritaria', note: 'Respuesta en menos de 6 h', price: '29 €' }] : PLANS_UI).map((p) => `<button class="plan-pick" data-action="ask-buy" data-v="${p.k}" ${busy ? 'disabled' : ''}>
         <span class="plan-pick-main"><span class="t-15 w-600 c-deep">${p.name}</span><span class="t-12 soft">${p.note}</span></span>
         <span class="t-15 w-600 c-deep nowrap">${busy === p.k ? 'Abriendo…' : p.price}</span></button>`).join('')}
     </div>

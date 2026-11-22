@@ -54,7 +54,7 @@ img { max-width: 100%; }
 :focus-visible { outline: 2px solid var(--plum); outline-offset: 3px; border-radius: 6px; }
 
 /* Cabecera */
-header.top { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--ivory) 92%, transparent); backdrop-filter: blur(8px); }
+header.top { position: sticky; top: 0; z-index: 10; background: var(--ivory); border-bottom: 1px solid #ECE9E1; }
 .top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 14px; }
 .logo { display: block; height: 34px; width: auto; }
 .nav { display: none; gap: 26px; font-size: 15px; }
@@ -232,7 +232,8 @@ section { padding: 64px 0; }
 #top-open { display: none; }
 @media (max-width: 699px) {
   #top-open { display: inline-flex; }
-  body:not(.past-ask) #top-ask, body.past-ask #top-open { opacity: 0; visibility: hidden; }
+  /* 23 nov: el mismo botón siempre (antes cambiaba de «Preguntar» redondo a «Pregunta tu duda» al bajar) */
+  #top-open { display: none !important; }
 }
 @media (prefers-reduced-motion: reduce) { .top-cta .btn { transition: none; } }
 .ask select { appearance: none; padding-right: 36px; background: var(--ivory) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%2345574C' stroke-width='1.8'%3E%3Cpath d='m1 1.5 5 5 5-5'/%3E%3C/svg%3E") no-repeat right 14px center; }

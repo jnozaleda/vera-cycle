@@ -59,13 +59,6 @@ header.top { position: sticky; top: 0; z-index: 10; background: color-mix(in srg
 .logo { display: block; height: 34px; width: auto; }
 .nav { display: none; gap: 26px; font-size: 15px; }
 /* Móvil: fila de accesos bajo la cabecera (en ordenador ya están en el menú) */
-.mnav { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 6px; }
-.mnav::-webkit-scrollbar { display: none; }
-.mnav a { flex: none; font: 600 14px/1 'Inter', sans-serif; color: var(--plum); text-decoration: none; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 9px 14px; }
-.mnav a.hl { background: #F6E0E2; border-color: #E8C9CC; }
-.mnav a.gu { display: inline-flex; align-items: center; gap: 6px; background: #F6E0E2; border-color: #E8C9CC; }
-.mnav a.wa { display: inline-flex; align-items: center; gap: 6px; color: #1E6B30; border-color: #BFDCC6; background: #EEF7F0; }
-@media (min-width: 900px) { .mnav { display: none; } }
 .nav a { text-decoration: none; color: var(--text); }
 .nav a:hover { color: var(--plum); }
 @media (min-width: 900px) { .nav { display: flex; } }
@@ -470,7 +463,35 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
 .appstrip-txt { display: grid; gap: 3px; font-size: 13.5px; line-height: 1.45; min-width: 0; }
 .appstrip-txt b { font-size: 15px; color: var(--ink); }
 .appstrip-txt em { font-style: normal; font-weight: 600; color: var(--plum); }
+/* Portada corta (22 nov): equipo y precios en una línea cada uno; el detalle está en sus páginas y en el menú */
+.brief { padding-block: 8px 40px; }
+.brief-in { display: grid; gap: 10px; }
+.brief-row { max-width: 560px; }
+.brief-row { display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; text-decoration: none; color: var(--text); transition: border-color .15s; }
+.brief-row:hover { border-color: var(--plum); }
+.brief-faces { display: flex; flex: none; } .brief-faces img { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; margin-left: -12px; } .brief-faces img:first-child { margin-left: 0; }
+.brief-ico { flex: none; width: 40px; height: 40px; border-radius: 50%; background: #F6E0E2; color: var(--plum); display: inline-flex; align-items: center; justify-content: center; }
+.brief-t { flex: 1; min-width: 0; display: grid; gap: 2px; } .brief-t b { font-weight: 600; font-size: 15px; } .brief-t small { font-size: 13px; color: var(--muted); }
+.brief-go { flex: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 600; font-size: 14px; color: var(--plum); }
+.brief-warn { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
+@media (max-width: 560px) { .brief-go { font-size: 0; gap: 0; } .brief-go svg { width: 18px; height: 18px; } }
 </style>
+<!-- menu:css --><style>.hm-btn,.hm-x{border:0!important;box-shadow:none!important;padding:0!important;min-width:0;font:inherit}
+.hm-btn{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;margin-left:6px;border:0;border-radius:999px;background:transparent;color:#45574C;cursor:pointer;flex:none}
+.hm-btn:hover{background:#EFEDE6}.hm-btn:focus-visible,.hm-x:focus-visible,.hm-p a:focus-visible{outline:2px solid #45574C;outline-offset:2px}
+.hm{position:fixed;inset:0;z-index:60}.hm-bg{position:absolute;inset:0;background:rgba(47,54,49,.42)}
+.hm-p{position:absolute;top:0;right:0;bottom:0;width:min(360px,86vw);background:#FAF9F4;box-shadow:-10px 0 30px rgba(47,54,49,.18);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-right:env(safe-area-inset-right,0px);animation:hm-in .2s ease-out}
+@keyframes hm-in{from{transform:translateX(24px);opacity:.4}to{transform:none;opacity:1}}@media (prefers-reduced-motion:reduce){.hm-p{animation:none}}
+.hm-h{display:flex;justify-content:space-between;align-items:center;padding:12px 16px 12px 20px;border-bottom:1px solid #E5E1D8}
+.hm-wm{font:400 28px/1 Newsreader,Georgia,serif;color:#45574C;text-decoration:none;letter-spacing:-.02em}
+.hm-x{width:42px;height:42px;border:0;border-radius:999px;background:transparent;color:#45574C;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}.hm-x:hover{background:#EFEDE6}
+.hm-l{flex:1;overflow-y:auto;padding:4px 20px 12px}.hm-g{font:600 11px/1.3 Inter,system-ui,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:#8A7045;margin:16px 0 2px}
+.hm-l ul{list-style:none;margin:0;padding:0}.hm-l a{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #ECE9E1;font:500 15.5px/1.3 Inter,system-ui,sans-serif;color:#2F3631;text-decoration:none}
+.hm-l a:hover{color:#45574C}.hm-l a svg{color:#A8A59D;flex:none}.hm-l a[aria-current]{color:#45574C;font-weight:600}
+.hm-f{padding:14px 20px calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid #E5E1D8}
+.hm-cta{display:block;text-align:center;background:#45574C;color:#fff;border-radius:8px;padding:14px;font:600 15px/1 Inter,system-ui,sans-serif;text-decoration:none}.hm-cta:hover{background:#384A3F}
+html.hm-open{overflow:hidden}
+header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top .top-in>.btn{margin-left:auto}header.top .top-in{display:flex;align-items:center}</style><!-- /menu:css -->
 </head>
 <body>
 
@@ -482,22 +503,16 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <a href="equipo.html">Profesionales</a>
       <a href="guias/">Guías</a>
       <a href="videollamada/">Videollamada</a>
-      <a href="#precio">Precios</a>
+      <a href="consultas/">Precios</a>
       <a href="app/" data-cta="abrir_portada">Abrir la app</a>
     </nav>
     <div class="top-cta">
       <a class="btn btn-pill btn-sm" href="app/" data-cta="abrir_portada" id="top-open">Abrir la app</a>
       <a class="btn btn-p btn-sm" href="#ask" data-goask id="top-ask">Pregunta tu duda</a>
     </div>
+    <!-- menu:btn --><button type="button" class="hm-btn" aria-label="Abrir el menú" aria-expanded="false" aria-controls="hm"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><!-- /menu:btn -->
   </div>
 </header>
-<nav class="wrap mnav" aria-label="Accesos">
-  <a class="gu" href="guias/" data-cta="clic:mnav_guias"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>Guías</a>
-  <a href="videollamada/" data-cta="clic:mnav_llamada">Llamada y videollamada</a>
-  <a href="equipo.html" data-cta="clic:mnav_equipo">Profesionales</a>
-  <a class="hl" href="#precio" data-cta="clic:mnav_precios">Precios</a>
-</nav>
-
 <main>
 <div class="wrap">
   <div class="hero">
@@ -571,210 +586,18 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
 </div>
 
 
-<section id="como-funciona">
-  <div class="wrap how">
-    <div>
-      <p class="eyebrow">Cómo funciona</p>
-      <h2>Preguntar es tan fácil como escribir un mensaje</h2>
-      <ol class="steps">
-        <li><span class="n">1</span><div><h3>Escribe tu duda</h3><p>Con tus palabras. Si quieres, Hera añade tu semana de embarazo o la edad de tu bebé para que tengan contexto.</p></div></li>
-        <li><span class="n">2</span><div><h3>Elige a quién preguntar</h3><p>Hera te sugiere ginecología, matrona o pediatría según lo que escribas. Siempre puedes cambiarlo.</p></div></li>
-        <li><span class="n">3</span><div><h3>Recibe la respuesta en tu correo</h3><p>En menos de 24 h, de la profesional que la ha leído. Si te queda algo, contestas al mismo correo.</p></div></li>
-      </ol>
-      <div class="eg-box"><small>Ejemplo orientativo, no es una consulta real</small>
-        <p><b>Tu duda:</b> «Estoy de 32 semanas y tengo ardor por las noches. ¿Qué puedo hacer?»</p>
-        <p style="margin:0"><b>La respuesta:</b> «Suelen ayudar las comidas pequeñas, no tumbarte justo después de comer y elevar un poco la cabecera de la cama. Si no basta, hay antiácidos seguros en el embarazo.»</p></div>
-      <a class="btn btn-p" href="#ask" data-goask data-free>Pregunta tu duda</a>
-    </div>
-    <div class="art">
-      <div class="phone"><img src="portada/consulta.jpg" width="560" height="1213" loading="lazy" alt="Hoja de consulta con Gonzalo, Marina y Lucía"></div>
-    </div>
-  </div>
-</section>
-
-<section id="etapas" style="padding-top:0">
-  <div class="wrap">
-    <p class="eyebrow">Para cada etapa</p>
-    <h2>Lo que necesitas saber, cuando lo necesitas</h2>
-    <p class="sub">Hera se adapta a tu momento: tu ciclo, tu embarazo, el primer año con tu bebé o la menopausia. Cada etapa con su color, como en la app.</p>
-    <div class="stages">
-      <div class="stage rose">
-        <div class="tile" style="background-image:url('portada/fluido/seda-rosa.webp')" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5s-6 6.4-6 10.8a6 6 0 0 0 12 0C18 9.9 12 3.5 12 3.5Z"/></svg></div>
-        <h3>Regla</h3>
-        <p>Tu ciclo de un vistazo: cuándo llega la regla, tu ventana fértil y la ovulación. Y tus síntomas, para ver tus patrones mes a mes.</p>
-        <p class="gl-h">Guías gratis</p>
-        <ul class="gl"><li><a href="guias/retraso-de-la-regla/" data-cta="clic:guia_etapa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>Se me ha retrasado la regla</a></li><li><a href="guias/pastilla-del-dia-despues/" data-cta="clic:guia_etapa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>Pastilla del día después</a></li><li><a href="guias/olvido-pastilla-anticonceptiva/" data-cta="clic:guia_etapa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>Olvidé la pastilla anticonceptiva</a></li></ul>
-        <div class="shot"><img src="portada/etapa-regla.jpg" width="560" height="1213" loading="lazy" alt="Hera en modo ciclo: día 10, ventana fértil y próxima regla"></div>
-      </div>
-      <div class="stage sage">
-        <div class="tile" style="background-image:url('portada/fluido/seda-melocoton.webp')" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="6.5"/><path d="M9 6.8c.9-1.7 2.4-2.8 4.5-3"/></svg></div>
-        <h3>Embarazo</h3>
-        <p>Cómo crece tu bebé semana a semana, con ilustración, ecografía y modelo 3D; las pruebas de cada trimestre; lo normal en cada momento y un registro de contracciones al final.</p>
-        <p class="gl-h">Guías gratis</p>
-        <ul class="gl"><li><a href="guias/nauseas-en-el-embarazo/" data-cta="clic:guia_etapa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>Náuseas en el embarazo</a></li><li><a href="guias/contracciones-de-braxton-hicks/" data-cta="clic:guia_etapa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>Contracciones de Braxton Hicks</a></li><li><a href="guias/cuando-ir-al-hospital-de-parto/" data-cta="clic:guia_etapa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>Cuándo ir al hospital de parto</a></li></ul>
-        <div class="shot"><img src="portada/etapa-embarazo.jpg" width="560" height="1213" loading="lazy" alt="Hera en el embarazo: semana 20, segundo trimestre"></div>
-      </div>
-      <div class="stage lav">
-        <div class="tile" style="background-image:url('portada/fluido/seda-musgo.webp');background-size:400%;background-position:35% 50%" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="4"/><path d="M5 20c1.2-3.4 3.8-5 7-5s5.8 1.6 7 5"/></svg></div>
-        <h3>Posparto y tu bebé</h3>
-        <p>Tu recuperación, la lactancia y el suelo pélvico. Y el primer año de tu bebé: lo normal a su edad, su peso, el sueño, las vacunas y cuándo ir a urgencias.</p>
-        <p class="gl-h">Guías gratis</p>
-        <ul class="gl"><li><a href="guias/bebe-llora-mucho-colicos/" data-cta="clic:guia_etapa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>Mi bebé llora mucho, ¿son cólicos?</a></li><li><a href="guias/estrenimiento-bebe/" data-cta="clic:guia_etapa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>Estreñimiento en el bebé</a></li><li><a href="guias/subida-de-la-leche/" data-cta="clic:guia_etapa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>Subida de la leche</a></li></ul>
-        <a class="gl-more" href="guias/" data-cta="clic:guia_etapa_todas">Ver las 29 guías</a>
-        <div class="shot"><img src="portada/etapa-posparto.jpg" width="560" height="1213" loading="lazy" alt="Hera en el posparto: 4 semanas desde el parto"></div>
-      </div>
-      <div class="stage sand">
-        <div class="tile" style="background-image:url('portada/fluido/seda-melocoton.webp');background-size:300%;background-position:70% 30%" aria-hidden="true"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg></div>
-        <h3>Menopausia</h3>
-        <p>Si se acerca o ya ha llegado: apunta sofocos, sueño y otros cambios, entiende qué es normal y pregunta a tu ginecólogo cuando algo te preocupe.</p>
-        <p class="gl-h">Guías gratis</p>
-        <ul class="gl"><li><a href="guias/sintomas-menopausia/" data-cta="clic:guia_etapa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>Síntomas de la menopausia</a></li><li><a href="guias/sangrado-despues-de-la-menopausia/" data-cta="clic:guia_etapa"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>Sangrado después de la menopausia</a></li></ul>
-        <div class="shot"><img src="portada/etapa-menopausia.jpg" width="560" height="1213" loading="lazy" alt="Hera en la menopausia: tu momento y cómo estás hoy"></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section id="equipo" style="background:#fff;border-block:1px solid var(--line)">
-  <div class="wrap">
-    <p class="eyebrow">El equipo</p>
-    <h2>Personas reales, con nombre y apellido</h2>
-    <p class="sub">Cada consulta la lee y la responde una de ellas. Nada de respuestas automáticas. <a class="pro-more" href="equipo.html">Conoce al equipo →</a></p>
-    <div class="team">
-      <article class="pro">
-        <div class="head"><img src="portada/equipo/gonzalo.jpg?v=2" alt="Gonzalo Nozaleda" width="72" height="72" loading="lazy">
-          <div><h3>Dr. Gonzalo Nozaleda</h3><p class="role">Ginecólogo</p></div></div>
-        <p>Embarazo y pruebas, medicación, anticoncepción, la regla y el ciclo, la menopausia y cualquier complicación.</p>
-        <a class="pro-more" href="equipo.html#gonzalo">Conocer a Gonzalo →</a>
-        <a class="btn btn-s" href="#ask" data-to="gineco">Pregunta a Gonzalo</a>
-      </article>
-      <article class="pro">
-        <div class="head"><img src="portada/equipo/marina.jpg?v=2" alt="Marina Fernández" width="72" height="72" loading="lazy">
-          <div><h3>Marina Fernández</h3><p class="role">Matrona</p></div></div>
-        <p>Lactancia, preparación al parto, posparto, suelo pélvico y los cuidados del recién nacido.</p>
-        <a class="pro-more" href="equipo.html#marina">Conocer a Marina →</a>
-        <a class="btn btn-s" href="#ask" data-to="matrona">Pregunta a Marina</a>
-      </article>
-      <article class="pro">
-        <div class="head"><img src="portada/equipo/lucia.jpg?v=3" alt="Dra. Lucía Carrascón" width="72" height="72" loading="lazy">
-          <div><h3>Dra. Lucía Carrascón</h3><p class="role">Pediatra</p></div></div>
-        <p>La salud y los cuidados de tu bebé: fiebre, alimentación, sueño, desarrollo y vacunas.</p>
-        <a class="pro-more" href="equipo.html#lucia">Conocer a Lucía →</a>
-        <a class="btn btn-s" href="#ask" data-to="pediatra">Pregunta a Lucía</a>
-      </article>
-    </div>
-  </div>
-</section>
-
-<section>
-  <div class="wrap">
-    <p class="eyebrow">Por qué Hera</p>
-    <h2>Mejor que buscar en internet a las tres de la mañana</h2>
-    <div class="vs">
-      <div class="them">
-        <h3>Foros y buscadores</h3>
-        <ul>
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>Respuestas que se contradicen</li>
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>Sin saber quién las escribe</li>
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>Pensadas para cualquiera, no para tu semana</li>
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>Más preocupación de la que tenías</li>
-        </ul>
-      </div>
-      <div class="us">
-        <h3>Hera</h3>
-        <ul>
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F2B9A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Una profesional con nombre que te responde a ti</li>
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F2B9A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Con tu semana de embarazo o la edad de tu bebé</li>
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F2B9A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Contenido de cada semana basado en la sanidad española</li>
-          <li><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#F2B9A0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Y te dice cuándo sí hay que ir a urgencias</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section style="padding-top:0">
-  <div class="wrap">
-    <div class="privacy">
-      <p class="eyebrow">Tu privacidad</p>
-      <h2>Tus datos son tuyos</h2>
-      <div class="pcards">
-        <div><b>Se quedan en tu móvil</b><p>Tu diario, tus síntomas y tus semanas se guardan en tu dispositivo. Sin cuentas ni contraseñas.</p></div>
-        <div><b>Salen solo para ayudarte</b><p>Tu consulta va a la profesional que eliges; tu copia en Google Drive y los avisos, solo si los activas.</p></div>
-        <div><b>Sin letra pequeña</b><p>No vendemos datos, no mostramos anuncios y no usamos cookies.</p></div>
-      </div>
-      <p class="more">Lo explicamos todo, con detalle, en la <a href="privacy.html">política de privacidad</a>.</p>
-    </div>
-  </div>
-</section>
-
-<section id="instalar" style="padding-top:0">
-  <div class="wrap">
-    <p class="eyebrow">Instalar</p>
-    <h2>Cómo instalarla</h2>
-    <p class="sub">Hera es una web que se instala en la pantalla de inicio de tu móvil, sin pasar por ninguna tienda. Ocupa muy poco y funciona también sin conexión.</p>
-    <div class="install">
-      <div><h3>iPhone (Safari)</h3><ol><li>Abre <a href="app/" data-cta="abrir_portada">hera-gine.com/app</a> en Safari.</li><li>Pulsa <b>Compartir</b> (el cuadrado con la flecha) y luego <b>Añadir a pantalla de inicio</b>.</li><li>Ábrela desde el icono: así podrás activar el aviso semanal.</li></ol></div>
-      <div><h3>Android (Chrome)</h3><ol><li>Abre <a href="app/" data-cta="abrir_portada">hera-gine.com/app</a> en Chrome.</li><li>Menú <b>⋮</b> → <b>Instalar aplicación</b> (o <b>Añadir a pantalla de inicio</b>).</li><li>Ábrela desde el icono, como cualquier app.</li></ol></div>
-    </div>
-  </div>
-</section>
-
-<section id="precio" style="padding-top:0">
-  <div class="wrap">
-    <p class="eyebrow">Precio</p>
-    <h2>Precio</h2>
-    <p class="sub">El contenido de cada semana es gratis siempre.</p>
-    <p class="price-k">Por escrito</p>
-    <div class="price">
-      <div class="plan main tap" data-goask data-cta="clic:tarjeta_consulta" role="button" tabindex="0"><span class="k">Consulta por escrito</span><span class="v">9 €</span><p>A quien quieras de las tres. Sin registro.</p><span class="go">Preguntar →</span></div>
-      <div class="plan tap" data-buy="bono" data-cta="clic:tarjeta_bono" role="button" tabindex="0"><span class="k">Bono de 5 consultas</span><span class="v">35 € <small>· 7 € cada una</small></span><p>Para cuando necesites preguntar más de una vez.</p><span class="go">Comprar →</span></div>
-      <a class="plan tap" href="consultas/#acompanamiento" data-cta="clic:tarjeta_acomp"><span class="k">Acompañamiento mensual</span><span class="v">99 € <small>/ mes</small></span><p>Respuesta en menos de 6 h, una videollamada al mes y WhatsApp con tu profesional. Sin permanencia.</p><span class="go">Empezar →</span></a>
-    </div>
-    <p style="margin-top:14px;font-size:14.5px;color:var(--muted)">Si no quedas satisfecha, te devolvemos el dinero. <a href="consultas/" data-cta="clic:ver_consultas" style="color:var(--plum);font-weight:600;white-space:nowrap">Ver todas las opciones →</a></p>
-    <div class="buybox" id="buybox" hidden>
-      <label class="fld"><span class="sr">Tu correo</span><input id="buy-email" type="email" inputmode="email" autocomplete="email" placeholder="Tu correo (el plan va a su nombre)"></label>
-      <div class="buybtns"><button type="button" class="btn btn-p" data-buyplan="bono">Bono de 5 consultas · 35 €</button></div>
-      <p class="err" id="buy-err" hidden></p>
-      <p style="margin:0;font-size:13px;color:var(--muted)">Pagas con tarjeta, Apple Pay o Google Pay en una página segura. Luego escribes tu duda y la envías sin gastar nada más.</p>
-    </div>
-    <p class="price-k">Por teléfono o videollamada</p>
-    <div class="price two">
-      <div class="plan"><span class="k">Llamada</span><span class="v">25 € <small>· 15 min</small></span><p>Con Gonzalo, Marina o Lucía, por teléfono y sin cámara. Te llaman a la hora que elijas.</p><a class="go" href="videollamada/">Reservar →</a></div>
-      <div class="plan"><span class="k">Videollamada</span><span class="v">55 € <small>· 30 min</small></span><p>Con Gonzalo, Marina o Lucía, por Google Meet, el día y la hora que te vengan bien.</p><a class="go" href="videollamada/">Reservar →</a></div>
-      <div class="plan"><span class="k">Asesoría de lactancia</span><span class="v">99 € <small>· 1 h 30</small></span><p>Con Marina, matrona y asesora de lactancia: agarre, dolor, crisis o sacaleches.</p><a class="go" href="videollamada/#lactancia">Reservar →</a></div>
-    </div>
-  </div>
-</section>
-
-<section id="preguntas" style="padding-top:0">
-  <div class="wrap">
-    <p class="eyebrow">Preguntas frecuentes</p>
-    <h2>Lo que suelen preguntarnos</h2>
-    <div class="faq">
-      <details><summary>¿Quién responde a mi consulta?</summary><p>El ginecólogo Gonzalo Nozaleda, la matrona Marina Fernández o la pediatra Lucía Carrascón, según a quién elijas. Hera te sugiere a la persona adecuada, pero siempre puedes cambiarla.</p></details>
-      <details><summary>¿Cuánto tardan en responder?</summary><p>Menos de 24 horas. La respuesta te llega a tu correo y, si te queda alguna duda, puedes contestar al mismo mensaje.</p></details>
-      <details><summary>¿Y si es urgente?</summary><p>Hera no atiende urgencias. Si tienes un sangrado abundante, pérdida de líquido, fiebre alta, dolor intenso o notas que tu bebé se mueve menos, llama al 112 o acude a urgencias. En la app tienes una guía de cuándo ir.</p></details>
-      <details><summary>¿Qué pasa con mis datos?</summary><p>Lo que apuntas en Hera se queda en tu móvil. Cuando haces una consulta, tu pregunta y tu correo van a la profesional que eliges para que pueda responderte; el texto de tu pregunta no se guarda en ningún servidor nuestro.</p></details>
-      <details><summary id="faq-precio">¿Cuánto cuesta una consulta?</summary><p>9 € por consulta suelta, 35 € el bono de 5 consultas o 99 € al mes el acompañamiento. Pagas con tarjeta, Apple Pay o Google Pay.</p></details>
-      <details><summary>¿Puedo hablar con ellas por videollamada?</summary><p>Sí. Una llamada de teléfono de 15 minutos por 25 €, 30 minutos por Google Meet con Gonzalo, Marina o Lucía por 55 €, o una asesoría de lactancia de 1 h 30 con Marina por 99 €. Pagas, nos dices qué horarios te vienen bien y te proponemos hora en menos de 24 h laborables. <a href="videollamada/">Ver cómo funciona</a>.</p></details>
-      <details><summary>¿Tengo que crear una cuenta o instalar algo?</summary><p>No hace falta cuenta. Hera funciona en el navegador de tu móvil y, si quieres, puedes añadirla a tu pantalla de inicio para abrirla como una app y recibir avisos cada semana. <a href="#instalar">Te explicamos cómo</a>.</p></details>
-    </div>
-  </div>
-</section>
-
-<section class="final">
-  <div class="wrap">
-    <div class="band">
-      <div>
-        <p class="kk">Ginecólogo, matrona y pediatra</p>
-        <h2>¿Qué te preocupa hoy?</h2>
-        <p class="sub">Pregúntalo y te responde una profesional en menos de 24 h.</p>
-        <a class="btn btn-w" href="#ask" data-goask data-free>Pregunta tu duda</a>
-      </div>
-      <div class="pic" role="img" aria-label="La Vía Láctea: según el mito, nació de la leche de Hera"></div>
-    </div>
-    <p class="warn">Hera informa y acompaña, pero no sustituye a tu médico ni atiende urgencias.</p>
+<section class="brief" id="precio" aria-label="El equipo y los precios">
+  <div class="wrap brief-in">
+    <a class="brief-row" href="equipo.html" data-cta="clic:linea_equipo">
+      <span class="brief-faces"><img src="portada/equipo/gonzalo.jpg?v=2" alt="" width="40" height="40" loading="lazy"><img src="portada/equipo/marina.jpg?v=2" alt="" width="40" height="40" loading="lazy"><img src="portada/equipo/lucia.jpg?v=3" alt="" width="40" height="40" loading="lazy"></span>
+      <span class="brief-t"><b>Gonzalo, Marina y Lucía</b><small>Ginecólogo, matrona y pediatra · más de 15 años de experiencia</small></span>
+      <span class="brief-go">Conoce al equipo<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+    </a>
+    <a class="brief-row" href="consultas/" data-cta="clic:linea_precios">
+      <span class="brief-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></span>
+      <span class="brief-t"><b id="brief-price">Consulta 9 € · Bono de 5, 35 € · Acompañamiento, 99 €/mes</b><small>Si no quedas satisfecha, te devolvemos el dinero</small></span>
+      <span class="brief-go">Precios<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
+    </a>
   </div>
 </section>
 </main>
@@ -956,8 +779,9 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     $('ask-send-t').textContent = 'Continuar al pago · 29 €'; $('ask-send-s').textContent = 'No se cobra nada hasta que lo confirmes';
     const pk = document.querySelector('.perks li'); if (pk) pk.lastChild.textContent = 'Pago seguro';
     const to0 = $('top-open'); if (to0) { to0.textContent = 'Preguntar'; to0.href = '#ask'; to0.dataset.goask = ''; to0.dataset.cta = 'clic:top_preguntar_prio'; }
+    const bp = $('brief-price'); if (bp) bp.textContent = 'Consulta prioritaria 29 € · Bono de 5, 35 € · Acompañamiento, 99 €/mes';
     const pr = document.getElementById('precio');
-    if (pr) {
+    if (pr?.querySelector('h2')) {
       pr.querySelector('h2').textContent = 'Consulta prioritaria: 29 €';
       pr.querySelector('.sub').textContent = 'El contenido de cada semana es gratis siempre. La consulta prioritaria te responde en menos de 6 h.';
       const main = pr.querySelector('.plan.main'); if (main) main.innerHTML = '<span class="k">Consulta prioritaria</span><span class="v">29 €</span><p>Respuesta en menos de 6 h. Revisa tus analíticas o informes.</p><span class="go">Preguntar →</span>';
@@ -977,7 +801,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     const to0 = $('top-open'); if (to0) { to0.textContent = 'Preguntar · 1 €'; to0.href = '#ask'; to0.dataset.goask = ''; to0.dataset.cta = 'clic:top_preguntar_bf'; }
     // Que nada más en la página diga «gratis» para las consultas (Noza, 21 nov)
     const pr = document.getElementById('precio');
-    if (pr) {
+    if (pr?.querySelector('h2')) {
       pr.querySelector('h2').textContent = 'Black Friday: consulta a 1 €';
       pr.querySelector('.sub').textContent = 'El contenido de cada semana es gratis siempre. Hasta el 1 de diciembre, cada consulta por escrito cuesta 1 €.';
       const main = pr.querySelector('.plan.main'); if (main) main.innerHTML = '<span class="k">Black Friday · hasta el 1 dic</span><span class="v">1 € <small>· antes 9 €</small></span><p>Por consulta, a quien quieras de las tres. Sin registro.</p><span class="go">Preguntar →</span>';
@@ -994,7 +818,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     $('ask-steps').hidden = false;
     const to0 = $('top-open'); if (to0) { to0.textContent = 'Preguntar'; to0.href = '#ask'; to0.dataset.goask = ''; to0.dataset.cta = 'clic:top_preguntar_pago'; }
     const pr = document.getElementById('precio');
-    if (pr) {
+    if (pr?.querySelector('h2')) {
       pr.querySelector('h2').textContent = 'Precio';
       pr.querySelector('.sub').textContent = 'El contenido de cada semana es gratis siempre. Cada consulta por escrito cuesta 9 €; con el bono, 7 €.';
     }
@@ -1010,7 +834,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     if (FREE) {
       const a = document.getElementById('annc-t'); if (a && /^Ginecólogo, matrona y pediatra/.test(a.textContent)) a.innerHTML = 'Tus 2 primeras consultas, gratis · <u>Pregunta ahora</u>';
       const pr = document.getElementById('precio');
-      if (pr) {
+      if (pr?.querySelector('h2')) {
         pr.querySelector('h2').textContent = 'Empieza gratis';
         pr.querySelector('.sub').textContent = 'El contenido de cada semana es gratis siempre. Las consultas, las dos primeras también.';
         const main = pr.querySelector('.plan.main');
@@ -1622,5 +1446,17 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   }
 </script>
 <!-- Cloudflare Web Analytics (sin cookies) --><script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "edc55b126e2943d8828e3241ae0c4efd"}'></script><!-- End Cloudflare Web Analytics -->
+<!-- menu:panel --><div class="hm" id="hm" hidden><div class="hm-bg" data-hm-close></div><nav class="hm-p" role="dialog" aria-modal="true" aria-label="Menú">
+<div class="hm-h"><a class="hm-wm" href="/">Hera</a><button type="button" class="hm-x" aria-label="Cerrar el menú" data-hm-close><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+<div class="hm-l"><p class="hm-g">Consultar</p><ul><li><a href="/#ask" data-hm="preguntar"><span>Pregunta tu duda por escrito</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a></li><li><a href="/consultas/" data-hm="consultas"><span>Consultas y precios</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a></li><li><a href="/videollamada/" data-hm="videollamada"><span>Videollamada y llamada</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a></li></ul><p class="hm-g">Para cada etapa</p><ul><li><a href="/ciclo/" data-hm="ciclo"><span>Tu ciclo</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a></li><li><a href="/embarazo/" data-hm="embarazo"><span>Embarazo semana a semana</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a></li><li><a href="/bebe/" data-hm="bebe"><span>Tu bebé mes a mes</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a></li><li><a href="/menopausia/" data-hm="menopausia"><span>Menopausia</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a></li><li><a href="/guias/" data-hm="guias"><span>Guías</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a></li><li><a href="/calculadoras/" data-hm="calculadoras"><span>Calculadoras</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a></li></ul><p class="hm-g">Hera</p><ul><li><a href="/equipo.html" data-hm="equipo"><span>El equipo</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a></li><li><a href="/app/" data-hm="app"><span>La app, gratis</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a></li><li><a href="/support.html" data-hm="ayuda"><span>Ayuda y preguntas frecuentes</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a></li><li><a href="/privacy.html" data-hm="privacidad"><span>Privacidad</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></a></li></ul></div>
+<div class="hm-f"><a class="hm-cta" href="/#ask" data-hm="cta_preguntar">Pregunta tu duda</a></div></nav></div><script>(()=>{const m=document.getElementById('hm'),b=document.querySelector('.hm-btn');if(!m||!b)return;
+const off=(()=>{try{return localStorage.getItem('hera-equipo')==='1'}catch{return false}})()||/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+const hit=(e)=>{if(!off)fetch('https://hera-consultas.tempcheck-app.workers.dev/hit',{method:'POST',body:JSON.stringify({e}),keepalive:true}).catch(()=>{})};
+const p=location.pathname.replace(/index\.html$/,'');m.querySelectorAll('.hm-l a').forEach((a)=>{const h=a.getAttribute('href');if(h!=='/'&&!h.includes('#')&&p.startsWith(h))a.setAttribute('aria-current','page')});
+const open=()=>{m.hidden=false;document.documentElement.classList.add('hm-open');b.setAttribute('aria-expanded','true');hit('menu:abrir');setTimeout(()=>m.querySelector('.hm-x').focus(),30)};
+const close=(back=true)=>{m.hidden=true;document.documentElement.classList.remove('hm-open');b.setAttribute('aria-expanded','false');if(back)b.focus()};
+b.addEventListener('click',open);m.querySelectorAll('[data-hm-close]').forEach((x)=>x.addEventListener('click',()=>close()));
+document.addEventListener('keydown',(e)=>{if(e.key==='Escape'&&!m.hidden)close()});
+m.querySelectorAll('a[data-hm]').forEach((a)=>a.addEventListener('click',()=>{hit('menu:'+a.dataset.hm);close(false)}));})();</script><!-- /menu:panel -->
 </body>
 </html>

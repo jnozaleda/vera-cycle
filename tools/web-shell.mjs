@@ -1,3 +1,4 @@
+import { MENU_BUTTON, MENU_PANEL, MENU_CSS, MENU_JS } from './menu.mjs';
 // Plantilla común de las páginas estáticas de Hera (guías y semanas de embarazo): estilos, cabecera y pie.
 
 export const SITE = 'https://hera-gine.com';
@@ -48,10 +49,11 @@ export const shell = ({ title, desc, path, ld, body }) => `<!doctype html>
 <title>${esc(title)}</title><meta name="description" content="${esc(desc)}"><link rel="canonical" href="${SITE}${path}">
 <meta property="og:title" content="${esc(title)}"><meta property="og:description" content="${esc(desc)}"><meta property="og:image" content="${SITE}/portada/compartir.jpg"><meta property="og:type" content="article"><meta property="og:locale" content="es_ES">
 <meta name="theme-color" content="#FAF9F4"><link rel="icon" href="/favicon.ico" sizes="48x48"><link rel="icon" type="image/svg+xml" href="/app/brand/favicon.svg"><link rel="icon" type="image/png" sizes="96x96" href="/app/icons/favicon-96.png"><link rel="apple-touch-icon" href="/app/icons/apple-touch-icon.png">
-<script type="application/ld+json">${JSON.stringify(ld)}</script><style>${CSS}</style></head><body>
-<header class="w top"><a class="wm" href="/">Hera</a><nav aria-label="Principal"><a href="/ciclo/">Ciclo</a><a href="/embarazo/">Embarazo</a><a href="/bebe/">Tu bebé</a><a href="/guias/">Guías</a><a href="/equipo.html">El equipo</a><a class="pill" href="/app/">Abrir la app</a></nav></header>
-<nav class="w mnav" aria-label="Secciones">${[['/ciclo/', 'Ciclo'], ['/embarazo/', 'Embarazo'], ['/bebe/', 'Bebé'], ['/guias/', 'Guías']].map(([h, l]) => `<a href="${h}"${path.startsWith(h) ? ' aria-current="page"' : ''}>${l}</a>`).join('')}</nav><main>${body}</main>
-<footer class="w"><a href="/">Inicio</a> · <a href="/ciclo/">Fases del ciclo</a> · <a href="/embarazo/">Embarazo semana a semana</a> · <a href="/bebe/">Tu bebé mes a mes</a> · <a href="/calculadoras/">Calculadoras</a> · <a href="/guias/">Guías</a> · <a href="/equipo.html">El equipo</a> · <a href="/privacy.html">Privacidad</a> · <a href="/support.html">Soporte</a></footer>${SITE_JS}${BEACON}</body></html>
+<script type="application/ld+json">${JSON.stringify(ld)}</script><style>${CSS}
+.top>nav{margin-left:auto}${MENU_CSS}</style></head><body>
+<header class="w top"><a class="wm" href="/">Hera</a><nav aria-label="Principal"><a href="/ciclo/">Ciclo</a><a href="/embarazo/">Embarazo</a><a href="/bebe/">Tu bebé</a><a href="/guias/">Guías</a><a href="/equipo.html">El equipo</a><a class="pill" href="/app/">Abrir la app</a></nav>${MENU_BUTTON}</header>
+<main>${body}</main>
+<footer class="w"><a href="/">Inicio</a> · <a href="/ciclo/">Fases del ciclo</a> · <a href="/embarazo/">Embarazo semana a semana</a> · <a href="/bebe/">Tu bebé mes a mes</a> · <a href="/calculadoras/">Calculadoras</a> · <a href="/guias/">Guías</a> · <a href="/equipo.html">El equipo</a> · <a href="/privacy.html">Privacidad</a> · <a href="/support.html">Soporte</a></footer>${MENU_PANEL}${MENU_JS}${SITE_JS}${BEACON}</body></html>
 `;
 export const face = (pro) => `<img src="/portada/equipo/${pro.photo}" alt="" width="52" height="52" loading="lazy">`;
 

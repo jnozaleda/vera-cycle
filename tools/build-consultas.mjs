@@ -116,6 +116,9 @@ const body = `${STYLE}<div class="w cq">
 
 <h2 class="cq-h">Lo que conviene saber</h2>
 <div class="cq-faq">
+  <div><b>¿Quién responde a mi consulta?</b><p>El ginecólogo Gonzalo Nozaleda, la matrona Marina Fernández o la pediatra Lucía Carrascón, según a quién elijas. Te responde esa persona, con su nombre, no un chat automático. <a href="/equipo.html">Conoce al equipo</a>.</p></div>
+  <div><b>¿Por qué no buscarlo en internet?</b><p>En foros y buscadores las respuestas se contradicen, no sabes quién las escribe y están pensadas para cualquiera. Aquí te responde una profesional con nombre, a ti, con tu semana de embarazo o la edad de tu bebé, y te dice cuándo sí hay que ir a urgencias.</p></div>
+  <div><b>¿Tengo que crear una cuenta o instalar algo?</b><p>No. Escribes tu duda y tu correo, y la respuesta te llega por correo. La app de Hera es gratis y opcional: <a href="/support.html">cómo instalarla</a>.</p></div>
   <div><b>¿Cuándo se cobra la consulta?</b><p>Primero escribes tu duda y después pagas. Hasta que no pagas no se cobra nada, y la consulta no le llega a la profesional.</p></div>
   <div><b>¿Y si la respuesta no me sirve?</b><p>Puedes responderle por correo con lo que te falte. Si aun así no quedas satisfecha, escríbenos y te devolvemos el dinero.</p></div>
   <div><b>¿Qué incluye el WhatsApp del acompañamiento?</b><p>Un número de Hera para hablar con la profesional que elijas, de 9:00 a 21:00 (hora de España), para dudas rápidas. Para algo largo, mejor por escrito o en la videollamada. Te escribimos nosotros en menos de 24 h desde que empiezas.</p></div>

@@ -66,7 +66,7 @@ const CSS = `<style>
 .m-ops span{display:inline-block;font-size:13.5px;border:1px solid #E5E1D8;border-radius:999px;padding:6px 12px;color:#4F4E49;background:#FAF9F4}
 .m-ops input:checked+span{background:#45574C;border-color:#45574C;color:#fff;font-weight:600}
 .m-ops input:focus-visible+span{outline:2px solid #8A7045;outline-offset:2px}
-.m-res{position:sticky;top:20px;background:#fff;border:1px solid #E5E1D8;border-radius:14px;padding:20px;display:grid;gap:14px}
+.m-res{position:sticky;top:86px;background:#fff;border:1px solid #E5E1D8;border-radius:14px;padding:20px;display:grid;gap:14px}
 .m-res h3{font-size:26px}.m-prog{font-size:13px;color:#6E6C67}
 .m-lvl{border-radius:10px;padding:12px 14px;font-size:14.5px;line-height:1.45;background:#F3F1EA}
 .m-lvl.l1{background:#EAF3EE}.m-lvl.l2{background:#FBF1E2}.m-lvl.l3{background:#FCEAE6}

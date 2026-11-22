@@ -1147,48 +1147,52 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
   return { ok: true };
 }
 
+/** Todas las consultas (solo nombre y metadatos), con una sola pasada por KV.
+ * 22 nov: antes cada consulta pendiente volvía a listar todas (answeredTwin) y el panel gastaba ~17 listas por visita;
+ * el plan gratis de Cloudflare permite 1000 listas al día y llegamos al 90 %. */
+async function listThreads(env) {
+  const keys = []; let cursor;
+  do {
+    const page = await env.KV.list({ prefix: 't:', cursor });
+    keys.push(...page.keys);
+    cursor = page.list_complete ? null : page.cursor;
+  } while (cursor);
+  return keys;
+}
+
 /** Consultas abiertas sin respuesta, por profesional (para el panel) */
 async function openThreads(env) {
   const out = { pendientes: {}, fuera_plazo: {} };
-  let cursor;
-  do {
-    const page = await env.KV.list({ prefix: 't:', cursor });
-    for (const k of page.keys) {
-      const m = k.metadata || {};
-      if (!m.p || m.a || m.p === 'prueba') continue;
-      // Consulta repetida (la misma duda enviada dos veces seguidas) ya contestada en la otra: no cuenta como pendiente
-      const tt = await loadThread(env, k.name.slice(2));
-      if (tt && await answeredTwin(env, tt)) continue;
-      out.pendientes[m.p] = (out.pendientes[m.p] || 0) + 1;
-      if (Date.now() - m.c > 24 * 3600000) out.fuera_plazo[m.p] = (out.fuera_plazo[m.p] || 0) + 1;
-    }
-    cursor = page.list_complete ? null : page.cursor;
-  } while (cursor);
+  const keys = await listThreads(env);
+  for (const k of keys) {
+    const m = k.metadata || {};
+    if (!m.p || m.a || m.p === 'prueba') continue;
+    // Consulta repetida (la misma duda enviada dos veces seguidas) ya contestada en la otra: no cuenta como pendiente
+    if (await answeredTwin(env, { id: k.name.slice(2), p: m.p, c: m.c, u8: m.u }, keys)) continue;
+    out.pendientes[m.p] = (out.pendientes[m.p] || 0) + 1;
+    if (Date.now() - m.c > 24 * 3600000) out.fuera_plazo[m.p] = (out.fuera_plazo[m.p] || 0) + 1;
+  }
   return out;
 }
 
 const TWIN_WINDOW = 3600000;
-async function answeredTwin(env, t) {
-  const u = String(t.uh || '').slice(0, 8);
-  let cursor;
-  do {
-    const page = await env.KV.list({ prefix: 't:', cursor });
-    for (const k of page.keys) {
-      const m = k.metadata || {};
-      // Gemela: misma profesional, enviada con menos de 1 h de diferencia y respondida después de esta
-      if (k.name === `t:${t.id}` || m.p !== t.p || !(m.a >= t.c) || Math.abs((m.c || 0) - t.c) > TWIN_WINDOW) continue;
-      if (m.u ? m.u === u : (await loadThread(env, k.name.slice(2)))?.uh === t.uh) return true;
-    }
-    cursor = page.list_complete ? null : page.cursor;
-  } while (cursor);
+/** ¿Hay otra consulta de la misma usuaria a la misma profesional, enviada con menos de 1 h de diferencia y respondida
+ * después de esta? Usa la lista ya hecha (keys); solo lee un hilo si le faltan los metadatos de la usuaria. */
+async function answeredTwin(env, t, keys) {
+  const u = String(t.uh || t.u8 || '').slice(0, 8); // ojo: en un hilo completo, t.u es el correo cifrado
+  for (const k of keys || await listThreads(env)) {
+    const m = k.metadata || {};
+    if (k.name === `t:${t.id}` || m.p !== t.p || !(m.a >= t.c) || Math.abs((m.c || 0) - t.c) > TWIN_WINDOW) continue;
+    if (m.u && u ? m.u === u : (await loadThread(env, k.name.slice(2)))?.uh?.slice(0, 8) === u) return true;
+  }
   return false;
 }
 
 export async function remindOverdue(env) {
-  let cursor; let n = 0;
-  do {
-    const page = await env.KV.list({ prefix: 't:', cursor });
-    for (const k of page.keys) {
+  let n = 0;
+  const keys = await listThreads(env);
+  {
+    for (const k of keys) {
       const m = k.metadata || {};
       // Prioritaria: recordatorio a las 4 h (plazo de 6 h); el resto, a las 16 h (plazo de 24 h)
       if (!m.p || m.a || m.r || Date.now() - m.c < (m.pr ? 4 : 16) * 3600000) continue;
@@ -1198,13 +1202,12 @@ export async function remindOverdue(env) {
       if (!pro) continue;
       // La misma usuaria hizo otra consulta a la misma profesional y esa ya está respondida después de esta:
       // casi siempre es la misma duda enviada dos veces (la profesional contestó en el otro hilo). Sin recordatorio.
-      if (await answeredTwin(env, t)) { t.rem = true; await saveThread(env, t); await bump(env, 'recordatorio_omitido'); continue; }
+      if (await answeredTwin(env, t, keys)) { t.rem = true; await saveThread(env, t); await bump(env, 'recordatorio_omitido'); continue; }
       const { html, text } = reminderEmail(pro, t.id, !!t.pr);
       const sent = await sendMail(env, { to: pro.email, replyTo: await relayAddress(env, 'p', t.id), subject: `Re: ${t.sp}`, refs: t.rp, html, text });
       if (sent) { t.rem = true; await saveThread(env, t); if (t.p !== 'prueba') await bump(env, `recordatorio:${t.p}`); n++; }
     }
-    cursor = page.list_complete ? null : page.cursor;
-  } while (cursor);
+  }
   return n;
 }
 

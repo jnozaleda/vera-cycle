@@ -116,6 +116,9 @@ f.addEventListener('change',update);
 $('m-send').addEventListener('click',(ev)=>{if($('m-send').getAttribute('aria-disabled')==='true'){ev.preventDefault();return}h('menopausia:enviar');try{localStorage.setItem('hera-ask-prefill',JSON.stringify({text:$('m-send').dataset.text,at:Date.now()}))}catch(e){}});
 $('m-reset').addEventListener('click',()=>{f.reset();update()});
 document.querySelectorAll('[data-hit]').forEach((a)=>a.addEventListener('click',()=>h('menopausia:'+a.dataset.hit)));
+// Latinoamérica (anuncios …_latam, como la portada): teléfono de urgencias de cada país y sin el dato de España
+let latam=false;try{if(/_latam$/.test((new URLSearchParams(location.search).get('utm_campaign')||'').toLowerCase()))sessionStorage.setItem('hera-latam','1');latam=sessionStorage.getItem('hera-latam')==='1'}catch(e){}
+if(latam){const u=$('m-urg');if(u)u.textContent='Si es urgente, llama al número de emergencias de tu país (911 en México, 107 en Argentina, 131 en Chile, 123 en Colombia) o ve a urgencias.';const t=$('m-t51');if(t)t.innerHTML='<b>40–45</b><span>Cuando suelen empezar los cambios</span>'}
 // Precio de la consulta por escrito: 1 € hasta el 1 dic (Black Friday), 9 € después
 if(Date.now()>=Date.parse('2026-12-01T23:59:59+01:00')){const p=$('m-price');if(p)p.textContent='9 €'}
 update();
@@ -128,7 +131,7 @@ const body = `${CSS}<div class="w">
   <p class="m-lead">Sofocos, mal sueño, cambios de ánimo, sequedad… Mide en 3 minutos cuánto te están afectando y llévale el resultado a tu ginecólogo.</p>
   <div class="m-ctas"><a class="m-btn p" href="#cuestionario" data-hit="clic_cuestionario">Hacer el cuestionario · 3 min</a><a class="m-btn s" href="/#preguntar-gineco" data-hit="clic_preguntar">Preguntar a ${g.name}</a></div></div>
   <div class="m-who">${face(g)}<b>Dr. Gonzalo Nozaleda</b><span>Ginecólogo</span><p>Te responde por escrito en menos de 24 h, o por videollamada si prefieres hablarlo.</p></div>
-  <div class="m-tiles"><div class="m-tile"><b>51 años</b><span>Edad media de la menopausia en España</span></div><div class="m-tile"><b>45–55</b><span>Lo habitual</span></div><div class="m-tile"><b>12 meses</b><span>Sin regla: entonces es menopausia</span></div><div class="m-tile"><b>Antes de 40</b><span>Consulta: es precoz</span></div></div>
+  <div class="m-tiles"><div class="m-tile" id="m-t51"><b>51 años</b><span>Edad media de la menopausia en España</span></div><div class="m-tile"><b>45–55</b><span>Lo habitual</span></div><div class="m-tile"><b>12 meses</b><span>Sin regla: entonces es menopausia</span></div><div class="m-tile"><b>Antes de 40</b><span>Consulta: es precoz</span></div></div>
 </div>
 
 <section class="m-blk" id="etapas"><h2>Tres etapas</h2>
@@ -176,7 +179,7 @@ const body = `${CSS}<div class="w">
 <div class="m-final" id="consulta"><div><h2>Habla con ${g.name}</h2><p>Cuéntale lo que te pasa, con tu resultado si quieres. Te responde él, por escrito o cara a cara.</p></div>
   <div class="m-opts"><a class="m-opt" href="/#preguntar-gineco" data-hit="clic_escrito"><div><b>Consulta por escrito</b><span>Te responde en menos de 24 h</span></div><em id="m-price">1 € · Black Friday</em></a>
   <a class="m-opt" href="/videollamada/#reservar-gineco" data-hit="clic_videollamada"><div><b>Videollamada de 30 min</b><span>Para hablarlo con calma</span></div><em>55 €</em></a></div></div>
-<p class="urg" style="margin-bottom:30px"><b>Si es urgente, llama al 112 o ve a urgencias.</b> Esta información es general y no sustituye la valoración de un profesional.</p>
+<p class="urg" style="margin-bottom:30px"><b id="m-urg">Si es urgente, llama al 112 o ve a urgencias.</b> Esta información es general y no sustituye la valoración de un profesional.</p>
 </div>${JS}`;
 
 const desc = 'Cuestionario orientativo de síntomas de la menopausia (3 min), las tres etapas, qué ayuda y cuándo consultar. Pregúntale a Gonzalo, ginecólogo, por escrito o por videollamada.';

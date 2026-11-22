@@ -694,3 +694,26 @@ console.log('consultas: OK');
   env.RELAY = R0; env.ADD_WINDOW_MIN = '0';
   console.log('Añadir a la consulta: OK');
 }
+
+// Sin consultas gratis (22 nov, NO_FREE): todas se guardan hasta pagar (1 € hasta el 1 dic), salvo enlaces de profesionales y amigas
+{
+  const P0 = env.PAYMENTS, K0 = env.STRIPE_SECRET_KEY, R0 = env.RELAY;
+  env.PAYMENTS = 'on'; env.STRIPE_SECRET_KEY = 'sk_test_x'; env.RELAY = '1'; env.NO_FREE = '1';
+  const DB0 = env.DB;
+  env.DB = { prepare: (sql) => { const st = DB0.prepare(sql); return { ...st, bind: (...a) => { const b = st.bind(...a); return Object.assign(Object.create(Object.getPrototypeOf(b) || Object.prototype), b, { first: b.first ? b.first.bind(b) : async () => null }); } }; } };
+  const s0 = sent.length;
+  const a = await call('/ask', { email: 'sin-gratis@example.com', to: 'gineco', text: 'Primera consulta, ya sin gratis', context: '' });
+  assert.ok(a.j.limit && a.j.held && a.j.bf, JSON.stringify(a.j));
+  const m = sent.slice(s0).find((x) => x.to[0] === 'sin-gratis@example.com');
+  assert.match(m.html, /Pagar 1 € y enviarla/); assert.ok(!/gratis/i.test(m.subject));
+  const pro = await call('/ask', { email: 'via-pro@example.com', to: 'matrona', text: 'Vengo del Instagram de Marina', context: '', via: 'ig_marina' });
+  assert.ok(pro.j.ok && !pro.j.limit, 'los enlaces de las profesionales siguen gratis');
+  const fr = await call('/ask', { email: 'amiga@example.com', to: 'matrona', text: 'Vengo del enlace de Maite', context: '', via: 'q7m' });
+  assert.ok(fr.j.ok && !fr.j.limit, 'los enlaces de amigas siguen gratis');
+  const app = await call('/ask', { email: 'app-sin-gratis@example.com', to: 'pediatra', text: 'Desde la app, sin ab ni anuncio', context: '' });
+  assert.ok(app.j.held && app.j.bf, 'también sin anuncio ni versión (la app)');
+  const { holdEmail } = await import('../src/worker.js');
+  assert.match(holdEmail(PROS.gineco, 'x', { suelta: 's', bono: 'b', mensual: 'm' }, false, '', 'pago').html, /Cada consulta por escrito cuesta 9 €/);
+  delete env.NO_FREE; env.PAYMENTS = P0; env.STRIPE_SECRET_KEY = K0; env.RELAY = R0; env.DB = DB0;
+  console.log('Sin consultas gratis: OK');
+}

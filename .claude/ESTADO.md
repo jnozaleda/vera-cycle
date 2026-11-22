@@ -7,7 +7,7 @@ registro de cambios publicados, el más reciente primero. Sin datos personales n
 
 | Qué | Detalle | Hasta / cuándo | Dónde |
 |---|---|---|---|
-| Prueba Black Friday | Desde el 21 nov, sin reparto al azar: quien llega por un anuncio de «2 consultas gratis» ve la versión gratis; solo el anuncio «Black Friday · 1 €» (`utm_content=bf`) lleva a la de 1 € (sin gratis, pago al enviar). Antes, 50/50 al azar. Ver una versión a propósito: `?utm_medium=cpc&utm_campaign=prueba&ab=bf` (o `ab=gratis`) | Hasta el 1 dic (`BF_END`). Leer resultados el 2 dic en el panel, «Pruebas de precio» | `index.html` (AB/BF), `worker.js` (`bf`, plan `bf1`) |
+| Consulta a 1 € / 9 € | Desde el 22 nov, sin gratis para nadie salvo enlaces de amigas y profesionales: 1 € hasta el 1 dic, 9 € después. Antes (21 nov), sin reparto al azar: quien llega por un anuncio de «2 consultas gratis» ve la versión gratis; solo el anuncio «Black Friday · 1 €» (`utm_content=bf`) lleva a la de 1 € (sin gratis, pago al enviar). Antes, 50/50 al azar. Ver una versión a propósito: `?utm_medium=cpc&utm_campaign=prueba&ab=bf` (o `ab=gratis`) | Hasta el 1 dic (`BF_END`). Leer resultados el 2 dic en el panel, «Pruebas de precio» | `index.html` (AB/BF), `worker.js` (`bf`, plan `bf1`) |
 | Consulta prioritaria | Campaña propia `utm_campaign=prioritaria`: 29 €, sin gratis, respuesta en menos de 6 h, aviso con hora límite y recordatorio a las 4 h | Desde el 2 dic, cuando Noza cree la campaña y las profesionales confirmen el plazo | `index.html` (PRIO), `worker.js` (`prio`, plan `prio29`) |
 | WhatsApp | En «Próximamente · Avísame» (pago desactivado); la lista de avisos está en el panel | Hasta que Noza decida volver a encenderlo (`SOON = false` en `tools/build-whatsapp.mjs`) | `tools/build-whatsapp.mjs`, `index.html` |
 | Enlaces propios | `?via=` de las profesionales, enlaces de amigas (5 gratis hasta el 31 dic) y del grupo (2 gratis) | 31 dic | `worker.js` (`FRIEND_LINKS`), `panel.js` (`VIA_NAME`) |
@@ -16,6 +16,7 @@ registro de cambios publicados, el más reciente primero. Sin datos personales n
 ## Registro
 
 ### 2026-11-22
+- **Sin consultas gratis** (Noza): todas se pagan desde la primera, en la web y en la app: 1 € hasta el 1 dic (Black Friday) y 9 € después (`NO_FREE="1"` en `consult-worker/wrangler.toml`; `NO_FREE` en `index.html`, `app/js/app.js` y `opinion/`). Siguen con 2 gratis los enlaces de las profesionales y el grupo de Maite (`FREE_VIA`) y los de amigas (`FRIEND_LINKS`, 5). Ya no se ofrecen invitaciones (prometían gratis). Textos «gratis» quitados de guías, bebé, embarazo, equipo, soporte, videollamada y WhatsApp. Para volver atrás: `NO_FREE` a "0" en el servicio y `false` en la web y la app. (publicado)
 - **Guías: medición para quien llega por anuncio**: tiempo (`guia_tiempo:10/30/60/180`), lectura (`guia_scroll:25…100`) y clics (`guia_clic:preguntar|videollamada|otra_guia|whatsapp|otro`), con nombres propios para no mezclarse con la portada. Solo con gclid o utm_medium=cpc. (publicado)
 
 ### 2026-11-21

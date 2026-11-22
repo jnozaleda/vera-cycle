@@ -1298,6 +1298,8 @@ const refSrc = () => { try { const r = JSON.parse(localStorage.getItem('hera-ref
 const adSrc = () => { try { const a = JSON.parse(localStorage.getItem('hera-src') || 'null'); return a && Date.now() - a.at < 30 * 86400000 ? { src: 'ads', ...(a.c ? { camp: a.c } : {}) } : {}; } catch { return {}; } };
 const PAY_DRAFT_KEY = 'hera-pay-draft';
 const payTest = () => { try { return localStorage.getItem(PAY_TEST_KEY) === '1'; } catch { return false; } };
+// Sin consultas gratis (Noza, 22 nov; en el servicio, NO_FREE): 1 € hasta el 1 dic (Black Friday) y 9 € después
+const NO_FREE = true;
 const PLANS_UI = [
   { k: 'bono', name: 'Bono de 5 consultas', price: '35 €', note: '7 € cada una · válido 12 meses' },
   { k: 'suelta', name: 'Consulta suelta', price: '9 €', note: 'Solo esta pregunta' },
@@ -1314,12 +1316,12 @@ function askPayView(a) {
         ? `<div class="t-15 w-500 c-deep">Bono o plan ilimitado</div>
       <p class="t-13 lh-4 c-deep">Si aún te quedan consultas gratuitas, se usan primero: lo que compres queda para después. Tu pregunta queda guardada y la envías al volver.</p>`
         : a.result.held ? `<div class="t-15 w-500 c-deep">Tu consulta está guardada</div>
-      <p class="t-13 lh-4 c-deep">Ya has usado tus ${a.result.freeLimit || 2} consultas gratis. En cuanto pagues, se la enviamos a ${esc((CONSULTS[a.sentTo] || CONSULTS.gineco).short)}: no tienes que volver a escribirla. También te hemos enviado el enlace por correo; si no pagas en 7 días, la borramos.</p>`
+      <p class="t-13 lh-4 c-deep">${a.result.bf ? 'Con la oferta de Black Friday, cada consulta cuesta 1 € hasta el 1 de diciembre' : NO_FREE ? 'Cada consulta por escrito cuesta 9 € (con el bono, 7 €)' : `Ya has usado tus ${a.result.freeLimit || 2} consultas gratis`}. En cuanto pagues, se la enviamos a ${esc((CONSULTS[a.sentTo] || CONSULTS.gineco).short)}: no tienes que volver a escribirla. También te hemos enviado el enlace por correo; si no pagas en 7 días, la borramos.</p>`
         : `<div class="t-15 w-500 c-deep">Has usado tus ${a.result.freeLimit || 2} consultas gratuitas</div>
       <p class="t-13 lh-4 c-deep">Para seguir preguntando a Gonzalo, Marina y Lucía, elige cómo. Tu pregunta queda guardada y la envías al volver.</p>`}
     </div>
     <div class="stack-8">
-      ${PLANS_UI.map((p) => `<button class="plan-pick" data-action="ask-buy" data-v="${p.k}" ${busy ? 'disabled' : ''}>
+      ${(a.result.bf && a.result.held ? [{ k: 'bf1', name: 'Consulta (Black Friday)', note: 'Solo esta pregunta · hasta el 1 dic', price: '1 €' }] : PLANS_UI).map((p) => `<button class="plan-pick" data-action="ask-buy" data-v="${p.k}" ${busy ? 'disabled' : ''}>
         <span class="plan-pick-main"><span class="t-15 w-600 c-deep">${p.name}</span><span class="t-12 soft">${p.note}</span></span>
         <span class="t-15 w-600 c-deep nowrap">${busy === p.k ? 'Abriendo…' : p.price}</span></button>`).join('')}
     </div>
@@ -1436,7 +1438,7 @@ function askSheet() {
   }[store.mode] || [];
   const picksOpen = a.picksOpen || !to;
   // «Gratis» mientras no sepamos que ya gastó las 2 (lo dice el servicio al enviar y se guarda en el móvil)
-  let freeOn = true; try { freeOn = localStorage.getItem('hera-free-left') !== '0' && !pd; } catch { /* sin almacenamiento */ }
+  let freeOn = !NO_FREE; try { freeOn = freeOn && localStorage.getItem('hera-free-left') !== '0' && !pd; } catch { /* sin almacenamiento */ }
   return sheetFrame('Consulta', `<div class="stack-14">
     ${paidBanner}
     ${freeOn ? '<div class="ask-free"><span><b>Tus 2 primeras consultas son gratis.</b> Sin tarjeta y sin registro: solo tu correo para recibir la respuesta, en menos de 24 h.</span></div>' : ''}

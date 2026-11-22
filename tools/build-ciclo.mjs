@@ -42,7 +42,7 @@ writeFileSync('ciclo/index.html', shell({ title: 'Las fases del ciclo menstrual 
 <div class="w"><div class="ih"><p class="ey">Ciclo menstrual</p><h1>Las fases de tu ciclo, <em>explicadas</em></h1><p class="sub">${esc(CYCLE_INTRO.lead)}</p></div>
 <div class="phs">${PHASE_PAGES.map((p) => `<a class="ph" href="/ciclo/${p.slug}/" style="background:${p.tint}"><span>${esc(p.days)}</span><b>${esc(p.name)}</b><p>${esc(p.lead.split('. ')[0])}.</p></a>`).join('')}</div>
 <section class="sec" style="margin-bottom:28px"><h2>Para entenderlo</h2>${list(CYCLE_INTRO.points)}</section>
-<div class="final"><div class="fin"><h2>¿Tienes una duda sobre tu ciclo?</h2><p>Ginecólogo y matrona te responden por escrito en menos de 24 h.</p><a class="btn" href="/#preguntar-gineco">Preguntar gratis</a></div></div></div>` }));
+<div class="final"><div class="fin"><h2>¿Tienes una duda sobre tu ciclo?</h2><p>Ginecólogo y matrona te responden por escrito en menos de 24 h.</p><a class="btn" href="/#preguntar-gineco">Preguntar</a></div></div></div>` }));
 
 let sm = readFileSync('sitemap.xml', 'utf8').replace(/\s*<url><loc>[^<]*\/ciclo\/[^<]*<\/loc><lastmod>[^<]*<\/lastmod><\/url>/g, '');
 const urls = ['/ciclo/', ...PHASE_PAGES.map((p) => `/ciclo/${p.slug}/`)].map((u) => `  <url><loc>${SITE}${u}</loc><lastmod>${UPDATED}</lastmod></url>`).join('\n');

@@ -70,8 +70,9 @@ function showInvite(code) {
     try { await navigator.clipboard.writeText(msg); } catch { const r = document.createRange(); r.selectNodeContents($('inv-url')); getSelection().removeAllRanges(); getSelection().addRange(r); }
     $('inv-cp').querySelector('span').textContent = 'Copiado';
   });
-  $('inv').hidden = false;
-  hit('invitacion_vista');
+  // Sin consultas gratis (Noza, 22 nov) no se ofrece invitar: el enlace prometía «2 primeras gratis»
+  const NO_FREE = true;
+  if (!NO_FREE) { $('inv').hidden = false; hit('invitacion_vista'); }
 }
 (async () => {
   try {

@@ -68,7 +68,7 @@ const body = `${STYLE}<div class="w vc">
   <div class="vc-note" id="vc-note" hidden aria-live="polite"></div>
 </section>
 <div class="vc-cards">${CARDS.map(card).join('')}</div>
-<div class="vc-free" id="gratis"><b>¿No sabes si necesitas una videollamada?</b><p>Pregúntalo gratis por escrito: te responde en menos de 24 h y te dice si te conviene hablarlo cara a cara. Tus 2 primeras consultas son gratis, sin tarjeta.</p>
+<div class="vc-free" id="gratis"><b>¿No sabes si necesitas una videollamada?</b><p>Pregúntalo antes por escrito: te responde en menos de 24 h y te dice si te conviene hablarlo cara a cara.</p>
   <div class="vc-free-l"><a href="/#preguntar-gineco">Preguntar a Gonzalo</a><a href="/#preguntar-matrona">Preguntar a Marina</a><a href="/#preguntar-pediatra">Preguntar a Lucía</a></div></div>
 
 <h2>Cómo funciona</h2>
@@ -168,7 +168,7 @@ const body = `${STYLE}<div class="w vc">
   if (pago === 'no') { const pl = (q.get('plan') || '').toLowerCase(); hit(/^[a-z0-9]{1,24}$/.test(pl) ? 'pago_cancelado:' + pl : 'pago_cancelado'); }
   if (pago) {
     history.replaceState(null, '', location.pathname);
-    if (pago === 'no') say('<b>No se ha hecho ningún pago</b>Puedes volver a intentarlo cuando quieras. ¿Prefieres preguntarlo antes por escrito? <a href="#gratis" style="color:#2D4A3A;font-weight:600">Es gratis</a>.');
+    if (pago === 'no') say('<b>No se ha hecho ningún pago</b>Puedes volver a intentarlo cuando quieras. ¿Prefieres preguntarlo antes por escrito? <a href="#gratis" style="color:#2D4A3A;font-weight:600">Pregúntalo por escrito</a>.');
     else {
       say('<b>Comprobando el pago…</b>');
       fetch(API + '/checkout/status?cs=' + encodeURIComponent(q.get('cs') || '')).then((r) => r.json()).then((j) => {

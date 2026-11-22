@@ -44,6 +44,8 @@ import { PLANS, VIDEO_PROS, paymentsOn, createCheckout, sessionStatus, handleWeb
 import { newThreadId, relayAddress, parseRelayAddress, sealEmail, openEmail, saveThread, loadThread, parseIncoming, isAutomatic } from './relay.js';
 
 /** Enlaces de amigas: consultas gratis y hasta cuándo (Noza, 20 nov) */
+// Enlaces que siguen con las 2 gratis aunque no haya gratis para nadie más (NO_FREE): profesionales y grupo de Maite
+export const FREE_VIA = ['ig_marina', 'reddit_gonzalo', 'x4d', 'p9t', 'g8w'];
 export const FRIEND_LINKS = { q7m: { free: 5, until: '2026-12-31T23:59:59+01:00' }, k2v: { free: 5, until: '2026-12-31T23:59:59+01:00' } }; // q7m Maite, k2v Noza
 
 export const PROS = {
@@ -227,7 +229,7 @@ export function holdEmail(pro, text, links, reminder = false, others = '', offer
   const bf = offer === 'bf' || offer === true; const prio = offer === 'prio';
   // others: la gratis que le queda es con otra especialista (1 gratis por especialista)
   // bf: prueba Black Friday (consulta a 1 € hasta el 1 dic). WhatsApp está en «Próximamente» desde el 19 nov: ya no se ofrece aquí
-  const why = prio ? 'Has elegido la consulta prioritaria (respuesta en menos de 6 h)' : bf ? 'Con la oferta de Black Friday, cada consulta cuesta 1 € hasta el 1 de diciembre' : others ? `Tu consulta gratis con ${pro.short} ya la usaste (la que te queda es para ${others})` : 'Ya has usado tus consultas gratis';
+  const why = prio ? 'Has elegido la consulta prioritaria (respuesta en menos de 6 h)' : offer === 'pago' ? 'Cada consulta por escrito cuesta 9 €' : bf ? 'Con la oferta de Black Friday, cada consulta cuesta 1 € hasta el 1 de diciembre' : others ? `Tu consulta gratis con ${pro.short} ya la usaste (la que te queda es para ${others})` : 'Ya has usado tus consultas gratis';
   const price = prio ? '29 €' : bf ? '1 €' : '9 €'; const link = prio ? links.prio29 : bf ? links.bf1 : links.suelta;
   const excerpt = text.length > 220 ? `${text.slice(0, 220).trim()}…` : text;
   const btn = `<p style="margin:16px 0"><a href="${link}" style="display:inline-block;background:#45574C;color:#ffffff;text-decoration:none;font-weight:600;border-radius:8px;padding:12px 20px">Pagar ${price} y enviarla</a></p>`;
@@ -487,7 +489,7 @@ const handler = {
           const to = s.customer_details?.email || s.customer_email;
           // Con su enlace para invitar (invite.js): quien paga una videollamada es quien más confía
           const h0 = /^[0-9a-f]{64}$/.test(String(s.metadata?.h || '')) ? s.metadata.h : '';
-          const inv = to && h0 ? inviteBlock(await inviteCode(env, h0, await sealEmail(env, to))) : null;
+          const inv = env.NO_FREE !== '1' && to && h0 ? inviteBlock(await inviteCode(env, h0, await sealEmail(env, to))) : null;
           if (to) await sendMail(env, { to, replyTo: 'contacto@hera-gine.com', ...videoPaidEmail(pro, PLANS[plan], inv) });
           if (s.metadata?.src === 'ads') { const ak = /_latam$/.test(String(s.metadata?.camp || '')) ? 'latam' : 'anuncio'; await bump(env, `${ak}_pago:${plan}`); await bump(env, `${ak}_eur`, madridDay(), PLANS[plan].eur); }
           const dash = `https://dashboard.stripe.com/${s.livemode ? '' : 'test/'}${s.payment_intent ? `payments/${s.payment_intent}` : 'payments'}`;
@@ -713,11 +715,15 @@ const handler = {
     const cc = /^[A-Z]{2}$/.test(request.cf?.country || '') ? request.cf.country : ''; // país de la consulta (Noza, 20 nov)
     // Amigas que prueban Hera (enlace de Maite, 20 nov): más consultas gratis hasta una fecha y sin la regla de 1 por especialista
     const friend = FRIEND_LINKS[via] && Date.now() < Date.parse(FRIEND_LINKS[via].until) ? FRIEND_LINKS[via] : null;
-    // Prueba Black Friday (Noza, 20 nov): la mitad de las visitas de anuncio ve la consulta a 1 € (sin gratis), hasta el 1 dic
-    const bf = !friend && body.ab === 'bf' && body.src === 'ads' && Date.now() < BF_END;
+    // Sin consultas gratis (Noza, 22 nov; NO_FREE="1" en wrangler.toml): todas se pagan desde la primera, salvo los enlaces
+    // de amigas (FRIEND_LINKS) y los de las profesionales y el grupo de Maite (FREE_VIA), que siguen con las 2 gratis de siempre.
+    const freeVia = FREE_VIA.includes(via);
+    const noFree = env.NO_FREE === '1' && !friend && !freeVia;
     // Consulta prioritaria (Noza, 21 nov): campaña propia «prioritaria», sin gratis, 29 € y respuesta en menos de 6 h
     const prio = !friend && body.ab === 'prio' && body.src === 'ads' && String(body.camp || '') === 'prioritaria';
-    const limit = friend ? friend.free : bf || prio ? 0 : Number(env.FREE_LIMIT || 2);
+    // Black Friday (hasta el 1 dic): 1 € por consulta. Con NO_FREE, para todos; antes, solo la prueba de anuncios (ab=bf)
+    const bf = !friend && !freeVia && !prio && Date.now() < BF_END && (noFree || (body.ab === 'bf' && body.src === 'ads'));
+    const limit = friend ? friend.free : bf || prio || noFree ? 0 : Number(env.FREE_LIMIT || 2);
 
     if (url.pathname === '/admin/reset') {
       if (!env.ADMIN_TOKEN || request.headers.get('Authorization') !== `Bearer ${env.ADMIN_TOKEN}`) return reply(401, { error: 'unauthorized' });
@@ -888,7 +894,7 @@ const handler = {
           const held = { email: q.email, to: body.to, text: q.text, context: q.context, situation: q.situation, follow: body.follow === true, src: body.src, camp: body.camp, ref: body.ref, p: body.p, team: body.team === true, ...(bf ? { ab: 'bf' } : prio ? { ab: 'prio' } : {}) };
           await env.KV.put(`hold:${hid}`, JSON.stringify({ x: await sealEmail(env, JSON.stringify(held)), at: Date.now(), h, to: body.to, rem: 0, ...(bf ? { bf: 1 } : {}), ...(prio ? { prio: 1 } : {}) }), { expirationTtl: HOLD_DAYS * 86400 });
           const links = await holdLinks(env, hid);
-          await sendMail(env, { to: q.email, replyTo: 'contacto@hera-gine.com', ...holdEmail(pro, q.text, links, false, others, bf ? 'bf' : prio ? 'prio' : '') });
+          await sendMail(env, { to: q.email, replyTo: 'contacto@hera-gine.com', ...holdEmail(pro, q.text, links, false, others, bf ? 'bf' : prio ? 'prio' : noFree ? 'pago' : '') });
           if (body.team !== true) await bump(env, bf ? 'bf_guardada' : prio ? 'prio_guardada' : 'consulta_guardada');
           {
             if (env.COPY_TO) {
@@ -1051,12 +1057,14 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
   let rate = null;
   if (role === 'p' && !t.a && !t.fr) { const sig = await feedbackSig(env, t.id); rate = rateBlock(pro, (r) => `https://hera-gine.com/opinion/?t=${t.id}&s=${sig}&r=${r}`); }
   // Primera respuesta: su enlace para invitar (invite.js), aunque no valore
-  const invite = role === 'p' && !t.a && t.h && t.p !== 'prueba' ? inviteBlock(await inviteCode(env, t.h, t.u)) : null;
+  // Sin gratis (NO_FREE, 22 nov) no se ofrece el enlace para invitar: prometía «2 primeras gratis» a quien invitas
+  const invite = env.NO_FREE !== '1' && role === 'p' && !t.a && t.h && t.p !== 'prueba' ? inviteBlock(await inviteCode(env, t.h, t.u)) : null;
   // Primera respuesta a una consulta de anuncio: oferta de llamada, videollamada o consulta nueva (Noza, 20 nov)
   let offer = null;
   if (role === 'p' && !t.a && t.ad && t.p !== 'prueba' && PROS[t.p]) {
     const rc = t.h ? await env.KV.get(`c:${t.h}`, 'json').catch(() => null) : null;
-    offer = offerBlock(pro, Math.max(0, Number(env.FREE_LIMIT || 2) - (rc?.n || 0)), !!t.bf);
+    // Sin gratis (NO_FREE): la consulta nueva cuesta 1 € hasta el 1 dic y 9 € después
+    offer = env.NO_FREE === '1' ? offerBlock(pro, 0, Date.now() < BF_END) : offerBlock(pro, Math.max(0, Number(env.FREE_LIMIT || 2) - (rc?.n || 0)), !!t.bf);
     await bump(env, 'oferta_respuesta');
   }
   const { html, text } = relayEmail(pro, role, t.id, msg.body || '(Sin texto: mira el archivo adjunto.)', msg.attachments.length, rate, invite, offer);

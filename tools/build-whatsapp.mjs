@@ -64,7 +64,7 @@ ${SOON ? `    <div class="wa-faces"><span><img src="/portada/equipo/gonzalo.jpg?
   <div class="wa-note" id="wa-note" hidden aria-live="polite"></div>
 </section>
 
-<div class="wa-free">${SOON ? 'Mientras, <a href="/#ask">pregunta por la web</a>' : '¿Prefieres gratis? <a href="/#ask">Pregunta por la web</a>'}: tus 2 primeras consultas son gratis y te responden por correo.</div>
+<div class="wa-free">${SOON ? 'Mientras, <a href="/#ask">pregunta por la web</a>' : '¿Prefieres gratis? <a href="/#ask">Pregunta por la web</a>'}: te responden por correo en menos de 24 h.</div>
 
 ${SOON ? '' : `<h2>Cómo funciona</h2>
 <ol class="wa-steps">
@@ -143,7 +143,7 @@ ${SOON ? '' : `<h2>Cómo funciona</h2>
 
 const html = shell({
   title: 'Consulta por WhatsApp con ginecólogo, matrona o pediatra · Hera',
-  desc: SOON ? 'Muy pronto podrás preguntar tu duda a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra) por WhatsApp. Mientras, tus 2 primeras consultas por la web son gratis.' : 'Pregunta tu duda a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra) por WhatsApp y te responden por el mismo chat en menos de 12 h. Black Friday: 4,50 € la consulta (antes 9 €).',
+  desc: SOON ? 'Muy pronto podrás preguntar tu duda a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra) por WhatsApp. Mientras, puedes preguntarles por escrito en la web.' : 'Pregunta tu duda a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra) por WhatsApp y te responden por el mismo chat en menos de 12 h. Black Friday: 4,50 € la consulta (antes 9 €).',
   path: '/whatsapp/',
   ld: { '@context': 'https://schema.org', '@type': 'Service', name: 'Consulta por WhatsApp con profesionales de Hera', provider: { '@type': 'Organization', name: 'Hera', url: 'https://hera-gine.com' },
     offers: [{ '@type': 'Offer', name: 'Consulta por WhatsApp', price: '9', priceCurrency: 'EUR' }] },

@@ -12,7 +12,7 @@
   } catch (e) {}
 </script>
 <title>Hera · Salud de la mujer, con profesionales</title>
-<meta name="description" content="Regla, embarazo, posparto, tu bebé y menopausia. Pregunta a tu ginecólogo, tu matrona o tu pediatra. Tus dos primeras consultas, gratis.">
+<meta name="description" content="Regla, embarazo, posparto, tu bebé y menopausia. Pregunta a tu ginecólogo, tu matrona o tu pediatra por escrito y te responden en menos de 24 h.">
 <meta name="theme-color" content="#FAF9F4">
 <link rel="icon" type="image/svg+xml" href="app/brand/favicon.svg"><link rel="icon" type="image/png" sizes="96x96" href="/app/icons/favicon-96.png"><link rel="icon" href="/favicon.ico" sizes="48x48">
 <link rel="apple-touch-icon" href="app/icons/apple-touch-icon.png">
@@ -870,7 +870,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   const FRIEND = { q7m: 'Maite', k2v: 'Noza' }[viaSrc().via || ''];
   if (FRIEND && Date.now() < Date.parse('2026-12-31T23:59:59+01:00')) { const a = document.getElementById('annc-t'); if (a) a.innerHTML = `Invitación de ${FRIEND}: 5 consultas gratis hasta el 31 de diciembre · <u>Pregunta ahora</u>`; }
   const refSrc = () => { try { const r = JSON.parse(store.get(REF_KEY) || 'null'); return r && Date.now() - r.at < 30 * 86400000 ? { ref: r.c } : {}; } catch { return {}; } };
-  if (refSrc().ref) { const a = document.querySelector('.annc a'); if (a) a.innerHTML = 'Te han invitado a Hera · Tus 2 primeras consultas, gratis y sin tarjeta · <u>Pregunta ahora</u>'; }
+  if (refSrc().ref && !NO_FREE) { const a = document.querySelector('.annc a'); if (a) a.innerHTML = 'Te han invitado a Hera · Tus 2 primeras consultas, gratis y sin tarjeta · <u>Pregunta ahora</u>'; }
   // Qué hacen al entrar (vera-backlog#80): hasta dónde bajan, qué secciones ven, dónde pulsan y cuánto se quedan.
   // Cada evento se manda una sola vez por visita; nada de lo que escriben.
   {
@@ -901,8 +901,15 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   // Prueba Black Friday (Noza, 20 nov): la mitad de quienes llegan por anuncio ve la consulta a 1 € (sin gratis), hasta el 1 dic.
   // Cada dispositivo ve siempre la misma versión. El servicio solo la aplica a consultas de anuncio (ab + src=ads).
   const BF_END = Date.parse('2026-12-01T23:59:59+01:00');
+  // Sin consultas gratis (Noza, 22 nov; en el servicio, NO_FREE): todos ven la consulta a 1 € hasta el 1 dic (Black Friday)
+  // y a 9 € después ('pago'). Salvo los enlaces de amigas y de las profesionales, que siguen con las 2 gratis.
+  const NO_FREE = true;
+  const FREE_VIA = ['q7m', 'k2v', 'g8w', 'ig_marina', 'reddit_gonzalo', 'x4d', 'p9t'];
+  const freeVia = FREE_VIA.includes(viaSrc().via || '');
   const AB = (() => {
-    if (!adSrc().src || Date.now() >= BF_END || adSrc().camp === 'prioritaria') return '';
+    if (adSrc().camp === 'prioritaria' || (NO_FREE && freeVia)) return '';
+    if (NO_FREE) { const v = Date.now() < BF_END ? 'bf' : 'pago'; hit(`ab_visita:${v}`); return v; }
+    if (!adSrc().src || Date.now() >= BF_END) return '';
     // Noza, 21 nov: ya no se reparte al azar. Los anuncios de siempre prometen «2 consultas gratis», así que quien llega por
     // ellos ve la versión gratis; solo el anuncio «Black Friday · 1 €» (utm_content=bf) lleva a la de 1 €. Nadie ve un precio
     // distinto del que le prometió su anuncio. Si vuelve sin anuncio, ve la última versión que vio.
@@ -918,6 +925,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     return v;
   })();
   const BF = AB === 'bf';
+  const PAGO = AB === 'pago'; // sin gratis y pasado Black Friday: 9 € la consulta suelta
   // Consulta prioritaria (Noza, 21 nov): quien llega por la campaña «prioritaria» ve la consulta a 29 € (sin gratis, respuesta en 6 h)
   const PRIO = adSrc().camp === 'prioritaria';
   // Cifras reales (servicio /cifras: 30 días): «79 de 84 respondidas este mes» y horas de media
@@ -972,6 +980,23 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     document.querySelectorAll('a.btn[data-goask]').forEach((x) => { x.textContent = x.textContent.replace(/ gratis$/, ''); });
     document.querySelectorAll('p.sub').forEach((x) => { x.textContent = x.textContent.replace('Tus dos primeras consultas, gratis.', 'Black Friday: cada consulta a 1 €.'); });
   }
+  if (PAGO) {
+    const a = document.getElementById('annc-t'); if (a) a.innerHTML = 'Consulta por escrito: 9 € · <u>Pregunta ahora</u>';
+    const pk = document.querySelector('.perks li'); if (pk) pk.lastChild.textContent = 'Pago seguro';
+    $('ask-send-t').textContent = 'Continuar al pago · 9 €'; $('ask-send-s').textContent = 'No se cobra nada hasta que lo confirmes';
+    $('ask-steps').hidden = false;
+    const to0 = $('top-open'); if (to0) { to0.textContent = 'Preguntar'; to0.href = '#ask'; to0.dataset.goask = ''; to0.dataset.cta = 'clic:top_preguntar_pago'; }
+    const pr = document.getElementById('precio');
+    if (pr) {
+      pr.querySelector('h2').textContent = 'Precio';
+      pr.querySelector('.sub').textContent = 'El contenido de cada semana es gratis siempre. Cada consulta por escrito cuesta 9 €; con el bono, 7 €.';
+      const main = pr.querySelector('.plan.main'); if (main) main.remove();
+      const suelta = [...pr.querySelectorAll('.plan')].find((x) => /Consulta suelta/.test(x.textContent)); if (suelta) suelta.classList.add('main');
+    }
+    document.querySelectorAll('#preguntas summary').forEach((x) => { if (/consultas gratis/.test(x.textContent)) { x.textContent = '¿Cuánto cuesta una consulta?'; const p2 = x.nextElementSibling; if (p2) p2.textContent = '9 € la consulta suelta, 35 € el bono de 5 (7 € cada una) o 15 € al mes el ilimitado. Pagas con tarjeta, Apple Pay o Google Pay, y no se cobra nada hasta que lo confirmas.'; } });
+    document.querySelectorAll('a.btn[data-goask]').forEach((x) => { x.textContent = x.textContent.replace(/ gratis$/, ''); });
+    document.querySelectorAll('p.sub').forEach((x) => { x.textContent = x.textContent.replace('Tus dos primeras consultas, gratis.', 'Cada consulta, 9 €.'); });
+  }
   document.addEventListener('click', (ev) => { if (ev.target.closest?.('a[href^="mailto:"]')) hit('contacto'); }, true);
 
   const box = $('ask'), form = $('ask-form'), ta = $('duda'), more = $('ask-more'), send = $('ask-send'), err = $('ask-err'), done = $('ask-done'), email = $('ask-email');
@@ -996,12 +1021,12 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     $('ask-topro').hidden = !to;
     box.classList.toggle('pickpro', pickOpen || !to);
     // A quién va, también en las versiones de pago (Noza, 21 nov: alguna consulta se envió a la profesional equivocada)
-    if (opened && !busy && (BF || PRIO) && to) $('ask-send-s').textContent = `Para ${PROS[to].name} · No se cobra nada hasta que lo confirmes`;
+    if (opened && !busy && (BF || PRIO || PAGO) && to) $('ask-send-s').textContent = `Para ${PROS[to].name} · No se cobra nada hasta que lo confirmes`;
     // En los 30 min siguientes a enviar, a la misma profesional se añade a su consulta (worker.js, ADD_WINDOW)
     const lastSent = (() => { try { const x = JSON.parse(store.get('hera-last-sent') || 'null'); return x && Date.now() - x.at < 29 * 60000 ? x : null; } catch { return null; } })();
     if (opened && !busy && to && lastSent?.to === to) { $('ask-send-t').textContent = `Añadir a tu consulta a ${PROS[to].name}`; $('ask-send-s').textContent = 'No gastas otra consulta'; }
-    else if (opened && !busy && !BF && !PRIO) $('ask-send-t').textContent = `Enviar${store.get('hera-free-left') === '0' || (to && !['q7m', 'k2v'].includes(viaSrc().via) && (store.get('hera-free-pros') || '').split(',').includes(to)) ? '' : ' gratis'}${to ? ` a ${PROS[to].name}` : ''}`;
-    if (opened && !busy && !BF && !PRIO && !(to && lastSent?.to === to)) $('ask-send-s').textContent = `Te ${to ? 'responde' : 'responden'} por correo en menos de 24\u00a0h`;
+    else if (opened && !busy && !BF && !PRIO && !PAGO) $('ask-send-t').textContent = `Enviar${store.get('hera-free-left') === '0' || (to && !['q7m', 'k2v'].includes(viaSrc().via) && (store.get('hera-free-pros') || '').split(',').includes(to)) ? '' : ' gratis'}${to ? ` a ${PROS[to].name}` : ''}`;
+    if (opened && !busy && !BF && !PRIO && !PAGO && !(to && lastSent?.to === to)) $('ask-send-s').textContent = `Te ${to ? 'responde' : 'responden'} por correo en menos de 24\u00a0h`;
     chat?.sync();
   }
   function open() {
@@ -1101,7 +1126,8 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       const h1 = document.querySelector('.hero h1, h1');
       const lead = document.querySelector('p.lead');
       if (h1) h1.innerHTML = page[0];
-      if (lead) lead.textContent = page[1];
+      // Sin gratis (BF / PAGO): el titular de la profesional no promete consultas gratis
+      if (lead) lead.textContent = BF ? page[1].replace('Tus 2 primeras consultas, gratis.', 'Black Friday: cada consulta a 1 €.') : PAGO ? page[1].replace('Tus 2 primeras consultas, gratis.', 'Cada consulta, 9 €.') : page[1];
       const who = document.querySelector('#ask-form .who');
       if (who) who.innerHTML = `<span class="who-faces"><img src="portada/equipo/${PROS[camp].img}.jpg?v=3" alt="" width="30" height="30"></span><span>Te responde <a class="who-link" href="equipo.html"><b>${page[2]}</b></a></span>`;
       const eg = $('ask-eg');
@@ -1313,7 +1339,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     swap(`${j.early ? `<h3>Bono o plan ilimitado</h3>
       <p>Si aún te quedan consultas gratuitas, se usan primero: lo que compres queda para después. Tu pregunta queda guardada y la envías al volver.</p>`
       : j.held ? `<h3>Tu consulta está guardada</h3>
-      <p>${j.same ? `Tu consulta gratis con ${esc(PROS[q.to]?.name || 'esta profesional')} ya la usaste (la que te queda es para ${esc(j.same)})` : `Ya has usado tus ${j.freeLimit || 2} consultas gratis`}. En cuanto pagues, se la enviamos a ${esc(PROS[q.to]?.name || 'la profesional')}: no tienes que volver a escribirla. También te hemos enviado el enlace por correo; si no pagas en 7 días, la borramos.</p>`
+      <p>${j.same ? `Tu consulta gratis con ${esc(PROS[q.to]?.name || 'esta profesional')} ya la usaste (la que te queda es para ${esc(j.same)})` : PAGO ? 'Cada consulta por escrito cuesta 9 € (con el bono, 7 €)' : `Ya has usado tus ${j.freeLimit || 2} consultas gratis`}. En cuanto pagues, se la enviamos a ${esc(PROS[q.to]?.name || 'la profesional')}: no tienes que volver a escribirla. También te hemos enviado el enlace por correo; si no pagas en 7 días, la borramos.</p>`
       : `<h3>Has usado tus ${j.freeLimit || 2} consultas gratuitas</h3>
       <p>Para seguir preguntando a Gonzalo, Marina y Lucía, elige cómo. Tu pregunta queda guardada y la envías al volver.</p>`}
       <div style="display:grid;gap:8px;max-width:30em;margin:0 auto;text-align:left">

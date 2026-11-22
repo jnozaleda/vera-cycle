@@ -15,6 +15,9 @@ registro de cambios publicados, el más reciente primero. Sin datos personales n
 
 ## Registro
 
+### 2026-11-22
+- **Guías: medición para quien llega por anuncio**: tiempo (`guia_tiempo:10/30/60/180`), lectura (`guia_scroll:25…100`) y clics (`guia_clic:preguntar|videollamada|otra_guia|whatsapp|otro`), con nombres propios para no mezclarse con la portada. Solo con gclid o utm_medium=cpc. (publicado)
+
 ### 2026-11-21
 - **Consultas repetidas**: si alguien vuelve a escribir al mismo profesional en 30 min y aún no le han respondido, se añade a su consulta (misma conversación, no gasta otra; `ADD_WINDOW_MIN`, `rec.lt`). Tras enviar: «¿Se te ha olvidado algo? Escríbelo aquí…»; el botón dice «Añadir a tu consulta a X» esos 30 min; en las versiones de pago, «Para X» bajo el botón. Panel: columna «Recordatorio» con cuál ha salido y cuándo el siguiente. (publicado)
 - **Recordatorios de pago pendiente**: dos en vez de uno, a la hora y a las 24 h (antes, uno a las 3–4 h), con cómo se paga y «si has tenido un problema, responde». El servicio revisa cada 15 min con un solo cron (el plan gratis de Cloudflare ya tiene los 5 usados); lo horario va a los :15. En el panel, tras qué recordatorio pagan. Worker b6dfc0ac. (publicado)

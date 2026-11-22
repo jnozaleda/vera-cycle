@@ -718,6 +718,25 @@ console.log('consultas: OK');
   console.log('Sin consultas gratis: OK');
 }
 
+// Grupo de Maite (g8w, FREE_VIA): con NO_FREE y la prueba 9 € / 29 €, sigue con 2 gratis, una por profesional
+{
+  const P0 = env.PAYMENTS, K0 = env.STRIPE_SECRET_KEY, R0 = env.RELAY;
+  env.PAYMENTS = 'on'; env.STRIPE_SECRET_KEY = 'sk_test_x'; env.RELAY = '1'; env.NO_FREE = '1'; env.PRICE_AB = '1';
+  const DB0 = env.DB;
+  env.DB = { prepare: (sql) => { const st = DB0.prepare(sql); return { ...st, bind: (...a) => { const b = st.bind(...a); return Object.assign(Object.create(Object.getPrototypeOf(b) || Object.prototype), b, { first: b.first ? b.first.bind(b) : async () => null }); } }; } };
+  const ask = (to, text) => call('/ask', { email: 'grupo-maite@example.com', to, text, context: '', via: 'g8w', ab: 'prio' });
+  const g1 = await ask('gineco', 'Primera, con Gonzalo');
+  assert.ok(g1.j.ok && !g1.j.limit && g1.j.remaining === 1, JSON.stringify(g1.j));
+  const g2 = await ask('gineco', 'Segunda, otra vez con Gonzalo');
+  assert.ok(g2.j.limit && g2.j.same && !g2.j.prio, 'la gratis con Gonzalo ya la usó: la otra es con otra profesional (y a 9 €, no a 29 €)');
+  const m1 = await ask('matrona', 'Segunda gratis, con Marina');
+  assert.ok(m1.j.ok && !m1.j.limit && m1.j.remaining === 0, JSON.stringify(m1.j));
+  const l1 = await ask('pediatra', 'Tercera: ya no hay gratis');
+  assert.ok(l1.j.limit && !l1.j.prio, 'gastadas las 2, se paga (9 €)');
+  delete env.NO_FREE; delete env.PRICE_AB; env.PAYMENTS = P0; env.STRIPE_SECRET_KEY = K0; env.RELAY = R0; env.DB = DB0;
+  console.log('Grupo de Maite: 2 gratis, una por profesional: OK');
+}
+
 // Fin del 1 € (22 nov): sin gratis y pasado BF_OFFER_END, la consulta nueva se guarda a 9 € (las guardadas antes siguen a 1 €)
 {
   const P0 = env.PAYMENTS, K0 = env.STRIPE_SECRET_KEY, R0 = env.RELAY, B0 = env.BF_OFFER_END_MS;

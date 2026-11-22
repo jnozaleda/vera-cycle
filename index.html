@@ -906,6 +906,11 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     const fs = document.querySelector('.final .sub');
     if (fs) fs.textContent += FREE ? ' Tus dos primeras consultas, gratis.' : BF ? ' Black Friday: cada consulta a 1 €.' : PAGO ? ' Cada consulta, 9 €.' : ' Consulta prioritaria: respuesta en menos de 6 h.';
     if (FREE) {
+      // Portada nueva (23 nov): la entradilla y la línea de abajo de las tarjetas dicen lo gratis (enlaces de amigas, profesionales y grupo de Maite)
+      const ld = document.querySelector('.hero .lead');
+      if (ld && /9 € la consulta\.$/.test(ld.textContent)) ld.textContent = FRIEND ? `Elige a quién se lo cuentas. Te responde por escrito, a ti, en menos de 24 h. Con la invitación de ${FRIEND}, tus 5 primeras consultas son gratis.` : 'Elige a quién se lo cuentas. Te responde por escrito, a ti, en menos de 24 h. Tus 2 primeras consultas son gratis: una con cada profesional.';
+      const pf = document.querySelector('.pf-fine'); if (pf) pf.textContent = 'Solo la lee tu profesional · Sin tarjeta para las gratis';
+      const bp = $('brief-price'); if (bp) bp.textContent = FRIEND ? '5 consultas gratis · después, 9 € la consulta' : '2 consultas gratis · después, 9 € la consulta';
       const a = document.getElementById('annc-t'); if (a && /^Ginecólogo, matrona y pediatra/.test(a.textContent)) a.innerHTML = 'Tus 2 primeras consultas, gratis · <u>Pregunta ahora</u>';
       const pr = document.getElementById('precio');
       if (pr?.querySelector('h2')) {

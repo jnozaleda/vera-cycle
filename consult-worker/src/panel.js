@@ -337,7 +337,7 @@ ${MODES.map(([m, t]) => `<div class="cv cv-${m}"><h3 class="fh">Personas · ${su
   const opRows = PROS.map(([k2, name]) => { const v = [1, 2, 3].map((r) => g(`opinion:${k2}:${r}`)); return v.some(Boolean) ? `<tr><td>${esc(name)}</td>${v.map((x) => `<td>${x}</td>`).join('')}</tr>` : ''; }).join('');
   const opFeed = opiniones.map((o) => `<li><time>${madrid(o.ts, { day: 'numeric', month: 'short' })}</time><span>«${esc(o.texto)}»</span><small>${esc((PROS.find(([k2]) => k2 === o.pro) || [, o.pro])[1])} · ${RATE[o.rating] || ''}${o.publicable ? ` · <b>se puede publicar como «${esc(o.nombre)}»</b>` : ' · no publicar'}</small></li>`).join('');
   const funnels = [
-    ['En la web', dropoff(act, [['Empezaron a escribir', 'pregunta_portada', 'ejemplo_duda'], ['Llegaron al correo', 'correo_portada'], ['Pulsaron enviar', 'intento_portada'], ['Enviaron', 'enviada_portada']], AD)],
+    ['En la web', dropoff(act, [['Eligieron profesional (desde el 23 nov)', 'clic:elige_gineco', 'clic:elige_matrona', 'clic:elige_pediatra', 'clic:elige_no_se'], ['Empezaron a escribir', 'pregunta_portada', 'ejemplo_duda'], ['Llegaron al correo', 'correo_portada'], ['Pulsaron «Ir al pago» o enviar', 'intento_portada'], ['Fueron a Stripe', 'pago_abierto'], ['Pagaron o enviaron', 'pago_hecho', 'enviada_portada']], AD)],
     ['En la app', dropoff(act.filter((r) => r.ts >= APP_FUNNEL_FROM), [['Abrieron la consulta', 'consulta_abierta'], ['Empezaron a escribir', 'consulta_escribe', 'consulta_ejemplo'], ['Escribieron el correo', 'consulta_correo'], ['Pulsaron enviar', 'consulta_intento'], ['Enviaron', 'consulta_enviada']], AD)],
   ];
   // Quien llega por un anuncio: personas (por día) que hicieron cada cosa después, y sus recorridos

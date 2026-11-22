@@ -547,7 +547,6 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         <button class="btn btn-p" type="submit" id="ask-send"><span id="ask-send-t">Enviar gratis</span><small id="ask-send-s">Te responden por correo en menos de 24&nbsp;h</small></button>
         <ul class="perks" aria-label="Condiciones"><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin tarjeta de crédito</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin registro</li></ul>
         <button type="button" class="linkplans" id="ask-plans" hidden>Ver planes</button>
-        <div class="soon" id="ask-soon"><span class="t"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5 5 16a8.5 8.5 0 1 1 3.2 3.1z"/></svg>WhatsApp<span class="pill">Próximamente</span></span><button type="button" id="ask-soon-b"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Avísame</button></div>
         <p class="churg2">Si es urgente, ve a urgencias.</p>
         <p class="fine" id="ask-fine" hidden>Consulta <a href="privacy.html#consultas">cómo tratamos tus datos</a>.</p>
       </form>
@@ -953,7 +952,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     hit('ab_visita:prio');
     const a = document.getElementById('annc-t'); if (a) a.innerHTML = 'Consulta prioritaria en menos de 6 h · <u>Pregunta</u>';
     const lead = document.querySelector('.hero .lead'); if (lead) lead.textContent = 'Una respuesta personal de tu ginecólogo, matrona o pediatra, sin desplazarte y en menos de 6 h.';
-    $('ask-prem').hidden = false; $('ask-steps').hidden = false; $('ask-soon').hidden = true;
+    $('ask-prem').hidden = false; $('ask-steps').hidden = false;
     $('ask-send-t').textContent = 'Continuar al pago · 29 €'; $('ask-send-s').textContent = 'No se cobra nada hasta que lo confirmes';
     const pk = document.querySelector('.perks li'); if (pk) pk.lastChild.textContent = 'Pago seguro';
     const to0 = $('top-open'); if (to0) { to0.textContent = 'Preguntar'; to0.href = '#ask'; to0.dataset.goask = ''; to0.dataset.cta = 'clic:top_preguntar_prio'; }
@@ -974,7 +973,6 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     const pk = document.querySelector('.perks li'); if (pk) pk.lastChild.textContent = 'Pago seguro';
     $('ask-send-t').textContent = 'Continuar al pago · 1 €'; $('ask-send-s').textContent = 'No se cobra nada hasta que lo confirmes';
     $('ask-steps').hidden = false;
-    $('ask-soon').hidden = true; // sin WhatsApp «Próximamente» en Black Friday: menos cosas que llamen la atención (Noza, 21 nov)
     // Arriba: «Preguntar · 1 €» en vez de «Abrir la app» (lleva al formulario)
     const to0 = $('top-open'); if (to0) { to0.textContent = 'Preguntar · 1 €'; to0.href = '#ask'; to0.dataset.goask = ''; to0.dataset.cta = 'clic:top_preguntar_bf'; }
     // Que nada más en la página diga «gratis» para las consultas (Noza, 21 nov)
@@ -1215,7 +1213,8 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
     if (b.dataset.nmEdit === 'duda') ta.focus(); else form.querySelector('.picks')?.scrollIntoView({ block: 'center' });
   });
   // WhatsApp «Próximamente»: «Avísame» con el correo de arriba; sin correo, se marca el campo en rojo
-  $('ask-soon-b').addEventListener('click', async (ev) => {
+  // Quitado de la portada el 22 nov (Noza: «queda cutre»); si vuelve el bloque #ask-soon, vuelve a funcionar
+  $('ask-soon-b')?.addEventListener('click', async (ev) => {
     const b = ev.currentTarget;
     if (!isEmail(email.value)) {
       box.classList.add('soonmail'); email.classList.remove('nm-ok'); hit('clic:wa_avisame_sin_correo');

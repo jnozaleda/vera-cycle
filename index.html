@@ -475,6 +475,38 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
 .brief-go { flex: none; display: inline-flex; align-items: center; gap: 4px; font-weight: 600; font-size: 14px; color: var(--plum); }
 .brief-warn { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
 @media (max-width: 560px) { .brief-go { font-size: 0; gap: 0; } .brief-go svg { width: 18px; height: 18px; } }
+/* Rediseño (Noza, 23 nov): más sobrio. Sin marco de color en la caja, sin ejemplos de dudas, equipo a la derecha, cifras y ejemplo de respuesta */
+.askwrap { background: none !important; padding: 0 !important; }
+.askwrap .ask, .ask { border: 1px solid var(--line) !important; box-shadow: 0 12px 32px -24px rgba(47,54,49,.35); }
+#ask-eg { display: none !important; }
+.hero h1 { font-weight: 400; letter-spacing: -.015em; }
+.hero-team { display: grid; gap: 10px; align-self: start; }
+@media (min-width: 960px) { .hero-team { margin-top: 30px; } }
+.tm-h { font-size: 13px; font-weight: 600; color: var(--muted); margin: 0; }
+.tm { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 16px; align-items: center; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px; text-decoration: none; color: var(--text); transition: border-color .15s; }
+.tm:hover { border-color: var(--plum); }
+.tm img { width: 84px; height: 84px; border-radius: 8px; object-fit: cover; object-position: center 25%; }
+.tm b { display: block; font: 500 20px/1.2 'Newsreader', Georgia, serif; color: var(--ink); }
+.tm span span { display: block; font-size: 14px; color: var(--muted); }
+.tm em { display: block; font-style: normal; font-size: 13px; font-weight: 500; color: var(--plum); margin-top: 2px; }
+.proof { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-top: 24px; max-width: 560px; border-block: 1px solid var(--line); padding: 14px 0; }
+.proof div { padding: 0 12px; border-left: 1px solid var(--line); min-width: 0; }
+.proof div:first-child { padding-left: 0; border-left: 0; }
+.proof b { display: block; font: 500 20px/1.15 'Newsreader', Georgia, serif; color: var(--plum); font-variant-numeric: tabular-nums; }
+.proof span { display: block; font-size: 12px; line-height: 1.35; color: var(--muted); margin-top: 3px; }
+@media (max-width: 560px) { .proof { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 12px; } .proof div:nth-child(3) { border-left: 0; padding-left: 0; } .tm { grid-template-columns: 64px minmax(0, 1fr); gap: 12px; } .tm img { width: 64px; height: 64px; } .tm b { font-size: 18px; } }
+.sample { padding-block: 8px 34px; }
+.sample-in { display: grid; gap: 22px; align-items: start; }
+@media (min-width: 860px) { .sample-in { grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 40px; } }
+.sample-tag { display: inline-block; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: #8A7045; background: #F6E0E2; border-radius: 4px; padding: 3px 7px; }
+.sample h2 { font-size: 30px; margin: 10px 0 8px; color: var(--plum); }
+.sample-in > div > p { color: var(--muted); margin: 0; }
+.letter { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 20px 22px; display: grid; gap: 12px; }
+.letter-q { font-size: 14px; color: var(--muted); margin: 0; padding-bottom: 12px; border-bottom: 1px solid var(--line); } .letter-q b { color: var(--ink); }
+.letter-a { margin: 0; font: 400 17px/1.6 'Newsreader', Georgia, serif; color: var(--ink); }
+.letter-s { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 13px; color: var(--muted); } .letter-s img { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; } .letter-s b { display: block; color: var(--ink); font-weight: 600; }
+.sample .quote1 { margin-top: 26px; }
+.sample .quote1 blockquote { font-size: 20px; }
 </style>
 <!-- menu:css --><style>.hm-btn,.hm-x{border:0!important;box-shadow:none!important;padding:0!important;min-width:0;font:inherit}
 .hm-btn{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;margin-left:6px;border:0;border-radius:999px;background:transparent;color:#45574C;cursor:pointer;flex:none}
@@ -495,7 +527,6 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
 </head>
 <body>
 
-<div class="annc"><a href="#ask" data-goask id="annc-t">Ginecólogo, matrona y pediatra · <u>Pregunta ahora</u></a></div>
 <header class="top">
   <div class="wrap">
     <a href="./" class="wordmark" aria-label="Hera, inicio">Hera</a>
@@ -517,8 +548,8 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
 <div class="wrap">
   <div class="hero">
     <div>
-      <p class="eyebrow">Regla · Embarazo · Bebé · Menopausia</p>
-      <h1>Tu duda, <em>leída y respondida</em> por tu ginecólogo, matrona o pediatra</h1>
+      <p class="eyebrow">Ginecología · Matronas · Pediatría</p>
+      <h1>Tu duda, leída y respondida por tu ginecólogo, matrona o pediatra</h1>
       <p class="lead">Gonzalo, Marina y Lucía leen tu caso entero y te responden por escrito, a ti. Sin cita, sin desplazarte y <span id="cf-lead">en menos de 24 h</span>.</p>
 
       <div class="askwrap">
@@ -568,31 +599,39 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
       <div class="done" id="ask-done" hidden aria-live="polite"></div>
       </div>
       </div>
-      <figure class="quote1" id="ask-quote"><blockquote>«La respuesta llegó en apenas una hora y me ayudó a quedarme tranquila con una duda urgente sobre mi embarazo.»</blockquote><figcaption>Irene · respondida por Marina, matrona</figcaption></figure>
-      <a class="appstrip" id="app-strip" href="app/" data-cta="clic:abrir_franja">
-        <span class="appstrip-shots" aria-hidden="true"><img src="portada/etapa-regla.jpg" alt="" width="560" height="1213" loading="lazy"><img src="portada/etapa-embarazo.jpg" alt="" width="560" height="1213" loading="lazy"><img src="portada/etapa-posparto.jpg" alt="" width="560" height="1213" loading="lazy"></span>
-        <span class="appstrip-txt"><b>Y gratis, la app de Hera</b><span>Tu regla, tu embarazo semana a semana, el posparto y tu bebé. Sin cuenta. Desde la app también puedes preguntarles.</span><em>Abrir la app →</em></span>
-      </a>
-      <div class="facts" aria-label="Hera en cifras">
-        <div id="cf-a"><b>24 h</b><span>como máximo</span></div>
-        <div id="cf-b"><b>Por escrito</b><span>para releerla</span></div>
+      <div class="proof" aria-label="Hera en cifras">
+        <div id="pf-n"><b>Por escrito</b><span>para releerla cuando quieras</span></div>
+        <div id="pf-h"><b>24 h</b><span>como máximo para responder</span></div>
+        <div><b>Colegiados</b><span>con nombre y apellidos</span></div>
         <div><b>Sin anuncios</b><span>ni cookies</span></div>
       </div>
     </div>
-    <div class="hero-art">
-      <div class="phone"><img src="portada/embarazo-hoy.jpg" width="560" height="1213" loading="eager" alt="Pantalla Hoy de Hera en la semana 20 de embarazo"></div>
+    <div class="hero-team" aria-label="Quién te responde">
+      <p class="tm-h">Quién te responde</p>
+      <a class="tm" href="equipo.html#gonzalo" data-cta="clic:hero_gonzalo"><img src="portada/equipo/gonzalo-grande.jpg" alt="" width="84" height="84" loading="eager"><span><b>Dr. Gonzalo Nozaleda</b><span>Ginecología y Obstetricia</span><em>Hospital Gregorio Marañón · más de 15 años</em></span></a>
+      <a class="tm" href="equipo.html#marina" data-cta="clic:hero_marina"><img src="portada/equipo/marina-grande.jpg" alt="" width="84" height="84" loading="eager"><span><b>Marina Fernández</b><span>Matrona y asesora de lactancia</span><em>Clínica Universidad de Navarra · más de 15 años</em></span></a>
+      <a class="tm" href="equipo.html#lucia" data-cta="clic:hero_lucia"><img src="portada/equipo/lucia-grande.jpg" alt="" width="84" height="84" loading="eager"><span><b>Dra. Lucía Carrascón</b><span>Pediatría</span><em>Hospital Gregorio Marañón · más de 15 años</em></span></a>
     </div>
   </div>
 </div>
 
 
-<section class="brief" id="precio" aria-label="El equipo y los precios">
+<section class="sample" aria-label="Ejemplo de respuesta">
+  <div class="wrap sample-in">
+    <div><span class="sample-tag">Ejemplo orientativo</span><h2>Así es una respuesta</h2><p>Personal, escrita para tu caso, con qué hacer y cuándo ir a consulta. Si te queda algo, contestas al mismo correo.</p></div>
+    <div class="letter">
+      <p class="letter-q"><b>Tu duda:</b> «Estoy de 32 semanas y tengo ardor por las noches. ¿Qué puedo hacer?»</p>
+      <p class="letter-a">Suelen ayudar las comidas pequeñas, no tumbarte justo después de comer y elevar un poco la cabecera de la cama. Si no basta, hay antiácidos seguros en el embarazo.</p>
+      <p class="letter-s"><img src="portada/equipo/marina.jpg?v=2" alt="" width="34" height="34" loading="lazy"><span><b>Marina Fernández</b>Matrona · Clínica Universidad de Navarra</span></p>
+    </div>
+  </div>
+  <div class="wrap">
+    <figure class="quote1" id="ask-quote"><blockquote>«La respuesta llegó en apenas una hora y me ayudó a quedarme tranquila con una duda urgente sobre mi embarazo.»</blockquote><figcaption>Irene · respondida por Marina, matrona</figcaption></figure>
+  </div>
+</section>
+
+<section class="brief" id="precio" aria-label="Precios">
   <div class="wrap brief-in">
-    <a class="brief-row" href="equipo.html" data-cta="clic:linea_equipo">
-      <span class="brief-faces"><img src="portada/equipo/gonzalo.jpg?v=2" alt="" width="40" height="40" loading="lazy"><img src="portada/equipo/marina.jpg?v=2" alt="" width="40" height="40" loading="lazy"><img src="portada/equipo/lucia.jpg?v=3" alt="" width="40" height="40" loading="lazy"></span>
-      <span class="brief-t"><b>Gonzalo, Marina y Lucía</b><small>Ginecólogo, matrona y pediatra · más de 15 años de experiencia</small></span>
-      <span class="brief-go">Conoce al equipo<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span>
-    </a>
     <a class="brief-row" href="consultas/" data-cta="clic:linea_precios">
       <span class="brief-ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg></span>
       <span class="brief-t"><b id="brief-price">Consulta 9 € · Bono de 5, 35 € · Acompañamiento, 99 €/mes</b><small>Si no quedas satisfecha, te devolvemos el dinero</small></span>
@@ -621,7 +660,6 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
       </nav>
     </div>
     <p class="disclaimer">Hera informa y acompaña, pero no sustituye a tu médico ni atiende urgencias. Si tienes un sangrado muy abundante, dolor intenso o fiebre, acude a tu médico o a urgencias.</p>
-    <p class="credit">Ilustración de la semana 20 en la captura: «3D Pregnancy», CC BY-SA 2.5, vía Wikimedia Commons.</p>
   </div>
 </footer>
 
@@ -672,7 +710,6 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
   {
     const q0 = new URLSearchParams(location.search);
     if (q0.has('gclid') || /^(cpc|ppc|paid)$/i.test(q0.get('utm_medium') || '')) {
-      $('app-strip').hidden = true;
       const c = (q0.get('utm_campaign') || '').toLowerCase().replace(/[^a-z0-9_]/g, '_').slice(0, 24);
       store.set(AD_KEY, JSON.stringify({ c, at: Date.now() }));
       hit(c ? `anuncio_visita:${c}` : 'anuncio_visita');
@@ -761,13 +798,16 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
   const PRIO = adSrc().camp === 'prioritaria' || AB === 'prio';
   // Cifras reales (servicio /cifras: 30 días): «79 de 84 respondidas este mes» y horas de media
   const CIFRAS = { h: 0 };
+  // Cifras reales (servicio /cifras, 30 días). Solo en «modo equipo» (hera-gine.com/#equipo), una SIMULACIÓN que sube un 5 % al día
+  // desde el 22 nov, para enseñar a Gonzalo cómo quedaría con más volumen (Noza, 23 nov). Nadie fuera del equipo la ve. Quitar cuando lo diga Noza.
   fetch(`${API}/cifras`).then((r) => r.json()).then((j) => {
-    if (!j || !j.n || j.n < 10) return;
+    if (!j || !j.n) return;
+    if (isTeam()) { const k = Math.pow(1.05, Math.max(0, Math.floor((Date.now() - Date.parse('2026-11-22T00:00:00+01:00')) / 86400000))); j = { ...j, r: Math.round(j.r * k), n: Math.round(j.n * k) }; }
+    if (j.n < 10) return;
     CIFRAS.h = j.h;
-    // Con datos: «R de N · respondidas este mes», «H h · de media en responder», «Por escrito»; sin datos se queda lo de siempre
-    const a = $('cf-a'), b = $('cf-b'), c = b?.nextElementSibling;
-    if (a) a.innerHTML = `<b>${j.r} de ${j.n}</b><span>respondidas este mes</span>`;
-    if (j.h && b) { b.innerHTML = `<b>${j.h} h</b><span>de media en responder</span>`; if (c) c.innerHTML = '<b>Por escrito</b><span>para releerla</span>'; }
+    const a = $('pf-n'), b = $('pf-h');
+    if (a) a.innerHTML = `<b>${j.r} de ${j.n}</b><span>consultas respondidas en los últimos 30 días</span>`;
+    if (j.h && b) b.innerHTML = `<b>${j.h} h</b><span>de media en responder</span>`;
     const l = $('cf-lead'); if (l && j.h && !PRIO) l.textContent = `en ${j.h} h de media`;
   }).catch(() => {});
   const abSrc = () => (PRIO ? { ab: 'prio' } : AB ? { ab: AB } : {});

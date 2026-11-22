@@ -100,7 +100,7 @@ export const GINE_WEB = [
     v: {
       tiles: [['51 años', 'Edad media en España'], ['45–55', 'Lo habitual'], ['12 meses', 'Sin regla: menopausia'], ['Antes de 40', 'Consulta']],
       sem: { g: ['Es normal', 'Reglas irregulares, sofocos, dormir peor o cambios de humor a partir de los 45.'], a: ['Consulta', 'Los síntomas te afectan en el día a día, o la regla se retira antes de los 40.'], r: ['Pide cita pronto', 'Cualquier sangrado después de 12 meses sin regla.'] },
-      links: [['/guias/sangrado-despues-de-la-menopausia/', 'Sangrado después de la menopausia']],
+      links: [['/menopausia/#cuestionario', 'Cuestionario: ¿cuánto te afectan?'], ['/guias/sangrado-despues-de-la-menopausia/', 'Sangrado después de la menopausia']],
     },
   },
   {
@@ -119,7 +119,7 @@ export const GINE_WEB = [
     v: {
       tiles: [['Siempre', 'Se consulta'], ['Semanas', 'Pide cita pronto'], ['Casi siempre', 'Causa benigna'], ['Ecografía', 'La primera prueba']],
       sem: { a: ['Pide cita pronto', 'Cualquier sangrado o manchado después de 12 meses sin regla.'], r: ['Urgencias', 'Sangrado abundante o mareo.'] },
-      links: [['/guias/sintomas-menopausia/', 'Síntomas de la menopausia']],
+      links: [['/guias/sintomas-menopausia/', 'Síntomas de la menopausia'], ['/menopausia/', 'Todo sobre la menopausia']],
     },
   },
 ];

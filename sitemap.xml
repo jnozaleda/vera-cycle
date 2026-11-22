@@ -6,28 +6,7 @@
   <url><loc>https://hera-gine.com/support.html</loc><lastmod>2026-10-10</lastmod></url>
   <url><loc>https://hera-gine.com/privacy.html</loc><lastmod>2026-10-31</lastmod></url>
   <url><loc>https://hera-gine.com/whatsapp/</loc></url>
-  <url><loc>https://hera-gine.com/bebe/</loc><lastmod>2026-11-08</lastmod></url>
-  <url><loc>https://hera-gine.com/bebe/mes-1/</loc><lastmod>2026-11-08</lastmod></url>
-  <url><loc>https://hera-gine.com/bebe/mes-2/</loc><lastmod>2026-11-08</lastmod></url>
-  <url><loc>https://hera-gine.com/bebe/mes-3/</loc><lastmod>2026-11-08</lastmod></url>
-  <url><loc>https://hera-gine.com/bebe/mes-4/</loc><lastmod>2026-11-08</lastmod></url>
-  <url><loc>https://hera-gine.com/bebe/mes-5/</loc><lastmod>2026-11-08</lastmod></url>
-  <url><loc>https://hera-gine.com/bebe/mes-6/</loc><lastmod>2026-11-08</lastmod></url>
-  <url><loc>https://hera-gine.com/bebe/mes-7/</loc><lastmod>2026-11-08</lastmod></url>
-  <url><loc>https://hera-gine.com/bebe/mes-8/</loc><lastmod>2026-11-08</lastmod></url>
-  <url><loc>https://hera-gine.com/bebe/mes-9/</loc><lastmod>2026-11-08</lastmod></url>
-  <url><loc>https://hera-gine.com/bebe/mes-10/</loc><lastmod>2026-11-08</lastmod></url>
-  <url><loc>https://hera-gine.com/bebe/mes-11/</loc><lastmod>2026-11-08</lastmod></url>
-  <url><loc>https://hera-gine.com/bebe/mes-12/</loc><lastmod>2026-11-08</lastmod></url>
-  <url><loc>https://hera-gine.com/calculadoras/</loc><lastmod>2026-11-09</lastmod></url>
-  <url><loc>https://hera-gine.com/calculadoras/fecha-de-parto/</loc><lastmod>2026-11-09</lastmod></url>
-  <url><loc>https://hera-gine.com/calculadoras/peso-en-el-embarazo/</loc><lastmod>2026-11-09</lastmod></url>
-  <url><loc>https://hera-gine.com/calculadoras/ovulacion/</loc><lastmod>2026-11-09</lastmod></url>
-  <url><loc>https://hera-gine.com/ciclo/</loc><lastmod>2026-11-08</lastmod></url>
-  <url><loc>https://hera-gine.com/ciclo/fase-menstrual/</loc><lastmod>2026-11-08</lastmod></url>
-  <url><loc>https://hera-gine.com/ciclo/fase-folicular/</loc><lastmod>2026-11-08</lastmod></url>
-  <url><loc>https://hera-gine.com/ciclo/ovulacion/</loc><lastmod>2026-11-08</lastmod></url>
-  <url><loc>https://hera-gine.com/ciclo/fase-lutea/</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://hera-gine.com/menopausia/</loc><lastmod>2026-11-22</lastmod></url>
   <url><loc>https://hera-gine.com/guias/</loc><lastmod>2026-10-31</lastmod></url>
   <url><loc>https://hera-gine.com/guias/manchar-al-principio-del-embarazo/</loc><lastmod>2026-10-31</lastmod></url>
   <url><loc>https://hera-gine.com/guias/nauseas-en-el-embarazo/</loc><lastmod>2026-10-31</lastmod></url>
@@ -60,6 +39,28 @@
   <url><loc>https://hera-gine.com/guias/olvido-pastilla-anticonceptiva/</loc><lastmod>2026-11-18</lastmod></url>
   <url><loc>https://hera-gine.com/guias/sintomas-menopausia/</loc><lastmod>2026-11-18</lastmod></url>
   <url><loc>https://hera-gine.com/guias/sangrado-despues-de-la-menopausia/</loc><lastmod>2026-11-18</lastmod></url>
+  <url><loc>https://hera-gine.com/bebe/</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://hera-gine.com/bebe/mes-1/</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://hera-gine.com/bebe/mes-2/</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://hera-gine.com/bebe/mes-3/</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://hera-gine.com/bebe/mes-4/</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://hera-gine.com/bebe/mes-5/</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://hera-gine.com/bebe/mes-6/</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://hera-gine.com/bebe/mes-7/</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://hera-gine.com/bebe/mes-8/</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://hera-gine.com/bebe/mes-9/</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://hera-gine.com/bebe/mes-10/</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://hera-gine.com/bebe/mes-11/</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://hera-gine.com/bebe/mes-12/</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://hera-gine.com/calculadoras/</loc><lastmod>2026-11-09</lastmod></url>
+  <url><loc>https://hera-gine.com/calculadoras/fecha-de-parto/</loc><lastmod>2026-11-09</lastmod></url>
+  <url><loc>https://hera-gine.com/calculadoras/peso-en-el-embarazo/</loc><lastmod>2026-11-09</lastmod></url>
+  <url><loc>https://hera-gine.com/calculadoras/ovulacion/</loc><lastmod>2026-11-09</lastmod></url>
+  <url><loc>https://hera-gine.com/ciclo/</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://hera-gine.com/ciclo/fase-menstrual/</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://hera-gine.com/ciclo/fase-folicular/</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://hera-gine.com/ciclo/ovulacion/</loc><lastmod>2026-11-08</lastmod></url>
+  <url><loc>https://hera-gine.com/ciclo/fase-lutea/</loc><lastmod>2026-11-08</lastmod></url>
   <url><loc>https://hera-gine.com/embarazo/</loc><lastmod>2026-11-07</lastmod></url>
   <url><loc>https://hera-gine.com/embarazo/semana-4/</loc><lastmod>2026-11-07</lastmod></url>
   <url><loc>https://hera-gine.com/embarazo/semana-5/</loc><lastmod>2026-11-07</lastmod></url>

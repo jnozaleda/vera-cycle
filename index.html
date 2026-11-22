@@ -1074,7 +1074,10 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   ta.addEventListener('input', () => { if (ta.value.trim()) open(); refresh(); });
   // Desde la página del equipo: #preguntar-matrona abre la caja con esa profesional elegida
   const fromHash = /^#preguntar-(gineco|matrona|pediatra)$/.exec(location.hash);
-  if (fromHash) { history.replaceState(null, '', location.pathname); setTimeout(() => goAsk(fromHash[1]), 50); }
+  // Viene de «Enviar mi resultado» de /menopausia/: el resumen del cuestionario ya escrito en la caja (lo revisa y añade su duda)
+  let prefill = '';
+  try { const x = JSON.parse(localStorage.getItem('hera-ask-prefill') || 'null'); localStorage.removeItem('hera-ask-prefill'); if (x && Date.now() - x.at < 30 * 60000 && typeof x.text === 'string') prefill = x.text.slice(0, 1800); } catch { /* sin almacenamiento */ }
+  if (fromHash) { history.replaceState(null, '', location.pathname); setTimeout(() => { goAsk(fromHash[1]); if (prefill && !chat && !ta.value.trim()) { ta.value = prefill; refresh(); ta.setSelectionRange(ta.value.length, ta.value.length); } }, 50); }
   // Vuelta de Stripe (?pago=ok|no): recupera la pregunta guardada en este dispositivo y dice qué se ha comprado
   {
     const qs = new URLSearchParams(location.search);

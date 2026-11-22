@@ -220,6 +220,8 @@ export function videoAbandonedEmail(pro, plan) {
 const WORKER_URL = 'https://hera-consultas.tempcheck-app.workers.dev';
 const HOLD_DAYS = 7;
 export const BF_END = Date.parse('2026-12-01T23:59:59+01:00');
+// Noza, 22 nov: el 1 € deja de ofrecerse hoy (ver BF_OFFER_END_MS para pruebas). Las consultas guardadas antes lo mantienen hasta BF_END
+export const BF_OFFER_END = Date.parse('2026-11-22T20:15:00+01:00');
 const holdSig = async (env, id) => (await hmac(env.HASH_SALT, `hold:${id}`)).slice(0, 16);
 const holdLinks = async (env, id) => { const s = await holdSig(env, id); return ({ ...Object.fromEntries(['suelta', 'bono', 'mensual', 'bf1', 'prio29'].map((p) => [p, `${WORKER_URL}/pagar?c=${id}&s=${s}&plan=${p}`])) }); };
 
@@ -720,9 +722,10 @@ const handler = {
     const freeVia = FREE_VIA.includes(via);
     const noFree = env.NO_FREE === '1' && !friend && !freeVia;
     // Consulta prioritaria (Noza, 21 nov): campaña propia «prioritaria», sin gratis, 29 € y respuesta en menos de 6 h
-    const prio = !friend && body.ab === 'prio' && body.src === 'ads' && String(body.camp || '') === 'prioritaria';
+    // y prueba de precio 9 € / 29 € (PRICE_AB="1", Noza 22 nov; apagada hasta que las profesionales confirmen las 6 h)
+    const prio = !friend && body.ab === 'prio' && ((body.src === 'ads' && String(body.camp || '') === 'prioritaria') || (env.PRICE_AB === '1' && !freeVia));
     // Black Friday (hasta el 1 dic): 1 € por consulta. Con NO_FREE, para todos; antes, solo la prueba de anuncios (ab=bf)
-    const bf = !friend && !freeVia && !prio && Date.now() < BF_END && (noFree || (body.ab === 'bf' && body.src === 'ads'));
+    const bf = !friend && !freeVia && !prio && Date.now() < Math.min(BF_END, Number(env.BF_OFFER_END_MS) || BF_OFFER_END) && (noFree || (body.ab === 'bf' && body.src === 'ads'));
     const limit = friend ? friend.free : bf || prio || noFree ? 0 : Number(env.FREE_LIMIT || 2);
 
     if (url.pathname === '/admin/reset') {
@@ -1064,7 +1067,7 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
   if (role === 'p' && !t.a && t.ad && t.p !== 'prueba' && PROS[t.p]) {
     const rc = t.h ? await env.KV.get(`c:${t.h}`, 'json').catch(() => null) : null;
     // Sin gratis (NO_FREE): la consulta nueva cuesta 1 € hasta el 1 dic y 9 € después
-    offer = env.NO_FREE === '1' ? offerBlock(pro, 0, Date.now() < BF_END) : offerBlock(pro, Math.max(0, Number(env.FREE_LIMIT || 2) - (rc?.n || 0)), !!t.bf);
+    offer = env.NO_FREE === '1' ? offerBlock(pro, 0, Date.now() < Math.min(BF_END, Number(env.BF_OFFER_END_MS) || BF_OFFER_END)) : offerBlock(pro, Math.max(0, Number(env.FREE_LIMIT || 2) - (rc?.n || 0)), !!t.bf);
     await bump(env, 'oferta_respuesta');
   }
   const { html, text } = relayEmail(pro, role, t.id, msg.body || '(Sin texto: mira el archivo adjunto.)', msg.attachments.length, rate, invite, offer);

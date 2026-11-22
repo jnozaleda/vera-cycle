@@ -120,7 +120,7 @@ document.querySelectorAll('[data-hit]').forEach((a)=>a.addEventListener('click',
 let latam=false;try{if(/_latam$/.test((new URLSearchParams(location.search).get('utm_campaign')||'').toLowerCase()))sessionStorage.setItem('hera-latam','1');latam=sessionStorage.getItem('hera-latam')==='1'}catch(e){}
 if(latam){const u=$('m-urg');if(u)u.textContent='Si es urgente, llama al número de emergencias de tu país (911 en México, 107 en Argentina, 131 en Chile, 123 en Colombia) o ve a urgencias.';const t=$('m-t51');if(t)t.innerHTML='<b>40–45</b><span>Cuando suelen empezar los cambios</span>'}
 // Precio de la consulta por escrito: 1 € hasta el 1 dic (Black Friday), 9 € después
-if(Date.now()>=Date.parse('2026-12-01T23:59:59+01:00')){const p=$('m-price');if(p)p.textContent='9 €'}
+if(Date.now()>=Date.parse('2026-11-22T20:15:00+01:00')){const p=$('m-price');if(p)p.textContent='9 €'}
 update();
 })()</script>`;
 
@@ -177,7 +177,7 @@ const body = `${CSS}<div class="w">
   <div class="lnk" style="margin-top:16px"><a href="/guias/sintomas-menopausia/">Síntomas de la menopausia →</a><a href="/guias/sangrado-despues-de-la-menopausia/">Sangrado después de la menopausia →</a><a href="/guias/sangrado-entre-reglas/">Sangrado entre reglas →</a></div></section>
 
 <div class="m-final" id="consulta"><div><h2>Habla con ${g.name}</h2><p>Cuéntale lo que te pasa, con tu resultado si quieres. Te responde él, por escrito o cara a cara.</p></div>
-  <div class="m-opts"><a class="m-opt" href="/#preguntar-gineco" data-hit="clic_escrito"><div><b>Consulta por escrito</b><span>Te responde en menos de 24 h</span></div><em id="m-price">1 € · Black Friday</em></a>
+  <div class="m-opts"><a class="m-opt" href="/#preguntar-gineco" data-hit="clic_escrito"><div><b>Consulta por escrito</b><span>Te responde en menos de 24 h</span></div><em id="m-price">9 €</em></a>
   <a class="m-opt" href="/videollamada/#reservar-gineco" data-hit="clic_videollamada"><div><b>Videollamada de 30 min</b><span>Para hablarlo con calma</span></div><em>55 €</em></a></div></div>
 <p class="urg" style="margin-bottom:30px"><b id="m-urg">Si es urgente, llama al 112 o ve a urgencias.</b> Esta información es general y no sustituye la valoración de un profesional.</p>
 </div>${JS}`;

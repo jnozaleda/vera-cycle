@@ -25,7 +25,7 @@ const DB = { prepare(sql) { return { bind(...a) { return { async run() {
   if (sql.startsWith('INSERT OR IGNORE')) { const k = a.join('|'); if (visitors.has(k)) return { meta: { changes: 0 } }; visitors.add(k); return { meta: { changes: 1 } }; }
   return { meta: { changes: 0 } }; },
   async all() { if (sql.includes('FROM opiniones')) return { results: opiniones }; if (sql.includes('FROM activity')) return { results: activity.filter((r) => r.ts > a[0] && r.ts <= a[1]) }; return { results: [...counts].map(([k, n]) => ({ day: k.split('|')[0], k: k.split('|')[1], n })) }; } }; } }; } };
-const env = { KV, DB, PANEL_CODE: 'panel', COPY_TO: 'copia@example.com', HASH_SALT: 'sal', ADMIN_TOKEN: 'adm', ALLOWED_ORIGINS: 'https://hera-gine.com', FROM: 'Hera <consultas@hera-gine.com>', FREE_LIMIT: '2', DRY_RUN: '0', RELAY: '1', RESEND_API_KEY: 'k', ADD_WINDOW_MIN: '0' }; // 0: sin «añadir a la consulta» salvo en su prueba
+const env = { KV, DB, PANEL_CODE: 'panel', COPY_TO: 'copia@example.com', HASH_SALT: 'sal', ADMIN_TOKEN: 'adm', ALLOWED_ORIGINS: 'https://hera-gine.com', FROM: 'Hera <consultas@hera-gine.com>', FREE_LIMIT: '2', DRY_RUN: '0', RELAY: '1', RESEND_API_KEY: 'k', ADD_WINDOW_MIN: '0', BF_OFFER_END_MS: String(Date.parse('2026-12-01T23:59:59+01:00')) }; // las pruebas de Black Friday siguen como si estuviera en marcha // 0: sin «añadir a la consulta» salvo en su prueba
 let rid = 0;
 globalThis.fetch = async (u, o) => {
   if (!o || o.method !== 'POST') return new Response(JSON.stringify({ message_id: `<m${u.split('/').pop()}@resend>` }), { status: 200 });
@@ -716,4 +716,25 @@ console.log('consultas: OK');
   assert.match(holdEmail(PROS.gineco, 'x', { suelta: 's', bono: 'b', mensual: 'm' }, false, '', 'pago').html, /Cada consulta por escrito cuesta 9 €/);
   delete env.NO_FREE; env.PAYMENTS = P0; env.STRIPE_SECRET_KEY = K0; env.RELAY = R0; env.DB = DB0;
   console.log('Sin consultas gratis: OK');
+}
+
+// Fin del 1 € (22 nov): sin gratis y pasado BF_OFFER_END, la consulta nueva se guarda a 9 € (las guardadas antes siguen a 1 €)
+{
+  const P0 = env.PAYMENTS, K0 = env.STRIPE_SECRET_KEY, R0 = env.RELAY, B0 = env.BF_OFFER_END_MS;
+  env.PAYMENTS = 'on'; env.STRIPE_SECRET_KEY = 'sk_test_x'; env.RELAY = '1'; env.NO_FREE = '1'; env.BF_OFFER_END_MS = String(Date.now() - 1000);
+  const DB0 = env.DB;
+  env.DB = { prepare: (sql) => { const st = DB0.prepare(sql); return { ...st, bind: (...a) => { const b = st.bind(...a); return Object.assign(Object.create(Object.getPrototypeOf(b) || Object.prototype), b, { first: b.first ? b.first.bind(b) : async () => null }); } }; } };
+  const s0 = sent.length;
+  const a = await call('/ask', { email: 'nueve-euros@example.com', to: 'gineco', text: 'Ya sin Black Friday', context: '', ab: 'pago' });
+  assert.ok(a.j.held && !a.j.bf && !a.j.prio, JSON.stringify(a.j));
+  const m = sent.slice(s0).find((x) => x.to[0] === 'nueve-euros@example.com');
+  assert.match(m.html, /Pagar 9 € y enviarla/); assert.match(m.html, /Cada consulta por escrito cuesta 9 €/);
+  // Prueba 9 € / 29 € apagada: ab=prio no da la prioritaria (sin campaña)
+  const p = await call('/ask', { email: 'sin-prio@example.com', to: 'gineco', text: 'Con ab=prio y la prueba apagada', context: '', ab: 'prio' });
+  assert.ok(p.j.held && !p.j.prio, 'sin PRICE_AB no hay 29 €');
+  env.PRICE_AB = '1';
+  const q = await call('/ask', { email: 'con-prio@example.com', to: 'gineco', text: 'Con la prueba encendida', context: '', ab: 'prio' });
+  assert.ok(q.j.held && q.j.prio, 'con PRICE_AB, 29 €');
+  delete env.PRICE_AB; delete env.NO_FREE; env.BF_OFFER_END_MS = B0; env.PAYMENTS = P0; env.STRIPE_SECRET_KEY = K0; env.RELAY = R0; env.DB = DB0;
+  console.log('Fin del 1 € y prueba de precio: OK');
 }

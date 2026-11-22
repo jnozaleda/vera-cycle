@@ -903,6 +903,9 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   // Prueba Black Friday (Noza, 20 nov): la mitad de quienes llegan por anuncio ve la consulta a 1 € (sin gratis), hasta el 1 dic.
   // Cada dispositivo ve siempre la misma versión. El servicio solo la aplica a consultas de anuncio (ab + src=ads).
   const BF_END = Date.parse('2026-12-01T23:59:59+01:00');
+  // Noza, 22 nov: el 1 € deja de ofrecerse hoy; después, 9 € (o la prueba 9 € / 29 € si PRICE_AB)
+  const BF_OFFER_END = Date.parse('2026-11-22T20:15:00+01:00');
+  const PRICE_AB = false; // encender junto con PRICE_AB="1" en el servicio, cuando las profesionales confirmen las 6 h
   // Sin consultas gratis (Noza, 22 nov; en el servicio, NO_FREE): todos ven la consulta a 1 € hasta el 1 dic (Black Friday)
   // y a 9 € después ('pago'). Salvo los enlaces de amigas y de las profesionales, que siguen con las 2 gratis.
   const NO_FREE = true;
@@ -910,7 +913,11 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   const freeVia = FREE_VIA.includes(viaSrc().via || '');
   const AB = (() => {
     if (adSrc().camp === 'prioritaria' || (NO_FREE && freeVia)) return '';
-    if (NO_FREE) { const v = Date.now() < BF_END ? 'bf' : 'pago'; hit(`ab_visita:${v}`); return v; }
+    if (NO_FREE) {
+      let v = Date.now() < BF_OFFER_END ? 'bf' : 'pago';
+      if (v === 'pago' && PRICE_AB) { v = store.get('hera-ab-precio'); if (v !== 'pago' && v !== 'prio') { v = Math.random() < 0.5 ? 'pago' : 'prio'; store.set('hera-ab-precio', v); } }
+      hit(`ab_visita:${v}`); return v;
+    }
     if (!adSrc().src || Date.now() >= BF_END) return '';
     // Noza, 21 nov: ya no se reparte al azar. Los anuncios de siempre prometen «2 consultas gratis», así que quien llega por
     // ellos ve la versión gratis; solo el anuncio «Black Friday · 1 €» (utm_content=bf) lleva a la de 1 €. Nadie ve un precio
@@ -929,7 +936,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   const BF = AB === 'bf';
   const PAGO = AB === 'pago'; // sin gratis y pasado Black Friday: 9 € la consulta suelta
   // Consulta prioritaria (Noza, 21 nov): quien llega por la campaña «prioritaria» ve la consulta a 29 € (sin gratis, respuesta en 6 h)
-  const PRIO = adSrc().camp === 'prioritaria';
+  const PRIO = adSrc().camp === 'prioritaria' || AB === 'prio';
   // Cifras reales (servicio /cifras: 30 días): «79 de 84 respondidas este mes» y horas de media
   const CIFRAS = { h: 0 };
   fetch(`${API}/cifras`).then((r) => r.json()).then((j) => {

@@ -133,7 +133,7 @@ export async function panel(env, url, openThreads) {
       let h = {};
       try { h = JSON.parse(await openEmail(env, raw.x)); } catch { /* sin descifrar */ }
       const [lp = '', dom = ''] = String(h.email || '').split('@');
-      holds.push({ id: k.name.slice(5), to: raw.to || h.to, at: raw.at || 0, rem: raw.rem === true ? 1 : Number(raw.rem) || 0, r1: raw.r1 || 0, ad: h.src === 'ads' ? (h.camp || 'anuncio') : '', mail: lp ? `${lp.slice(0, 3)}…@${dom}` : '—' });
+      holds.push({ id: k.name.slice(5), to: raw.to || h.to, at: raw.at || 0, rem: raw.rem === true ? 1 : Number(raw.rem) || 0, r1: raw.r1 || 0, ad: h.src === 'ads' ? (h.camp || 'anuncio') : '', ver: raw.bf ? '1 €' : raw.prio ? '29 €' : '9 €', mail: lp ? `${lp.slice(0, 3)}…@${dom}` : '—' });
     }
     holds.sort((a, b) => b.at - a.at);
   } catch { /* sin KV */ }
@@ -302,8 +302,10 @@ export async function panel(env, url, openThreads) {
   };
   // Prueba Black Friday (20 nov – 1 dic): las dos versiones para quien llega por anuncio
   const abPeople = (v) => new Set(act.filter((r) => r.e === `ab_visita:${v}` && r.p).map((r) => `${dayISO(r.ts)}:${r.p}`)).size;
-  const abRows = [['pago', 'Consulta · 9 € (desde el 22 nov)'], ['prio', 'Prioritaria · 29 € (desde el 22 nov)'], ['bf', 'Black Friday · 1 €'], ['gratis', 'La de siempre · 2 gratis']].map(([v, t]) => ({ v, t, pp: abPeople(v), cq: g(`consulta_ab:${v}`) }));
-  const abCard = abRows.some((r) => r.pp || r.cq) ? `<div class="card" id="prueba-bf"><h2>Pruebas de precio</h2><table><tr><th>Versión</th><th>Personas</th><th>Consultas</th><th>%</th><th>Pagos</th></tr>${abRows.map((r) => `<tr><td>${r.t}</td><td>${r.pp}</td><td>${r.cq}</td><td>${r.pp ? fmtPct(r.cq, r.pp) : '—'}</td><td>${r.v === 'bf' ? g('pago:bf1') : r.v === 'prio' ? g('pago:prio29') : r.v === 'pago' ? g('pago:suelta') : '—'}</td></tr>`).join('')}</table><p class="mute" style="margin-top:6px">Black Friday y la de siempre: hasta el 21 nov, visitas de anuncio repartidas al azar 50/50; el 21 nov, cada uno vio la que le prometió su anuncio; desde el 22 nov ya no hay gratis para nadie (todos ven la de 1 €, salvo los enlaces de amigas y de las profesionales). Hasta el 1 dic; después, 9 €. Desde el 22 nov, 9 € y 29 € (respuesta en menos de 6 h) al azar, 50/50 y fijo por dispositivo, para todas las visitas salvo los enlaces con gratis; «Pagos» de 9 € cuenta todas las consultas sueltas. En las de pago, la consulta se envía al pagar. Guardadas sin pagar: ${g('bf_guardada') - g('pago:bf1') > 0 ? g('bf_guardada') - g('pago:bf1') : 0}.</p></div>` : '';
+  const abRows = [['pago', 'Consulta · 9 € (desde el 22 nov)'], ['prio', 'Prioritaria · 29 € (desde el 22 nov)'], ['bf', 'Black Friday · 1 €'], ['gratis', 'La de siempre · 2 gratis']].map(([v, t]) => ({ v, t, pp: abPeople(v), cq: g(`consulta_ab:${v}`), gu: g({ pago: 'consulta_guardada', prio: 'prio_guardada', bf: 'bf_guardada' }[v] || '-') }));
+  // A medias (Noza, 22 nov): enviaron la consulta (se guardó) pero no pagaron
+  const medias = (r) => (r.v === 'gratis' ? null : Math.max(0, r.gu - r.cq));
+  const abCard = abRows.some((r) => r.pp || r.cq) ? `<div class="card" id="prueba-bf"><h2>Pruebas de precio</h2><table><tr><th>Versión</th><th>Personas</th><th>Enviaron</th><th>A medias</th><th>Pagadas</th><th>%</th><th>Pagos</th></tr>${abRows.map((r) => `<tr><td>${r.t}</td><td>${r.pp}</td><td>${r.v === 'gratis' ? r.cq : r.gu}</td><td>${medias(r) == null ? '—' : medias(r)}</td><td>${r.cq}</td><td>${r.pp ? fmtPct(r.cq, r.pp) : '—'}</td><td>${r.v === 'bf' ? g('pago:bf1') : r.v === 'prio' ? g('pago:prio29') : r.v === 'pago' ? g('pago:suelta') : '—'}</td></tr>`).join('')}</table><p class="mute" style="margin-top:6px">Black Friday y la de siempre: hasta el 21 nov, visitas de anuncio repartidas al azar 50/50; el 21 nov, cada uno vio la que le prometió su anuncio; desde el 22 nov ya no hay gratis para nadie (todos ven la de 1 €, salvo los enlaces de amigas y de las profesionales). Hasta el 1 dic; después, 9 €. Desde el 22 nov, 9 € y 29 € (respuesta en menos de 6 h) al azar, 50/50 y fijo por dispositivo, para todas las visitas salvo los enlaces con gratis; «Pagos» de 9 € cuenta todas las consultas sueltas. En las de pago, la consulta llega a la profesional al pagar: «Enviaron» son las que la escribieron y pulsaron enviar, «A medias» las que no han pagado (todavía) y «Pagadas» las que ya llegaron. El % es de pagadas sobre personas.</p></div>` : '';
   // Embudo del pago (21 nov): eligió pagar → fue a Stripe → pagó, o volvió sin pagar / lo dejó a medias (caduca a las 24 h; videollamadas, 2 h).
   // Stripe no avisa de quién «ve» su pantalla: «Fueron a Stripe» son las veces que se le mandó allí (justo después de pulsar pagar).
   const payRows = Object.keys(PLANS).map((k2) => ({ k2, t: PLANS[k2].label, el: g(`pago_elegido:${k2}`), st: g(`pago_inicio:${k2}`), ok: g(`pago:${k2}`), no: g(`pago_cancelado:${k2}`), cad: g(`pago_caducado:${k2}`) }))
@@ -322,6 +324,7 @@ ${MODES.map(([m, t]) => `<div class="cv cv-${m}"><h3 class="fh">Personas · ${su
   for (const r of act) if (r.d && r.p) { const k = deviceText(r.d); (dev.get(k) || dev.set(k, new Set()).get(k)).add(`${dayISO(r.ts)}:${r.p}`); }
   const devices = [...dev.entries()].map(([k2, s2]) => [k2, s2.size, [...s2].filter((x) => AD.has(x)).length]).sort((a, b) => b[1] - a[1]);
 
+  const mediasTot = Math.max(0, g('bf_guardada') + g('prio_guardada') + g('consulta_guardada') - g('guardada_pagada'));
   const consultas = PROS.reduce((a, [k]) => a + g(`consulta:${k}`), 0);
   const respondidas = PROS.reduce((a, [k]) => a + g(`respondida:${k}`), 0);
   const horas = PROS.reduce((a, [k]) => a + g(`resp_horas:${k}`), 0);
@@ -458,6 +461,7 @@ ${MODES.map(([m, t]) => `<div class="cv cv-${m}"><h3 class="fh">Personas · ${su
   const STEP = (e) => {
     const [n2, v2 = ''] = e.split(':');
     if (n2 === 'consulta' && PRO_NAME[v2]) return `<b>envió a ${PRO_NAME[v2]}</b>`;
+    if (n2 === 'consulta_guardada' && PRO_NAME[v2]) return `<b>envió a ${PRO_NAME[v2]} sin pagar</b>`;
     return ({ pregunta_portada: 'escribió', consulta_escribe: 'escribió', ejemplo_duda: 'tocó un ejemplo', consulta_ejemplo: 'tocó un ejemplo', correo_portada: 'puso el correo', consulta_correo: 'puso el correo',
       adjunto_portada: 'adjuntó un archivo', consulta_adjunto: 'adjuntó un archivo', elige_pro: 'cambió de profesional', intento_portada: 'pulsó enviar', consulta_intento: 'pulsó enviar',
       consulta_abierta: 'abrió la consulta en la app', apertura: 'abrió la app', instalada: 'instaló la app', video_pagina: 'vio la videollamada', video_reserva: 'pulsó reservar videollamada', pago_hecho: '<b>pagó</b>', pago_elegido: 'eligió pagar', pago_abierto: '<b>fue a Stripe</b>', pago_cancelado: 'volvió de Stripe sin pagar', pago_caducado: 'dejó el pago a medias',
@@ -476,11 +480,11 @@ ${MODES.map(([m, t]) => `<div class="cv cv-${m}"><h3 class="fh">Personas · ${su
     const secs = Math.max(0, ...seq.filter((r) => r.e.startsWith('tiempo:')).map((r) => Number(r.e.slice(7)) || 0));
     const scr = Math.max(0, ...seq.filter((r) => r.e.startsWith('scroll:')).map((r) => Number(r.e.slice(7)) || 0));
     const tail = [secs ? `${secs} s` : '', scr >= 50 ? `bajó al ${scr} %` : ''].filter(Boolean).join(', ');
-    const sent = nCons(p.v) > 0 || has(p.v, ['pago_hecho']);
+    const sent = nCons(p.v) > 0 || has(p.v, ['pago_hecho']) || p.v.some((r) => r.e.startsWith('consulta_guardada'));
     const txt = steps.length ? `${steps.join(' → ')}${sent ? '' : ' → se fue'}${tail ? ` · ${tail}` : ''}` : `entró${tail ? ` · ${tail}` : ''} y se fue`;
     const dv = seq.find((r) => r.d)?.d; const [sl, sc] = SRC_LABEL(p);
     // Prueba Black Friday (20 nov): qué versión vio
-    const abv = has(p.v, ['ab_visita:prio']) ? '<span class="tagk warn">Prioritaria 29 €</span>' : has(p.v, ['ab_visita:bf']) ? '<span class="tagk bad">Black Friday 1 €</span>' : has(p.v, ['ab_visita:gratis']) ? '<span class="tagk ok2">2 gratis</span>' : '';
+    const abv = has(p.v, ['ab_visita:prio']) ? '<span class="tagk warn">Vio 29 €</span>' : has(p.v, ['ab_visita:pago']) ? '<span class="tagk ok2">Vio 9 €</span>' : has(p.v, ['ab_visita:bf']) ? '<span class="tagk bad">Black Friday 1 €</span>' : has(p.v, ['ab_visita:gratis']) ? '<span class="tagk ok2">2 gratis</span>' : '';
     return { sent, ts: seq[0].ts, html: `<li><time>${madrid(seq[0].ts, days === 1 ? { hour: '2-digit', minute: '2-digit' } : { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</time><div><span class="tag">${esc(seq[0].p)}</span> ${dv ? esc(deviceText(dv)) : ''} <span class="src s-${sc}">${esc(sl)}</span>${abv ? ` ${abv}` : ''}<br><span class="steps">${txt}</span></div></li>` };
   }).sort((a, b) => b.ts - a.ts);
   const tripsHtml = trips.slice(0, 15).map((t) => t.html).join('');
@@ -502,7 +506,7 @@ ${MODES.map(([m, t]) => `<div class="cv cv-${m}"><h3 class="fh">Personas · ${su
   const remTxt = (x) => x.rem >= 2 ? 'Los 2 enviados'
     : x.rem === 1 ? `1.º enviado${x.r1 ? ` (${hm(x.r1)})` : ''} · 2.º hacia ${madrid(Math.max(x.at + 86400000, (x.r1 || 0) + 12 * 3600000), { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`
     : `1.º hacia las ${hm(x.at + 3600000)}`;
-  const holdCard = holds.length ? `<div class="card" id="guardadas"><h2>Consultas guardadas sin pagar</h2><p class="mute" style="margin-bottom:8px">No llegan a la profesional hasta que pagan. Se borran solas a los 7 días. A todas les mandamos dos recordatorios (a la hora y a las 24 h), sin tener que pedir permiso. «Borrar» la quita al momento (para pruebas).</p><div style="overflow-x:auto"><table><tr><th>Número</th><th>Para</th><th>Cuándo</th><th>Correo</th><th>Anuncio</th><th>Recordatorio</th><th>Caduca</th><th></th></tr>${holds.map((x) => `<tr><td><b>#${esc(x.id.toUpperCase())}</b></td><td>${esc(PRO_SHORT[x.to] || x.to || '—')}</td><td>${madrid(x.at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td><td>${esc(x.mail)}</td><td>${esc(x.ad || '—')}</td><td>${remTxt(x)}</td><td>${madrid(x.at + 7 * 86400000, { day: 'numeric', month: 'short' })}</td><td><form method="post" action="/panel/guardada"><input type="hidden" name="k" value="${kRaw}"><input type="hidden" name="id" value="${esc(x.id)}"><button type="submit" class="lnk">Borrar</button></form></td></tr>`).join('')}</table></div></div>` : '';
+  const holdCard = holds.length ? `<div class="card" id="guardadas"><h2>Consultas guardadas sin pagar</h2><p class="mute" style="margin-bottom:8px">No llegan a la profesional hasta que pagan. Se borran solas a los 7 días. A todas les mandamos dos recordatorios (a la hora y a las 24 h), sin tener que pedir permiso. «Borrar» la quita al momento (para pruebas).</p><div style="overflow-x:auto"><table><tr><th>Número</th><th>Para</th><th>Precio</th><th>Cuándo</th><th>Correo</th><th>Anuncio</th><th>Recordatorio</th><th>Caduca</th><th></th></tr>${holds.map((x) => `<tr><td><b>#${esc(x.id.toUpperCase())}</b></td><td>${esc(PRO_SHORT[x.to] || x.to || '—')}</td><td>${x.ver}</td><td>${madrid(x.at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td><td>${esc(x.mail)}</td><td>${esc(x.ad || '—')}</td><td>${remTxt(x)}</td><td>${madrid(x.at + 7 * 86400000, { day: 'numeric', month: 'short' })}</td><td><form method="post" action="/panel/guardada"><input type="hidden" name="k" value="${kRaw}"><input type="hidden" name="id" value="${esc(x.id)}"><button type="submit" class="lnk">Borrar</button></form></td></tr>`).join('')}</table></div></div>` : '';
   // Consultas por WhatsApp (whatsapp.js): añadir con el número, qué consulta es, estado y abrir el chat
   const PRO_LABEL = Object.fromEntries(PROS);
   const waErr = { tel: 'Ese número no parece válido: ponlo con el prefijo del país (por ejemplo +54 9 11 1234 5678).', pro: 'Elige la profesional.' }[url.searchParams.get('wa')] || '';
@@ -534,7 +538,7 @@ h1{font:500 28px/1.1 Georgia,serif;color:var(--plum);margin:4px 0 2px}h2{font-si
 .lead{font:400 20px/1.4 Georgia,serif;margin:0}.lead b{color:var(--plum);font-weight:600}
 .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}.chip{border-radius:999px;padding:4px 11px;font-size:13px;font-weight:500}
 .chip.ok{background:var(--ok2);color:var(--plum)}.chip.warn{background:var(--la2);color:var(--la-t)}.chip.red{background:var(--red2);color:var(--red)}
-.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:12px}
+.kpis{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-top:12px}
 .k{border-top:2px solid var(--plum);padding-top:8px}.k b{display:block;font:500 28px/1.05 Georgia,serif;color:var(--plum);font-variant-numeric:tabular-nums}.k>span{font-size:12.5px;color:var(--mute);display:block}
 .split{display:block;font-size:12px;margin-top:3px}.c-es{color:var(--es-t);font-weight:600}.c-la{color:var(--la-t);font-weight:600}
 .leg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--mute);margin-bottom:10px}.leg i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:5px;vertical-align:-1px}
@@ -588,6 +592,7 @@ ${waCard}
 <div class="k"><b>${visTotal}</b><span>personas en la web</span>${splitTxt(vis)}</div>
 <div class="k"><b>${wrTotal}</b><span>empezaron a escribir</span>${splitTxt(wr)}</div>
 <div class="k"><b>${consultas}</b><span>consultas enviadas</span>${splitTxt(cs)}</div>
+<div class="k"><b>${mediasTot}</b><span>a medias</span><span class="split mute">enviaron sin pagar</span></div>
 <div class="k"><b>${respondidas}</b><span>respondidas</span><span class="split mute">${respondidas ? `media ${media} h` : '—'}</span></div>
 <div class="k"><b>${eur} €</b><span>${nPagos === 1 ? '1 pago' : `${nPagos} pagos`}</span><span class="split mute">${nVideo === 1 ? '1 videollamada' : `${nVideo} videollamadas`}</span></div>
 </div>

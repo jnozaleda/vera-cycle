@@ -65,6 +65,7 @@ export const EVENTS = {
   // Solo del servicio
   consulta: ['Envió una consulta a', false], // el equipo ya recibe la copia «Consulta · …» con el texto entero
   respondida: ['Respondida una consulta por', false], // sin aviso al momento: ya llega la copia de la respuesta (sale en el resumen de 3 h)
+  consulta_guardada: ['Envió la consulta y aún no ha pagado, para', false],
   consulta_anadida: ['Añadió algo a su consulta (dentro de los 30 min) para', false],
   gratuitas_agotadas: ['Intentó consultar con las gratuitas agotadas', true],
   anuncio_visita: ['Llegó desde un anuncio', false],
@@ -80,7 +81,7 @@ export const EVENTS = {
   whatsapp_pagina: ['Vio la página de consulta por WhatsApp', false],
   whatsapp_pagar: ['Pulsó pagar una consulta por WhatsApp', true],
   via_visita: ['Visita desde', false],
-  ab_visita: ['Prueba Black Friday: vio la versión', false],
+  ab_visita: ['Prueba de precio: vio la versión', false],
   whatsapp_avisame: ['Pidió aviso cuando vuelva WhatsApp', false], // el aviso con el correo lo manda /avisame
   guia_compartir: ['Compartió una guía por WhatsApp', false],
   consulta_invitada: ['Envió su primera consulta con una invitación', true],

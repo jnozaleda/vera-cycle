@@ -376,9 +376,8 @@ section { padding: 64px 0; }
 /* Precio */
 .price { display: grid; gap: 16px; margin-top: 28px; }
 /* Opinión real junto al botón (copy, 21 nov) */
-.quote1 { margin: 0; padding: 10px 12px; border-left: 3px solid #E8C9CC; background: #FBF5F5; border-radius: 0 8px 8px 0; }
+.quote1 { margin: 18px 0 0; padding: 2px 0 2px 14px; border-left: 3px solid #E8C9CC; max-width: 520px; }
 .quote1 blockquote { margin: 0; font: italic 400 15px/1.45 'Newsreader', Georgia, serif; color: var(--ink); } .quote1 figcaption { margin-top: 4px; font-size: 12px; color: var(--muted); }
-.ask.needmail .quote1 { display: none; }
 /* Comprar bono o ilimitado desde Precios, sin saltar al formulario (21 nov) */
 .buybox { display: grid; gap: 10px; max-width: 30em; margin-top: 12px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
 .buybox input { width: 100%; font: inherit; font-size: 16px; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 10px; background: #FAF9F4; color: var(--ink); } .buybtns { display: grid; gap: 8px; } .buybtns .btn { width: 100%; }
@@ -546,7 +545,6 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
         <div class="steps3" id="ask-steps" hidden><div class="on"><i>1</i>Envía tu duda</div><div><i>2</i>Confirma el pago</div><div><i>3</i>Te respondemos</div></div>
         <button class="btn btn-p" type="submit" id="ask-send"><span id="ask-send-t">Enviar gratis</span><small id="ask-send-s">Te responden por correo en menos de 24&nbsp;h</small></button>
         <ul class="perks" aria-label="Condiciones"><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin tarjeta de crédito</li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Sin registro</li></ul>
-        <figure class="quote1" id="ask-quote"><blockquote>«La respuesta llegó en apenas una hora y me ayudó a quedarme tranquila con una duda urgente sobre mi embarazo.»</blockquote><figcaption>Irene · respondida por Marina, matrona</figcaption></figure>
         <button type="button" class="linkplans" id="ask-plans" hidden>Ver planes</button>
         <div class="soon" id="ask-soon"><span class="t"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 20.5 5 16a8.5 8.5 0 1 1 3.2 3.1z"/></svg>WhatsApp<span class="pill">Próximamente</span></span><button type="button" id="ask-soon-b"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>Avísame</button></div>
         <p class="churg2">Si es urgente, ve a urgencias.</p>
@@ -555,6 +553,7 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
       <div class="done" id="ask-done" hidden aria-live="polite"></div>
       </div>
       </div>
+      <figure class="quote1" id="ask-quote"><blockquote>«La respuesta llegó en apenas una hora y me ayudó a quedarme tranquila con una duda urgente sobre mi embarazo.»</blockquote><figcaption>Irene · respondida por Marina, matrona</figcaption></figure>
       <a class="appstrip" id="app-strip" href="app/" data-cta="clic:abrir_franja">
         <span class="appstrip-shots" aria-hidden="true"><img src="portada/etapa-regla.jpg" alt="" width="560" height="1213" loading="lazy"><img src="portada/etapa-embarazo.jpg" alt="" width="560" height="1213" loading="lazy"><img src="portada/etapa-posparto.jpg" alt="" width="560" height="1213" loading="lazy"></span>
         <span class="appstrip-txt"><b>Y gratis, la app de Hera</b><span>Tu regla, tu embarazo semana a semana, el posparto y tu bebé. Sin cuenta. Desde la app también puedes preguntarles.</span><em>Abrir la app →</em></span>

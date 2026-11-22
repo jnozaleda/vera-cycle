@@ -259,7 +259,7 @@ async function deliverHold(env, id, ctx) {
   const held = JSON.parse(await openEmail(env, raw.x));
   const res = await handler.fetch(new Request(`${WORKER_URL}/ask`, { method: 'POST', headers: { Origin: 'https://hera-gine.com', 'Content-Type': 'application/json' }, body: JSON.stringify({ ...held, held: true }) }), env, ctx);
   const j = await res.json().catch(() => ({}));
-  if (j.ok) { await bump(env, 'guardada_pagada'); await bump(env, `guardada_pagada_tras:${raw.rem === true ? 1 : Number(raw.rem) || 0}`); }
+  if (j.ok && !held.team) { await bump(env, 'guardada_pagada'); await bump(env, `guardada_pagada_tras:${raw.rem === true ? 1 : Number(raw.rem) || 0}`); }
   else console.log(`hold ${id}: no se pudo enviar ${JSON.stringify(j)}`);
   return !!j.ok;
 }
@@ -898,7 +898,7 @@ const handler = {
           await env.KV.put(`hold:${hid}`, JSON.stringify({ x: await sealEmail(env, JSON.stringify(held)), at: Date.now(), h, to: body.to, rem: 0, ...(bf ? { bf: 1 } : {}), ...(prio ? { prio: 1 } : {}) }), { expirationTtl: HOLD_DAYS * 86400 });
           const links = await holdLinks(env, hid);
           await sendMail(env, { to: q.email, replyTo: 'contacto@hera-gine.com', ...holdEmail(pro, q.text, links, false, others, bf ? 'bf' : prio ? 'prio' : noFree ? 'pago' : '') });
-          if (body.team !== true) await bump(env, bf ? 'bf_guardada' : prio ? 'prio_guardada' : 'consulta_guardada');
+          if (body.team !== true) { await bump(env, bf ? 'bf_guardada' : prio ? 'prio_guardada' : 'consulta_guardada'); await record(env, { e: `consulta_guardada:${body.to}`, p: await personTag(env, request, madridDay(), body.p) }, sendMail, ctx); }
           {
             if (env.COPY_TO) {
               const who = env.COPY_EMAIL === '1' ? `<p style="font-size:13px;color:#6E6C67">Correo de la usuaria: <b>${esc(q.email)}</b></p>` : '';

@@ -1482,7 +1482,6 @@ function askSheet() {
     ${consultFormOn() && (CONSULT_ATTACH || isBeta()) && (!NO_FREE || isBeta()) ? `<div class="stack-6"><label class="pill-outline row gap-6 center self-start ask-add">${icon('plusCircle', 13)} Añadir foto o PDF<input type="file" hidden multiple accept="image/*,application/pdf" data-ask-files></label>
       ${(a.files || []).map((f, i) => `<div class="period-item"><span class="t-13 grow">${esc(f.filename)}</span><button class="icon-btn soft" data-action="ask-file-remove" data-i="${i}" aria-label="Quitar ${attr(f.filename)}">${icon('xCircle', 16)}</button></div>`).join('')}
       ${a.fileError ? `<p class="t-12 c-rose">${esc(a.fileError)}</p>` : ''}<p class="t-11 soft-70 lh-3">Hasta 3 archivos (10 MB). ${ATTACH_NOTE}</p></div>` : ''}
-    ${consultFormOn() ? `<label class="ask-check"><input type="checkbox" data-ask-follow ${a.follow ? 'checked' : ''}><span class="t-13 lh-4">Quiero seguimiento si la respuesta no me sirve.</span></label>` : ''}
     ${askVideoCard(to)}
     ${!a.text && !pd ? askSample() : ''}
     <div class="ask-more t-12 soft lh-4">

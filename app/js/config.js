@@ -34,7 +34,7 @@ export const CONSULTS = {
     whatsapp: '',
     // PRUEBAS: la dirección @hera-gine.com reenvía al correo de Noza; cambiar el destino del reenvío por el real al lanzar.
     email: 'gonzalo@hera-gine.com',
-    responseHours: 48,
+    responseHours: 24,
   },
   matrona: {
     key: 'matrona',
@@ -48,7 +48,7 @@ export const CONSULTS = {
     whatsapp: '',
     // PRUEBAS: la dirección @hera-gine.com reenvía al correo de Noza; cambiar el destino del reenvío por el real al lanzar.
     email: 'marina@hera-gine.com',
-    responseHours: 48,
+    responseHours: 24,
   },
   pediatra: {
     key: 'pediatra',
@@ -62,7 +62,7 @@ export const CONSULTS = {
     whatsapp: '',
     // PRUEBAS: la dirección @hera-gine.com reenvía al correo de Noza; cambiar el destino del reenvío por el real al lanzar.
     email: 'lucia@hera-gine.com',
-    responseHours: 48,
+    responseHours: 24,
   },
 };
 // Compatibilidad: contacto principal (ginecología)

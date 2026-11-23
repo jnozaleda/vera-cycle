@@ -1279,8 +1279,9 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     ['acomp', 'Acompañamiento mensual', 'Respuesta en menos de 6 h · videollamada y WhatsApp · sin permanencia', '99 €/mes']];
   function showPlans(j, q) {
     // Black Friday: la consulta ya está guardada; directo al pago de 1 € (sin elegir plan)
-    if ((j.bf || j.prio) && j.held) {
-      const plan = j.prio ? 'prio29' : 'bf1', price = j.prio ? '29 €' : '1 €';
+    // 23 nov: también la de 9 € va directa al pago (el botón dice «Ir al pago · 9 €»; antes salía otra pantalla para elegir plan)
+    if ((j.bf || j.prio || PAGO) && j.held) {
+      const plan = j.prio ? 'prio29' : j.bf ? 'bf1' : 'suelta', price = j.prio ? '29 €' : j.bf ? '1 €' : '9 €';
       swap(`<h3>Abriendo el pago…</h3><p>Tu consulta está guardada. En cuanto pagues ${price}, se la enviamos a la profesional.</p>`);
       hit(`pago_elegido:${plan}`);
       store.set('hera-pay-draft', JSON.stringify({ to: q.to, manual: true, text: q.text, context: '', include: true, follow: q.follow, at: Date.now(), held: j.held }));

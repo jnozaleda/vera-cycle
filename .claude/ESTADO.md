@@ -17,6 +17,7 @@ registro de cambios publicados, el más reciente primero. Sin datos personales n
 ## Registro
 
 ### 2026-11-23
+- **Pago directo también a 9 €**: en la versión de 9 €, «Ir al pago · 9 €» llevaba a otra pantalla para elegir plan (suelta o acompañamiento) en vez de al pago; ahora va directo a Stripe, como la de 29 €. Comprobado además en producción que se abren las pantallas de pago de 9 €, 29 € (precio `hera_prio29` creado) y Acompañamiento (`hera_acomp99`), en modo equipo y sin cobrar. Web (GitHub Pages) y servicio en su última versión. (publicado)
 - **Google Ads: campaña «Hera | Argentina» en pausa** (Noza): ~10 €/día y ningún pago desde que la consulta cuesta 9 o 29 €. Se reactiva con `enable_campaign` (id 24455080524). La página /menopausia/ y la prueba de precio siguen igual para quien entre desde Argentina por otras vías.
 - **Google Ads: «gratis» como palabra negativa** (amplia) en «Hera | Trafico | Prueba Nov», «Hera | Argentina» y «Hera | México, Chile y Colombia» (Noza). Ya no hay consultas gratis: en la última semana las palabras clave con «gratis» se llevaron ~25 € y ~72 clics. Las palabras clave con «gratis» siguen activas pero la negativa impide que salgan. No se ha puesto en «Hera | Guías | España» (las guías sí son gratis).
 

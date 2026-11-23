@@ -572,6 +572,32 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
   .track .ln, .track .halo { animation: none; } .track .dot, .typing { display: none; }
   .letter .letter-q, .letter-a .ph, .letter .letter-s, .stamp { animation: none; opacity: 1; }
 }
+/* Dibujos animados (Noza, 23 nov, como el de via-spain): A «del centro a tu profesional» y B «círculo de etapas». Quietos con «reducir movimiento» */
+.hero { align-items: start; }
+@media (min-width: 960px) { .hero-side { margin-top: 8px; } }
+.orbit, .lifering { display: flex; justify-content: center; background: #F3F1EA; border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-bottom: 8px; }
+.orbit svg, .lifering svg { width: 100%; max-width: 300px; height: auto; display: block; }
+.ob-ring { fill: none; stroke: #DDD8CC; stroke-width: 1; }
+.ob-route { fill: none; stroke: #B9B2A2; stroke-width: 1.2; stroke-dasharray: 3 4; animation: ob-flow 1.6s linear infinite; }
+@keyframes ob-flow { to { stroke-dashoffset: -14; } }
+.ob-pulse { fill: var(--plum); opacity: 0; transform-box: fill-box; transform-origin: center; animation: ob-pulse 2.8s ease-out infinite; }
+@keyframes ob-pulse { from { transform: scale(.8); opacity: .45; } to { transform: scale(3); opacity: 0; } }
+.ob-lbl { font: 600 10px 'Inter', sans-serif; fill: var(--muted); letter-spacing: .06em; }
+.lr-arc { fill: none; stroke: var(--plum); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 691; stroke-dashoffset: 691; animation: lr-arc 12s linear infinite; }
+@keyframes lr-arc { to { stroke-dashoffset: 0; } }
+.lr-c { font: 500 16px 'Newsreader', Georgia, serif; fill: var(--plum); }
+.lr-l { font: 500 13px 'Newsreader', Georgia, serif; fill: var(--ink); }
+.etapas { padding: 12px 0 40px; }
+.stages-in { display: grid; gap: 22px; align-items: center; }
+@media (min-width: 900px) { .stages-in { grid-template-columns: 360px minmax(0, 560px); gap: 48px; } .lifering { margin: 0; } }
+.etapas h2 { margin: 10px 0 8px; }
+.stages-s { margin: 0 0 16px; color: var(--text); }
+.stages-l { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.stages-l a { display: block; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; text-decoration: none; transition: border-color .15s; }
+.stages-l a:hover { border-color: var(--plum); }
+.stages-l b { display: block; font: 500 17px/1.25 'Newsreader', Georgia, serif; color: var(--ink); }
+.stages-l span { display: block; font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+@media (prefers-reduced-motion: reduce) { .ob-route, .ob-pulse { animation: none; } .ob-motion { display: none; } .lr-arc { animation: none; stroke-dashoffset: 0; } }
 /* «Tu consulta con …» (23 nov) */
 .chosen { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 12px; align-items: center; background: #EEF3EF; border: 1px solid #C9D6CD; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
 .chosen[hidden] { display: none; }
@@ -713,6 +739,34 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
       </div>
     </div>
     <div class="hero-side mv-in mv-d4">
+    <div class="orbit" aria-hidden="true">
+      <svg viewBox="0 0 320 320" width="300" height="300">
+        <defs><clipPath id="ob-cg"><circle cx="62" cy="88" r="19"/></clipPath><clipPath id="ob-cm"><circle cx="266" cy="112" r="19"/></clipPath><clipPath id="ob-cl"><circle cx="118" cy="268" r="19"/></clipPath></defs>
+        <circle class="ob-ring" cx="160" cy="160" r="50"/><circle class="ob-ring" cx="160" cy="160" r="95"/><circle class="ob-ring" cx="160" cy="160" r="140"/>
+        <path id="ob-pg" class="ob-route" d="M160 160 Q90 150 62 88"/><path id="ob-pm" class="ob-route" d="M160 160 Q230 170 266 112"/><path id="ob-pl" class="ob-route" d="M160 160 Q170 230 118 268"/>
+        <circle class="ob-pulse" cx="160" cy="160" r="9"/>
+        <circle cx="160" cy="160" r="15" fill="#fff" stroke="#45574C" stroke-width="1.5"/>
+        <path d="M151 153.5h18a2.5 2.5 0 0 1 2.5 2.5v8a2.5 2.5 0 0 1-2.5 2.5h-11l-5 4v-4h-2a2.5 2.5 0 0 1-2.5-2.5v-8a2.5 2.5 0 0 1 2.5-2.5z" fill="none" stroke="#45574C" stroke-width="1.5" stroke-linejoin="round"/><g fill="#45574C"><circle cx="155" cy="160" r="1.2"/><circle cx="160" cy="160" r="1.2"/><circle cx="165" cy="160" r="1.2"/></g>
+        <g class="ob-motion" fill="none" stroke="#45574C" stroke-width="2">
+          <circle cx="62" cy="88" r="22" opacity="0"><animate attributeName="opacity" dur="9s" repeatCount="indefinite" values="0;0;1;1;0;0" keyTimes="0;.12;.16;.3;.34;1"/></circle>
+          <circle cx="266" cy="112" r="22" opacity="0"><animate attributeName="opacity" dur="9s" repeatCount="indefinite" values="0;0;1;1;0;0" keyTimes="0;.45;.49;.63;.67;1"/></circle>
+          <circle cx="118" cy="268" r="22" opacity="0"><animate attributeName="opacity" dur="9s" repeatCount="indefinite" values="0;0;1;1;0;0" keyTimes="0;.78;.82;.96;.99;1"/></circle>
+        </g>
+        <image href="portada/equipo/gonzalo.jpg?v=2" x="43" y="69" width="38" height="38" clip-path="url(#ob-cg)" preserveAspectRatio="xMidYMid slice"/>
+        <image href="portada/equipo/marina.jpg?v=2" x="247" y="93" width="38" height="38" clip-path="url(#ob-cm)" preserveAspectRatio="xMidYMid slice"/>
+        <image href="portada/equipo/lucia.jpg?v=3" x="99" y="249" width="38" height="38" clip-path="url(#ob-cl)" preserveAspectRatio="xMidYMid slice"/>
+        <g fill="none" stroke="#fff" stroke-width="2"><circle cx="62" cy="88" r="19"/><circle cx="266" cy="112" r="19"/><circle cx="118" cy="268" r="19"/></g>
+        <text class="ob-lbl" x="62" y="126" text-anchor="middle">GINECÓLOGO</text><text class="ob-lbl" x="266" y="150" text-anchor="middle">MATRONA</text><text class="ob-lbl" x="146" y="272">PEDIATRA</text>
+        <g class="ob-motion">
+          <circle r="4.5" fill="#45574C"><animateMotion dur="9s" repeatCount="indefinite" calcMode="linear" keyPoints="0;1;0;0" keyTimes="0;.15;.31;1"><mpath href="#ob-pg"/></animateMotion><animate attributeName="opacity" dur="9s" repeatCount="indefinite" values="1;1;0;0" keyTimes="0;.15;.16;1"/></circle>
+          <circle r="4.5" fill="#fff" stroke="#45574C" stroke-width="1.5"><animateMotion dur="9s" repeatCount="indefinite" calcMode="linear" keyPoints="0;1;0;0" keyTimes="0;.15;.31;1"><mpath href="#ob-pg"/></animateMotion><animate attributeName="opacity" dur="9s" repeatCount="indefinite" values="0;0;1;1;0;0" keyTimes="0;.16;.17;.3;.31;1"/></circle>
+          <circle r="4.5" fill="#45574C"><animateMotion dur="9s" repeatCount="indefinite" calcMode="linear" keyPoints="0;0;1;0;0" keyTimes="0;.33;.48;.64;1"><mpath href="#ob-pm"/></animateMotion><animate attributeName="opacity" dur="9s" repeatCount="indefinite" values="0;0;1;1;0;0" keyTimes="0;.33;.34;.48;.49;1"/></circle>
+          <circle r="4.5" fill="#fff" stroke="#45574C" stroke-width="1.5"><animateMotion dur="9s" repeatCount="indefinite" calcMode="linear" keyPoints="0;0;1;0;0" keyTimes="0;.33;.48;.64;1"><mpath href="#ob-pm"/></animateMotion><animate attributeName="opacity" dur="9s" repeatCount="indefinite" values="0;0;1;1;0;0" keyTimes="0;.49;.5;.63;.64;1"/></circle>
+          <circle r="4.5" fill="#45574C"><animateMotion dur="9s" repeatCount="indefinite" calcMode="linear" keyPoints="0;0;1;0" keyTimes="0;.66;.81;.97"><mpath href="#ob-pl"/></animateMotion><animate attributeName="opacity" dur="9s" repeatCount="indefinite" values="0;0;1;1;0;0" keyTimes="0;.66;.67;.81;.82;1"/></circle>
+          <circle r="4.5" fill="#fff" stroke="#45574C" stroke-width="1.5"><animateMotion dur="9s" repeatCount="indefinite" calcMode="linear" keyPoints="0;0;1;0" keyTimes="0;.66;.81;.97"><mpath href="#ob-pl"/></animateMotion><animate attributeName="opacity" dur="9s" repeatCount="indefinite" values="0;0;1;1;0" keyTimes="0;.82;.83;.96;.97"/></circle>
+        </g>
+      </svg>
+    </div>
       <p class="sample-tag">Ejemplo orientativo</p>
       <p class="side-h">Así es una respuesta</p>
     <div class="letter">
@@ -726,6 +780,36 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
   </div>
 </div>
 
+
+<section class="etapas" aria-labelledby="stages-h">
+  <div class="wrap stages-in">
+    <div class="lifering" aria-hidden="true">
+      <svg viewBox="0 0 320 320" width="280" height="280">
+        <circle class="ob-ring" cx="160" cy="160" r="60"/><circle class="ob-ring" cx="160" cy="160" r="140"/>
+        <circle class="ob-route" cx="160" cy="160" r="110"/>
+        <path id="lr-arc" class="lr-arc" d="M160 50 A110 110 0 1 1 159.9 50"/>
+        <circle class="ob-pulse" cx="160" cy="160" r="8"/>
+        <circle cx="160" cy="160" r="26" fill="#fff" stroke="#45574C" stroke-width="1.5"/>
+        <text x="160" y="165" text-anchor="middle" class="lr-c">Hera</text>
+        <g fill="#fff" stroke="#45574C" stroke-width="1.5"><circle cx="160" cy="50" r="7"/><circle cx="270" cy="160" r="7"/><circle cx="160" cy="270" r="7"/><circle cx="50" cy="160" r="7"/></g>
+        <text class="lr-l" x="160" y="32" text-anchor="middle">Regla y ciclo</text><text class="lr-l" x="278" y="185" text-anchor="middle">Embarazo</text>
+        <text class="lr-l" x="160" y="298" text-anchor="middle">Posparto y bebé</text><text class="lr-l" x="44" y="185" text-anchor="middle">Menopausia</text>
+        <g class="ob-motion"><circle r="5" fill="#45574C"><animateMotion dur="12s" repeatCount="indefinite"><mpath href="#lr-arc"/></animateMotion></circle></g>
+      </svg>
+    </div>
+    <div>
+      <p class="eyebrow">Para cada etapa</p>
+      <h2 id="stages-h">Te acompañamos en cada etapa</h2>
+      <p class="stages-s">Guías gratis para cada momento y, cuando tengas una duda, tu consulta con Gonzalo, Marina o Lucía.</p>
+      <div class="stages-l">
+        <a href="ciclo/" data-cta="clic:etapa_ciclo"><b>Regla y ciclo</b><span>Fases, retrasos y dolor</span></a>
+        <a href="embarazo/" data-cta="clic:etapa_embarazo"><b>Embarazo</b><span>Semana a semana</span></a>
+        <a href="bebe/" data-cta="clic:etapa_bebe"><b>Posparto y bebé</b><span>Mes a mes</span></a>
+        <a href="menopausia/" data-cta="clic:etapa_menopausia"><b>Menopausia</b><span>Síntomas y cuestionario</span></a>
+      </div>
+    </div>
+  </div>
+</section>
 
 <section class="brief" id="precio" aria-label="Precios">
   <div class="wrap brief-in">

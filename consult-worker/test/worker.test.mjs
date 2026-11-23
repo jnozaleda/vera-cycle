@@ -589,6 +589,24 @@ console.log('consultas: OK');
   console.log('Consulta prioritaria: OK');
 }
 
+// Enlaces de socios (23 nov): precio fijo aunque el dispositivo esté en la otra versión de la prueba, y no cuentan en ella
+{
+  const P0 = env.PAYMENTS, K0 = env.STRIPE_SECRET_KEY, R0 = env.RELAY, DB0 = env.DB, N0 = env.NO_FREE, A0 = env.PRICE_AB;
+  env.PAYMENTS = 'on'; env.STRIPE_SECRET_KEY = 'sk_test_x'; env.RELAY = '1'; env.NO_FREE = '1'; env.PRICE_AB = '1'; const B0 = env.BF_OFFER_END_MS; env.BF_OFFER_END_MS = '1'; // ya sin Black Friday
+  env.DB = { prepare: (sql) => { const st = DB0.prepare(sql); return { ...st, bind: (...a) => { const b = st.bind(...a); return Object.assign(Object.create(Object.getPrototypeOf(b) || Object.prototype), b, { first: b.first ? b.first.bind(b) : async () => null }); } }; } };
+  const s0 = sent.length;
+  const ab0 = cnt('consulta_ab:prio') + cnt('consulta_ab:pago');
+  const li = await call('/ask', { email: 'socio-lidia@example.com', to: 'gineco', text: 'Duda desde el enlace de Lidia', context: '', via: 'lidia', ab: 'prio' });
+  assert.ok(li.j.held && !li.j.prio, JSON.stringify(li.j));
+  assert.ok(sent.slice(s0).some((x) => x.to[0] === 'socio-lidia@example.com' && /Pagar 9 € y enviarla/.test(x.html || '')), 'pago de 9 €');
+  const cl = await call('/ask', { email: 'socio-clinica@example.com', to: 'gineco', text: 'Duda desde la clínica', context: '', via: 'atempocare', ab: 'pago' });
+  assert.ok(cl.j.held && cl.j.prio, JSON.stringify(cl.j));
+  assert.ok(sent.slice(s0).some((x) => x.to[0] === 'socio-clinica@example.com' && /Pagar 29 € y enviarla/.test(x.html || '')), 'pago de 29 €');
+  assert.equal(cnt('consulta_ab:prio') + cnt('consulta_ab:pago'), ab0, 'fuera de la prueba de precio');
+  env.PAYMENTS = P0; env.STRIPE_SECRET_KEY = K0; env.RELAY = R0; env.DB = DB0; env.NO_FREE = N0; env.PRICE_AB = A0; env.BF_OFFER_END_MS = B0;
+  console.log('Enlaces de socios: OK');
+}
+
 // Cifras públicas de la portada
 { const r = await worker.fetch(new Request('https://w/cifras', { headers: { Origin: 'https://hera-gine.com' } }), env); assert.equal(r.status, 200); const j = await r.json(); assert.ok('n' in j && 'r' in j && 'h' in j); console.log('Cifras: OK'); }
 

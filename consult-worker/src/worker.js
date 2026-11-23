@@ -46,6 +46,8 @@ import { newThreadId, relayAddress, parseRelayAddress, sealEmail, openEmail, sav
 /** Enlaces de amigas: consultas gratis y hasta cuándo (Noza, 20 nov) */
 // Enlaces que siguen con las 2 gratis aunque no haya gratis para nadie más (NO_FREE): profesionales y grupo de Maite
 export const FREE_VIA = ['ig_marina', 'reddit_gonzalo', 'x4d', 'p9t', 'g8w'];
+// Enlaces de socios (Noza, 23 nov): precio fijo, sin gratis y fuera de la prueba 9 € / 29 €. pago = 9 €, prio = 29 € (menos de 6 h)
+export const PARTNER_LINKS = { lidia: 'pago', jaime: 'pago', atempocare: 'prio' }; // lidia y jaime: influencers; atempocare: clínica
 export const FRIEND_LINKS = { q7m: { free: 5, until: '2026-12-31T23:59:59+01:00' }, k2v: { free: 5, until: '2026-12-31T23:59:59+01:00' } }; // q7m Maite, k2v Noza
 
 export const PROS = {
@@ -751,7 +753,8 @@ const handler = {
     const noFree = env.NO_FREE === '1' && !friend && !freeVia;
     // Consulta prioritaria (Noza, 21 nov): campaña propia «prioritaria», sin gratis, 29 € y respuesta en menos de 6 h
     // y prueba de precio 9 € / 29 € (PRICE_AB="1", Noza 22 nov; apagada hasta que las profesionales confirmen las 6 h)
-    let prio = !friend && body.ab === 'prio' && ((body.src === 'ads' && String(body.camp || '') === 'prioritaria') || (env.PRICE_AB === '1' && !freeVia));
+    const partner = PARTNER_LINKS[via] || '';
+    let prio = !friend && (partner ? partner === 'prio' : body.ab === 'prio' && ((body.src === 'ads' && String(body.camp || '') === 'prioritaria') || (env.PRICE_AB === '1' && !freeVia)));
     // Black Friday (hasta el 1 dic): 1 € por consulta. Con NO_FREE, para todos; antes, solo la prueba de anuncios (ab=bf)
     const bf = !friend && !freeVia && !prio && Date.now() < Math.min(BF_END, Number(env.BF_OFFER_END_MS) || BF_OFFER_END) && (noFree || (body.ab === 'bf' && body.src === 'ads'));
     const limit = friend ? friend.free : bf || prio || noFree ? 0 : Number(env.FREE_LIMIT || 2);
@@ -992,7 +995,7 @@ const handler = {
           if (cc) await bump(env, `consulta_pais:${cc}`);
           // Prueba Black Friday: consultas enviadas por cada versión (bf = pagada a 1 €; gratis = la de siempre)
           // Pruebas de precio (desde el 22 nov, para todas las visitas, no solo anuncios): pago = 9 €, prio = 29 €
-          if ((body.src === 'ads' || ['pago', 'prio'].includes(body.ab)) && ['bf', 'gratis', 'prio', 'pago'].includes(body.ab)) await bump(env, `consulta_ab:${body.ab}`);
+          if (!partner && (body.src === 'ads' || ['pago', 'prio'].includes(body.ab)) && ['bf', 'gratis', 'prio', 'pago'].includes(body.ab)) await bump(env, `consulta_ab:${body.ab}`);
           if (via) { await bump(env, `consulta_via:${via}`); await record(env, { e: `via_visita:${via}`, p: tag, note: 'envió una consulta' }, sendMail, ctx); }
         }
       }

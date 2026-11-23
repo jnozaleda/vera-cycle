@@ -867,7 +867,10 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
   const NO_FREE = true;
   const FREE_VIA = ['q7m', 'k2v', 'g8w', 'ig_marina', 'reddit_gonzalo', 'x4d', 'p9t'];
   const freeVia = FREE_VIA.includes(viaSrc().via || '');
+  // Enlaces de socios (Noza, 23 nov): precio fijo, sin gratis y fuera de la prueba 9 € / 29 € (el servicio aplica lo mismo)
+  const PARTNER = { lidia: ['pago', 'Lidia'], jaime: ['pago', 'Jaime'], atempocare: ['prio', ''] }[viaSrc().via || ''];
   const AB = (() => {
+    if (PARTNER) return PARTNER[0];
     if (adSrc().camp === 'prioritaria' || (NO_FREE && freeVia)) return '';
     if (NO_FREE) {
       let v = Date.now() < BF_OFFER_END ? 'bf' : 'pago';
@@ -909,7 +912,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
   }).catch(() => {});
   const abSrc = () => (PRIO ? { ab: 'prio' } : AB ? { ab: AB } : {});
   if (PRIO) {
-    hit('ab_visita:prio');
+    if (!PARTNER) hit('ab_visita:prio');
     const a = document.getElementById('annc-t'); if (a) a.innerHTML = 'Consulta prioritaria en menos de 6 h · <u>Pregunta</u>';
     const lead = document.querySelector('.hero .lead'); if (lead) lead.textContent = 'Cuéntalo como en la consulta. Te responde por escrito tu ginecólogo, matrona o pediatra, en menos de 6 h. 29 € la consulta.';
     $('ask-prem').hidden = false; $('ask-steps').hidden = false;
@@ -965,6 +968,12 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     document.querySelectorAll('#faq-precio').forEach((x) => { { x.textContent = '¿Cuánto cuesta una consulta?'; const p2 = x.nextElementSibling; if (p2) p2.textContent = '9 € la consulta suelta, 35 € el bono de 5 (7 € cada una) o 99 € al mes el acompañamiento (respuesta en menos de 6 h, videollamada y WhatsApp). Si no quedas satisfecha, te devolvemos el dinero. Pagas con tarjeta, Apple Pay o Google Pay, y no se cobra nada hasta que lo confirmas.'; } });
     document.querySelectorAll('a.btn[data-goask]').forEach((x) => { x.textContent = x.textContent.replace(/ gratis$/, ''); });
     document.querySelectorAll('p.sub').forEach((x) => { x.textContent = x.textContent.replace('Tus dos primeras consultas, gratis.', 'Cada consulta, 9 €.'); });
+    // Enlace de una influencer (Lidia, Jaime): el 9 € se presenta como precio especial de su enlace
+    if (PARTNER?.[1]) {
+      if (a) a.innerHTML = `Precio especial con el enlace de ${PARTNER[1]}: consulta a 9 € · <u>Pregunta ahora</u>`;
+      const ld = document.querySelector('.hero .lead');
+      if (ld && /9 € la consulta\.$/.test(ld.textContent)) ld.textContent = ld.textContent.replace(/9 € la consulta\.$/, `Con el enlace de ${PARTNER[1]}, 9 € la consulta.`);
+    }
   }
   // El texto base no dice precio ni «gratis» (Noza, 22 nov: que no se vea «gratis» ni un instante): aquí se pone según la versión
   {

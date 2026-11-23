@@ -1387,6 +1387,28 @@ function shareLink(r = {}) {
   return { url, msg, note };
 }
 
+/** Recorrido 1-2-3 con un punto que viaja (como en la portada, Noza 23 nov) */
+function askRoute(freeOn) {
+  return `<div class="ask-route" aria-label="Cómo funciona">
+    <div class="rt-track" aria-hidden="true"><span class="ln"></span><span class="st"></span><span class="st s2"></span><span class="halo"></span><span class="st s3"></span><span class="dot"></span></div>
+    <div class="rt-lb"><div><b>1. Envías tu duda</b>sin registro</div><div><b>${freeOn ? '2. Sin pagar' : '2. Pagas'}</b>${freeOn ? 'las 2 primeras, gratis' : '9 €'}</div><div><b>3. Te responde</b>en menos de 24 h</div></div>
+  </div>`;
+}
+
+/** «Así es una respuesta»: la respuesta de ejemplo de la portada se escribe sola (cada 16 s) */
+function askSample() {
+  const m = CONSULTS.matrona;
+  return `<div class="ask-sample">
+    <span class="t-11 w-600 soft">Así es una respuesta · ejemplo orientativo</span>
+    <div class="lt">
+      <p class="lt-q"><b>Tu duda:</b> «Estoy de 32 semanas y tengo ardor por las noches. ¿Qué puedo hacer?»</p>
+      <p class="lt-a"><span class="lt-ty" aria-hidden="true"><i></i><i></i><i></i>${esc(m.short)} está escribiendo</span><span class="ph">Suelen ayudar las comidas pequeñas, no tumbarte justo después de comer </span><span class="ph ph2">y elevar un poco la cabecera de la cama. </span><span class="ph ph3">Si no basta, hay antiácidos seguros en el embarazo.</span></p>
+      <p class="lt-s">${consultAvatar('sm', 'matrona')}<span><b>${esc(m.name)}</b>${esc(m.role)}</span></p>
+      <span class="lt-ok">${icon('check', 12)}Respondida por escrito</span>
+    </div>
+  </div>`;
+}
+
 function askSheet() {
   const a = ui.ask;
   const to = CONSULTS[a.to];
@@ -1454,6 +1476,7 @@ function askSheet() {
       <input class="field" type="email" inputmode="email" autocomplete="email" data-model="ask.email" value="${attr(a.email)}" placeholder="nombre@correo.com"></label>
       <input class="hp" tabindex="-1" autocomplete="off" aria-hidden="true" data-model="ask.website" value="">` : ''}
     ${a.status === 'error' ? `<p class="t-12 c-rose">${esc(a.error || 'No se ha podido enviar. Inténtalo de nuevo.')}</p>` : ''}
+    ${consultFormOn() && !pd ? askRoute(freeOn) : ''}
     <button class="btn-primary" data-action="${consultFormOn() ? 'ask-submit' : 'ask-send'}" data-v="email" data-ask-send ${freeOn ? 'data-free' : ''} ${a.status !== 'sending' ? '' : 'disabled'}>${a.status === 'sending' ? 'Enviando…' : `Enviar${freeOn ? ' gratis' : ''}${to ? ` a ${esc(to.short)}` : ''}`}</button>
     <p class="ask-private">${icon('lock', 13)}<span><b>Privada.</b> ${to ? esc(to.short) : 'La profesional'} no ve tu correo.</span></p>
     ${consultFormOn() && (CONSULT_ATTACH || isBeta()) && (!NO_FREE || isBeta()) ? `<div class="stack-6"><label class="pill-outline row gap-6 center self-start ask-add">${icon('plusCircle', 13)} Añadir foto o PDF<input type="file" hidden multiple accept="image/*,application/pdf" data-ask-files></label>
@@ -1461,6 +1484,7 @@ function askSheet() {
       ${a.fileError ? `<p class="t-12 c-rose">${esc(a.fileError)}</p>` : ''}<p class="t-11 soft-70 lh-3">Hasta 3 archivos (10 MB). ${ATTACH_NOTE}</p></div>` : ''}
     ${consultFormOn() ? `<label class="ask-check"><input type="checkbox" data-ask-follow ${a.follow ? 'checked' : ''}><span class="t-13 lh-4">Quiero seguimiento si la respuesta no me sirve.</span></label>` : ''}
     ${askVideoCard(to)}
+    ${!a.text && !pd ? askSample() : ''}
     <div class="ask-more t-12 soft lh-4">
       <a class="link-deep" href="../equipo.html">Conoce al equipo</a> · <button class="inline-link" data-action="ask-pay-preview">Ver el acompañamiento</button>${to?.whatsapp ? ' · <button class="inline-link" data-action="ask-send" data-v="whatsapp">Escribir por WhatsApp</button>' : ''}
     </div>

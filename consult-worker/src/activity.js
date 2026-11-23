@@ -77,6 +77,7 @@ export const EVENTS = {
   guia_scroll: ['Bajó en la guía hasta el', false],
   guia_clic: ['Pulsó en la guía', false],
   menopausia: ['Página de menopausia', false],
+  pediatria: ['Página de pediatría', false],
   invitacion_vista: ['Vio su enlace para invitar (tras valorar «Sí, mucho»)', false],
   invitacion_whatsapp: ['Compartió su enlace por WhatsApp', false],
   invitacion_copiar: ['Copió su enlace para invitar', false],

@@ -540,6 +540,9 @@ body.pf-on .askwrap { display: none; }
 .chosen span span { display: block; font-size: 12px; color: var(--muted); }
 .chosen button { font: inherit; font-size: 13px; color: var(--plum); background: none; border: 0; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; padding: 4px; }
 .ask.haschosen #ask-topro { display: none !important; }
+/* Versiones de pago: sin botón de adjuntar (23 nov) */
+.files.nofiles .file-add, .files.nofiles #ask-file-list { display: none !important; }
+.files.nofiles #ask-file-note { font-style: normal; font-size: 12.5px; color: var(--muted); }
 </style>
 <!-- menu:css --><style>.hm-btn,.hm-x{border:0!important;box-shadow:none!important;padding:0!important;min-width:0;font:inherit}
 .hm-btn{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;margin-left:6px;border:0;border-radius:999px;background:transparent;color:#45574C;cursor:pointer;flex:none}
@@ -839,7 +842,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     if (j.n < 10) return;
     CIFRAS.h = j.h;
     const a = $('pf-n'), b = $('pf-h');
-    if (a) a.innerHTML = `<b>${j.r} de ${j.n}</b><span>consultas respondidas en los últimos 30 días</span>`;
+    if (a) a.innerHTML = `<b>${j.r}</b><span>consultas respondidas en los últimos 30 días</span>`;
     // Plazos (Noza, 23 nov): 24 h en general y 6 h en la prioritaria; ya no se enseña la media de horas
     if (b && PRIO) b.innerHTML = '<b>6 h</b><span>como máximo para responder</span>';
   }).catch(() => {});
@@ -985,7 +988,10 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
   email.addEventListener('focus', () => hit('correo_portada'), { once: true });
   // Adjuntos (vera-backlog#78)
   let files = [];
-  if (CONSULT_ATTACH || isBeta()) {
+  // 23 nov: en las versiones de pago la consulta se guarda hasta que se paga y los archivos no se guardan (se perdían).
+  // Se quita el botón y se dice cómo mandarlos: respondiendo al correo de la profesional.
+  if ((BF || PRIO || PAGO) && !isBeta()) { const n = $('ask-file-note'); $('ask-files').hidden = false; $('ask-files').classList.add('nofiles'); if (n) n.textContent = '¿Fotos o informes? Podrás mandárselos respondiendo al correo de la profesional.'; }
+  else if (CONSULT_ATTACH || isBeta()) {
     $('ask-files').hidden = false;
     $('ask-file-note').textContent = 'Hasta 3 archivos (10 MB). Que no salga tu cara, tu nombre ni tu DNI.';
     const drawFiles = (error = '') => {
@@ -1056,11 +1062,11 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
   // Solo en esa visita; quien entra por otro sitio ve la portada de siempre.
   {
     const AD_PAGE = {
-      matrona: ['Pregunta a una matrona, <em>por escrito y sin cita</em>', 'Marina Fernández, matrona, lee tu duda y te responde por escrito en menos de 24 h. Embarazo, parto, posparto y lactancia. Tus 2 primeras consultas, gratis.',
+      matrona: ['Pregunta a una matrona, por escrito y sin cita', 'Marina Fernández, matrona, lee tu duda y te responde por escrito en menos de 24 h. Embarazo, parto, posparto y lactancia. Tus 2 primeras consultas, gratis.',
         'Marina, matrona', ['¿Es normal tener contracciones?', '¿Mi bebé se engancha bien?', 'Me duelen los puntos del parto']],
-      gineco: ['Pregunta a un ginecólogo, <em>por escrito y sin cita</em>', 'El Dr. Gonzalo Nozaleda, ginecólogo, lee tu duda y te responde por escrito en menos de 24 h. Regla, anticoncepción, embarazo y menopausia. Tus 2 primeras consultas, gratis.',
+      gineco: ['Pregunta a un ginecólogo, por escrito y sin cita', 'El Dr. Gonzalo Nozaleda, ginecólogo, lee tu duda y te responde por escrito en menos de 24 h. Regla, anticoncepción, embarazo y menopausia. Tus 2 primeras consultas, gratis.',
         'Gonzalo, ginecólogo', ['Se me ha retrasado la regla', 'Tengo un sangrado entre reglas', '¿Qué anticonceptivo me conviene?']],
-      pediatra: ['Pregunta a una pediatra, <em>por escrito y sin cita</em>', 'La Dra. Lucía Carrascón, pediatra, lee tu duda y te responde por escrito en menos de 24 h. Sueño, alimentación, piel o desarrollo del bebé. Tus 2 primeras consultas, gratis.',
+      pediatra: ['Pregunta a una pediatra, por escrito y sin cita', 'La Dra. Lucía Carrascón, pediatra, lee tu duda y te responde por escrito en menos de 24 h. Sueño, alimentación, piel o desarrollo del bebé. Tus 2 primeras consultas, gratis.',
         'Lucía, pediatra', ['Mi bebé tiene fiebre, ¿qué hago?', 'Mi bebé no hace caca desde hace 2 días', 'Tiene granitos en la cara']],
     };
     // Enlaces de canal de una profesional: su titular y ella ya elegida (ig_marina → Marina)
@@ -1072,7 +1078,12 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
       const lead = document.querySelector('p.lead');
       if (h1) h1.innerHTML = page[0];
       // Sin gratis (BF / PAGO): el titular de la profesional no promete consultas gratis
-      if (lead) lead.textContent = BF ? page[1].replace('Tus 2 primeras consultas, gratis.', 'Black Friday: cada consulta a 1 €.') : PAGO ? page[1].replace('Tus 2 primeras consultas, gratis.', 'Cada consulta, 9 €.') : page[1];
+      // 23 nov: cada versión dice su precio y su plazo (antes la de 29 € decía «2 gratis» y «24 h»)
+      if (lead) lead.textContent = PRIO ? page[1].replace('en menos de 24 h', 'en menos de 6 h').replace('Tus 2 primeras consultas, gratis.', 'Consulta prioritaria, 29 €.')
+        : BF ? page[1].replace('Tus 2 primeras consultas, gratis.', 'Black Friday: cada consulta a 1 €.')
+        : PAGO ? page[1].replace('Tus 2 primeras consultas, gratis.', 'Cada consulta, 9 €.')
+        : FRIEND ? page[1].replace('Tus 2 primeras consultas, gratis.', `Con la invitación de ${FRIEND}, tus 5 primeras consultas son gratis.`)
+        : page[1].replace('Tus 2 primeras consultas, gratis.', 'Tus 2 primeras consultas son gratis: una con cada profesional.');
       const who = document.querySelector('#ask-form .who');
       if (who) who.innerHTML = `<span class="who-faces"><img src="portada/equipo/${PROS[camp].img}.jpg?v=3" alt="" width="30" height="30"></span><span>Te responde <a class="who-link" href="equipo.html"><b>${page[2]}</b></a></span>`;
       const eg = $('ask-eg');

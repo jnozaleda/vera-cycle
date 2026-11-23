@@ -531,6 +531,49 @@ body.pf-on .askwrap { display: none; }
 .side-s { font-size: 14px; color: var(--muted); margin: 0; }
 .hero-side .sample-tag { justify-self: start; margin: 0; }
 @media (max-width: 560px) { .pf-c { grid-template-columns: 56px minmax(0, 1fr) 16px; gap: 12px; } .pf-c img { width: 56px; height: 56px; } .pf-t b { font-size: 17px; } }
+/* Movimiento en la portada (Noza, 23 nov, como el dibujo de via-spain): solo CSS; quieto con «reducir movimiento» */
+.mv-in { opacity: 0; translate: 0 10px; animation: mv-in .6s cubic-bezier(.2,.7,.2,1) forwards; }
+.mv-d1 { animation-delay: .05s; } .mv-d2 { animation-delay: .15s; } .mv-d3 { animation-delay: .3s; } .mv-d4 { animation-delay: .42s; } .mv-d5 { animation-delay: .54s; } .mv-d6 { animation-delay: .7s; }
+@keyframes mv-in { to { opacity: 1; translate: none; } }
+.pf-c { transition: border-color .2s, box-shadow .2s, transform .2s; } .pf-c img { transition: transform .3s; } .pf-go { transition: transform .2s, color .2s; }
+@media (hover: hover) { .pf-c:hover { box-shadow: 0 10px 24px -16px rgba(47,54,49,.45); transform: translateY(-2px); } .pf-c:hover img { transform: scale(1.05); } .pf-c:hover .pf-go { transform: translateX(4px); color: var(--plum); } }
+.pf-c:active { transform: scale(.985); }
+.route { max-width: 560px; margin-top: 24px; padding: 4px 0 2px; }
+.track { position: relative; height: 14px; margin: 0 7px; }
+.track .ln { position: absolute; left: 0; right: 0; top: 6px; height: 2px; background: repeating-linear-gradient(90deg, #D3CCBD 0 4px, transparent 4px 8px); background-size: 16px 2px; animation: rt-flow 1.6s linear infinite; }
+@keyframes rt-flow { from { background-position: 0 0; } to { background-position: 16px 0; } }
+.track .st, .track .halo { position: absolute; top: 0; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; }
+.track .st { background: #fff; border: 1.5px solid var(--plum); } .track .s2 { left: 50%; } .track .s3, .track .halo { left: 100%; background: var(--plum); }
+.track .halo { animation: rt-pulse 2.8s ease-out infinite; }
+@keyframes rt-pulse { from { transform: scale(.8); opacity: .5; } to { transform: scale(2.8); opacity: 0; } }
+.track .dot { position: absolute; top: 3px; width: 8px; height: 8px; margin-left: -4px; border-radius: 50%; background: var(--plum); animation: rt-go 5s ease-in-out infinite; }
+@keyframes rt-go { 0% { left: 0; opacity: 0; } 8% { opacity: 1; } 45%, 55% { left: 50%; } 92% { opacity: 1; } 100% { left: 100%; opacity: 0; } }
+.route .lb { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); font-size: 12.5px; color: var(--muted); margin-top: 8px; line-height: 1.35; }
+.route .lb b { display: block; color: var(--ink); font-weight: 600; font-size: 13px; }
+.route .lb div:nth-child(2) { text-align: center; } .route .lb div:nth-child(3) { text-align: right; }
+.letter-a { position: relative; } .letter-a .ph { opacity: 0; }
+.typing { position: absolute; top: 0; left: 0; display: flex; align-items: center; gap: 8px; font: 400 13px/1.6 'Inter', sans-serif; color: var(--muted); opacity: 0; }
+.typing i { width: 6px; height: 6px; border-radius: 50%; background: var(--plum); animation: ty-dot 1.2s infinite; } .typing i:nth-child(2) { animation-delay: .2s; } .typing i:nth-child(3) { animation-delay: .4s; }
+@keyframes ty-dot { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+.stamp { justify-self: start; display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #1E6B30; background: #E4F2E7; border-radius: 999px; padding: 4px 10px; opacity: 0; }
+.letter .letter-s { opacity: 0; }
+/* ciclo de 16 s: duda · «está escribiendo» · tres frases · firma · sello · se queda hasta los 15 s */
+.letter .letter-q { animation: lt-q 16s infinite; } .typing { animation: lt-ty 16s infinite; }
+.letter-a .ph { animation: lt-p1 16s infinite; } .letter-a .ph2 { animation-name: lt-p2; } .letter-a .ph3 { animation-name: lt-p3; }
+.letter .letter-s { animation: lt-s 16s infinite; } .stamp { animation: lt-st 16s infinite; }
+@keyframes lt-q { 0% { opacity: 0; transform: translateY(6px); } 3%, 94% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+@keyframes lt-ty { 0%, 5% { opacity: 0; } 7%, 20% { opacity: 1; } 23%, 100% { opacity: 0; } }
+@keyframes lt-p1 { 0%, 22% { opacity: 0; } 27%, 94% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes lt-p2 { 0%, 31% { opacity: 0; } 36%, 94% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes lt-p3 { 0%, 40% { opacity: 0; } 45%, 94% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes lt-s { 0%, 46% { opacity: 0; transform: translateY(4px); } 50%, 94% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+@keyframes lt-st { 0%, 51% { opacity: 0; transform: scale(.9); } 54%, 94% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .mv-in { animation: none; opacity: 1; translate: none; }
+  .pf-c, .pf-c img, .pf-go { transition: none; }
+  .track .ln, .track .halo { animation: none; } .track .dot, .typing { display: none; }
+  .letter .letter-q, .letter-a .ph, .letter .letter-s, .stamp { animation: none; opacity: 1; }
+}
 /* «Tu consulta con …» (23 nov) */
 .chosen { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 12px; align-items: center; background: #EEF3EF; border: 1px solid #C9D6CD; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
 .chosen[hidden] { display: none; }
@@ -584,16 +627,16 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
 <div class="wrap">
   <div class="hero">
     <div>
-      <p class="eyebrow">Ginecología · Matronas · Pediatría</p>
-      <h1>Consulta online con tu ginecólogo, matrona o pediatra</h1>
-      <p class="lead">Elige a quién se lo cuentas. Te responde por escrito, a ti, en menos de 24 h. 9 € la consulta.</p>
+      <p class="eyebrow mv-in mv-d1">Ginecología · Matronas · Pediatría</p>
+      <h1 class="mv-in mv-d1">Consulta online con tu ginecólogo, matrona o pediatra</h1>
+      <p class="lead mv-in mv-d2">Elige a quién se lo cuentas. Te responde por escrito, a ti, en menos de 24 h. 9 € la consulta.</p>
 
       <div class="pf" id="pick1">
-        <p class="pf-l">¿A quién se lo preguntas?</p>
-        <button type="button" class="pf-c" data-pick="gineco"><img src="portada/equipo/gonzalo-grande.jpg" alt="" width="64" height="64"><span class="pf-t"><b>Dr. Gonzalo Nozaleda</b><span>Ginecólogo · Hospital Gregorio Marañón · más de 15 años</span><em>Regla, anticoncepción, embarazo, pruebas y menopausia</em></span><span class="pf-go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span></button>
-        <button type="button" class="pf-c" data-pick="matrona"><img src="portada/equipo/marina-grande.jpg" alt="" width="64" height="64"><span class="pf-t"><b>Marina Fernández</b><span>Matrona · Clínica Universidad de Navarra · más de 15 años</span><em>Embarazo, parto, posparto, lactancia y suelo pélvico</em></span><span class="pf-go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span></button>
-        <button type="button" class="pf-c" data-pick="pediatra"><img src="portada/equipo/lucia-grande.jpg" alt="" width="64" height="64"><span class="pf-t"><b>Dra. Lucía Carrascón</b><span>Pediatra · Hospital Gregorio Marañón · más de 15 años</span><em>Fiebre, alimentación, sueño, piel y desarrollo del bebé</em></span><span class="pf-go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span></button>
-        <button type="button" class="pf-dk" id="pick-dk">¿No sabes a quién? <u>Escribe tu duda y te lo sugerimos</u></button>
+        <p class="pf-l mv-in mv-d2">¿A quién se lo preguntas?</p>
+        <button type="button" class="pf-c mv-in mv-d3" data-pick="gineco"><img src="portada/equipo/gonzalo-grande.jpg" alt="" width="64" height="64"><span class="pf-t"><b>Dr. Gonzalo Nozaleda</b><span>Ginecólogo · Hospital Gregorio Marañón · más de 15 años</span><em>Regla, anticoncepción, embarazo, pruebas y menopausia</em></span><span class="pf-go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span></button>
+        <button type="button" class="pf-c mv-in mv-d4" data-pick="matrona"><img src="portada/equipo/marina-grande.jpg" alt="" width="64" height="64"><span class="pf-t"><b>Marina Fernández</b><span>Matrona · Clínica Universidad de Navarra · más de 15 años</span><em>Embarazo, parto, posparto, lactancia y suelo pélvico</em></span><span class="pf-go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span></button>
+        <button type="button" class="pf-c mv-in mv-d5" data-pick="pediatra"><img src="portada/equipo/lucia-grande.jpg" alt="" width="64" height="64"><span class="pf-t"><b>Dra. Lucía Carrascón</b><span>Pediatra · Hospital Gregorio Marañón · más de 15 años</span><em>Fiebre, alimentación, sueño, piel y desarrollo del bebé</em></span><span class="pf-go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span></button>
+        <button type="button" class="pf-dk mv-in mv-d5" id="pick-dk">¿No sabes a quién? <u>Escribe tu duda y te lo sugerimos</u></button>
         <p class="pf-fine">Solo la lee tu profesional · Si no te sirve, te devolvemos el dinero</p>
       </div>
 
@@ -645,6 +688,10 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
       <div class="done" id="ask-done" hidden aria-live="polite"></div>
       </div>
       </div>
+      <div class="route mv-in mv-d6" aria-label="Cómo funciona">
+        <div class="track" aria-hidden="true"><span class="ln"></span><span class="st"></span><span class="st s2"></span><span class="halo"></span><span class="st s3"></span><span class="dot"></span></div>
+        <div class="lb"><div><b>1. Envías tu duda</b>sin registro</div><div><b id="rt-p-t">2. Pagas</b><span id="rt-p">9 €</span></div><div><b>3. Te responde</b><span id="rt-h">en menos de 24 h</span></div></div>
+      </div>
       <div class="proof" aria-label="Hera en cifras">
         <div id="pf-n"><b>Por escrito</b><span>para releerla cuando quieras</span></div>
         <div id="pf-h"><b>24 h</b><span>como máximo para responder</span></div>
@@ -652,13 +699,14 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
         <div><b>Sin anuncios</b><span>ni cookies</span></div>
       </div>
     </div>
-    <div class="hero-side">
+    <div class="hero-side mv-in mv-d4">
       <p class="sample-tag">Ejemplo orientativo</p>
       <p class="side-h">Así es una respuesta</p>
     <div class="letter">
       <p class="letter-q"><b>Tu duda:</b> «Estoy de 32 semanas y tengo ardor por las noches. ¿Qué puedo hacer?»</p>
-      <p class="letter-a">Suelen ayudar las comidas pequeñas, no tumbarte justo después de comer y elevar un poco la cabecera de la cama. Si no basta, hay antiácidos seguros en el embarazo.</p>
+      <p class="letter-a"><span class="typing" aria-hidden="true"><i></i><i></i><i></i>Marina está escribiendo</span><span class="ph">Suelen ayudar las comidas pequeñas, no tumbarte justo después de comer </span><span class="ph ph2">y elevar un poco la cabecera de la cama. </span><span class="ph ph3">Si no basta, hay antiácidos seguros en el embarazo.</span></p>
       <p class="letter-s"><img src="portada/equipo/marina.jpg?v=2" alt="" width="34" height="34" loading="lazy"><span><b>Marina Fernández</b>Matrona · Clínica Universidad de Navarra</span></p>
+      <span class="stamp"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Respondida por escrito</span>
     </div>
       <p class="side-s">Personal, escrita para tu caso, con qué hacer y cuándo ir a consulta. Si te queda algo, contestas al mismo correo.</p>
     </div>
@@ -857,6 +905,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     const to0 = $('top-open'); if (to0) { to0.textContent = 'Preguntar'; to0.href = '#ask'; to0.dataset.goask = ''; to0.dataset.cta = 'clic:top_preguntar_prio'; }
     const bp = $('brief-price'); if (bp) bp.textContent = 'Consulta prioritaria 29 € · Acompañamiento mensual, 99 €';
     const ph = $('pf-h'); if (ph) ph.innerHTML = '<b>6 h</b><span>como máximo para responder</span>';
+    $('rt-p').textContent = '29 €'; $('rt-h').textContent = 'en menos de 6 h';
     const pr = document.getElementById('precio');
     if (pr?.querySelector('h2')) {
       pr.querySelector('h2').textContent = 'Consulta prioritaria: 29 €';
@@ -871,6 +920,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
   if (BF) {
     const a = document.getElementById('annc-t'); if (a) a.innerHTML = 'Black Friday: consulta a 1 € · <u>Pregunta ahora</u>';
     $('ask-bf').hidden = false;
+    $('rt-p').textContent = '1 €';
     const pk = document.querySelector('.perks li'); if (pk) pk.lastChild.textContent = 'Pago seguro';
     $('ask-send-t').textContent = 'Empezar mi consulta · 1 €'; $('ask-send-s').textContent = 'No se cobra nada hasta que lo confirmes';
     $('ask-steps').hidden = false;
@@ -913,6 +963,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
       const ld = document.querySelector('.hero .lead');
       if (ld && /9 € la consulta\.$/.test(ld.textContent)) ld.textContent = FRIEND ? `Elige a quién se lo cuentas. Te responde por escrito, a ti, en menos de 24 h. Con la invitación de ${FRIEND}, tus 5 primeras consultas son gratis.` : 'Elige a quién se lo cuentas. Te responde por escrito, a ti, en menos de 24 h. Tus 2 primeras consultas son gratis: una con cada profesional.';
       const pf = document.querySelector('.pf-fine'); if (pf) pf.textContent = 'Solo la lee tu profesional · Sin tarjeta para las gratis';
+      $('rt-p-t').textContent = '2. Sin pagar'; $('rt-p').textContent = FRIEND ? 'las 5 primeras, gratis' : 'las 2 primeras, gratis';
       const bp = $('brief-price'); if (bp) bp.textContent = FRIEND ? '5 consultas gratis · después, 9 € la consulta' : '2 consultas gratis · después, 9 € la consulta';
       const a = document.getElementById('annc-t'); if (a && /^Ginecólogo, matrona y pediatra/.test(a.textContent)) a.innerHTML = 'Tus 2 primeras consultas, gratis · <u>Pregunta ahora</u>';
       const pr = document.getElementById('precio');

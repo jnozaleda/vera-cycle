@@ -633,6 +633,127 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
 .lee b { display: block; font: 400 22px/1.2 'Newsreader', Georgia, serif; color: var(--plum); }
 .lee span { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
 @media (prefers-reduced-motion: reduce) { .pick, .pick img { transition: none; } }
+
+/* ===== Portada estilo plano (Noza, 24 nov; inspirado en goexponential, en claro y con lo propio de Hera) ===== */
+@property --d { syntax: '<integer>'; initial-value: 1; inherits: false; }
+:root { --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; --soft: #F3F1EA; }
+.mono { font-family: var(--mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
+p.mono { margin: 0; } .k { color: var(--mauve); }
+main.frame { max-width: 1200px; margin: 0 auto; border-inline: 1px solid var(--line); overflow-x: clip; }
+@media (max-width: 1239px) { main.frame { border-inline: 0; } }
+main.frame > section, main.frame > .wrap { border-bottom: 1px solid var(--line); position: relative; }
+main.frame section h2 { font-size: clamp(32px, 4.2vw, 48px); line-height: 1.06; letter-spacing: -.02em; margin: 12px 0 16px; }
+.pill { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 11px 18px; background: var(--plum); color: #fff; text-decoration: none; font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; transition: background .15s; }
+.pill:hover { background: var(--plum-h); }
+.pill.ghost { background: transparent; color: var(--plum); border: 1px solid var(--plum); } .pill.ghost:hover { background: #EEF3EF; }
+.cta-row { margin: 22px 0 0; }
+/* héroe centrado */
+.hero.hx { grid-template-columns: minmax(0, 1fr) !important; justify-items: center; text-align: center; padding: 72px 0 56px; position: relative; }
+.hero.hx > div:not(.dmw) { width: 100%; max-width: 720px; position: relative; z-index: 1; }
+.hx h1 { font-size: clamp(48px, 9vw, 104px) !important; line-height: .98 !important; letter-spacing: -.03em !important; margin: 24px auto 18px; max-width: 12ch; }
+.hx .lead { margin: 0 auto; max-width: 36em; }
+.hx .askwrap, .hx .ask { text-align: left; } .hx .ask { margin-left: auto; margin-right: auto; max-width: 620px; }
+.hx .route { margin-left: auto; margin-right: auto; max-width: 620px; text-align: left; }
+.live { display: inline-flex; align-items: center; gap: 10px; border: 1px solid var(--plum); border-radius: 999px; padding: 8px 16px; color: var(--plum); }
+.live i { width: 7px; height: 7px; border-radius: 50%; background: var(--plum); animation: live-b 1.6s ease-in-out infinite; }
+@keyframes live-b { 50% { opacity: .2; } }
+.dmw { position: absolute; pointer-events: none; fill: var(--plum); z-index: 0; }
+.dmw svg { display: block; }
+.dmw.d1 { left: 2%; top: 14%; animation: dm-drift 14s ease-in-out infinite alternate; }
+.dmw.d2 { right: 3%; top: 46%; animation: dm-drift 18s ease-in-out infinite alternate-reverse; }
+@keyframes dm-drift { to { transform: translate(14px, -18px); } }
+@media (max-width: 820px) { .dmw { opacity: .45; } .dmw.d1 { left: -50px; } .dmw.d2 { right: -60px; } }
+.proof.nums { max-width: 620px; margin: 28px auto 0; text-align: left; padding: 0; }
+.proof.nums div { padding: 16px 14px; }
+.proof.nums b { font: 300 28px/1.05 'Newsreader', Georgia, serif; white-space: nowrap; }
+.proof.nums span { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; margin-top: 8px; }
+/* frase grande que cambia */
+.claim-in { display: grid; gap: 36px; }
+@media (min-width: 960px) { .claim-in { grid-template-columns: minmax(0, 1.25fr) minmax(0, .75fr); gap: 56px; align-items: center; } }
+main.frame h2.big { font-size: clamp(44px, 5.2vw, 72px); line-height: 1; letter-spacing: -.03em; margin: 18px 0 26px; }
+.rot { display: inline-grid; vertical-align: top; }
+.rot .w { grid-area: 1/1; font-style: italic; font-weight: 300; opacity: 0; transform: translateY(.25em); animation: rot-w 9s infinite; }
+.rot .w2, .ph3 .p2, .cap3 .c2 { animation-delay: 3s; } .rot .w3, .ph3 .p3, .cap3 .c3 { animation-delay: 6s; }
+@keyframes rot-w { 0% { opacity: 0; transform: translateY(.25em); } 5%, 30% { opacity: 1; transform: none; } 36%, 100% { opacity: 0; transform: translateY(-.2em); } }
+.who3 { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+.ph3 { position: relative; width: 56px; height: 56px; flex: none; }
+.ph3 img { position: absolute; inset: 0; width: 56px; height: 56px; border-radius: 50%; object-fit: cover; opacity: 0; animation: fade3 9s infinite; }
+.cap3 { display: grid; color: var(--muted); } .cap3 span { grid-area: 1/1; opacity: 0; animation: fade3 9s infinite; }
+@keyframes fade3 { 0% { opacity: 0; } 5%, 30% { opacity: 1; } 36%, 100% { opacity: 0; } }
+.claim .hero-side { margin-top: 0 !important; }
+/* quién responde */
+.pros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 24px; border-top: 1px solid var(--line); }
+.pcard { display: flex; flex-direction: column; gap: 6px; padding: 24px 20px 26px; border-left: 1px solid var(--line); text-decoration: none; color: var(--text); }
+.pcard:first-child { border-left: 0; padding-left: 0; } .pcard:last-child { padding-right: 0; }
+.pcard img { width: 100%; height: auto; aspect-ratio: 4/3; object-fit: cover; object-position: center 22%; border-radius: 10px; transition: transform .4s; }
+.pcard:hover img { transform: scale(1.02); }
+.pcard h3 { font: 400 28px/1.05 'Newsreader', Georgia, serif; color: var(--ink); margin: 12px 0 0; }
+.pcard .m { color: var(--muted); } .pcard .q { color: var(--muted); margin-top: 10px; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; } .tags span { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 4px 11px; font-size: 13px; color: var(--plum); }
+@media (max-width: 820px) { .pros { grid-template-columns: 1fr; } .pcard { border-left: 0; border-top: 1px solid var(--line); padding: 24px 0; } .pcard:first-child { border-top: 0; } }
+/* cómo te ayudamos */
+.cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 26px; }
+.card { background: #fff; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; display: flex; flex-direction: column; }
+.card .art { background: var(--soft); border: 0; border-bottom: 1px solid var(--line); border-radius: 0; margin: 0; aspect-ratio: 1 / .8; display: flex; align-items: center; justify-content: center; padding: 14px; }
+.card .art svg { width: 100%; max-width: 240px; height: auto; display: block; }
+.card .t { padding: 18px 18px 20px; display: grid; gap: 8px; flex: 1; align-content: start; }
+.card h3 { font: 400 32px/1 'Newsreader', Georgia, serif; color: var(--plum); margin: 0; letter-spacing: -.02em; }
+.card p { margin: 0; color: var(--text); font-size: 14.5px; }
+.card .pill { justify-self: start; margin-top: 6px; padding: 9px 14px; font-size: 11px; }
+@media (max-width: 900px) { .cards { grid-template-columns: 1fr; } }
+.vframe { fill: #fff; stroke: var(--plum); stroke-width: 1.4; }
+.wave { fill: none; stroke: var(--plum); stroke-width: 1.6; stroke-linecap: round; stroke-dasharray: 4 5; animation: ob-flow 1.2s linear infinite; }
+.cal rect.dd { fill: #fff; stroke: #D3CCBD; } .cal rect.on { fill: var(--plum); stroke: var(--plum); animation: cal-on 6s steps(1) infinite; }
+@keyframes cal-on { 0% { opacity: 0; } 20%, 100% { opacity: 1; } }
+/* etapas */
+.etapas { padding: 56px 0; }
+/* app */
+.app-in { display: grid; gap: 32px; align-items: center; }
+@media (min-width: 900px) { .app-in { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; } }
+.ticks { list-style: none; padding: 0; margin: 18px 0 0; display: flex; flex-wrap: wrap; gap: 8px 18px; color: var(--plum); } .ticks li::before { content: '✓ '; }
+.phonewrap { display: flex; justify-content: center; background: var(--soft); border: 1px solid var(--line); border-radius: 14px; padding: 36px 16px; }
+.hphone { width: 250px; border: 1.5px solid var(--plum); border-radius: 34px; padding: 18px 16px 14px; background: var(--ivory); box-shadow: 0 30px 60px -40px rgba(47,54,49,.5); }
+.ph-top { display: flex; justify-content: space-between; color: var(--muted); padding: 0 4px 6px; }
+.dialbox { position: relative; } .dialsvg { width: 100%; height: auto; display: block; }
+.dc { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--muted); }
+.dnum { font: 300 48px/1 'Newsreader', Georgia, serif; color: var(--plum); counter-reset: d var(--d); animation: dday 14s linear infinite; }
+.dnum::before { content: counter(d); }
+@keyframes dday { from { --d: 1; } 93%, to { --d: 28; } }
+.dph { position: relative; height: 14px; width: 130px; text-align: center; }
+.dph i { position: absolute; inset: 0; font-style: normal; opacity: 0; animation: 14s steps(1) infinite; }
+.dph i:nth-child(1) { animation-name: dph1; } .dph i:nth-child(2) { animation-name: dph2; } .dph i:nth-child(3) { animation-name: dph3; color: #446E52; } .dph i:nth-child(4) { animation-name: dph4; }
+@keyframes dph1 { 0% { opacity: 1; } 14%, 100% { opacity: 0; } }
+@keyframes dph2 { 0% { opacity: 0; } 14% { opacity: 1; } 28%, 100% { opacity: 0; } }
+@keyframes dph3 { 0% { opacity: 0; } 28% { opacity: 1; } 52%, 100% { opacity: 0; } }
+@keyframes dph4 { 0% { opacity: 0; } 52%, 100% { opacity: 1; } }
+.ph-ask { display: flex; align-items: center; margin-top: 10px; border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 6px 12px 6px 8px; font-size: 13px; color: var(--plum); font-weight: 600; }
+.ph-ask img { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; margin-right: -6px; } .ph-ask span { margin-left: 14px; }
+.ph-tabs { display: flex; justify-content: space-around; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); color: #A39F95; font-size: 10px; } .ph-tabs .on { color: var(--plum); }
+/* cierre */
+main.frame > section.final { text-align: center; padding: 88px 0; overflow: hidden; }
+.final .dmw.d1 { top: 18%; } .final .dmw.d2 { top: 30%; }
+main.frame .final h2 { font-size: clamp(44px, 7vw, 88px); margin: 12px 0 14px; }
+.final .sub { margin: 0 auto; }
+.brief { padding-top: 32px; }
+/* índice lateral (pantallas grandes) */
+.rail { display: none; }
+@media (min-width: 1420px) {
+  .rail { display: grid; gap: 12px; position: fixed; top: 42%; left: calc(50% - 600px - 104px); width: 88px; z-index: 6; }
+  .rail a { display: flex; justify-content: space-between; align-items: center; text-decoration: none; color: #A39F95; }
+  .rail a::after { content: ''; width: 6px; height: 6px; border: 1px solid currentColor; }
+  .rail a.on { color: var(--ink); } .rail a.on::after { background: var(--ink); }
+}
+/* aparición al bajar, donde el navegador lo permite */
+@supports (animation-timeline: view()) {
+  .rv { animation: rv-in linear both; animation-timeline: view(); animation-range: entry 0% entry 35%; }
+  @keyframes rv-in { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rv, .live i, .dmw, .wave, .rot .w, .ph3 img, .cap3 span, .dnum, .dph i, .cal rect.on { animation: none !important; }
+  .rv { opacity: 1; transform: none; }
+  .rot .w, .ph3 img, .cap3 span, .dph i { opacity: 0; } .rot .w2, .ph3 .p2, .cap3 .c2, .dph i:nth-child(3) { opacity: 1; transform: none; }
+  .dnum { --d: 14; }
+}
 </style>
 <!-- menu:css --><style>.hm-btn,.hm-x{border:0!important;box-shadow:none!important;padding:0!important;min-width:0;font:inherit}
 .hm-btn{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;margin-left:6px;border:0;border-radius:999px;background:transparent;color:#45574C;cursor:pointer;flex:none}
@@ -670,11 +791,13 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     <!-- menu:btn --><button type="button" class="hm-btn" aria-label="Abrir el menú" aria-expanded="false" aria-controls="hm"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><!-- /menu:btn -->
   </div>
 </header>
-<main>
+<nav class="rail mono" aria-label="Índice de la portada"><a href="#ask" data-r="ask">Tu duda</a><a href="#quien" data-r="quien">Equipo</a><a href="#como" data-r="como">Cómo</a><a href="#etapas" data-r="etapas">Etapas</a><a href="#app" data-r="app">La app</a></nav>
+<main class="frame">
 <div class="wrap">
-  <div class="hero">
+  <div class="hero hx">
+    <div class="dmw d1" aria-hidden="true"><svg width="134" height="134" viewBox="0 0 134 134"><circle cx="41" cy="14" r="1.3" opacity="0.15"/><circle cx="50" cy="14" r="1.3" opacity="0.19"/><circle cx="59" cy="14" r="1.3" opacity="0.25"/><circle cx="68" cy="14" r="1.3" opacity="0.27"/><circle cx="77" cy="14" r="1.3" opacity="0.24"/><circle cx="86" cy="14" r="1.3" opacity="0.18"/><circle cx="95" cy="14" r="1.3" opacity="0.15"/><circle cx="32" cy="23" r="1.3" opacity="0.18"/><circle cx="41" cy="23" r="1.3" opacity="0.32"/><circle cx="50" cy="23" r="1.3" opacity="0.42"/><circle cx="59" cy="23" r="1.3" opacity="0.48"/><circle cx="68" cy="23" r="1.3" opacity="0.50"/><circle cx="77" cy="23" r="1.3" opacity="0.47"/><circle cx="86" cy="23" r="1.3" opacity="0.40"/><circle cx="95" cy="23" r="1.3" opacity="0.29"/><circle cx="104" cy="23" r="1.3" opacity="0.15"/><circle cx="23" cy="32" r="1.3" opacity="0.18"/><circle cx="32" cy="32" r="1.3" opacity="0.36"/><circle cx="41" cy="32" r="1.3" opacity="0.51"/><circle cx="50" cy="32" r="1.3" opacity="0.61"/><circle cx="59" cy="32" r="1.3" opacity="0.66"/><circle cx="68" cy="32" r="1.3" opacity="0.68"/><circle cx="77" cy="32" r="1.3" opacity="0.66"/><circle cx="86" cy="32" r="1.3" opacity="0.59"/><circle cx="95" cy="32" r="1.3" opacity="0.48"/><circle cx="104" cy="32" r="1.3" opacity="0.33"/><circle cx="113" cy="32" r="1.3" opacity="0.15"/><circle cx="14" cy="41" r="1.3" opacity="0.15"/><circle cx="23" cy="41" r="1.3" opacity="0.32"/><circle cx="32" cy="41" r="1.3" opacity="0.51"/><circle cx="41" cy="41" r="1.3" opacity="0.65"/><circle cx="50" cy="41" r="1.3" opacity="0.75"/><circle cx="59" cy="41" r="1.3" opacity="0.81"/><circle cx="68" cy="41" r="1.3" opacity="0.82"/><circle cx="77" cy="41" r="1.3" opacity="0.80"/><circle cx="86" cy="41" r="1.3" opacity="0.73"/><circle cx="95" cy="41" r="1.3" opacity="0.62"/><circle cx="104" cy="41" r="1.3" opacity="0.47"/><circle cx="113" cy="41" r="1.3" opacity="0.27"/><circle cx="122" cy="41" r="1.3" opacity="0.15"/><circle cx="14" cy="50" r="1.3" opacity="0.19"/><circle cx="23" cy="50" r="1.3" opacity="0.42"/><circle cx="32" cy="50" r="1.3" opacity="0.61"/><circle cx="41" cy="50" r="1.3" opacity="0.75"/><circle cx="50" cy="50" r="1.3" opacity="0.85"/><circle cx="59" cy="50" r="1.3" opacity="0.91"/><circle cx="68" cy="50" r="1.3" opacity="0.92"/><circle cx="77" cy="50" r="1.3" opacity="0.90"/><circle cx="86" cy="50" r="1.3" opacity="0.83"/><circle cx="95" cy="50" r="1.3" opacity="0.72"/><circle cx="104" cy="50" r="1.3" opacity="0.57"/><circle cx="113" cy="50" r="1.3" opacity="0.37"/><circle cx="122" cy="50" r="1.3" opacity="0.15"/><circle cx="14" cy="59" r="1.3" opacity="0.25"/><circle cx="23" cy="59" r="1.3" opacity="0.48"/><circle cx="32" cy="59" r="1.3" opacity="0.66"/><circle cx="41" cy="59" r="1.3" opacity="0.81"/><circle cx="50" cy="59" r="1.3" opacity="0.91"/><circle cx="59" cy="59" r="1.3" opacity="0.97"/><circle cx="68" cy="59" r="1.3" opacity="0.98"/><circle cx="77" cy="59" r="1.3" opacity="0.96"/><circle cx="86" cy="59" r="1.3" opacity="0.89"/><circle cx="95" cy="59" r="1.3" opacity="0.78"/><circle cx="104" cy="59" r="1.3" opacity="0.63"/><circle cx="113" cy="59" r="1.3" opacity="0.43"/><circle cx="122" cy="59" r="1.3" opacity="0.20"/><circle cx="14" cy="68" r="1.3" opacity="0.27"/><circle cx="23" cy="68" r="1.3" opacity="0.50"/><circle cx="32" cy="68" r="1.3" opacity="0.68"/><circle cx="41" cy="68" r="1.3" opacity="0.82"/><circle cx="50" cy="68" r="1.3" opacity="0.92"/><circle cx="59" cy="68" r="1.3" opacity="0.98"/><circle cx="68" cy="68" r="1.3" opacity="1.00"/><circle cx="77" cy="68" r="1.3" opacity="0.97"/><circle cx="86" cy="68" r="1.3" opacity="0.91"/><circle cx="95" cy="68" r="1.3" opacity="0.80"/><circle cx="104" cy="68" r="1.3" opacity="0.64"/><circle cx="113" cy="68" r="1.3" opacity="0.45"/><circle cx="122" cy="68" r="1.3" opacity="0.21"/><circle cx="14" cy="77" r="1.3" opacity="0.24"/><circle cx="23" cy="77" r="1.3" opacity="0.47"/><circle cx="32" cy="77" r="1.3" opacity="0.66"/><circle cx="41" cy="77" r="1.3" opacity="0.80"/><circle cx="50" cy="77" r="1.3" opacity="0.90"/><circle cx="59" cy="77" r="1.3" opacity="0.96"/><circle cx="68" cy="77" r="1.3" opacity="0.97"/><circle cx="77" cy="77" r="1.3" opacity="0.95"/><circle cx="86" cy="77" r="1.3" opacity="0.88"/><circle cx="95" cy="77" r="1.3" opacity="0.77"/><circle cx="104" cy="77" r="1.3" opacity="0.62"/><circle cx="113" cy="77" r="1.3" opacity="0.42"/><circle cx="122" cy="77" r="1.3" opacity="0.19"/><circle cx="14" cy="86" r="1.3" opacity="0.18"/><circle cx="23" cy="86" r="1.3" opacity="0.40"/><circle cx="32" cy="86" r="1.3" opacity="0.59"/><circle cx="41" cy="86" r="1.3" opacity="0.73"/><circle cx="50" cy="86" r="1.3" opacity="0.83"/><circle cx="59" cy="86" r="1.3" opacity="0.89"/><circle cx="68" cy="86" r="1.3" opacity="0.91"/><circle cx="77" cy="86" r="1.3" opacity="0.88"/><circle cx="86" cy="86" r="1.3" opacity="0.81"/><circle cx="95" cy="86" r="1.3" opacity="0.70"/><circle cx="104" cy="86" r="1.3" opacity="0.55"/><circle cx="113" cy="86" r="1.3" opacity="0.36"/><circle cx="122" cy="86" r="1.3" opacity="0.15"/><circle cx="14" cy="95" r="1.3" opacity="0.15"/><circle cx="23" cy="95" r="1.3" opacity="0.29"/><circle cx="32" cy="95" r="1.3" opacity="0.48"/><circle cx="41" cy="95" r="1.3" opacity="0.62"/><circle cx="50" cy="95" r="1.3" opacity="0.72"/><circle cx="59" cy="95" r="1.3" opacity="0.78"/><circle cx="68" cy="95" r="1.3" opacity="0.80"/><circle cx="77" cy="95" r="1.3" opacity="0.77"/><circle cx="86" cy="95" r="1.3" opacity="0.70"/><circle cx="95" cy="95" r="1.3" opacity="0.59"/><circle cx="104" cy="95" r="1.3" opacity="0.44"/><circle cx="113" cy="95" r="1.3" opacity="0.25"/><circle cx="122" cy="95" r="1.3" opacity="0.15"/><circle cx="23" cy="104" r="1.3" opacity="0.15"/><circle cx="32" cy="104" r="1.3" opacity="0.33"/><circle cx="41" cy="104" r="1.3" opacity="0.47"/><circle cx="50" cy="104" r="1.3" opacity="0.57"/><circle cx="59" cy="104" r="1.3" opacity="0.63"/><circle cx="68" cy="104" r="1.3" opacity="0.64"/><circle cx="77" cy="104" r="1.3" opacity="0.62"/><circle cx="86" cy="104" r="1.3" opacity="0.55"/><circle cx="95" cy="104" r="1.3" opacity="0.44"/><circle cx="104" cy="104" r="1.3" opacity="0.29"/><circle cx="113" cy="104" r="1.3" opacity="0.15"/><circle cx="32" cy="113" r="1.3" opacity="0.15"/><circle cx="41" cy="113" r="1.3" opacity="0.27"/><circle cx="50" cy="113" r="1.3" opacity="0.37"/><circle cx="59" cy="113" r="1.3" opacity="0.43"/><circle cx="68" cy="113" r="1.3" opacity="0.45"/><circle cx="77" cy="113" r="1.3" opacity="0.42"/><circle cx="86" cy="113" r="1.3" opacity="0.36"/><circle cx="95" cy="113" r="1.3" opacity="0.25"/><circle cx="104" cy="113" r="1.3" opacity="0.15"/><circle cx="41" cy="122" r="1.3" opacity="0.15"/><circle cx="50" cy="122" r="1.3" opacity="0.15"/><circle cx="59" cy="122" r="1.3" opacity="0.20"/><circle cx="68" cy="122" r="1.3" opacity="0.21"/><circle cx="77" cy="122" r="1.3" opacity="0.19"/><circle cx="86" cy="122" r="1.3" opacity="0.15"/><circle cx="95" cy="122" r="1.3" opacity="0.15"/></svg></div><div class="dmw d2" aria-hidden="true"><svg width="118" height="118" viewBox="0 0 118 118"><circle cx="59" cy="5" r="1.3" opacity="0.15"/><circle cx="32" cy="14" r="1.3" opacity="0.15"/><circle cx="41" cy="14" r="1.3" opacity="0.19"/><circle cx="50" cy="14" r="1.3" opacity="0.28"/><circle cx="59" cy="14" r="1.3" opacity="0.31"/><circle cx="68" cy="14" r="1.3" opacity="0.28"/><circle cx="77" cy="14" r="1.3" opacity="0.19"/><circle cx="86" cy="14" r="1.3" opacity="0.15"/><circle cx="23" cy="23" r="1.3" opacity="0.15"/><circle cx="32" cy="23" r="1.3" opacity="0.31"/><circle cx="41" cy="23" r="1.3" opacity="0.44"/><circle cx="50" cy="23" r="1.3" opacity="0.53"/><circle cx="59" cy="23" r="1.3" opacity="0.56"/><circle cx="68" cy="23" r="1.3" opacity="0.53"/><circle cx="77" cy="23" r="1.3" opacity="0.44"/><circle cx="86" cy="23" r="1.3" opacity="0.31"/><circle cx="95" cy="23" r="1.3" opacity="0.15"/><circle cx="14" cy="32" r="1.3" opacity="0.15"/><circle cx="23" cy="32" r="1.3" opacity="0.31"/><circle cx="32" cy="32" r="1.3" opacity="0.50"/><circle cx="41" cy="32" r="1.3" opacity="0.64"/><circle cx="50" cy="32" r="1.3" opacity="0.72"/><circle cx="59" cy="32" r="1.3" opacity="0.75"/><circle cx="68" cy="32" r="1.3" opacity="0.72"/><circle cx="77" cy="32" r="1.3" opacity="0.64"/><circle cx="86" cy="32" r="1.3" opacity="0.50"/><circle cx="95" cy="32" r="1.3" opacity="0.31"/><circle cx="104" cy="32" r="1.3" opacity="0.15"/><circle cx="14" cy="41" r="1.3" opacity="0.19"/><circle cx="23" cy="41" r="1.3" opacity="0.44"/><circle cx="32" cy="41" r="1.3" opacity="0.64"/><circle cx="41" cy="41" r="1.3" opacity="0.78"/><circle cx="50" cy="41" r="1.3" opacity="0.86"/><circle cx="59" cy="41" r="1.3" opacity="0.89"/><circle cx="68" cy="41" r="1.3" opacity="0.86"/><circle cx="77" cy="41" r="1.3" opacity="0.78"/><circle cx="86" cy="41" r="1.3" opacity="0.64"/><circle cx="95" cy="41" r="1.3" opacity="0.44"/><circle cx="104" cy="41" r="1.3" opacity="0.19"/><circle cx="14" cy="50" r="1.3" opacity="0.28"/><circle cx="23" cy="50" r="1.3" opacity="0.53"/><circle cx="32" cy="50" r="1.3" opacity="0.72"/><circle cx="41" cy="50" r="1.3" opacity="0.86"/><circle cx="50" cy="50" r="1.3" opacity="0.94"/><circle cx="59" cy="50" r="1.3" opacity="0.97"/><circle cx="68" cy="50" r="1.3" opacity="0.94"/><circle cx="77" cy="50" r="1.3" opacity="0.86"/><circle cx="86" cy="50" r="1.3" opacity="0.72"/><circle cx="95" cy="50" r="1.3" opacity="0.53"/><circle cx="104" cy="50" r="1.3" opacity="0.28"/><circle cx="5" cy="59" r="1.3" opacity="0.15"/><circle cx="14" cy="59" r="1.3" opacity="0.31"/><circle cx="23" cy="59" r="1.3" opacity="0.56"/><circle cx="32" cy="59" r="1.3" opacity="0.75"/><circle cx="41" cy="59" r="1.3" opacity="0.89"/><circle cx="50" cy="59" r="1.3" opacity="0.97"/><circle cx="59" cy="59" r="1.3" opacity="1.00"/><circle cx="68" cy="59" r="1.3" opacity="0.97"/><circle cx="77" cy="59" r="1.3" opacity="0.89"/><circle cx="86" cy="59" r="1.3" opacity="0.75"/><circle cx="95" cy="59" r="1.3" opacity="0.56"/><circle cx="104" cy="59" r="1.3" opacity="0.31"/><circle cx="113" cy="59" r="1.3" opacity="0.15"/><circle cx="14" cy="68" r="1.3" opacity="0.28"/><circle cx="23" cy="68" r="1.3" opacity="0.53"/><circle cx="32" cy="68" r="1.3" opacity="0.72"/><circle cx="41" cy="68" r="1.3" opacity="0.86"/><circle cx="50" cy="68" r="1.3" opacity="0.94"/><circle cx="59" cy="68" r="1.3" opacity="0.97"/><circle cx="68" cy="68" r="1.3" opacity="0.94"/><circle cx="77" cy="68" r="1.3" opacity="0.86"/><circle cx="86" cy="68" r="1.3" opacity="0.72"/><circle cx="95" cy="68" r="1.3" opacity="0.53"/><circle cx="104" cy="68" r="1.3" opacity="0.28"/><circle cx="14" cy="77" r="1.3" opacity="0.19"/><circle cx="23" cy="77" r="1.3" opacity="0.44"/><circle cx="32" cy="77" r="1.3" opacity="0.64"/><circle cx="41" cy="77" r="1.3" opacity="0.78"/><circle cx="50" cy="77" r="1.3" opacity="0.86"/><circle cx="59" cy="77" r="1.3" opacity="0.89"/><circle cx="68" cy="77" r="1.3" opacity="0.86"/><circle cx="77" cy="77" r="1.3" opacity="0.78"/><circle cx="86" cy="77" r="1.3" opacity="0.64"/><circle cx="95" cy="77" r="1.3" opacity="0.44"/><circle cx="104" cy="77" r="1.3" opacity="0.19"/><circle cx="14" cy="86" r="1.3" opacity="0.15"/><circle cx="23" cy="86" r="1.3" opacity="0.31"/><circle cx="32" cy="86" r="1.3" opacity="0.50"/><circle cx="41" cy="86" r="1.3" opacity="0.64"/><circle cx="50" cy="86" r="1.3" opacity="0.72"/><circle cx="59" cy="86" r="1.3" opacity="0.75"/><circle cx="68" cy="86" r="1.3" opacity="0.72"/><circle cx="77" cy="86" r="1.3" opacity="0.64"/><circle cx="86" cy="86" r="1.3" opacity="0.50"/><circle cx="95" cy="86" r="1.3" opacity="0.31"/><circle cx="104" cy="86" r="1.3" opacity="0.15"/><circle cx="23" cy="95" r="1.3" opacity="0.15"/><circle cx="32" cy="95" r="1.3" opacity="0.31"/><circle cx="41" cy="95" r="1.3" opacity="0.44"/><circle cx="50" cy="95" r="1.3" opacity="0.53"/><circle cx="59" cy="95" r="1.3" opacity="0.56"/><circle cx="68" cy="95" r="1.3" opacity="0.53"/><circle cx="77" cy="95" r="1.3" opacity="0.44"/><circle cx="86" cy="95" r="1.3" opacity="0.31"/><circle cx="95" cy="95" r="1.3" opacity="0.15"/><circle cx="32" cy="104" r="1.3" opacity="0.15"/><circle cx="41" cy="104" r="1.3" opacity="0.19"/><circle cx="50" cy="104" r="1.3" opacity="0.28"/><circle cx="59" cy="104" r="1.3" opacity="0.31"/><circle cx="68" cy="104" r="1.3" opacity="0.28"/><circle cx="77" cy="104" r="1.3" opacity="0.19"/><circle cx="86" cy="104" r="1.3" opacity="0.15"/><circle cx="59" cy="113" r="1.3" opacity="0.15"/></svg></div>
     <div>
-      <p class="eyebrow mv-in mv-d1">Ginecología · Matronas · Pediatría</p>
+      <p class="live mono mv-in mv-d1"><i></i>Ginecólogo · Matrona · Pediatra</p>
       <h1 class="mv-in mv-d1">¿Qué te preocupa?</h1>
       <p class="lead mv-in mv-d2">Cuéntalo como en la consulta. Te responde por escrito tu ginecólogo, matrona o pediatra, en menos de 24 h. 9 € la consulta.</p>
 
@@ -731,16 +854,56 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
         <div class="track" aria-hidden="true"><span class="ln"></span><span class="st"></span><span class="st s2"></span><span class="halo"></span><span class="st s3"></span><span class="dot"></span></div>
         <div class="lb"><div><b>1. Envías tu duda</b>sin registro</div><div><b id="rt-p-t">2. Pagas</b><span id="rt-p">9 €</span></div><div><b>3. Te responde</b><span id="rt-h">en menos de 24 h</span></div></div>
       </div>
-      <div class="proof" aria-label="Hera en cifras">
+      <div class="proof nums" id="cifras" aria-label="Hera en cifras">
         <div id="pf-n"><b>Por escrito</b><span>para releerla cuando quieras</span></div>
         <div id="pf-h"><b>24 h</b><span>como máximo para responder</span></div>
-        <div><b>Colegiados</b><span>con nombre y apellidos</span></div>
-        <div><b>Sin anuncios</b><span>ni cookies</span></div>
+        <div><b>3</b><span>profesionales colegiados</span></div>
+        <div><b>+15</b><span>años de experiencia</span></div>
       </div>
     </div>
-    <div class="hero-side mv-in mv-d4">
-    <div class="orbit" aria-hidden="true">
-      <svg viewBox="0 0 320 320" width="300" height="300">
+  </div>
+</div>
+
+
+<section class="claim rv" aria-labelledby="claim-h">
+  <div class="wrap claim-in">
+    <div>
+      <p class="mono k">Por qué Hera</p>
+      <h2 class="big" id="claim-h">No es un buscador.<br>Es <span class="rot"><span class="w w1">tu ginecólogo.</span><span class="w w2">tu matrona.</span><span class="w w3">tu pediatra.</span></span></h2>
+      <div class="who3" aria-hidden="true">
+        <span class="ph3"><img class="p1" src="portada/equipo/gonzalo.jpg?v=2" alt="" width="56" height="56" loading="lazy"><img class="p2" src="portada/equipo/marina.jpg?v=2" alt="" width="56" height="56" loading="lazy"><img class="p3" src="portada/equipo/lucia.jpg?v=3" alt="" width="56" height="56" loading="lazy"></span>
+        <span class="cap3 mono"><span class="c1">Dr. Gonzalo Nozaleda · Hospital Gregorio Marañón</span><span class="c2">Marina Fernández · Clínica Universidad de Navarra</span><span class="c3">Dra. Lucía Carrascón · Hospital Gregorio Marañón</span></span>
+      </div>
+      <p class="sub">Te contesta para tu caso y por escrito, para que la puedas releer cuando quieras. Si te queda algo, contestas al mismo correo.</p>
+      <p class="cta-row"><a class="pill ghost" href="equipo.html" data-cta="clic:claim_equipo">Conoce al equipo <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></p>
+    </div>
+    <div class="hero-side">
+      <p class="sample-tag">Ejemplo orientativo</p>
+      <p class="side-h">Así es una respuesta</p>
+    <div class="letter">
+      <p class="letter-q"><b>Tu duda:</b> «Estoy de 32 semanas y tengo ardor por las noches. ¿Qué puedo hacer?»</p>
+      <p class="letter-a"><span class="typing" aria-hidden="true"><i></i><i></i><i></i>Marina está escribiendo</span><span class="ph">Suelen ayudar las comidas pequeñas, no tumbarte justo después de comer </span><span class="ph ph2">y elevar un poco la cabecera de la cama. </span><span class="ph ph3">Si no basta, hay antiácidos seguros en el embarazo.</span></p>
+      <p class="letter-s"><img src="portada/equipo/marina.jpg?v=2" alt="" width="34" height="34" loading="lazy"><span><b>Marina Fernández</b>Matrona · Clínica Universidad de Navarra</span></p>
+      <span class="stamp"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Respondida por escrito</span>
+    </div>
+    </div>
+  </div>
+</section>
+
+<section class="pros-s rv" id="quien" aria-labelledby="quien-h">
+  <div class="wrap"><p class="mono k">Quién responde</p><h2 id="quien-h">Tres profesionales. Un nombre detrás de cada respuesta.</h2></div>
+  <div class="wrap pros">
+    <a class="pcard" href="equipo.html" data-cta="clic:pro_gineco"><img src="portada/equipo/gonzalo-grande.jpg" alt="" width="400" height="300" loading="lazy"><h3>Dr. Gonzalo Nozaleda</h3><span class="mono m">Ginecólogo · Hospital Gregorio Marañón · +15 años</span><span class="mono q">Le puedes preguntar por</span><span class="tags"><span>Regla</span><span>Anticoncepción</span><span>Embarazo</span><span>Pruebas</span><span>Menopausia</span></span></a>
+    <a class="pcard" href="equipo.html" data-cta="clic:pro_matrona"><img src="portada/equipo/marina-grande.jpg" alt="" width="400" height="300" loading="lazy"><h3>Marina Fernández</h3><span class="mono m">Matrona · Clínica Universidad de Navarra · +15 años</span><span class="mono q">Le puedes preguntar por</span><span class="tags"><span>Embarazo</span><span>Parto</span><span>Posparto</span><span>Lactancia</span><span>Suelo pélvico</span></span></a>
+    <a class="pcard" href="equipo.html" data-cta="clic:pro_pediatra"><img src="portada/equipo/lucia-grande.jpg" alt="" width="400" height="300" loading="lazy"><h3>Dra. Lucía Carrascón</h3><span class="mono m">Pediatra · Hospital Gregorio Marañón · +15 años</span><span class="mono q">Le puedes preguntar por</span><span class="tags"><span>Fiebre</span><span>Alimentación</span><span>Sueño</span><span>Piel</span><span>Desarrollo</span></span></a>
+  </div>
+</section>
+
+<section class="como rv" id="como" aria-labelledby="como-h">
+  <div class="wrap">
+    <p class="mono k">Cómo te ayudamos</p><h2 id="como-h">Elige cómo quieres hablarlo.</h2>
+    <div class="cards">
+      <div class="card"><div class="art orbit" aria-hidden="true"><svg viewBox="0 0 320 320">
         <defs><clipPath id="ob-cg"><circle cx="62" cy="88" r="19"/></clipPath><clipPath id="ob-cm"><circle cx="266" cy="112" r="19"/></clipPath><clipPath id="ob-cl"><circle cx="118" cy="268" r="19"/></clipPath></defs>
         <circle class="ob-ring" cx="160" cy="160" r="50"/><circle class="ob-ring" cx="160" cy="160" r="95"/><circle class="ob-ring" cx="160" cy="160" r="140"/>
         <path id="ob-pg" class="ob-route" d="M160 160 Q90 150 62 88"/><path id="ob-pm" class="ob-route" d="M160 160 Q230 170 266 112"/><path id="ob-pl" class="ob-route" d="M160 160 Q170 230 118 268"/>
@@ -765,23 +928,26 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
           <circle r="4.5" fill="#45574C"><animateMotion dur="9s" repeatCount="indefinite" calcMode="linear" keyPoints="0;0;1;0" keyTimes="0;.66;.81;.97"><mpath href="#ob-pl"/></animateMotion><animate attributeName="opacity" dur="9s" repeatCount="indefinite" values="0;0;1;1;0;0" keyTimes="0;.66;.67;.81;.82;1"/></circle>
           <circle r="4.5" fill="#fff" stroke="#45574C" stroke-width="1.5"><animateMotion dur="9s" repeatCount="indefinite" calcMode="linear" keyPoints="0;0;1;0" keyTimes="0;.66;.81;.97"><mpath href="#ob-pl"/></animateMotion><animate attributeName="opacity" dur="9s" repeatCount="indefinite" values="0;0;1;1;0" keyTimes="0;.82;.83;.96;.97"/></circle>
         </g>
-      </svg>
-    </div>
-      <p class="sample-tag">Ejemplo orientativo</p>
-      <p class="side-h">Así es una respuesta</p>
-    <div class="letter">
-      <p class="letter-q"><b>Tu duda:</b> «Estoy de 32 semanas y tengo ardor por las noches. ¿Qué puedo hacer?»</p>
-      <p class="letter-a"><span class="typing" aria-hidden="true"><i></i><i></i><i></i>Marina está escribiendo</span><span class="ph">Suelen ayudar las comidas pequeñas, no tumbarte justo después de comer </span><span class="ph ph2">y elevar un poco la cabecera de la cama. </span><span class="ph ph3">Si no basta, hay antiácidos seguros en el embarazo.</span></p>
-      <p class="letter-s"><img src="portada/equipo/marina.jpg?v=2" alt="" width="34" height="34" loading="lazy"><span><b>Marina Fernández</b>Matrona · Clínica Universidad de Navarra</span></p>
-      <span class="stamp"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Respondida por escrito</span>
-    </div>
-      <p class="side-s">Personal, escrita para tu caso, con qué hacer y cuándo ir a consulta. Si te queda algo, contestas al mismo correo.</p>
+      </svg></div><div class="t"><h3>Por escrito</h3><p>Tu duda a la profesional que toca. Respuesta personal <span id="cx-h">en menos de 24 h</span>.</p><a class="pill" href="#ask" data-goask data-cta="clic:card_escrito"><span id="cx-price">9 €</span> · Preguntar <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div></div>
+      <div class="card"><div class="art" aria-hidden="true"><svg viewBox="0 0 320 260">
+        <rect class="vframe" x="30" y="40" width="160" height="110" rx="10"/><rect class="vframe" x="150" y="110" width="140" height="100" rx="10"/>
+        <defs><clipPath id="vc-m"><circle cx="110" cy="90" r="30"/></clipPath></defs>
+        <image href="portada/equipo/marina.jpg?v=2" x="80" y="60" width="60" height="60" clip-path="url(#vc-m)" preserveAspectRatio="xMidYMid slice"/>
+        <circle cx="220" cy="150" r="24" fill="#F3F1EA" stroke="#C9C2B2"/><path d="M208 168a12 12 0 0 1 24 0" fill="none" stroke="#B9B2A2" stroke-width="1.4"/><circle cx="220" cy="146" r="7" fill="none" stroke="#B9B2A2" stroke-width="1.4"/>
+        <path class="wave" d="M60 135 q10 -12 20 0 t20 0 t20 0 t20 0"/>
+        <circle class="ob-pulse" cx="176" cy="54" r="4"/><circle cx="176" cy="54" r="4" fill="#45574C"/>
+        <text x="30" y="235" class="ob-lbl">30 MIN · CARA A CARA</text></svg></div>
+        <div class="t"><h3>Videollamada</h3><p>Si prefieres hablarlo, 30 minutos con tu profesional. La hora se propone después del pago.</p><a class="pill ghost" href="videollamada/" data-cta="clic:card_video">Ver videollamada <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div></div>
+      <div class="card"><div class="art" aria-hidden="true"><svg viewBox="0 0 320 260" class="cal">
+        <rect class="dd" x="40" y="40" width="28" height="28" rx="6"/><rect class="dd" x="76" y="40" width="28" height="28" rx="6"/><rect class="dd" x="112" y="40" width="28" height="28" rx="6"/><rect class="dd" x="148" y="40" width="28" height="28" rx="6"/><rect class="dd" x="184" y="40" width="28" height="28" rx="6"/><rect class="dd" x="220" y="40" width="28" height="28" rx="6"/><rect class="dd" x="256" y="40" width="28" height="28" rx="6"/><rect class="dd" x="40" y="76" width="28" height="28" rx="6"/><rect class="dd" x="76" y="76" width="28" height="28" rx="6"/><rect class="dd" x="112" y="76" width="28" height="28" rx="6"/><rect class="dd" x="148" y="76" width="28" height="28" rx="6"/><rect class="dd" x="184" y="76" width="28" height="28" rx="6"/><rect class="dd" x="220" y="76" width="28" height="28" rx="6"/><rect class="dd" x="256" y="76" width="28" height="28" rx="6"/><rect class="dd" x="40" y="112" width="28" height="28" rx="6"/><rect class="dd" x="76" y="112" width="28" height="28" rx="6"/><rect class="dd" x="112" y="112" width="28" height="28" rx="6"/><rect class="dd" x="148" y="112" width="28" height="28" rx="6"/><rect class="dd" x="184" y="112" width="28" height="28" rx="6"/><rect class="dd" x="220" y="112" width="28" height="28" rx="6"/><rect class="dd" x="256" y="112" width="28" height="28" rx="6"/><rect class="dd" x="40" y="148" width="28" height="28" rx="6"/><rect class="dd" x="76" y="148" width="28" height="28" rx="6"/><rect class="dd" x="112" y="148" width="28" height="28" rx="6"/><rect class="dd" x="148" y="148" width="28" height="28" rx="6"/><rect class="dd" x="184" y="148" width="28" height="28" rx="6"/><rect class="dd" x="220" y="148" width="28" height="28" rx="6"/><rect class="dd" x="256" y="148" width="28" height="28" rx="6"/>
+        <rect class="on" x="112" y="40" width="28" height="28" rx="6" style="animation-delay:0.44s"/><rect class="on" x="220" y="40" width="28" height="28" rx="6" style="animation-delay:1.10s"/><rect class="on" x="112" y="76" width="28" height="28" rx="6" style="animation-delay:1.98s"/><rect class="on" x="256" y="76" width="28" height="28" rx="6" style="animation-delay:2.86s"/><rect class="on" x="112" y="112" width="28" height="28" rx="6" style="animation-delay:3.52s"/><rect class="on" x="256" y="112" width="28" height="28" rx="6" style="animation-delay:4.40s"/><rect class="on" x="148" y="148" width="28" height="28" rx="6" style="animation-delay:5.28s"/>
+        <text x="40" y="200" class="ob-lbl">UN MES CONTIGO · SIN PERMANENCIA</text></svg></div>
+        <div class="t"><h3>Acompañamiento</h3><p>Un mes con respuestas en menos de 6 h, una videollamada y WhatsApp con tu profesional.</p><a class="pill ghost" href="consultas/" data-cta="clic:card_acomp">99 € / mes <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></div></div>
     </div>
   </div>
-</div>
+</section>
 
-
-<section class="etapas" aria-labelledby="stages-h">
+<section class="etapas rv" id="etapas" aria-labelledby="stages-h">
   <div class="wrap stages-in">
     <div class="lifering" aria-hidden="true">
       <svg viewBox="0 0 320 320" width="280" height="280">
@@ -798,8 +964,8 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
       </svg>
     </div>
     <div>
-      <p class="eyebrow">Para cada etapa</p>
-      <h2 id="stages-h">Te acompañamos en cada etapa</h2>
+      <p class="mono k">Para cada etapa</p>
+      <h2 id="stages-h">Te acompañamos en cada etapa.</h2>
       <p class="stages-s">Guías gratis para cada momento y, cuando tengas una duda, tu consulta con Gonzalo, Marina o Lucía.</p>
       <div class="stages-l">
         <a href="ciclo/" data-cta="clic:etapa_ciclo"><b>Regla y ciclo</b><span>Fases, retrasos y dolor</span></a>
@@ -808,6 +974,33 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
         <a href="menopausia/" data-cta="clic:etapa_menopausia"><b>Menopausia</b><span>Síntomas y cuestionario</span></a>
       </div>
     </div>
+  </div>
+</section>
+
+<section class="appsec rv" id="app" aria-labelledby="app-h">
+  <div class="wrap app-in">
+    <div>
+      <p class="mono k">La app de Hera</p><h2 id="app-h">También en tu móvil.</h2>
+      <p class="sub">Apunta tu regla y mira en qué fase estás, sigue tu embarazo semana a semana o el mes de tu bebé. Y cuando te surja una duda, pregunta a tu profesional desde ahí.</p>
+      <ul class="ticks mono"><li>Gratis</li><li>Sin registro</li><li>Se instala desde el navegador</li></ul>
+      <p class="cta-row"><a class="pill" href="app/" data-cta="clic:app_portada">Abre Hera, es gratis <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></p>
+    </div>
+    <div class="phonewrap" aria-hidden="true"><div class="hphone">
+      <div class="ph-top mono"><span>Hoy</span><span>Ciclo</span></div>
+      <div class="dialbox"><svg viewBox="0 0 240 240" class="dialsvg"><path id="dtrack" d="M120 28 A92 92 0 1 1 119.9 28" fill="none"/><circle cx="120" cy="120" r="92" stroke="#E5E1D8" stroke-width="9" fill="none"/><path d="M123.1 28.1 A92 92 0 0 1 201.5 77.3" stroke="#B5362B" stroke-width="9" fill="none" stroke-linecap="round"/><path d="M202.9 159.9 A92 92 0 0 1 91.6 207.5" stroke="#446E52" stroke-width="9" fill="none" stroke-linecap="round"/><path d="M113.8 211.8 A92 92 0 0 1 105.6 210.9" stroke="#3B6EA8" stroke-width="12" fill="none" stroke-linecap="round"/><line x1="120.0" y1="16.0" x2="120.0" y2="8.0" stroke="#5E7266" stroke-opacity="0.9" stroke-width="1.4"/><line x1="143.1" y1="18.6" x2="144.0" y2="14.7" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><line x1="165.1" y1="26.3" x2="166.9" y2="22.7" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><line x1="184.8" y1="38.7" x2="187.3" y2="35.6" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><line x1="201.3" y1="55.2" x2="204.4" y2="52.7" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><line x1="213.7" y1="74.9" x2="217.3" y2="73.1" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><line x1="221.4" y1="96.9" x2="225.3" y2="96.0" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><line x1="224.0" y1="120.0" x2="232.0" y2="120.0" stroke="#5E7266" stroke-opacity="0.9" stroke-width="1.4"/><line x1="221.4" y1="143.1" x2="225.3" y2="144.0" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><line x1="213.7" y1="165.1" x2="217.3" y2="166.9" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><line x1="201.3" y1="184.8" x2="204.4" y2="187.3" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><line x1="184.8" y1="201.3" x2="187.3" y2="204.4" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><line x1="165.1" y1="213.7" x2="166.9" y2="217.3" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><line x1="143.1" y1="221.4" x2="144.0" y2="225.3" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><line x1="120.0" y1="224.0" x2="120.0" y2="232.0" stroke="#5E7266" stroke-opacity="0.9" stroke-width="1.4"/><line x1="96.9" y1="221.4" x2="96.0" y2="225.3" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><line x1="74.9" y1="213.7" x2="73.1" y2="217.3" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><line x1="55.2" y1="201.3" x2="52.7" y2="204.4" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><line x1="38.7" y1="184.8" x2="35.6" y2="187.3" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><line x1="26.3" y1="165.1" x2="22.7" y2="166.9" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><line x1="18.6" y1="143.1" x2="14.7" y2="144.0" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><line x1="16.0" y1="120.0" x2="8.0" y2="120.0" stroke="#5E7266" stroke-opacity="0.9" stroke-width="1.4"/><line x1="18.6" y1="96.9" x2="14.7" y2="96.0" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><line x1="26.3" y1="74.9" x2="22.7" y2="73.1" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><line x1="38.7" y1="55.2" x2="35.6" y2="52.7" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><line x1="55.2" y1="38.7" x2="52.7" y2="35.6" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><line x1="74.9" y1="26.3" x2="73.1" y2="22.7" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><line x1="96.9" y1="18.6" x2="96.0" y2="14.7" stroke="#5E7266" stroke-opacity="0.45" stroke-width="0.8"/><g class="ob-motion"><circle r="8" fill="#45574C" stroke="#FAF9F4" stroke-width="3"><animateMotion dur="14s" repeatCount="indefinite" calcMode="linear" keyPoints="0;0.964;0.964" keyTimes="0;0.93;1"><mpath href="#dtrack"/></animateMotion></circle></g></svg><div class="dc"><span class="mono">Día</span><b class="dnum"></b><span class="mono dph"><i>Menstrual</i><i>Folicular</i><i>Ventana fértil</i><i>Lútea</i></span></div></div>
+      <div class="ph-ask"><img src="portada/equipo/gonzalo.jpg?v=2" alt="" width="24" height="24" loading="lazy"><img src="portada/equipo/marina.jpg?v=2" alt="" width="24" height="24" loading="lazy"><img src="portada/equipo/lucia.jpg?v=3" alt="" width="24" height="24" loading="lazy"><span>Pregúntanos</span></div>
+      <div class="ph-tabs mono"><span class="on">Ciclo</span><span>Embarazo</span><span>Bebé</span></div>
+    </div></div>
+  </div>
+</section>
+
+<section class="final rv" aria-labelledby="final-h">
+  <div class="dmw d1" aria-hidden="true"><svg width="106" height="106" viewBox="0 0 106 106"><circle cx="32" cy="14" r="1.3" opacity="0.15"/><circle cx="41" cy="14" r="1.3" opacity="0.28"/><circle cx="50" cy="14" r="1.3" opacity="0.34"/><circle cx="59" cy="14" r="1.3" opacity="0.32"/><circle cx="68" cy="14" r="1.3" opacity="0.24"/><circle cx="77" cy="14" r="1.3" opacity="0.15"/><circle cx="23" cy="23" r="1.3" opacity="0.22"/><circle cx="32" cy="23" r="1.3" opacity="0.42"/><circle cx="41" cy="23" r="1.3" opacity="0.55"/><circle cx="50" cy="23" r="1.3" opacity="0.61"/><circle cx="59" cy="23" r="1.3" opacity="0.59"/><circle cx="68" cy="23" r="1.3" opacity="0.51"/><circle cx="77" cy="23" r="1.3" opacity="0.36"/><circle cx="86" cy="23" r="1.3" opacity="0.15"/><circle cx="14" cy="32" r="1.3" opacity="0.15"/><circle cx="23" cy="32" r="1.3" opacity="0.42"/><circle cx="32" cy="32" r="1.3" opacity="0.62"/><circle cx="41" cy="32" r="1.3" opacity="0.75"/><circle cx="50" cy="32" r="1.3" opacity="0.80"/><circle cx="59" cy="32" r="1.3" opacity="0.79"/><circle cx="68" cy="32" r="1.3" opacity="0.71"/><circle cx="77" cy="32" r="1.3" opacity="0.56"/><circle cx="86" cy="32" r="1.3" opacity="0.34"/><circle cx="95" cy="32" r="1.3" opacity="0.15"/><circle cx="14" cy="41" r="1.3" opacity="0.28"/><circle cx="23" cy="41" r="1.3" opacity="0.55"/><circle cx="32" cy="41" r="1.3" opacity="0.75"/><circle cx="41" cy="41" r="1.3" opacity="0.88"/><circle cx="50" cy="41" r="1.3" opacity="0.93"/><circle cx="59" cy="41" r="1.3" opacity="0.92"/><circle cx="68" cy="41" r="1.3" opacity="0.84"/><circle cx="77" cy="41" r="1.3" opacity="0.69"/><circle cx="86" cy="41" r="1.3" opacity="0.46"/><circle cx="95" cy="41" r="1.3" opacity="0.17"/><circle cx="14" cy="50" r="1.3" opacity="0.34"/><circle cx="23" cy="50" r="1.3" opacity="0.61"/><circle cx="32" cy="50" r="1.3" opacity="0.80"/><circle cx="41" cy="50" r="1.3" opacity="0.93"/><circle cx="50" cy="50" r="1.3" opacity="0.99"/><circle cx="59" cy="50" r="1.3" opacity="0.98"/><circle cx="68" cy="50" r="1.3" opacity="0.90"/><circle cx="77" cy="50" r="1.3" opacity="0.75"/><circle cx="86" cy="50" r="1.3" opacity="0.52"/><circle cx="95" cy="50" r="1.3" opacity="0.23"/><circle cx="14" cy="59" r="1.3" opacity="0.32"/><circle cx="23" cy="59" r="1.3" opacity="0.59"/><circle cx="32" cy="59" r="1.3" opacity="0.79"/><circle cx="41" cy="59" r="1.3" opacity="0.92"/><circle cx="50" cy="59" r="1.3" opacity="0.98"/><circle cx="59" cy="59" r="1.3" opacity="0.97"/><circle cx="68" cy="59" r="1.3" opacity="0.89"/><circle cx="77" cy="59" r="1.3" opacity="0.73"/><circle cx="86" cy="59" r="1.3" opacity="0.51"/><circle cx="95" cy="59" r="1.3" opacity="0.22"/><circle cx="14" cy="68" r="1.3" opacity="0.24"/><circle cx="23" cy="68" r="1.3" opacity="0.51"/><circle cx="32" cy="68" r="1.3" opacity="0.71"/><circle cx="41" cy="68" r="1.3" opacity="0.84"/><circle cx="50" cy="68" r="1.3" opacity="0.90"/><circle cx="59" cy="68" r="1.3" opacity="0.89"/><circle cx="68" cy="68" r="1.3" opacity="0.80"/><circle cx="77" cy="68" r="1.3" opacity="0.65"/><circle cx="86" cy="68" r="1.3" opacity="0.43"/><circle cx="95" cy="68" r="1.3" opacity="0.15"/><circle cx="14" cy="77" r="1.3" opacity="0.15"/><circle cx="23" cy="77" r="1.3" opacity="0.36"/><circle cx="32" cy="77" r="1.3" opacity="0.56"/><circle cx="41" cy="77" r="1.3" opacity="0.69"/><circle cx="50" cy="77" r="1.3" opacity="0.75"/><circle cx="59" cy="77" r="1.3" opacity="0.73"/><circle cx="68" cy="77" r="1.3" opacity="0.65"/><circle cx="77" cy="77" r="1.3" opacity="0.50"/><circle cx="86" cy="77" r="1.3" opacity="0.28"/><circle cx="23" cy="86" r="1.3" opacity="0.15"/><circle cx="32" cy="86" r="1.3" opacity="0.34"/><circle cx="41" cy="86" r="1.3" opacity="0.46"/><circle cx="50" cy="86" r="1.3" opacity="0.52"/><circle cx="59" cy="86" r="1.3" opacity="0.51"/><circle cx="68" cy="86" r="1.3" opacity="0.43"/><circle cx="77" cy="86" r="1.3" opacity="0.28"/><circle cx="86" cy="86" r="1.3" opacity="0.15"/><circle cx="32" cy="95" r="1.3" opacity="0.15"/><circle cx="41" cy="95" r="1.3" opacity="0.17"/><circle cx="50" cy="95" r="1.3" opacity="0.23"/><circle cx="59" cy="95" r="1.3" opacity="0.22"/><circle cx="68" cy="95" r="1.3" opacity="0.15"/></svg></div><div class="dmw d2" aria-hidden="true"><svg width="134" height="134" viewBox="0 0 134 134"><circle cx="41" cy="14" r="1.3" opacity="0.15"/><circle cx="50" cy="14" r="1.3" opacity="0.19"/><circle cx="59" cy="14" r="1.3" opacity="0.25"/><circle cx="68" cy="14" r="1.3" opacity="0.27"/><circle cx="77" cy="14" r="1.3" opacity="0.24"/><circle cx="86" cy="14" r="1.3" opacity="0.18"/><circle cx="95" cy="14" r="1.3" opacity="0.15"/><circle cx="32" cy="23" r="1.3" opacity="0.18"/><circle cx="41" cy="23" r="1.3" opacity="0.32"/><circle cx="50" cy="23" r="1.3" opacity="0.42"/><circle cx="59" cy="23" r="1.3" opacity="0.48"/><circle cx="68" cy="23" r="1.3" opacity="0.50"/><circle cx="77" cy="23" r="1.3" opacity="0.47"/><circle cx="86" cy="23" r="1.3" opacity="0.40"/><circle cx="95" cy="23" r="1.3" opacity="0.29"/><circle cx="104" cy="23" r="1.3" opacity="0.15"/><circle cx="23" cy="32" r="1.3" opacity="0.18"/><circle cx="32" cy="32" r="1.3" opacity="0.36"/><circle cx="41" cy="32" r="1.3" opacity="0.51"/><circle cx="50" cy="32" r="1.3" opacity="0.61"/><circle cx="59" cy="32" r="1.3" opacity="0.66"/><circle cx="68" cy="32" r="1.3" opacity="0.68"/><circle cx="77" cy="32" r="1.3" opacity="0.66"/><circle cx="86" cy="32" r="1.3" opacity="0.59"/><circle cx="95" cy="32" r="1.3" opacity="0.48"/><circle cx="104" cy="32" r="1.3" opacity="0.33"/><circle cx="113" cy="32" r="1.3" opacity="0.15"/><circle cx="14" cy="41" r="1.3" opacity="0.15"/><circle cx="23" cy="41" r="1.3" opacity="0.32"/><circle cx="32" cy="41" r="1.3" opacity="0.51"/><circle cx="41" cy="41" r="1.3" opacity="0.65"/><circle cx="50" cy="41" r="1.3" opacity="0.75"/><circle cx="59" cy="41" r="1.3" opacity="0.81"/><circle cx="68" cy="41" r="1.3" opacity="0.82"/><circle cx="77" cy="41" r="1.3" opacity="0.80"/><circle cx="86" cy="41" r="1.3" opacity="0.73"/><circle cx="95" cy="41" r="1.3" opacity="0.62"/><circle cx="104" cy="41" r="1.3" opacity="0.47"/><circle cx="113" cy="41" r="1.3" opacity="0.27"/><circle cx="122" cy="41" r="1.3" opacity="0.15"/><circle cx="14" cy="50" r="1.3" opacity="0.19"/><circle cx="23" cy="50" r="1.3" opacity="0.42"/><circle cx="32" cy="50" r="1.3" opacity="0.61"/><circle cx="41" cy="50" r="1.3" opacity="0.75"/><circle cx="50" cy="50" r="1.3" opacity="0.85"/><circle cx="59" cy="50" r="1.3" opacity="0.91"/><circle cx="68" cy="50" r="1.3" opacity="0.92"/><circle cx="77" cy="50" r="1.3" opacity="0.90"/><circle cx="86" cy="50" r="1.3" opacity="0.83"/><circle cx="95" cy="50" r="1.3" opacity="0.72"/><circle cx="104" cy="50" r="1.3" opacity="0.57"/><circle cx="113" cy="50" r="1.3" opacity="0.37"/><circle cx="122" cy="50" r="1.3" opacity="0.15"/><circle cx="14" cy="59" r="1.3" opacity="0.25"/><circle cx="23" cy="59" r="1.3" opacity="0.48"/><circle cx="32" cy="59" r="1.3" opacity="0.66"/><circle cx="41" cy="59" r="1.3" opacity="0.81"/><circle cx="50" cy="59" r="1.3" opacity="0.91"/><circle cx="59" cy="59" r="1.3" opacity="0.97"/><circle cx="68" cy="59" r="1.3" opacity="0.98"/><circle cx="77" cy="59" r="1.3" opacity="0.96"/><circle cx="86" cy="59" r="1.3" opacity="0.89"/><circle cx="95" cy="59" r="1.3" opacity="0.78"/><circle cx="104" cy="59" r="1.3" opacity="0.63"/><circle cx="113" cy="59" r="1.3" opacity="0.43"/><circle cx="122" cy="59" r="1.3" opacity="0.20"/><circle cx="14" cy="68" r="1.3" opacity="0.27"/><circle cx="23" cy="68" r="1.3" opacity="0.50"/><circle cx="32" cy="68" r="1.3" opacity="0.68"/><circle cx="41" cy="68" r="1.3" opacity="0.82"/><circle cx="50" cy="68" r="1.3" opacity="0.92"/><circle cx="59" cy="68" r="1.3" opacity="0.98"/><circle cx="68" cy="68" r="1.3" opacity="1.00"/><circle cx="77" cy="68" r="1.3" opacity="0.97"/><circle cx="86" cy="68" r="1.3" opacity="0.91"/><circle cx="95" cy="68" r="1.3" opacity="0.80"/><circle cx="104" cy="68" r="1.3" opacity="0.64"/><circle cx="113" cy="68" r="1.3" opacity="0.45"/><circle cx="122" cy="68" r="1.3" opacity="0.21"/><circle cx="14" cy="77" r="1.3" opacity="0.24"/><circle cx="23" cy="77" r="1.3" opacity="0.47"/><circle cx="32" cy="77" r="1.3" opacity="0.66"/><circle cx="41" cy="77" r="1.3" opacity="0.80"/><circle cx="50" cy="77" r="1.3" opacity="0.90"/><circle cx="59" cy="77" r="1.3" opacity="0.96"/><circle cx="68" cy="77" r="1.3" opacity="0.97"/><circle cx="77" cy="77" r="1.3" opacity="0.95"/><circle cx="86" cy="77" r="1.3" opacity="0.88"/><circle cx="95" cy="77" r="1.3" opacity="0.77"/><circle cx="104" cy="77" r="1.3" opacity="0.62"/><circle cx="113" cy="77" r="1.3" opacity="0.42"/><circle cx="122" cy="77" r="1.3" opacity="0.19"/><circle cx="14" cy="86" r="1.3" opacity="0.18"/><circle cx="23" cy="86" r="1.3" opacity="0.40"/><circle cx="32" cy="86" r="1.3" opacity="0.59"/><circle cx="41" cy="86" r="1.3" opacity="0.73"/><circle cx="50" cy="86" r="1.3" opacity="0.83"/><circle cx="59" cy="86" r="1.3" opacity="0.89"/><circle cx="68" cy="86" r="1.3" opacity="0.91"/><circle cx="77" cy="86" r="1.3" opacity="0.88"/><circle cx="86" cy="86" r="1.3" opacity="0.81"/><circle cx="95" cy="86" r="1.3" opacity="0.70"/><circle cx="104" cy="86" r="1.3" opacity="0.55"/><circle cx="113" cy="86" r="1.3" opacity="0.36"/><circle cx="122" cy="86" r="1.3" opacity="0.15"/><circle cx="14" cy="95" r="1.3" opacity="0.15"/><circle cx="23" cy="95" r="1.3" opacity="0.29"/><circle cx="32" cy="95" r="1.3" opacity="0.48"/><circle cx="41" cy="95" r="1.3" opacity="0.62"/><circle cx="50" cy="95" r="1.3" opacity="0.72"/><circle cx="59" cy="95" r="1.3" opacity="0.78"/><circle cx="68" cy="95" r="1.3" opacity="0.80"/><circle cx="77" cy="95" r="1.3" opacity="0.77"/><circle cx="86" cy="95" r="1.3" opacity="0.70"/><circle cx="95" cy="95" r="1.3" opacity="0.59"/><circle cx="104" cy="95" r="1.3" opacity="0.44"/><circle cx="113" cy="95" r="1.3" opacity="0.25"/><circle cx="122" cy="95" r="1.3" opacity="0.15"/><circle cx="23" cy="104" r="1.3" opacity="0.15"/><circle cx="32" cy="104" r="1.3" opacity="0.33"/><circle cx="41" cy="104" r="1.3" opacity="0.47"/><circle cx="50" cy="104" r="1.3" opacity="0.57"/><circle cx="59" cy="104" r="1.3" opacity="0.63"/><circle cx="68" cy="104" r="1.3" opacity="0.64"/><circle cx="77" cy="104" r="1.3" opacity="0.62"/><circle cx="86" cy="104" r="1.3" opacity="0.55"/><circle cx="95" cy="104" r="1.3" opacity="0.44"/><circle cx="104" cy="104" r="1.3" opacity="0.29"/><circle cx="113" cy="104" r="1.3" opacity="0.15"/><circle cx="32" cy="113" r="1.3" opacity="0.15"/><circle cx="41" cy="113" r="1.3" opacity="0.27"/><circle cx="50" cy="113" r="1.3" opacity="0.37"/><circle cx="59" cy="113" r="1.3" opacity="0.43"/><circle cx="68" cy="113" r="1.3" opacity="0.45"/><circle cx="77" cy="113" r="1.3" opacity="0.42"/><circle cx="86" cy="113" r="1.3" opacity="0.36"/><circle cx="95" cy="113" r="1.3" opacity="0.25"/><circle cx="104" cy="113" r="1.3" opacity="0.15"/><circle cx="41" cy="122" r="1.3" opacity="0.15"/><circle cx="50" cy="122" r="1.3" opacity="0.15"/><circle cx="59" cy="122" r="1.3" opacity="0.20"/><circle cx="68" cy="122" r="1.3" opacity="0.21"/><circle cx="77" cy="122" r="1.3" opacity="0.19"/><circle cx="86" cy="122" r="1.3" opacity="0.15"/><circle cx="95" cy="122" r="1.3" opacity="0.15"/></svg></div>
+  <div class="wrap">
+    <p class="mono k">Si es urgente, ve a urgencias</p>
+    <h2 id="final-h">¿Qué te preocupa?</h2>
+    <p class="sub">Escríbelo con tus palabras. Te responde tu profesional, por escrito.</p>
+    <p class="cta-row"><a class="pill" href="#ask" data-goask data-cta="clic:final_preguntar">Pregunta tu duda <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></p>
   </div>
 </section>
 
@@ -821,6 +1014,11 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
   </div>
 </section>
 </main>
+<script>(() => { // índice lateral: marca la sección que se ve
+  const links = [...document.querySelectorAll('.rail a')]; if (!links.length || !('IntersectionObserver' in window)) return;
+  const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) links.forEach((a) => a.classList.toggle('on', a.dataset.r === e.target.id)); }), { rootMargin: '-45% 0px -50% 0px' });
+  links.forEach((a) => { const s = document.getElementById(a.dataset.r); if (s) io.observe(s); });
+})();</script>
 
 <footer>
   <div class="wrap">
@@ -990,7 +1188,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     if (j.n < 10) return;
     CIFRAS.h = j.h;
     const a = $('pf-n'), b = $('pf-h');
-    if (a) a.innerHTML = `<b>${j.r}</b><span>consultas respondidas en los últimos 30 días</span>`;
+    // 24 nov (Noza): sin la cifra de consultas respondidas en la portada; queda «Por escrito»
     // Plazos (Noza, 23 nov): 24 h en general y 6 h en la prioritaria; ya no se enseña la media de horas
     if (b && PRIO) b.innerHTML = '<b>6 h</b><span>como máximo para responder</span>';
   }).catch(() => {});
@@ -1005,7 +1203,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     const to0 = $('top-open'); if (to0) { to0.textContent = 'Preguntar'; to0.href = '#ask'; to0.dataset.goask = ''; to0.dataset.cta = 'clic:top_preguntar_prio'; }
     const bp = $('brief-price'); if (bp) bp.textContent = 'Consulta prioritaria 29 € · Acompañamiento mensual, 99 €';
     const ph = $('pf-h'); if (ph) ph.innerHTML = '<b>6 h</b><span>como máximo para responder</span>';
-    $('rt-p').textContent = '29 €'; $('rt-h').textContent = 'en menos de 6 h';
+    $('rt-p').textContent = '29 €'; $('rt-h').textContent = 'en menos de 6 h'; $('cx-price').textContent = '29 €'; $('cx-h').textContent = 'en menos de 6 h';
     const pr = document.getElementById('precio');
     if (pr?.querySelector('h2')) {
       pr.querySelector('h2').textContent = 'Consulta prioritaria: 29 €';
@@ -1020,7 +1218,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
   if (BF) {
     const a = document.getElementById('annc-t'); if (a) a.innerHTML = 'Black Friday: consulta a 1 € · <u>Pregunta ahora</u>';
     $('ask-bf').hidden = false;
-    $('rt-p').textContent = '1 €';
+    $('rt-p').textContent = '1 €'; $('cx-price').textContent = '1 €';
     const pk = document.querySelector('.perks li'); if (pk) pk.lastChild.textContent = 'Pago seguro';
     $('ask-send-t').textContent = 'Empezar mi consulta · 1 €'; $('ask-send-s').textContent = 'No se cobra nada hasta que lo confirmes';
     $('ask-steps').hidden = false;
@@ -1069,7 +1267,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
       const ld = document.querySelector('.hero .lead');
       if (ld && /9 € la consulta\.$/.test(ld.textContent)) ld.textContent = FRIEND ? `Cuéntalo como en la consulta. Te responde por escrito tu ginecólogo, matrona o pediatra, en menos de 24 h. Con la invitación de ${FRIEND}, tus 5 primeras consultas son gratis.` : 'Cuéntalo como en la consulta. Te responde por escrito tu ginecólogo, matrona o pediatra, en menos de 24 h. Tus 2 primeras consultas son gratis: una con cada profesional.';
       const pf = document.querySelector('.pf-fine'); if (pf) pf.textContent = 'Solo la lee tu profesional · Sin tarjeta para las gratis';
-      $('rt-p-t').textContent = '2. Sin pagar'; $('rt-p').textContent = FRIEND ? 'las 5 primeras, gratis' : 'las 2 primeras, gratis';
+      $('rt-p-t').textContent = '2. Sin pagar'; $('rt-p').textContent = FRIEND ? 'las 5 primeras, gratis' : 'las 2 primeras, gratis'; $('cx-price').textContent = 'Gratis';
       const bp = $('brief-price'); if (bp) bp.textContent = FRIEND ? '5 consultas gratis · después, 9 € la consulta' : '2 consultas gratis · después, 9 € la consulta';
       const a = document.getElementById('annc-t'); if (a && /^Ginecólogo, matrona y pediatra/.test(a.textContent)) a.innerHTML = 'Tus 2 primeras consultas, gratis · <u>Pregunta ahora</u>';
       const pr = document.getElementById('precio');

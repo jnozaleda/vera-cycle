@@ -16,6 +16,9 @@ registro de cambios publicados, el más reciente primero. Sin datos personales n
 
 ## Registro
 
+### 2026-11-23
+- **Google Ads: «gratis» como palabra negativa** (amplia) en «Hera | Trafico | Prueba Nov», «Hera | Argentina» y «Hera | México, Chile y Colombia» (Noza). Ya no hay consultas gratis: en la última semana las palabras clave con «gratis» se llevaron ~25 € y ~72 clics. Las palabras clave con «gratis» siguen activas pero la negativa impide que salgan. No se ha puesto en «Hera | Guías | España» (las guías sí son gratis).
+
 ### 2026-11-22
 - **Aviso de Cloudflare: 90 % de las listas de KV del día** (plan gratis: 1000 listas/día; hoy 961). Causa: el panel y el recordatorio horario listaban todas las consultas una vez más por cada consulta pendiente (búsqueda de duplicadas). Ahora se listan una sola vez (`listThreads`). Queda: ~96 listas/día del cron de recordatorios de pago, ~48 de lo horario y ~5 por cada vez que se abre el panel. Si se pasa el límite, solo fallan las listas (panel y recordatorios); las consultas y los pagos no usan listas. Worker c0a312a8. (publicado)
 - **Enlaces con consultas gratis en la portada nueva**: el grupo de Maite (g8w) y los enlaces de las profesionales veían «9 € la consulta» en la entradilla (el botón ya decía «Enviar gratis»). Ahora dicen «Tus 2 primeras consultas son gratis: una con cada profesional» (amigas, q7m/k2v: «tus 5 primeras consultas son gratis»). Comprobado que el servicio mantiene 2 gratis, una por profesional, también con la prueba de 29 € (prueba automática nueva). (publicado)

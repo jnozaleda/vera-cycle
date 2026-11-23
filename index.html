@@ -212,7 +212,7 @@ section { padding: 64px 0; }
 .topro img { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; flex: none; }
 .topro span { min-width: 0; flex: 1; } .topro small { color: #8A6D3B; font-size: 12px; }
 .topro button { flex: none; font: 500 13.5px/1 'Inter', sans-serif; color: var(--plum); background: none; border: 0; padding: 4px 0; text-decoration: underline; cursor: pointer; }
-.ask:not(.pickpro) .picks { display: none; } .ask:not(.pickpro) #ask-hint { display: none; }
+.ask:not(.pickpro) #ask-hint { display: none; }
 .ask.needmail #ask-topro { display: none !important; }
 .ask.sending .wabtn2 { opacity: .45; pointer-events: none; }
 .wabtn2 b { display: flex; gap: 8px; align-items: center; font: 600 16px/1.2 'Inter', sans-serif; white-space: nowrap; }
@@ -509,8 +509,6 @@ footer { border-top: 1px solid var(--line); padding: 32px 0 40px; }
 .sample .quote1 { margin-top: 26px; }
 .sample .quote1 blockquote { font-size: 20px; }
 /* Elegir profesional primero (23 nov) */
-body:not(.pf-on) #pick1 { display: none; }
-body.pf-on .askwrap { display: none; }
 .pf { display: grid; gap: 8px; margin-top: 22px; max-width: 560px; }
 .pf-l { font-size: 13px; font-weight: 600; color: var(--muted); margin: 0 0 2px; }
 .pf-c { display: grid; grid-template-columns: 64px minmax(0, 1fr) 18px; gap: 14px; align-items: center; width: 100%; text-align: left; font: inherit; color: var(--text); background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px 10px 10px; cursor: pointer; transition: border-color .15s, box-shadow .15s; }
@@ -524,7 +522,7 @@ body.pf-on .askwrap { display: none; }
 .pf-dk { font: inherit; font-size: 14px; color: var(--muted); background: none; border: 0; padding: 8px 0 0; cursor: pointer; text-align: center; }
 .pf-dk u { color: var(--plum); text-underline-offset: 3px; }
 .pf-fine { font-size: 12.5px; color: var(--muted); text-align: center; margin: 2px 0 0; }
-#ask-form .who, #ask-steps { display: none !important; }
+#ask-steps { display: none !important; }
 .hero-side { display: grid; gap: 10px; align-self: start; }
 @media (min-width: 960px) { .hero-side { margin-top: 64px; } }
 .side-h { font: 400 26px/1.15 'Newsreader', Georgia, serif; color: var(--plum); margin: 0; }
@@ -586,6 +584,29 @@ body.pf-on .askwrap { display: none; }
 /* Versiones de pago: sin botón de adjuntar (23 nov) */
 .files.nofiles .file-add, .files.nofiles #ask-file-list { display: none !important; }
 .files.nofiles #ask-file-note { font-style: normal; font-size: 12.5px; color: var(--muted); }
+/* Escribe primero y, al escribir, quién la leerá (Noza, 23 nov: borrador 1 con el gesto del 3) */
+.ask .who { margin-bottom: 2px; font-size: 13.5px; line-height: 1.4; color: var(--muted); }
+.ask .who-faces img { width: 38px; height: 38px; object-position: center 25%; border-color: var(--ivory); }
+.ask .who-faces img + img { margin-left: -10px; }
+#ask-topro { display: none !important; }
+.ask.haschosen:not(.pickpro) .picks, .ask.haschosen:not(.pickpro) #ask-lee, .ask.haschosen .who { display: none !important; }
+.picks { gap: 10px; }
+.picks legend { font-size: 13px; }
+.picks.hasto legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+.pick { padding: 0; gap: 6px; border: 0; background: none; transition: opacity .2s; }
+.pick img { width: 100%; height: auto; aspect-ratio: 1; border-radius: 10px; object-fit: cover; object-position: center 25%; outline: 2px solid transparent; outline-offset: 2px; transition: outline-color .2s; }
+.pick b { font: 500 16px/1.2 'Newsreader', Georgia, serif; }
+.pick small { font-size: 11.5px; }
+.pick em, .pick.sugg em { display: none; }
+.pick:has(input:checked) { background: none; }
+.pick:has(input:checked) img { outline-color: var(--plum); }
+.picks.hasto .pick:not(:has(input:checked)) { opacity: .38; }
+.picks.hasto .pick:not(:has(input:checked)):hover { opacity: .7; }
+.lee { margin: -2px 0 0; text-align: center; }
+.lee[hidden] { display: none; }
+.lee b { display: block; font: 400 22px/1.2 'Newsreader', Georgia, serif; color: var(--plum); }
+.lee span { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
+@media (prefers-reduced-motion: reduce) { .pick, .pick img { transition: none; } }
 </style>
 <!-- menu:css --><style>.hm-btn,.hm-x{border:0!important;box-shadow:none!important;padding:0!important;min-width:0;font:inherit}
 .hm-btn{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;margin-left:6px;border:0;border-radius:999px;background:transparent;color:#45574C;cursor:pointer;flex:none}
@@ -628,22 +649,13 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
   <div class="hero">
     <div>
       <p class="eyebrow mv-in mv-d1">Ginecología · Matronas · Pediatría</p>
-      <h1 class="mv-in mv-d1">Consulta online con tu ginecólogo, matrona o pediatra</h1>
-      <p class="lead mv-in mv-d2">Elige a quién se lo cuentas. Te responde por escrito, a ti, en menos de 24 h. 9 € la consulta.</p>
-
-      <div class="pf" id="pick1">
-        <p class="pf-l mv-in mv-d2">¿A quién se lo preguntas?</p>
-        <button type="button" class="pf-c mv-in mv-d3" data-pick="gineco"><img src="portada/equipo/gonzalo-grande.jpg" alt="" width="64" height="64"><span class="pf-t"><b>Dr. Gonzalo Nozaleda</b><span>Ginecólogo · Hospital Gregorio Marañón · más de 15 años</span><em>Regla, anticoncepción, embarazo, pruebas y menopausia</em></span><span class="pf-go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span></button>
-        <button type="button" class="pf-c mv-in mv-d4" data-pick="matrona"><img src="portada/equipo/marina-grande.jpg" alt="" width="64" height="64"><span class="pf-t"><b>Marina Fernández</b><span>Matrona · Clínica Universidad de Navarra · más de 15 años</span><em>Embarazo, parto, posparto, lactancia y suelo pélvico</em></span><span class="pf-go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span></button>
-        <button type="button" class="pf-c mv-in mv-d5" data-pick="pediatra"><img src="portada/equipo/lucia-grande.jpg" alt="" width="64" height="64"><span class="pf-t"><b>Dra. Lucía Carrascón</b><span>Pediatra · Hospital Gregorio Marañón · más de 15 años</span><em>Fiebre, alimentación, sueño, piel y desarrollo del bebé</em></span><span class="pf-go"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></span></button>
-        <button type="button" class="pf-dk mv-in mv-d5" id="pick-dk">¿No sabes a quién? <u>Escribe tu duda y te lo sugerimos</u></button>
-        <p class="pf-fine">Solo la lee tu profesional · Si no te sirve, te devolvemos el dinero</p>
-      </div>
+      <h1 class="mv-in mv-d1">¿Qué te preocupa?</h1>
+      <p class="lead mv-in mv-d2">Cuéntalo como en la consulta. Te responde por escrito tu ginecólogo, matrona o pediatra, en menos de 24 h. 9 € la consulta.</p>
 
       <div class="askwrap">
       <div class="ask" id="ask">
       <form id="ask-form" novalidate>
-        <div class="who"><span class="who-faces"><img src="portada/equipo/gonzalo.jpg?v=2" alt="" width="30" height="30"><img src="portada/equipo/marina.jpg?v=2" alt="" width="30" height="30"><img src="portada/equipo/lucia.jpg?v=3" alt="" width="30" height="30"></span><span>Te responde <a class="who-link" href="equipo.html"><b>Gonzalo, Marina o Lucía</b></a></span></div>
+        <div class="who"><span class="who-faces"><img src="portada/equipo/gonzalo-grande.jpg" alt="" width="38" height="38"><img src="portada/equipo/marina-grande.jpg" alt="" width="38" height="38"><img src="portada/equipo/lucia-grande.jpg" alt="" width="38" height="38"></span><span>Te responde <a class="who-link" href="equipo.html"><b>Gonzalo</b>, ginecólogo, <b>Marina</b>, matrona, o <b>Lucía</b>, pediatra</a></span></div>
         <div class="nm-sum" id="ask-sum" hidden><div class="nm-row"><span><small>Tu duda</small><span id="ask-sum-t"></span></span><button type="button" data-nm-edit="duda">Editar</button></div><div class="nm-row"><img id="ask-sum-img" src="" alt="" width="26" height="26"><span id="ask-sum-pro"></span><button type="button" data-nm-edit="pro">Cambiar</button></div></div>
         <div class="chosen" id="ask-chosen" hidden><img id="ask-chosen-img" src="" alt="" width="48" height="48"><span><small>Tu consulta con</small><b id="ask-chosen-n"></b><span id="ask-chosen-r"></span></span><button type="button" id="ask-chosen-b">Cambiar</button></div>
         <label for="duda" class="sr">Tu duda</label>
@@ -656,14 +668,15 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
         <p class="priv"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span><b>Solo la lee tu profesional.</b> No ve tu correo y no lo compartimos con nadie.</span></p>
         <div class="more" id="ask-more" hidden>
           <div class="nm-almost" id="ask-almost" hidden><span class="ck"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span><span><b>Ya casi está.</b><span id="ask-almost-t">Solo falta tu correo para que te puedan responder.</span></span></div>
+          <fieldset class="picks">
+            <legend id="ask-lee-l">¿A quién se lo preguntas?</legend>
+            <label class="pick"><input type="radio" name="to" value="gineco"><img src="portada/equipo/gonzalo-grande.jpg" alt="" width="88" height="88"><span><b>Gonzalo</b><small>Ginecólogo</small></span><em>Sugerido</em></label>
+            <label class="pick"><input type="radio" name="to" value="matrona"><img src="portada/equipo/marina-grande.jpg" alt="" width="88" height="88"><span><b>Marina</b><small>Matrona</small></span><em>Sugerido</em></label>
+            <label class="pick"><input type="radio" name="to" value="pediatra"><img src="portada/equipo/lucia-grande.jpg" alt="" width="88" height="88"><span><b>Lucía</b><small>Pediatra</small></span><em>Sugerido</em></label>
+          </fieldset>
+          <p class="lee" id="ask-lee" hidden aria-live="polite"><b id="ask-lee-n"></b><span id="ask-lee-r"></span></p>
           <label class="fld"><span class="sr">Tu correo</span><input id="ask-email" type="email" inputmode="email" autocomplete="email" placeholder="Tu correo, para la respuesta"></label>
           <div class="topro" id="ask-topro" hidden><img id="ask-topro-img" src="" alt="" width="26" height="26"><span id="ask-topro-t"></span><button type="button" id="ask-topro-b">Cambiar</button></div>
-          <fieldset class="picks">
-            <legend>¿A quién se lo preguntas?</legend>
-            <label class="pick"><input type="radio" name="to" value="gineco"><img src="portada/equipo/gonzalo.jpg?v=2" alt="" width="40" height="40"><span><b>Gonzalo</b><small>Ginecólogo</small></span><em>Sugerido</em></label>
-            <label class="pick"><input type="radio" name="to" value="matrona"><img src="portada/equipo/marina.jpg?v=2" alt="" width="40" height="40"><span><b>Marina</b><small>Matrona</small></span><em>Sugerido</em></label>
-            <label class="pick"><input type="radio" name="to" value="pediatra"><img src="portada/equipo/lucia.jpg?v=3" alt="" width="40" height="40"><span><b>Lucía</b><small>Pediatra</small></span><em>Sugerido</em></label>
-          </fieldset>
           <p class="hint" id="ask-hint" aria-live="polite"></p>
           <p class="urgent" id="ask-urgent" hidden>Si es algo urgente (sangrado abundante, pérdida de líquido, el bebé no se mueve, dolor muy fuerte), no esperes: llama al 112 o ve a urgencias.</p>
           <div class="files" id="ask-files" hidden>
@@ -898,7 +911,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
   if (PRIO) {
     hit('ab_visita:prio');
     const a = document.getElementById('annc-t'); if (a) a.innerHTML = 'Consulta prioritaria en menos de 6 h · <u>Pregunta</u>';
-    const lead = document.querySelector('.hero .lead'); if (lead) lead.textContent = 'Elige a quién se lo cuentas. Te responde por escrito, a ti, en menos de 6 h. 29 € la consulta.';
+    const lead = document.querySelector('.hero .lead'); if (lead) lead.textContent = 'Cuéntalo como en la consulta. Te responde por escrito tu ginecólogo, matrona o pediatra, en menos de 6 h. 29 € la consulta.';
     $('ask-prem').hidden = false; $('ask-steps').hidden = false;
     $('ask-send-t').textContent = 'Empezar mi consulta · 29 €'; $('ask-send-s').textContent = 'No se cobra nada hasta que lo confirmes';
     const pk = document.querySelector('.perks li'); if (pk) pk.lastChild.textContent = 'Pago seguro';
@@ -961,7 +974,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     if (FREE) {
       // Portada nueva (23 nov): la entradilla y la línea de abajo de las tarjetas dicen lo gratis (enlaces de amigas, profesionales y grupo de Maite)
       const ld = document.querySelector('.hero .lead');
-      if (ld && /9 € la consulta\.$/.test(ld.textContent)) ld.textContent = FRIEND ? `Elige a quién se lo cuentas. Te responde por escrito, a ti, en menos de 24 h. Con la invitación de ${FRIEND}, tus 5 primeras consultas son gratis.` : 'Elige a quién se lo cuentas. Te responde por escrito, a ti, en menos de 24 h. Tus 2 primeras consultas son gratis: una con cada profesional.';
+      if (ld && /9 € la consulta\.$/.test(ld.textContent)) ld.textContent = FRIEND ? `Cuéntalo como en la consulta. Te responde por escrito tu ginecólogo, matrona o pediatra, en menos de 24 h. Con la invitación de ${FRIEND}, tus 5 primeras consultas son gratis.` : 'Cuéntalo como en la consulta. Te responde por escrito tu ginecólogo, matrona o pediatra, en menos de 24 h. Tus 2 primeras consultas son gratis: una con cada profesional.';
       const pf = document.querySelector('.pf-fine'); if (pf) pf.textContent = 'Solo la lee tu profesional · Sin tarjeta para las gratis';
       $('rt-p-t').textContent = '2. Sin pagar'; $('rt-p').textContent = FRIEND ? 'las 5 primeras, gratis' : 'las 2 primeras, gratis';
       const bp = $('brief-price'); if (bp) bp.textContent = FRIEND ? '5 consultas gratis · después, 9 € la consulta' : '2 consultas gratis · después, 9 € la consulta';
@@ -990,7 +1003,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
 
   const box = $('ask'), form = $('ask-form'), ta = $('duda'), more = $('ask-more'), send = $('ask-send'), err = $('ask-err'), done = $('ask-done'), email = $('ask-email');
   const radios = [...form.querySelectorAll('input[name=to]')];
-  let manual = false, opened = false, busy = false, lastEmail = '', pickOpen = false;
+  let manual = false, opened = false, busy = false, lastEmail = '', pickOpen = false, picked = false;
   let chat = null; // consulta en formato chat (abajo); null = caja clásica
   email.value = store.get('hera-ask-email');
 
@@ -1013,8 +1026,11 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     if (opened && !busy && (BF || PRIO || PAGO) && to) $('ask-send-s').textContent = 'No se cobra nada hasta que lo confirmes';
     // «Tu consulta con …» arriba de la caja cuando ya ha elegido profesional (23 nov)
     const FULL = { gineco: ['Dr. Gonzalo Nozaleda', 'Ginecólogo · Hospital Gregorio Marañón'], matrona: ['Marina Fernández', 'Matrona · Clínica Universidad de Navarra'], pediatra: ['Dra. Lucía Carrascón', 'Pediatra · Hospital Gregorio Marañón'] };
+    // Quién la leerá (23 nov): las tres fotos; la elegida o sugerida se ilumina y las otras se apagan
+    const pk = form.querySelector('.picks');
+    if (pk) { pk.classList.toggle('hasto', !!to); $('ask-lee').hidden = !to; if (to && FULL[to]) { $('ask-lee-n').textContent = `La leerá ${FULL[to][0]}`; $('ask-lee-r').textContent = `${FULL[to][1]} · Toca otra foto si prefieres a otra persona`; } }
     const ch = $('ask-chosen');
-    if (ch) { const on = !!(to && manual && FULL[to]); ch.hidden = !on; box.classList.toggle('haschosen', on); if (on) { $('ask-chosen-img').src = `portada/equipo/${PROS[to].img}.jpg?v=3`; $('ask-chosen-n').textContent = FULL[to][0]; $('ask-chosen-r').textContent = FULL[to][1]; } }
+    if (ch) { const on = !!(to && manual && !picked && FULL[to]); ch.hidden = !on; box.classList.toggle('haschosen', on); if (on) { $('ask-chosen-img').src = `portada/equipo/${PROS[to].img}.jpg?v=3`; $('ask-chosen-n').textContent = FULL[to][0]; $('ask-chosen-r').textContent = FULL[to][1]; } }
     // En los 30 min siguientes a enviar, a la misma profesional se añade a su consulta (worker.js, ADD_WINDOW)
     const lastSent = (() => { try { const x = JSON.parse(store.get('hera-last-sent') || 'null'); return x && Date.now() - x.at < 29 * 60000 ? x : null; } catch { return null; } })();
     if (opened && !busy && to && lastSent?.to === to) { $('ask-send-t').textContent = `Añadir a tu consulta a ${PROS[to].name}`; $('ask-send-s').textContent = 'No gastas otra consulta'; }
@@ -1149,16 +1165,13 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
   if ('IntersectionObserver' in window) {
     new IntersectionObserver(([e]) => document.body.classList.toggle('past-ask', !e.isIntersecting && e.boundingClientRect.top < 0)).observe(box);
   } else document.body.classList.add('past-ask');
-  radios.forEach((r) => r.addEventListener('change', () => { manual = true; refresh(); }));
+  radios.forEach((r) => r.addEventListener('change', () => { manual = true; picked = true; refresh(); }));
   document.querySelectorAll('[data-ex]').forEach((b) => b.addEventListener('click', () => { ta.value = b.dataset.ex; open(); refresh(); ta.focus(); }));
   document.querySelectorAll('[data-goask], [data-to]').forEach((a) => a.addEventListener('click', (ev) => { ev.preventDefault(); goAsk(a.dataset.to); }));
   // Elegir profesional primero (Noza, 23 nov): la caja se ve al elegir (o con «no sé a quién»). Con un acceso directo
   // (#preguntar-…, vuelta del pago, resumen de /menopausia/, anuncio de una profesional, botón de arriba) se abre como siempre.
-  document.querySelectorAll('[data-pick]').forEach((b) => b.addEventListener('click', () => { hit(`clic:elige_${b.dataset.pick}`); goAsk(b.dataset.pick); }));
-  $('pick-dk').addEventListener('click', () => { hit('clic:elige_no_se'); goAsk(); });
-  $('ask-chosen-b').addEventListener('click', () => $('ask-topro-b').click());
-  $('ask-topro-b')?.addEventListener('click', (ev) => { if (!document.body.classList.contains('pf-on') && !ta.value.trim()) { ev.stopImmediatePropagation(); radios.forEach((r) => { r.checked = false; }); manual = false; refresh(); document.body.classList.add('pf-on'); $('pick1').scrollIntoView({ block: 'center' }); } }, true);
-  if (!manual && !fromHash && !prefill && !ta.value.trim() && !new URLSearchParams(location.search).get('pago') && !chat) document.body.classList.add('pf-on');
+  // Desde el 23 nov (noche) ya no se elige antes de escribir: la caja está a la vista y, al escribir, se sugiere quién la leerá
+  $('ask-chosen-b').addEventListener('click', () => { open(); $('ask-topro-b').click(); });
   document.querySelectorAll('[data-cta]').forEach((a) => a.addEventListener('click', () => hit(a.dataset.cta)));
 
   // Enviar sin correo: «Ya casi está», duda y profesional recogidas, correo en rojo y botón inactivo hasta que esté bien escrito

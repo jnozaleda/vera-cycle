@@ -69,6 +69,8 @@ export const EVENTS = {
   consultas_pagina: ['Vio la página de consultas y planes', false],
   enviada_consultas: ['Envió una consulta desde la página de consultas', false],
   consulta_guardada: ['Envió la consulta y aún no ha pagado, para', false],
+  valorada: ['La profesional valoró una consulta (aún sin pagar):', false],
+  valorada_pagada: ['Pagó la respuesta completa tras la valoración de', true],
   consulta_anadida: ['Añadió algo a su consulta (dentro de los 30 min) para', false],
   gratuitas_agotadas: ['Intentó consultar con las gratuitas agotadas', true],
   anuncio_visita: ['Llegó desde un anuncio', false],

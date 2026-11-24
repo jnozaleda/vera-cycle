@@ -88,7 +88,7 @@ export async function waCode(sessionId) {
 }
 
 /** Crea la sesión de pago y devuelve su URL */
-export async function createCheckout(env, { email, plan, h, origin, back, ad, pro, camp, hold, country, p: who }) {
+export async function createCheckout(env, { email, plan, h, origin, back, ad, pro, camp, hold, val, country, p: who }) {
   const p = PLANS[plan];
   // Vuelve al mismo sitio desde el que se pagó (la web real, o localhost en pruebas)
   // back = 'web': desde la portada, vuelve a la portada (?web=1 evita que salte a la app instalada)
@@ -115,6 +115,7 @@ export async function createCheckout(env, { email, plan, h, origin, back, ad, pr
     ...(pro ? { 'metadata[pro]': pro } : {}),
     ...(ad && camp ? { 'metadata[camp]': camp } : {}),
     ...(hold ? { 'metadata[hold]': hold } : {}),
+    ...(val ? { 'metadata[val]': val } : {}), // consulta valorada por la profesional (escribir gratis, pagar después)
   };
   if (p.mode === 'subscription') { params['subscription_data[metadata][h]'] = h; params['subscription_data[metadata][plan]'] = plan; if (pro) params['subscription_data[metadata][pro]'] = pro; }
   const s = await api(env, 'POST', 'checkout/sessions', params);
@@ -189,6 +190,7 @@ export async function sessionStatus(env, cs, hooks) {
   if (PLANS[g.plan].video) { out.video = true; out.pro = s.metadata?.pro || ''; }
   if (PLANS[g.plan].wa) { out.wa = true; out.code = await waCode(s.id); }
   if (s.metadata?.hold) { out.held = true; out.pro = s.metadata?.pro || ''; }
+  if (s.metadata?.val) { out.val = true; out.pro = s.metadata?.pro || ''; }
   if (PLANS[g.plan].mode === 'subscription') { out.unlimited = true; if (env.STRIPE_PORTAL_URL) out.portal = env.STRIPE_PORTAL_URL; }
   if (PLANS[g.plan].acomp) { out.acomp = true; out.pro = s.metadata?.pro || ''; }
   return out;

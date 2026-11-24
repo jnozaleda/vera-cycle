@@ -132,7 +132,7 @@ document.querySelectorAll('[data-hit]').forEach((a)=>a.addEventListener('click',
 let latam=false;try{if(/_latam$/.test((new URLSearchParams(location.search).get('utm_campaign')||'').toLowerCase()))sessionStorage.setItem('hera-latam','1');latam=sessionStorage.getItem('hera-latam')==='1'}catch(e){}
 if(latam){const u=$('m-urg');if(u)u.textContent='Si es urgente, llama al número de emergencias de tu país (911 en México, 107 en Argentina, 131 en Chile, 123 en Colombia) o ve a urgencias.';const t=$('m-t51');if(t)t.innerHTML='<b>40–45</b><span>Cuando suelen empezar los cambios</span>'}
 // Precio de la consulta por escrito: 5 € (Noza, 24 nov; antes 9 € o 29 € en la prueba)
-{const p=$('m-price');if(p)p.textContent='5 €'}
+{const p=$('m-price');if(p)p.textContent='Gratis'}
 update();
 })()</script>`;
 
@@ -168,7 +168,7 @@ const body = `${CSS}<div class="w">
       <div class="m-lvl" id="m-lvl">Contesta las ${TOTAL} preguntas para ver cuánto te afectan.</div>
       <div class="m-offer" id="m-offer" hidden>
         <div class="m-ofw">${face(g)}<span><b>${g.name} puede revisar tu resultado</b> y decirte qué opciones tienes. Te responde por escrito <span id="m-when">en menos de 24 h</span>.</span></div>
-        <a class="m-btn p" id="m-send" href="/#preguntar-gineco" aria-disabled="true" style="text-align:center">Enviar mi resultado a ${g.name} <span style="white-space:nowrap">· <span id="m-send-p">5 €</span></span></a>
+        <a class="m-btn p" id="m-send" href="/#preguntar-gineco" aria-disabled="true" style="text-align:center">Enviar mi resultado a ${g.name} <span style="white-space:nowrap">· <span id="m-send-p">gratis</span></span></a>
         <p class="m-note">Primero lo revisas en la caja de consulta; no se cobra nada hasta que lo confirmas. Si no te sirve, te devolvemos el dinero.</p>
         <form class="m-mail" id="m-mail" novalidate>
           <p class="m-mail-t"><b>¿Prefieres pensarlo?</b> Te mandamos tu resultado por correo.</p>
@@ -198,7 +198,7 @@ const body = `${CSS}<div class="w">
   <div class="lnk" style="margin-top:16px"><a href="/guias/sintomas-menopausia/">Síntomas de la menopausia →</a><a href="/guias/sangrado-despues-de-la-menopausia/">Sangrado después de la menopausia →</a><a href="/guias/sangrado-entre-reglas/">Sangrado entre reglas →</a></div></section>
 
 <div class="m-final" id="consulta"><div><h2>Habla con ${g.name}</h2><p>Cuéntale lo que te pasa, con tu resultado si quieres. Te responde él, por escrito o cara a cara.</p></div>
-  <div class="m-opts"><a class="m-opt" href="/#preguntar-gineco" data-hit="clic_escrito"><div><b>Consulta por escrito</b><span>Te responde en menos de 24 h</span></div><em id="m-price">5 €</em></a>
+  <div class="m-opts"><a class="m-opt" href="/#preguntar-gineco" data-hit="clic_escrito"><div><b>Consulta por escrito</b><span>Enviarla es gratis; te dice el precio (normalmente 5 €)</span></div><em id="m-price">Gratis</em></a>
   <a class="m-opt" href="/videollamada/#reservar-gineco" data-hit="clic_videollamada"><div><b>Videollamada de 30 min</b><span>Para hablarlo con calma</span></div><em>55 €</em></a></div></div>
 <p class="urg" style="margin-bottom:30px"><b id="m-urg">Si es urgente, llama al 112 o ve a urgencias.</b> Esta información es general y no sustituye la valoración de un profesional.</p>
 </div>${JS}`;

@@ -1208,7 +1208,8 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     return v;
   })();
   const BF = AB === 'bf';
-  const PAGO = AB === 'pago'; // sin gratis y pasado Black Friday: 9 € la consulta suelta
+  const PAGO = AB === 'pago'; // sin gratis: escribir gratis y pagar 5 € tras la valoración de la profesional (24 nov)
+  const VAL_SUB = 'Te dirá qué necesita y el precio, normalmente 5 €. Solo pagas si quieres la respuesta.';
   // Consulta prioritaria (Noza, 21 nov): quien llega por la campaña «prioritaria» ve la consulta a 29 € (sin gratis, respuesta en 6 h)
   const PRIO = adSrc().camp === 'prioritaria' || AB === 'prio';
   // Cifras reales (servicio /cifras: 30 días): «79 de 84 respondidas este mes» y horas de media
@@ -1270,25 +1271,29 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     document.querySelectorAll('p.sub').forEach((x) => { x.textContent = x.textContent.replace('Tus dos primeras consultas, gratis.', 'Black Friday: cada consulta a 1 €.'); });
   }
   if (PAGO) {
-    const a = document.getElementById('annc-t'); if (a) a.innerHTML = 'Consulta por escrito: 5 € · <u>Pregunta ahora</u>';
+    const a = document.getElementById('annc-t'); if (a) a.innerHTML = 'Envía tu duda gratis · <u>Pregunta ahora</u>';
     const pk = document.querySelector('.perks li'); if (pk) pk.lastChild.textContent = 'Pago seguro';
-    $('ask-send-t').textContent = 'Empezar mi consulta · 5 €'; $('ask-send-s').textContent = 'No se cobra nada hasta que lo confirmes';
+    // Escribir gratis, pagar después (Noza, 24 nov): enviar es gratis; la profesional dice qué necesita y el precio
+    $('ask-send-t').textContent = 'Enviar mi duda gratis'; $('ask-send-s').textContent = VAL_SUB;
+    { const ld = document.querySelector('.hero .lead'); if (ld) ld.textContent = 'Cuéntalo como en la consulta. Tu ginecólogo, matrona o pediatra lo lee y te dice en menos de 24 h qué necesita y el precio, normalmente 5 €. Enviarlo es gratis.'; }
+    $('rt-p-t').textContent = '2. Te valora'; $('rt-p').textContent = 'gratis, en 24 h'; $('rt-h').textContent = 'si pagas 5 €';
+    { const cp = $('cx-price'); if (cp) cp.textContent = 'Gratis'; const bp = $('brief-price'); if (bp) bp.textContent = 'Enviar tu duda es gratis · Respuesta completa, 5 €'; }
     $('ask-steps').hidden = false;
     const to0 = $('top-open'); if (to0) { to0.textContent = 'Preguntar'; to0.href = '#ask'; to0.dataset.goask = ''; to0.dataset.cta = 'clic:top_preguntar_pago'; }
     const pr = document.getElementById('precio');
     if (pr?.querySelector('h2')) {
       pr.querySelector('h2').textContent = 'Precio';
-      pr.querySelector('.sub').textContent = 'El contenido de cada semana es gratis siempre. Cada consulta por escrito cuesta 5 €.';
+      pr.querySelector('.sub').textContent = 'El contenido de cada semana es gratis siempre. Enviar tu duda también: la profesional te dice qué necesita y el precio, normalmente 5 €, y solo pagas si quieres la respuesta completa.';
     }
-    document.querySelectorAll('#faq-precio').forEach((x) => { { x.textContent = '¿Cuánto cuesta una consulta?'; const p2 = x.nextElementSibling; if (p2) p2.textContent = '5 € la consulta suelta o 99 € al mes el acompañamiento (respuesta en menos de 6 h, videollamada y WhatsApp). Si no quedas satisfecha, te devolvemos el dinero. Pagas con tarjeta, Apple Pay o Google Pay, y no se cobra nada hasta que lo confirmas.'; } });
+    document.querySelectorAll('#faq-precio').forEach((x) => { { x.textContent = '¿Cuánto cuesta una consulta?'; const p2 = x.nextElementSibling; if (p2) p2.textContent = 'Enviar tu duda es gratis. La profesional la lee y te dice en menos de 24 h qué necesita y el precio de la respuesta completa, normalmente 5 €. Solo pagas si la quieres, con tarjeta, Apple Pay o Google Pay. También está el acompañamiento mensual por 99 € (respuesta en menos de 6 h, videollamada y WhatsApp). Si no quedas satisfecha, te devolvemos el dinero.'; } });
     document.querySelectorAll('a.btn[data-goask]').forEach((x) => { x.textContent = x.textContent.replace(/ gratis$/, ''); });
-    document.querySelectorAll('p.sub').forEach((x) => { x.textContent = x.textContent.replace('Tus dos primeras consultas, gratis.', 'Cada consulta, 5 €.'); });
+    document.querySelectorAll('p.sub').forEach((x) => { x.textContent = x.textContent.replace('Tus dos primeras consultas, gratis.', 'Enviar tu duda es gratis.'); });
   }
   // El texto base no dice precio ni «gratis» (Noza, 22 nov: que no se vea «gratis» ni un instante): aquí se pone según la versión
   {
     const FREE = !BF && !PAGO && !PRIO;
     const fs = document.querySelector('.final .sub');
-    if (fs) fs.textContent += FREE ? ' Tus dos primeras consultas, gratis.' : BF ? ' Black Friday: cada consulta a 1 €.' : PAGO ? ' Cada consulta, 5 €.' : ' Consulta prioritaria: respuesta en menos de 6 h.';
+    if (fs) fs.textContent += FREE ? ' Tus dos primeras consultas, gratis.' : BF ? ' Black Friday: cada consulta a 1 €.' : PAGO ? ' Enviar tu duda es gratis.' : ' Consulta prioritaria: respuesta en menos de 6 h.';
     if (FREE) {
       // Portada nueva (23 nov): la entradilla y la línea de abajo de las tarjetas dicen lo gratis (enlaces de amigas, profesionales y grupo de Maite)
       const ld = document.querySelector('.hero .lead');
@@ -1341,7 +1346,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     $('ask-topro').hidden = !to;
     box.classList.toggle('pickpro', pickOpen || !to);
     // A quién va, también en las versiones de pago (Noza, 21 nov: alguna consulta se envió a la profesional equivocada)
-    if (opened && !busy && (BF || PRIO || PAGO) && to) $('ask-send-s').textContent = 'No se cobra nada hasta que lo confirmes';
+    if (opened && !busy && (BF || PRIO || PAGO) && to) $('ask-send-s').textContent = PAGO ? VAL_SUB : 'No se cobra nada hasta que lo confirmes';
     // «Tu consulta con …» arriba de la caja cuando ya ha elegido profesional (23 nov)
     const FULL = { gineco: ['Dr. Gonzalo Nozaleda', 'Ginecólogo · Hospital Gregorio Marañón'], matrona: ['Marina Fernández', 'Matrona · Clínica Universidad de Navarra'], pediatra: ['Dra. Lucía Carrascón', 'Pediatra · Hospital Gregorio Marañón'] };
     // Quién la leerá (23 nov): las tres fotos; la elegida o sugerida se ilumina y las otras se apagan
@@ -1353,7 +1358,8 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     const lastSent = (() => { try { const x = JSON.parse(store.get('hera-last-sent') || 'null'); return x && Date.now() - x.at < 29 * 60000 ? x : null; } catch { return null; } })();
     if (opened && !busy && to && lastSent?.to === to) { $('ask-send-t').textContent = `Añadir a tu consulta a ${PROS[to].name}`; $('ask-send-s').textContent = 'No gastas otra consulta'; }
     // El botón dice lo que pasa (23 nov): «Empezar mi consulta» abre el formulario; ya abierto, «Ir al pago»
-    else if (opened && !busy && (BF || PRIO || PAGO)) $('ask-send-t').textContent = `Ir al pago · ${PRIO ? '29' : BF ? '1' : '5'} €`;
+    else if (opened && !busy && PAGO) $('ask-send-t').textContent = `Enviar mi duda gratis${to ? ` a ${PROS[to].name}` : ''}`;
+    else if (opened && !busy && (BF || PRIO)) $('ask-send-t').textContent = `Ir al pago · ${PRIO ? '29' : '1'} €`;
     else if (opened && !busy && !BF && !PRIO && !PAGO) $('ask-send-t').textContent = `Enviar${store.get('hera-free-left') === '0' || (to && !['q7m', 'k2v'].includes(viaSrc().via) && (store.get('hera-free-pros') || '').split(',').includes(to)) ? '' : ' gratis'}${to ? ` a ${PROS[to].name}` : ''}`;
     if (opened && !busy && !BF && !PRIO && !PAGO && !(to && lastSent?.to === to)) $('ask-send-s').textContent = `Te ${to ? 'responde' : 'responden'} por correo en menos de 24\u00a0h`;
     chat?.sync();
@@ -1375,7 +1381,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
   let files = [];
   // 23 nov: en las versiones de pago la consulta se guarda hasta que se paga y los archivos no se guardan (se perdían).
   // Se quita el botón y se dice cómo mandarlos: respondiendo al correo de la profesional.
-  if ((BF || PRIO || PAGO) && !isBeta()) { const n = $('ask-file-note'); $('ask-files').hidden = false; $('ask-files').classList.add('nofiles'); if (n) n.textContent = '¿Fotos o informes? Podrás mandárselos respondiendo al correo de la profesional.'; }
+  if ((BF || PRIO) && !isBeta()) { const n = $('ask-file-note'); $('ask-files').hidden = false; $('ask-files').classList.add('nofiles'); if (n) n.textContent = '¿Fotos o informes? Podrás mandárselos respondiendo al correo de la profesional.'; }
   else if (CONSULT_ATTACH || isBeta()) {
     $('ask-files').hidden = false;
     $('ask-file-note').textContent = 'Hasta 3 archivos (10 MB). Que no salga tu cara, tu nombre ni tu DNI.';
@@ -1436,6 +1442,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
         fetch(`${API}/checkout/status?cs=${encodeURIComponent(qs.get('cs') || '')}`).then((r) => r.json()).then((j) => {
           if (!j.paid) throw new Error();
           hit(`pago_hecho:${j.plan}`);
+          if (j.val) { ta.value = ''; refresh(); say(`<b>Pago hecho.</b> ${esc(PROS[j.pro]?.name || 'La profesional')} ya puede responderte entera: te llegará por correo en menos de 24 h, en la misma conversación.`); return; }
           if (j.held) { ta.value = ''; refresh(); say(`<b>Pago hecho. Tu consulta ya ha llegado a ${esc(PROS[j.pro]?.name || PROS[d?.to]?.name || 'la profesional')}.</b> Te responderá por correo en menos de 24 h. ${j.acomp ? 'Ya tienes el acompañamiento mensual: mira tu correo para reservar la videollamada.' : j.unlimited ? 'Tienes el plan ilimitado: una consulta nueva al día.' : j.credits ? `Te ${j.credits === 1 ? 'queda 1 consulta pagada' : `quedan ${j.credits} consultas pagadas`}.` : ''}`); return; }
           say(`<b>Pago hecho.</b> ${j.acomp ? 'Ya tienes el acompañamiento mensual: te responden en menos de 6 h. Mira tu correo para reservar la videollamada del mes.' : j.unlimited ? 'Tienes el plan ilimitado: una consulta nueva al día.' : `Tienes ${j.credits === 1 ? '1 consulta pagada' : `${j.credits} consultas pagadas`}.`} ${ta.value.trim() ? 'Tu pregunta está aquí: revísala y envíala.' : 'Escribe tu pregunta y envíala.'}${j.portal ? ` <a href="${esc(j.portal)}" target="_blank" rel="noopener">Gestionar suscripción</a>` : ''}`);
         }).catch(() => say(`No hemos podido confirmar el pago todavía. Si te han cobrado, envía la consulta en unos minutos o escríbenos a contacto@hera-gine.com.`));
@@ -1466,7 +1473,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
       // 23 nov: cada versión dice su precio y su plazo (antes la de 29 € decía «2 gratis» y «24 h»)
       if (lead) lead.textContent = PRIO ? page[1].replace('en menos de 24 h', 'en menos de 6 h').replace('Tus 2 primeras consultas, gratis.', 'Consulta prioritaria, 29 €.')
         : BF ? page[1].replace('Tus 2 primeras consultas, gratis.', 'Black Friday: cada consulta a 1 €.')
-        : PAGO ? page[1].replace('Tus 2 primeras consultas, gratis.', 'Cada consulta, 5 €.')
+        : PAGO ? page[1].replace('te responde por escrito en menos de 24 h', 'te dice en menos de 24 h qué necesita y el precio, normalmente 5 €').replace('Tus 2 primeras consultas, gratis.', 'Enviar tu duda es gratis.')
         : FRIEND ? page[1].replace('Tus 2 primeras consultas, gratis.', `Con la invitación de ${FRIEND}, tus 5 primeras consultas son gratis.`)
         : page[1].replace('Tus 2 primeras consultas, gratis.', 'Tus 2 primeras consultas son gratis: una con cada profesional.');
       const who = document.querySelector('#ask-form .who');
@@ -1560,7 +1567,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     lastEmail = email.value.trim(); store.set('hera-ask-email', lastEmail);
     try {
       const res = await fetch(`${API}/ask`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: lastEmail, to, text, context: '', situation: '', website: $('ask-hp').value, p: ptag, attachments: filesPayload(files), follow: $('ask-follow').checked, ...(isTeam() ? { team: true } : {}), ...adSrc(), ...abSrc(), ...refSrc(), ...viaSrc() }) });
+        body: JSON.stringify({ email: lastEmail, to, text, context: '', situation: '', website: $('ask-hp').value, p: ptag, attachments: filesPayload(files), follow: $('ask-follow').checked, ...(isTeam() ? { team: true } : {}), ...adSrc(), ...abSrc(), ...refSrc(), ...viaSrc(), ...(PAGO ? { val: true } : {}) }) });
       const j = await res.json().catch(() => ({}));
       if (res.status === 429) throw new Error('Has enviado varias consultas seguidas. Espera unos minutos y vuelve a intentarlo.');
       if (j.error === 'bad_email') throw new Error('Revisa tu correo: parece que no es válido.');
@@ -1642,6 +1649,18 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
       <p>${p.name} lo recibe en la misma conversación, junto a lo que ya le habías escrito. No gastas otra consulta.</p>
       <button type="button" class="linkbtn" data-again>Añadir algo más</button>`);
       done.querySelector('[data-again]').addEventListener('click', () => { ta.value = ''; done.hidden = true; form.hidden = false; refresh(); ta.focus(); });
+      return;
+    }
+    if (j.val) {
+      swap(`<img src="portada/equipo/${p.img}.jpg?v=3" alt="" width="64" height="64">
+      <h3>${p.name} ya tiene tu consulta</h3>
+      <p>La leerá y te escribirá a <b>${esc(lastEmail)}</b> en menos de 24 h para decirte si puede ayudarte, qué necesita saber y cuánto cuesta la respuesta completa (normalmente 5 €). Si no te convence, no pagas nada. Te hemos mandado una copia.</p>
+      <p class="forgot" style="background:#F6E0E2;border-radius:10px;padding:10px 12px;font-size:14.5px;line-height:1.45">¿Se te ha olvidado algo? <button type="button" class="linkbtn" data-add style="display:inline;padding:0;font:inherit;text-decoration:underline">Escríbelo aquí</button> en los próximos 30 minutos, o responde al correo que te hemos mandado.</p>
+      <p class="small">Mira también en promociones o spam. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.</p>
+      ${guideCard(to)}
+      <button type="button" class="linkbtn" data-again style="font-size:13px;opacity:.8">Hacer una pregunta nueva</button>`);
+      done.querySelector('[data-again]').addEventListener('click', () => { ta.value = ''; manual = false; done.hidden = true; form.hidden = false; refresh(); ta.focus(); });
+      done.querySelector('[data-add]')?.addEventListener('click', () => { hit('clic:anadir_consulta'); ta.value = ''; manual = true; radios.forEach((r) => { r.checked = r.value === to; }); done.hidden = true; form.hidden = false; refresh(); ta.focus(); });
       return;
     }
     swap(`<img src="portada/equipo/${p.img}.jpg?v=3" alt="" width="64" height="64">

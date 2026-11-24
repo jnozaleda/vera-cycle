@@ -101,8 +101,8 @@ const reassignText = (links) => (links?.length ? `\n\n¿No es de tu área? ${lin
 export function proEmail(pro, q, id = '', relay = true, links = []) {
   // Prioritaria: plazo de 6 h, con la hora límite (Madrid) en el asunto
   const due = q.prio ? new Date(Date.now() + 6 * 3600000).toLocaleTimeString('es-ES', { timeZone: 'Europe/Madrid', hour: '2-digit', minute: '2-digit' }) : '';
-  const subject = `${q.prio ? `PRIORITARIA · responder antes de las ${due} · ` : ''}Consulta Hera${id ? ` #${id.toUpperCase()}` : ''}${q.context ? ` · ${q.context}` : ''}${q.via ? ` · vía ${q.via}` : ''}`;
-  const html = shell(`<p>Nueva consulta para <b>${esc(pro.name)}</b>.${q.via ? ` Llegó desde ${esc(q.via)}.` : ''}</p>${q.prio ? `<p style="background:#FFF6D6;border-radius:8px;padding:8px 12px;font-size:14px"><b>${q.acomp ? 'Acompañamiento mensual' : 'Consulta prioritaria (29 €)'}: responde antes de las ${due}</b> (plazo de 6 h). Si te adjunta analíticas o informes, revísalos y dile qué pruebas pedir y cuándo ir a consulta.</p>` : ''}
+  const subject = `${q.prio ? `PRIORITARIA · responder antes de las ${due} · ` : ''}${q.val ? 'POR VALORAR · ' : ''}Consulta Hera${id ? ` #${id.toUpperCase()}` : ''}${q.context ? ` · ${q.context}` : ''}${q.via ? ` · vía ${q.via}` : ''}`;
+  const html = shell(`<p>Nueva consulta para <b>${esc(pro.name)}</b>.${q.via ? ` Llegó desde ${esc(q.via)}.` : ''}</p>${q.val ? valProHtml(q.val) : ''}${q.prio ? `<p style="background:#FFF6D6;border-radius:8px;padding:8px 12px;font-size:14px"><b>${q.acomp ? 'Acompañamiento mensual' : 'Consulta prioritaria (29 €)'}: responde antes de las ${due}</b> (plazo de 6 h). Si te adjunta analíticas o informes, revísalos y dile qué pruebas pedir y cuándo ir a consulta.</p>` : ''}
 <div style="background:#F6E0E2;border-radius:10px;padding:14px;margin:12px 0">${nl2br(q.text)}</div>
 ${q.context ? `<p style="font-size:13px;color:#6E6C67">Sobre: ${esc(q.context)}</p>` : ''}
 ${q.situation ? `<p style="font-size:13px;color:#6E6C67">Situación: ${nl2br(q.situation)}</p>` : ''}
@@ -110,7 +110,7 @@ ${q.files ? `<p style="font-size:13px;color:#6E6C67">Incluye ${q.files} ${q.file
 ${relay ? `<p style="font-size:13px;color:#6E6C67"><b>Para contestar, responde a este correo</b> desde el móvil o el ordenador. Tu respuesta le llegará a la usuaria desde ${esc(pro.email)}: tu correo personal no se muestra. Si ella vuelve a escribir, te llegará en esta misma conversación. Plazo comprometido: 24 h.</p>`
     : `<p style="font-size:13px;color:#6E6C67">Responde a este correo para contestar directamente a la usuaria (${esc(q.email)}). Plazo comprometido: 24 h.</p>`}${reassignHtml(links)}`);
   const text0 = `${q.prio ? `${q.acomp ? 'ACOMPAÑAMIENTO MENSUAL' : 'CONSULTA PRIORITARIA (29 €)'}: responde antes de las ${due} (plazo de 6 h).\n\n` : ''}Nueva consulta para ${pro.name}\n\n${q.text}\n\n${q.context ? `Sobre: ${q.context}\n` : ''}${q.situation ? `Situación: ${q.situation}\n` : ''}\n${relay ? `Para contestar, responde a este correo: tu respuesta le llegará a la usuaria desde ${pro.email}, sin mostrar tu correo personal. Plazo: 24 h.` : `Responde a este correo para contestar a la usuaria (${q.email}).`}`;
-  const text = text0 + reassignText(links);
+  const text = (q.val ? `${valProText(q.val)}\n\n` : '') + text0 + reassignText(links);
   return { subject, html, text };
 }
 
@@ -119,13 +119,13 @@ export function confirmEmail(pro, q, remaining, id = '', unlimited = false, left
   const left = leftText || (unlimited ? 'Tienes consultas ilimitadas' : remaining === 0 ? 'Era tu última consulta gratuita' : `Te ${remaining === 1 ? 'queda 1 consulta gratuita' : `quedan ${remaining} consultas gratuitas`}`);
   const subject = `Tu consulta a ${pro.short} · Hera${id ? ` #${id.toUpperCase()}` : ''}`;
   const html = shell(`<p>Hola,</p>
-<p>Tu consulta ha llegado a <b>${esc(pro.name)}, ${esc(pro.role)}</b>. Te responderá en esta misma conversación en menos de ${q.prio ? '6' : '24'} h.</p>
+<p>Tu consulta ha llegado a <b>${esc(pro.name)}, ${esc(pro.role)}</b>. ${q.val ? `La leerá y te dirá en menos de 24 h si puede ayudarte, qué necesita saber y cuánto cuesta la respuesta completa (normalmente ${VAL_PRICE}). Si no te convence, no pagas nada.` : `Te responderá en esta misma conversación en menos de ${q.prio ? '6' : '24'} h.`}</p>
 <div style="background:#F6E0E2;border-radius:10px;padding:12px;margin:12px 0;font-size:14px;color:#2F3631">«${esc(excerpt)}»${q.context ? `<br><span style="color:#6E6C67">Sobre: ${esc(q.context)}</span>` : ''}</div>
 <p><span style="display:inline-block;background:#ffffff;color:#45574C;border:1.5px solid #45574C;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600">${left}</span></p>
 <p style="font-size:13px;color:#6E6C67">¿Quieres añadir algo o enviar una foto? Responde a este correo y le llegará a ${esc(pro.short)}.</p>
 <p style="font-size:13px;color:#6E6C67">No es un servicio de urgencias. Si algo no va bien, llama al 112 o acude a tu centro de salud.</p>
 <p style="font-size:12px;color:#8A8A8E">¿No has escrito tú esta consulta? Escríbenos a contacto@hera-gine.com y la borramos.</p>`);
-  const text = `Tu consulta ha llegado a ${pro.name}, ${pro.role}. Te responderá en esta misma conversación en menos de ${q.prio ? '6' : '24'} h.\n\n«${excerpt}»\n\n${left}.\n\n¿Quieres añadir algo o enviar una foto? Responde a este correo y le llegará a ${pro.short}.\n\nNo es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.\n¿No has escrito tú esta consulta? Escríbenos a contacto@hera-gine.com y la borramos.`;
+  const text = `Tu consulta ha llegado a ${pro.name}, ${pro.role}. ${q.val ? `La leerá y te dirá en menos de 24 h si puede ayudarte, qué necesita saber y cuánto cuesta la respuesta completa (normalmente ${VAL_PRICE}). Si no te convence, no pagas nada.` : `Te responderá en esta misma conversación en menos de ${q.prio ? '6' : '24'} h.`}\n\n«${excerpt}»\n\n${left}.\n\n¿Quieres añadir algo o enviar una foto? Responde a este correo y le llegará a ${pro.short}.\n\nNo es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.\n¿No has escrito tú esta consulta? Escríbenos a contacto@hera-gine.com y la borramos.`;
   return { subject, html, text };
 }
 
@@ -241,6 +241,48 @@ export const BF_END = Date.parse('2026-12-01T23:59:59+01:00');
 // Noza, 22 nov: el 1 € deja de ofrecerse hoy (ver BF_OFFER_END_MS para pruebas). Las consultas guardadas antes lo mantienen hasta BF_END
 export const BF_OFFER_END = Date.parse('2026-11-22T20:15:00+01:00');
 const holdSig = async (env, id) => (await hmac(env.HASH_SALT, `hold:${id}`)).slice(0, 16);
+
+// ── Escribir gratis, pagar después (Noza, 24 nov; VALORA="1" y la web manda val: true) ──
+// Sin gratis ni saldo, la consulta llega YA a la profesional «por valorar» (hilo con v: 1), sin pagar. Su primera respuesta
+// (2-3 líneas: si puede ayudar, qué necesita saber y el precio) le llega a la usuaria con «Pagar 5 € y recibir la respuesta»
+// (v: 2). Al pagar (metadata val) se gasta la consulta pagada, v: 3, y se avisa a la profesional de que ya puede responder
+// entera. «Es urgente» (enlace firmado del correo de la profesional): v: 0, sin pago. Recordatorio de pago a las 24 h.
+const VAL_PRICE = '5 €';
+const valSig = async (env, id, what) => (await hmac(env.HASH_SALT, `val:${what}:${id}`)).slice(0, 16);
+export const valLinks = async (env, id) => ({ pay: `${WORKER_URL}/valorar/pagar?c=${id}&s=${await valSig(env, id, 'pagar')}`, urgent: `${WORKER_URL}/valorar/urgente?c=${id}&s=${await valSig(env, id, 'urgente')}` });
+function valProHtml(l) {
+  return `<div style="background:#DCEBE4;border-radius:10px;padding:12px 14px;margin:10px 0;font-size:14px;color:#2F3631"><b>Por valorar: aún no ha pagado.</b> Respóndele en 2 o 3 líneas: si puedes ayudarla, qué necesitas saber y que la respuesta completa cuesta ${VAL_PRICE}. Hera añade debajo el botón de pago. No le des todavía la respuesta: cuando pague, te avisamos en esta conversación.</div>
+<p style="font-size:13.5px;margin:0 0 12px">¿Es urgente? <a href="${l.urgent}" style="color:#9A3B2B;font-weight:600">Marcar como urgente (sin pago)</a> y respóndele que vaya a urgencias. Tu respuesta le llegará sin botón de pago.</p>`;
+}
+function valProText(l) {
+  return `POR VALORAR: aún no ha pagado. Respóndele en 2 o 3 líneas: si puedes ayudarla, qué necesitas saber y que la respuesta completa cuesta ${VAL_PRICE}. Hera añade debajo el botón de pago. No le des todavía la respuesta: cuando pague, te avisamos.\n¿Es urgente? Márcalo aquí (sin pago) y respóndele que vaya a urgencias: ${l.urgent}`;
+}
+/** Botón de pago debajo de la valoración de la profesional */
+export function valPayBlock(pro, link) {
+  return {
+    html: `<div style="margin:18px 0 0;padding:14px;border-radius:12px;background:#F6E0E2"><div style="font-size:14px;color:#2F3631;margin-bottom:10px">La respuesta completa de ${esc(pro.short)}, por escrito y con lo que puedes hacer, cuesta <b>${VAL_PRICE}</b>. Puedes contestar a este correo con lo que te pide antes de pagar.</div><a href="${link}" style="display:inline-block;background:#45574C;color:#ffffff;text-decoration:none;font-weight:600;border-radius:8px;padding:12px 20px">Pagar ${VAL_PRICE} y recibir la respuesta</a><div style="font-size:12.5px;color:#6E6C67;margin-top:8px">Tarjeta, Apple Pay o Google Pay. Si no te sirve, te devolvemos el dinero.</div></div>`,
+    text: `La respuesta completa de ${pro.short} cuesta ${VAL_PRICE}. Puedes contestar a este correo con lo que te pide antes de pagar.\nPagar ${VAL_PRICE} y recibir la respuesta: ${link}`,
+  };
+}
+export function valReminderEmail(pro, link) {
+  const html = shell(`<p>Hola,</p><p>${esc(pro.name)}, ${esc(pro.role)}, leyó ayer tu consulta y te dijo lo que necesitaba para responderte. Si todavía quieres su respuesta completa, está a un paso:</p>
+<p style="margin:16px 0"><a href="${link}" style="display:inline-block;background:#45574C;color:#ffffff;text-decoration:none;font-weight:600;border-radius:8px;padding:12px 20px">Pagar ${VAL_PRICE} y recibir la respuesta</a></p>
+<p style="font-size:13px;color:#6E6C67">Si has tenido algún problema para pagar, responde a este correo y te ayudamos. Si ya no lo necesitas, no tienes que hacer nada.</p>`);
+  return { html, text: `Hola. ${pro.name}, ${pro.role}, leyó ayer tu consulta. Si todavía quieres su respuesta completa: ${link}\n\nSi has tenido algún problema para pagar, responde a este correo.` };
+}
+/** Al pagar una consulta valorada: se gasta la consulta pagada, avisos a la profesional y a la usuaria */
+export async function unlockVal(env, id) {
+  const t = await loadThread(env, id);
+  if (!t || t.v === 3) return;
+  const pro = PROS[t.p]; if (!pro) return;
+  if (t.h) await spendCredit(env, t.h);
+  t.v = 3; t.vp = Date.now();
+  const html = shell(`<p><b>Ha pagado la respuesta completa (${VAL_PRICE}).</b> Ya puedes responderle entera: responde a este correo y le llegará, como siempre. Plazo: 24 h.</p>`);
+  await sendMail(env, { to: pro.email, from: `Consulta #${t.id.toUpperCase()} · Hera <consultas@hera-gine.com>`, replyTo: await relayAddress(env, 'p', t.id), subject: `Re: ${t.sp}`, refs: t.rp, html, text: `Ha pagado la respuesta completa (${VAL_PRICE}). Ya puedes responderle entera: responde a este correo. Plazo: 24 h.` });
+  await saveThread(env, t);
+  await bump(env, 'valorada_pagada');
+  await record(env, { e: `valorada_pagada:${t.p}` }, sendMail);
+}
 
 // ── Resultado del cuestionario de menopausia por correo (Noza, 24 nov; experimento, sin casilla) ──
 // Al completarlo, la usuaria puede pedir su resultado por correo. Se le envía al momento y, a los 2 días, un único
@@ -573,6 +615,7 @@ const handler = {
         }
         if (s.metadata?.src === 'ads') { const ak = /_latam$/.test(String(s.metadata?.camp || '')) ? 'latam' : 'anuncio'; await bump(env, `${ak}_pago:${plan}`); await bump(env, `${ak}_eur`, madridDay(), PLANS[plan].eur); }
         if (/^[a-z0-9]{8}$/.test(String(s.metadata?.hold || ''))) await deliverHold(env, s.metadata.hold, ctx);
+        if (/^[a-z0-9]{8}$/.test(String(s.metadata?.val || ''))) await unlockVal(env, s.metadata.val);
         // Aviso al equipo: sin correo de la usuaria; enlace al pago en el panel de Stripe
         const dash = `https://dashboard.stripe.com/${s.livemode ? '' : 'test/'}${s.payment_intent ? `payments/${s.payment_intent}` : s.subscription ? `subscriptions/${typeof s.subscription === 'string' ? s.subscription : s.subscription.id}` : 'payments'}`;
         const hora = new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid', dateStyle: 'medium', timeStyle: 'short' });
@@ -619,6 +662,28 @@ const handler = {
         }
         return Response.redirect(u, 303);
       } catch (e) { console.log(e.message); return new Response('No se ha podido abrir el pago. Inténtalo en un rato.', { status: 502 }); }
+    }
+    // Escribir gratis, pagar después: «Pagar 5 € y recibir la respuesta» (usuaria) y «Es urgente» (profesional)
+    if (request.method === 'GET' && (url.pathname === '/valorar/pagar' || url.pathname === '/valorar/urgente')) {
+      const id = String(url.searchParams.get('c') || ''); const what = url.pathname.endsWith('pagar') ? 'pagar' : 'urgente';
+      const t = /^[a-z0-9]{8}$/.test(id) && url.searchParams.get('s') === await valSig(env, id, what) ? await loadThread(env, id) : null;
+      const page = (h, p) => new Response(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Hera</title><body style="font:16px/1.5 -apple-system,sans-serif;max-width:32em;margin:40px auto;padding:0 18px;color:#2F3631;background:#FAF9F4"><h1 style="font:400 26px Georgia,serif;color:#45574C">${h}</h1><p>${p}</p><p><a href="https://hera-gine.com/" style="color:#45574C">Volver a Hera</a></p></body>`, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } });
+      if (!t || !PROS[t.p]) return page('Este enlace ya no sirve', 'Puede que la consulta haya caducado. Si necesitas ayuda, escríbenos a contacto@hera-gine.com.');
+      const pro = PROS[t.p];
+      if (what === 'urgente') {
+        if (t.v === 1 || t.v === 2) { t.v = 0; t.vu = Date.now(); await saveThread(env, t); await bump(env, 'valorada_urgente'); }
+        return page('Marcada como urgente', t.v === 3 ? 'Esta consulta ya estaba pagada.' : 'No se le pedirá pago. Responde al correo de la consulta: tu respuesta le llegará sin botón de pago.');
+      }
+      if (t.v === 3) return page('Ya está pagada', `${esc(pro.short)} te responderá por correo en menos de 24 h.`);
+      if (t.v !== 1 && t.v !== 2) return page('No tienes que pagar nada', `${esc(pro.short)} te responde por correo sin coste.`);
+      if (!env.STRIPE_SECRET_KEY) return page('El pago no está disponible', 'Inténtalo en un rato o escríbenos a contacto@hera-gine.com.');
+      try {
+        const who = await personTag(env, request, madridDay());
+        const u = await createCheckout(env, { email: await openEmail(env, t.u), plan: 'suelta', h: t.h, origin: 'https://hera-gine.com', back: 'web', ad: !!t.ad, pro: t.p, val: id, p: who });
+        await bump(env, 'pago_inicio:valorada');
+        await record(env, { e: 'pago_abierto:suelta', p: who, note: 'desde la valoración de la profesional' }, sendMail, ctx);
+        return Response.redirect(u, 303);
+      } catch (e) { console.log(e.message); return page('No se ha podido abrir el pago', 'Inténtalo en un rato o escríbenos a contacto@hera-gine.com.'); }
     }
     // Cuestionario de menopausia: enlaces de los correos (pagar o no recibir más)
     if (request.method === 'GET' && (url.pathname === '/menopausia/pagar' || url.pathname === '/menopausia/baja')) {
@@ -1029,7 +1094,9 @@ const handler = {
       const fp = Array.isArray(rec.fp) ? rec.fp : [];
       const samePro = !test && !friend && rec.n < limit && fp.includes(body.to);
       const others = samePro ? Object.values(PROS).filter((x) => !fp.includes(x.key)).map((x) => x.short).join(' o ') : '';
-      if (!test && !unlimited && (rec.n >= limit || samePro) && credits <= 0) {
+      // Escribir gratis, pagar después: sin gratis ni saldo, va a la profesional «por valorar» en vez de guardarse
+      const valora = !test && !unlimited && env.VALORA === '1' && body.val === true && body.held !== true && env.RELAY === '1' && pay && !bf && !prio && (rec.n >= limit || samePro) && credits <= 0;
+      if (!valora && !test && !unlimited && (rec.n >= limit || samePro) && credits <= 0) {
         if (body.team !== true && !bf && !prio) {
           if (body.src === 'ads') await bump(env, /_latam$/.test(String(body.camp || '')) ? 'latam_limite' : 'anuncio_limite');
           await bump(env, 'gratuitas_agotadas');
@@ -1065,7 +1132,8 @@ const handler = {
       const bcc = test ? undefined : env.COPY_TO || undefined; // COPY_TO (secreto): copia oculta de cada consulta mientras se prueba
       // RELAY="1": respuestas a través de Hera (necesita la regla catch-all → Worker en Email Routing). Las pruebas siempre lo usan.
       const relay = env.RELAY === '1' || !!test;
-      const pm = proEmail(pro, { ...q, via: viaName, prio, acomp }, id, relay, relay && !test ? await reassignLinks(env, id, pro.key) : []);
+      const vl = valora ? await valLinks(env, id) : null;
+      const pm = proEmail(pro, { ...q, via: viaName, prio, acomp, ...(vl ? { val: vl } : {}) }, id, relay, relay && !test ? await reassignLinks(env, id, pro.key) : []);
       // Con adjuntos, la copia de control va aparte y sin los archivos: solo los recibe la profesional
       const proReply = relay ? await relayAddress(env, 'p', id) : q.email;
       const sent = await sendMail(env, { to: pro.email, replyTo: proReply, ...pm, attachments: files });
@@ -1073,24 +1141,25 @@ const handler = {
       // La consulta se guarda ya (antes de contadores y correos): si la usuaria sale de la página y la petición se corta,
       // la respuesta de la profesional igual le llega (B45WUAX3, 18 nov). Al final se vuelve a guardar completa.
       const baseThread = relay ? { id, p: pro.key || body.to, u: await sealEmail(env, q.email), uh: (await hmac(env.HASH_SALT, norm)).slice(0, 24),
-        sp: pm.subject, su: `Tu consulta a ${pro.short} · Hera #${id.toUpperCase()}`, rp: [], ru: [], c: Date.now(), a: 0, rem: false, n: 0, h, ...(body.src === 'ads' ? { ad: 1 } : {}), ...(bf ? { bf: 1 } : {}), ...(prio ? { pr: 1 } : {}), ...(sent.id ? { po: sent.id } : {}), ...(body.follow === true ? { f: 1 } : {}) } : null;
+        sp: pm.subject, su: `Tu consulta a ${pro.short} · Hera #${id.toUpperCase()}`, rp: [], ru: [], c: Date.now(), a: 0, rem: false, n: 0, h, ...(body.src === 'ads' ? { ad: 1 } : {}), ...(bf ? { bf: 1 } : {}), ...(prio ? { pr: 1 } : {}), ...(sent.id ? { po: sent.id } : {}), ...(body.follow === true ? { f: 1 } : {}), ...(valora ? { v: 1 } : {}) } : null;
       if (baseThread) await saveThread(env, baseThread);
       const now = new Date().toISOString();
       // Primero se gastan las gratuitas y después las pagadas
-      const paid = !test && !unlimited && (rec.n >= limit || samePro);
-      const n = test || unlimited || paid ? rec.n : rec.n + 1;
+      const paid = !valora && !test && !unlimited && (rec.n >= limit || samePro);
+      const n = test || unlimited || paid || valora ? rec.n : rec.n + 1;
       let creditsLeft = credits;
       // Cuántas consultas lleva este correo en total (gratis, pagadas e ilimitadas), para el aviso al equipo
       const nth = (rec.all ?? rec.n) + 1;
       const prevAt = rec.last;
       if (!test) {
         if (paid) creditsLeft = await spendCredit(env, h);
-        const fpNext = !unlimited && !paid && !fp.includes(body.to) ? [...fp, body.to] : fp;
+        const fpNext = !unlimited && !paid && !valora && !fp.includes(body.to) ? [...fp, body.to] : fp;
         await env.KV.put(key, JSON.stringify({ n, first: rec.first || now, last: now, all: nth, ...(fpNext.length ? { fp: fpNext } : {}), ...(relay ? { lt: { id, to: body.to, at: Date.now() } } : {}) }));
         if (subscriber) await markDay(env, h, madridDay());
         // Dispositivos del equipo (modo equipo en la app): la consulta se envía igual, pero no cuenta en métricas ni avisos
         if (body.team !== true) {
           await bump(env, `consulta:${body.to}`);
+          if (valora) { await bump(env, 'valora_enviada'); await bump(env, `valora_enviada:${body.to}`); }
           if (body.src === 'ads') { const ak = /_latam$/.test(String(body.camp || '')) ? 'latam' : 'anuncio'; await bump(env, paid ? `${ak}_consulta_pagada` : `${ak}_consulta`); }
           if (unlimited) await bump(env, 'consulta_ilimitada');
           // Si llegó desde un anuncio, el aviso lo dice (y queda en la actividad para el resumen y los recorridos)
@@ -1122,7 +1191,7 @@ const handler = {
         // COPY_EMAIL="1" (temporal, Noza 11 nov): la copia dice el correo de la usuaria, por si hay problemas
         const who = env.COPY_EMAIL === '1' ? `<p style="font-size:13px;color:#6E6C67">Correo de la usuaria: <b>${esc(q.email)}</b></p>` : '';
         const extra = `${who}${q.context ? `<p style="font-size:13px;color:#6E6C67">Sobre: ${esc(q.context)}</p>` : ''}${q.situation ? `<p style="font-size:13px;color:#6E6C67">Situación: ${nl2br(q.situation)}</p>` : ''}`;
-        const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${id.toUpperCase()}${files.length ? ` · ${files.length} ${files.length === 1 ? 'adjunto' : 'adjuntos'}` : ''}${body.src === 'ads' ? (/_latam$/.test(String(body.camp || '')) ? ' · desde anuncio (Latinoamérica)' : ' · desde anuncio') : ''}${via ? ` · desde ${viaName || via}` : ''}${paid ? ' · pagada' : ''}${nth > 1 ? ` · ${nth}.ª consulta` : ''}${prio ? ' · PRIORITARIA 6 h' : ''}${cc ? ` · ${cc}` : ''}${body.team === true ? ' · prueba del equipo' : ''}`,
+        const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${id.toUpperCase()}${valora ? ' · POR VALORAR (sin pagar)' : ''}${files.length ? ` · ${files.length} ${files.length === 1 ? 'adjunto' : 'adjuntos'}` : ''}${body.src === 'ads' ? (/_latam$/.test(String(body.camp || '')) ? ' · desde anuncio (Latinoamérica)' : ' · desde anuncio') : ''}${via ? ` · desde ${viaName || via}` : ''}${paid ? ' · pagada' : ''}${nth > 1 ? ` · ${nth}.ª consulta` : ''}${prio ? ' · PRIORITARIA 6 h' : ''}${cc ? ` · ${cc}` : ''}${body.team === true ? ' · prueba del equipo' : ''}`,
           intro: `Nueva consulta para <b>${esc(pro.name)}</b>${body.src === 'ads' ? ' (llegó desde un anuncio)' : ''}.${nth > 1 ? ` <b>Es su ${nth}.ª consulta</b>${prevAt ? ` (la anterior, el ${new Date(prevAt).toLocaleDateString('es-ES', { timeZone: 'Europe/Madrid', day: 'numeric', month: 'short' })})` : ''}.` : ''}`, body: q.text, extra, nFiles: files.length, withFiles });
         await sendMail(env, { to: bcc, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc, ...(withFiles ? { attachments: files } : {}) });
       }
@@ -1131,7 +1200,7 @@ const handler = {
         ? (creditsLeft === 0 ? 'Era la última consulta de tu saldo' : `Te ${creditsLeft === 1 ? 'queda 1 consulta' : `quedan ${creditsLeft} consultas`} en tu saldo`) : '';
       const usedPros = test ? fp : (!unlimited && !paid && !fp.includes(body.to) ? [...fp, body.to] : fp);
       const nextWith = !friend && remaining > 0 && usedPros.length ? Object.values(PROS).filter((x) => !usedPros.includes(x.key)).map((x) => x.short).join(' o ') : '';
-      const cm = confirmEmail(pro, { ...q, prio }, remaining, id, unlimited, acomp ? 'Tienes el acompañamiento mensual: te responden en menos de 6 h' : subscriber ? 'Tienes el plan ilimitado: una consulta nueva al día' : paidLeft || (nextWith && remaining === 1 ? `Te queda 1 consulta gratuita, con ${nextWith}` : ''));
+      const cm = confirmEmail(pro, { ...q, prio, val: valora }, remaining, id, unlimited, valora ? 'Enviarla ha sido gratis' : acomp ? 'Tienes el acompañamiento mensual: te responden en menos de 6 h' : subscriber ? 'Tienes el plan ilimitado: una consulta nueva al día' : paidLeft || (nextWith && remaining === 1 ? `Te queda 1 consulta gratuita, con ${nextWith}` : ''));
       const sentU = await sendMail(env, { to: q.email, replyTo: relay ? await relayAddress(env, 'u', id) : pro.email, ...cm });
       // Sin relay no hay hilo que seguir (ni recordatorios): no se guarda nada más
       if (relay) {
@@ -1139,7 +1208,7 @@ const handler = {
       }
       // «Envíaselo a alguien» en la pantalla de enviada: su enlace personal (invite.js), si quien llega pregunta, 1 consulta para ella
       const invite = relay && !test && body.team !== true ? await inviteCode(env, h, baseThread.u).catch(() => '') : '';
-      return reply(200, { ok: true, ...(invite ? { invite } : {}), remaining, freeLimit: limit, ...(nextWith ? { next: nextWith, fp: usedPros } : {}), ...(unlimited ? { unlimited: true } : {}), ...(acomp ? { acomp: true } : {}), ...(paid || credits > 0 ? { credits: creditsLeft } : {}), ...(relay ? { id } : {}), dryRun: env.DRY_RUN === '1' });
+      return reply(200, { ok: true, ...(valora ? { val: true } : {}), ...(invite ? { invite } : {}), remaining, freeLimit: limit, ...(nextWith ? { next: nextWith, fp: usedPros } : {}), ...(unlimited ? { unlimited: true } : {}), ...(acomp ? { acomp: true } : {}), ...(paid || credits > 0 ? { credits: creditsLeft } : {}), ...(relay ? { id } : {}), dryRun: env.DRY_RUN === '1' });
     }
     return reply(404, { error: 'not_found' });
   },
@@ -1207,18 +1276,23 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
   const toUser = role === 'p';
   // Primera respuesta de la profesional: «¿Te ha ayudado?» al pie (si aún no ha valorado)
   let rate = null;
-  if (role === 'p' && !t.a && !t.fr) { const sig = await feedbackSig(env, t.id); rate = rateBlock(pro, (r) => `https://hera-gine.com/opinion/?t=${t.id}&s=${sig}&r=${r}`); }
+  // Escribir gratis, pagar después: mientras no ha pagado (v 1 o 2), cada mensaje de la profesional lleva el botón de pago;
+  // «¿Te ha ayudado?» va con la primera respuesta tras pagar (o la primera de siempre en las demás)
+  const valPending = role === 'p' && (t.v === 1 || t.v === 2);
+  const firstFull = t.v === 3 ? !t.vf : t.v ? false : !t.a;
+  if (role === 'p' && firstFull && !t.fr) { const sig = await feedbackSig(env, t.id); rate = rateBlock(pro, (r) => `https://hera-gine.com/opinion/?t=${t.id}&s=${sig}&r=${r}`); }
   // Primera respuesta: su enlace para invitar (invite.js), aunque no valore
   // Sin gratis (NO_FREE, 22 nov) no se ofrece el enlace para invitar: prometía «2 primeras gratis» a quien invitas
-  const invite = env.NO_FREE !== '1' && role === 'p' && !t.a && t.h && t.p !== 'prueba' ? inviteBlock(await inviteCode(env, t.h, t.u)) : null;
+  const invite = env.NO_FREE !== '1' && !t.v && role === 'p' && !t.a && t.h && t.p !== 'prueba' ? inviteBlock(await inviteCode(env, t.h, t.u)) : null;
   // Primera respuesta a una consulta de anuncio: oferta de llamada, videollamada o consulta nueva (Noza, 20 nov)
   let offer = null;
-  if (role === 'p' && !t.a && t.ad && t.p !== 'prueba' && PROS[t.p]) {
+  if (role === 'p' && !t.a && !t.v && t.ad && t.p !== 'prueba' && PROS[t.p]) {
     const rc = t.h ? await env.KV.get(`c:${t.h}`, 'json').catch(() => null) : null;
     // Sin gratis (NO_FREE): la consulta nueva cuesta 1 € hasta el 1 dic y 9 € después
     offer = env.NO_FREE === '1' ? offerBlock(pro, 0, Date.now() < Math.min(BF_END, Number(env.BF_OFFER_END_MS) || BF_OFFER_END)) : offerBlock(pro, Math.max(0, Number(env.FREE_LIMIT || 2) - (rc?.n || 0)), !!t.bf);
     await bump(env, 'oferta_respuesta');
   }
+  if (valPending) offer = valPayBlock(pro, (await valLinks(env, t.id)).pay);
   const { html, text } = relayEmail(pro, role, t.id, msg.body || '(Sin texto: mira el archivo adjunto.)', msg.attachments.length, rate, invite, offer);
   const refsMine = toUser ? t.ru : t.rp;
   const sent = await sendMail(env, {
@@ -1247,6 +1321,8 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
   // Lo que le enviamos a la usuaria: solo el identificador de Resend, para poder reenviárselo si rebotó (panel)
   if (toUser && sent.id) t.ou = [...(t.ou || []), sent.id].slice(-10);
   t.n = (t.n || 0) + 1;
+  if (valPending && t.v === 1) { t.v = 2; t.va = Date.now(); if (t.p !== 'prueba') { await bump(env, 'valorada'); await record(env, { e: `valorada:${t.p}` }, sendMail); } }
+  if (toUser && t.v === 3 && !t.vf) t.vf = Date.now();
   if (toUser && !t.a) {
     t.a = Date.now();
     if (t.p !== 'prueba') {
@@ -1321,6 +1397,24 @@ export async function remindOverdue(env) {
       const sent = await sendMail(env, { to: pro.email, replyTo: await relayAddress(env, 'p', t.id), subject: `Re: ${t.sp}`, refs: t.rp, html, text });
       if (sent) { t.rem = true; await saveThread(env, t); if (t.p !== 'prueba') await bump(env, `recordatorio:${t.p}`); n++; }
     }
+  }
+  // Escribir gratis, pagar después: a las 24 h de la valoración, si no ha pagado, un único recordatorio a la usuaria
+  for (const k of keys) {
+    const m = k.metadata || {};
+    // Pagada tras la valoración y la profesional aún no ha respondido entera: recordatorio a las 16 h del pago
+    if (m.v === 3) {
+      const t = await loadThread(env, k.name.slice(2));
+      if (!t || t.vf || t.vr2 || !t.vp || Date.now() - t.vp < 16 * 3600000 || !PROS[t.p]) continue;
+      const { html, text } = reminderEmail(PROS[t.p], t.id);
+      if (await sendMail(env, { to: PROS[t.p].email, replyTo: await relayAddress(env, 'p', t.id), subject: `Re: ${t.sp}`, refs: t.rp, html, text })) { t.vr2 = Date.now(); await saveThread(env, t); n++; }
+      continue;
+    }
+    if (m.v !== 2 || m.vr || !m.va || Date.now() - m.va < 24 * 3600000) continue;
+    const t = await loadThread(env, k.name.slice(2));
+    if (!t || t.v !== 2 || t.vr || !PROS[t.p]) continue;
+    const { html, text } = valReminderEmail(PROS[t.p], (await valLinks(env, t.id)).pay);
+    const sent = await sendMail(env, { to: await openEmail(env, t.u), from: `${PROS[t.p].short} · Hera <${PROS[t.p].email}>`, replyTo: await relayAddress(env, 'u', t.id), subject: `Re: ${t.su}`, refs: t.ru, html, text });
+    if (sent) { t.vr = Date.now(); await saveThread(env, t); await bump(env, 'valorada_recordatorio'); n++; }
   }
   return n;
 }

@@ -588,6 +588,7 @@ table.wa-t td,table.wa-t th{white-space:nowrap;padding-left:8px}table.wa-t td:fi
 </style></head><body><div class="w">
 <p class="mute">HERA · sin el equipo (modo equipo)</p><h1>Panel</h1>
 <p class="mute">Actualizado ${madrid(now, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} (hora de Madrid). Datos anónimos, sin cookies.</p>
+<p class="mute" style="margin-top:6px"><a href="/panel/mapa?k=${k}" style="color:var(--plum);font-weight:600">Mapa de calor de la portada →</a> dónde tocan y dónde se van</p>
 <div class="tabs">${tab(1, 'Hoy')}${tab(7, '7 días')}${tab(30, '30 días')}</div>
 
 <div class="card"><p class="lead">${lead}</p><div class="chips">${chips}</div></div>
@@ -665,4 +666,74 @@ ${opFeed || opRows ? `<div class="card"><h2>Opiniones tras la consulta</h2>${opR
 </div></details>
 <p class="mute" style="margin-top:14px">«Persona XXXX» es una etiqueta anónima que cambia cada día; «personas» suma días, así que una misma persona cuenta una vez por cada día que entra. La actividad detallada se guarda 31 días.</p>
 </div><script>document.querySelectorAll('.day').forEach((g)=>{const f=()=>{(g.closest('.cv')||g.closest('.card')).querySelectorAll('.day.on').forEach((x)=>x.classList.remove('on'));g.classList.add('on');(g.closest('.cv')||g.closest('.card')).querySelector('.dayinfo').textContent=g.dataset.t;};g.addEventListener('click',f);g.addEventListener('mouseenter',f);});</script></body></html>`;
+}
+
+// Mapa de calor de la portada (Noza, 24 nov): GET /panel/mapa?k=…&v=movil|ordenador&d=1|7
+// Dónde tocan (tabla taps, 31 días) dibujado encima de la portada real (iframe en modo equipo: no cuenta en las métricas),
+// el embudo de la portada (personas distintas de la tabla activity) y la lista de lo que más tocan.
+export async function heatmap(env, url) {
+  const k = encodeURIComponent(url.searchParams.get('k') || '');
+  const v = url.searchParams.get('v') === 'ordenador' ? 'ordenador' : 'movil';
+  const days = url.searchParams.get('d') === '1' ? 1 : 7;
+  const now = Date.now();
+  // Hoy = desde las 0:00 de Madrid; 7 días = las últimas 7×24 h
+  const since = days === 1 ? Date.parse(`${dayISO(now)}T00:00:00+01:00`) : now - 7 * 86400000;
+  let taps = [];
+  try { taps = (await env.DB.prepare('SELECT x, y, w, h, el, act, p FROM taps WHERE pg = ?1 AND ts > ?2').bind('portada', since).all()).results || []; } catch { /* sin tabla */ }
+  const inV = (t) => (v === 'movil' ? t.w < 700 : t.w >= 1000);
+  const mine = taps.filter(inV);
+  const W = v === 'movil' ? 390 : 1280; const S = v === 'movil' ? 1 : 0.5;
+  const hs = mine.map((t) => t.h * (v === 'movil' ? 1 : W / t.w)).sort((a, b) => a - b);
+  const H = Math.round(hs.length ? hs[Math.floor(hs.length / 2)] : (v === 'movil' ? 4200 : 2600));
+  const dots = mine.map((t) => {
+    const f = v === 'movil' ? W / t.w : 1; // en el móvil, los anchos van de 360 a 430: se ajusta al de 390
+    const x = (W / 2 + t.x * f) * S, y = t.y * S;
+    return y < H * S + 40 ? `<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="9" class="${t.act ? 'a' : 'n'}"/>` : '';
+  }).join('');
+  // Embudo: personas distintas de la portada en el periodo (mismo dispositivo y día)
+  let act = [];
+  try { act = (await env.DB.prepare("SELECT e, p FROM activity WHERE ts > ?1 AND p IS NOT NULL AND e IN ('portada','scroll:50','seccion:precio','pregunta_portada','correo_portada','intento_portada','bf_guardada')").bind(since).all()).results || []; } catch { /* sin tabla */ }
+  const pp = (e) => new Set(act.filter((r) => r.e === e).map((r) => r.p)).size;
+  const tapP = new Set(taps.map((t) => t.p).filter(Boolean)).size;
+  const steps = [['Entraron en la portada', pp('portada')], ['Bajaron hasta la mitad', pp('scroll:50')], ['Llegaron a los precios', pp('seccion:precio')], ['Tocaron algo', tapP], ['Empezaron a escribir', pp('pregunta_portada')], ['Tocaron el correo', pp('correo_portada')], ['Pulsaron enviar', pp('intento_portada')]];
+  const top = steps[0][1] || 1;
+  const funnel = steps.map(([l, n]) => `<div class="fr"><span>${l}</span><div class="lane"><i style="width:${Math.round((n / top) * 100)}%"></i></div><b>${n}</b><span class="pc">${Math.round((n / top) * 100)} %</span></div>`).join('');
+  // Lo que más tocan: por elemento, toques y personas
+  const by = new Map();
+  for (const t of mine) { const r = by.get(t.el) || { n: 0, p: new Set(), act: t.act }; r.n++; if (t.p) r.p.add(t.p); by.set(t.el, r); }
+  const rows = [...by].sort((a, b) => b[1].p.size - a[1].p.size || b[1].n - a[1].n).slice(0, 25)
+    .map(([el, r]) => `<tr><td>${esc(el)}</td><td>${r.act ? 'Sí' : '<span class="no">No</span>'}</td><td>${r.n}</td><td>${r.p.size}</td></tr>`).join('');
+  const tab = (key, val, label, cur) => `<a class="${cur === val ? 'on' : ''}" href="/panel/mapa?k=${k}&${key === 'v' ? `v=${val}&d=${days}` : `v=${v}&d=${val}`}">${label}</a>`;
+  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Mapa de calor · Hera</title>
+<style>
+:root{--bg:#FAF9F4;--card:#fff;--ink:#2F3631;--mute:#6E6C67;--line:#E5E1D8;--bar:#EFECE4;--plum:#45574C;--red:#B4442F}
+@media (prefers-color-scheme:dark){:root{--bg:#161B18;--card:#1F2622;--ink:#F0F1EC;--mute:#ABB2AC;--line:#2E3832;--bar:#2A332D;--plum:#A9C2B2;--red:#E58A74}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.w{max-width:720px;margin:0 auto;padding:18px 16px 40px}h1{font:500 26px/1.1 Georgia,serif;color:var(--plum);margin:4px 0 6px}h2{font-size:15px;font-weight:650;color:var(--plum);margin:0 0 10px}
+.mute{color:var(--mute);font-size:13px;margin:0}a{color:var(--plum)}
+.tabs{display:flex;gap:6px;margin:12px 0 0}.tabs a{flex:1;text-align:center;padding:9px;border-radius:6px;background:var(--card);border:1px solid var(--line);color:var(--ink);text-decoration:none;font-weight:500}.tabs a.on{background:var(--plum);border-color:var(--plum);color:var(--bg)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-top:12px}
+.fr{display:grid;grid-template-columns:150px minmax(0,1fr) 36px 46px;gap:10px;align-items:center;font-size:14px;margin-bottom:7px}.fr b{text-align:right;font-variant-numeric:tabular-nums}.fr .pc{text-align:right;color:var(--mute);font-size:13px}
+.lane{background:var(--bar);border-radius:5px;height:18px;overflow:hidden}.lane i{display:block;height:100%;background:var(--plum)}
+.leg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--mute);margin-bottom:10px}.leg i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.map{overflow:auto;border:1px solid var(--line);border-radius:8px;max-height:80vh;background:#fff}
+.stage{position:relative;width:${Math.round(W * S)}px;height:${Math.round(H * S)}px;margin:0 auto}
+.stage iframe{position:absolute;left:0;top:0;width:${W}px;height:${H}px;border:0;transform:scale(${S});transform-origin:0 0;pointer-events:none}
+.stage svg{position:absolute;left:0;top:0}circle.a{fill:var(--plum);fill-opacity:.35}circle.n{fill:var(--red);fill-opacity:.4}
+table{width:100%;border-collapse:collapse;font-size:13.5px}th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--mute);font-weight:500}td:nth-child(n+3),th:nth-child(n+3){text-align:right;font-variant-numeric:tabular-nums}td:first-child{word-break:break-word}.no{color:var(--red);font-weight:600}
+@media (max-width:520px){.fr{grid-template-columns:110px minmax(0,1fr) 30px 40px;font-size:13px}}
+</style></head><body><div class="w">
+<p class="mute"><a href="/panel?k=${k}">← Panel</a></p>
+<h1>Mapa de calor · portada</h1>
+<p class="mute">Dónde tocan quienes visitan la portada. Sin cookies y sin lo que escriben. Los dispositivos en modo equipo no cuentan.</p>
+<div class="tabs">${tab('v', 'movil', 'Móvil', v)}${tab('v', 'ordenador', 'Ordenador', v)}</div>
+<div class="tabs">${tab('d', 1, 'Hoy', days)}${tab('d', 7, '7 días', days)}</div>
+<div class="card"><h2>Dónde se van</h2>${funnel}<p class="mute" style="margin-top:6px">Personas distintas en la portada (móvil y ordenador juntos). «Tocaron algo» cuenta desde el 24 nov, cuando empezó el mapa.</p></div>
+<div class="card"><h2>Toques en ${v === 'movil' ? 'el móvil' : 'el ordenador'} (${mine.length})</h2>
+<div class="leg"><span><i style="background:var(--plum);opacity:.6"></i>Botón o enlace</span><span><i style="background:var(--red);opacity:.7"></i>No es botón: lo tocaron esperando algo</span></div>
+${mine.length ? `<div class="map"><div class="stage"><iframe src="https://hera-gine.com/?mapa=1#equipo" title="Portada" loading="lazy" scrolling="no" tabindex="-1"></iframe><svg width="${Math.round(W * S)}" height="${Math.round(H * S)}" aria-hidden="true">${dots}</svg></div></div>
+<p class="mute" style="margin-top:8px">El dibujo es la portada de hoy, a ${W} px de ancho${v === 'ordenador' ? ' (a la mitad de tamaño)' : ''}. Si alguien la vio con otro texto o más alta (por ejemplo, con la caja de consulta abierta), los puntos de abajo pueden no caer en su sitio: la lista de abajo dice qué tocaron exactamente.</p>` : '<p class="mute">Todavía no hay toques en este periodo.</p>'}</div>
+<div class="card"><h2>Lo que más tocan</h2>${rows ? `<table><tr><th>Qué</th><th>¿Botón?</th><th>Toques</th><th>Personas</th></tr>${rows}</table>` : '<p class="mute">Todavía no hay toques.</p>'}
+<p class="mute" style="margin-top:8px">«Sección › elemento». Si mucha gente toca algo que no es botón (una foto, una tarjeta, un precio), esperaban que hiciera algo.</p></div>
+</div></body></html>`;
 }

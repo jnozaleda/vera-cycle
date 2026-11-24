@@ -31,7 +31,7 @@
 import { validateAttachments } from './attachments.js';
 import { sendFeedbackDue, handleOpinion, feedbackEmail, feedbackSig } from './feedback.js';
 import { inviteCode, inviteFor, rewardInvite } from './invite.js';
-import { panel } from './panel.js';
+import { panel, heatmap } from './panel.js';
 import { isEvent, isDevice, record, personTag, hourlyDigest, notify, LINK_NAME } from './activity.js';
 import { handleResendWebhook } from './bounces.js';
 import { addWaConsult, setWaState, assignPaidRow, maskPhone, normalizePhone } from './whatsapp.js';
@@ -686,6 +686,10 @@ const handler = {
         headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex, nofollow', 'referrer-policy': 'no-referrer' },
       });
     }
+    if (request.method === 'GET' && url.pathname === '/panel/mapa') {
+      if (!env.DASH_KEY || url.searchParams.get('k') !== env.DASH_KEY) return new Response('Not found', { status: 404, headers: { 'x-robots-tag': 'noindex' } });
+      return new Response(await heatmap(env, url), { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex, nofollow', 'referrer-policy': 'no-referrer' } });
+    }
     // Corregir el correo de una consulta (panel → «Corregir el correo»): cuando rebotó por estar mal escrito y la usuaria
     // ha confirmado el bueno. Cambia a dónde va el hilo y, si se marca, le reenvía lo que no le llegó (Resend guarda los
     // correos enviados; Hera solo guarda sus identificadores). Lo que la profesional responda después ya va al correo nuevo.
@@ -858,6 +862,24 @@ const handler = {
       if (!t || t.p !== 'prueba') return reply(404, { error: 'not_found' });
       const fe = feedbackEmail({ short: 'Marina', role: 'matrona' }, t.id, await feedbackSig(env, t.id));
       return reply(200, { sent: !!(await sendMail(env, { to: await openEmail(env, t.u), replyTo: 'contacto@hera-gine.com', ...fe })) });
+    }
+    // Mapa de calor (Noza, 24 nov): toques en la portada (posición, ancho, alto de página y qué se tocó; nunca lo que escriben).
+    // Se guardan 31 días en D1 (tabla taps) y se ven en /panel/mapa
+    if (url.pathname === '/tap') {
+      const pg = /^[a-z_]{2,24}$/.test(String(body.pg || '')) ? body.pg : '';
+      const t = Array.isArray(body.t) ? body.t.slice(0, 20) : [];
+      const int = (v, lo, hi) => (Number.isFinite(v) && v >= lo && v <= hi ? Math.round(v) : null);
+      const rows = t.map((r) => (Array.isArray(r) ? [int(r[0], -3000, 3000), int(r[1], 0, 60000), int(r[2], 200, 6000), int(r[3], 200, 60000), String(r[4] || '').replace(/[\u0000-\u001f<>]/g, '').slice(0, 90), r[5] ? 1 : 0] : null))
+        .filter((r) => r && r.slice(0, 4).every((v) => v !== null));
+      if (!pg || !rows.length) return reply(400, { error: 'bad_tap' });
+      const p = /^[0-9A-F]{4}$/.test(String(body.p || '')) ? body.p : null;
+      const d = isDevice(body.d) ? body.d : null;
+      const ts = Date.now();
+      try {
+        const st = env.DB.prepare('INSERT INTO taps (ts, pg, x, y, w, h, el, act, d, p) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)');
+        await env.DB.batch(rows.map((r) => st.bind(ts, pg, ...r, d, p)));
+      } catch (e) { console.log('taps', e.message); }
+      return reply(200, { ok: true });
     }
     if (url.pathname === '/hit') {
       const e = String(body.e || '');

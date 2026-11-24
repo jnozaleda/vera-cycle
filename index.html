@@ -1111,6 +1111,39 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
   if (FRIEND && Date.now() < Date.parse('2026-12-31T23:59:59+01:00')) { const a = document.getElementById('annc-t'); if (a) a.innerHTML = `Invitación de ${FRIEND}: 5 consultas gratis hasta el 31 de diciembre · <u>Pregunta ahora</u>`; }
   const refSrc = () => { try { const r = JSON.parse(store.get(REF_KEY) || 'null'); return r && Date.now() - r.at < 30 * 86400000 ? { ref: r.c } : {}; } catch { return {}; } };
   if (refSrc().ref && !NO_FREE) { const a = document.querySelector('.annc a'); if (a) a.innerHTML = 'Te han invitado a Hera · Tus 2 primeras consultas, gratis y sin tarjeta · <u>Pregunta ahora</u>'; }
+  // Mapa de calor (Noza, 24 nov): dónde tocan en la portada, para entender por qué no empiezan a escribir.
+  // Sin cookies ni nada guardado en el dispositivo; nunca lo que escriben: solo la posición (px desde el centro de la pantalla
+  // y desde arriba de la página), el ancho, el alto de la página y qué se tocó (botón o enlace con su texto, o el bloque).
+  {
+    const q = []; let n = 0;
+    const send = () => {
+      if (!q.length || local || isTeam()) { q.length = 0; return; }
+      const b = JSON.stringify({ pg: 'portada', p: ptag, d: device(), t: q.splice(0) });
+      if (!(navigator.sendBeacon && navigator.sendBeacon(`${API}/tap`, b))) fetch(`${API}/tap`, { method: 'POST', body: b, keepalive: true }).catch(() => {});
+    };
+    const what = (t) => {
+      const a = t.closest('a,button,summary,label,input,textarea,select,[role=button],[data-goask]');
+      const el = a || t;
+      let s = el.tagName.toLowerCase();
+      if (el.id) s += `#${el.id}`; else if (typeof el.className === 'string' && el.className.trim()) s += `.${el.className.trim().split(/\s+/)[0]}`;
+      // Texto solo de nuestros botones y enlaces, nunca dentro de la caja de consulta (ahí puede estar lo que escriben)
+      if (a && !el.id && /^(a|button|summary)$/.test(el.tagName.toLowerCase()) && !el.closest('#ask, #ask-form')) {
+        const tx = (el.getAttribute('aria-label') || el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 32);
+        if (tx) s += ` «${tx}»`;
+      }
+      const sec = el.parentElement?.closest('section[id], header, footer, nav');
+      return [(sec ? `${sec.id || sec.tagName.toLowerCase()} › ${s}` : s).slice(0, 90), a ? 1 : 0];
+    };
+    document.addEventListener('pointerdown', (ev) => {
+      if (n >= 60 || !(ev.target instanceof Element)) return; n++;
+      const w = document.documentElement.clientWidth, h = document.documentElement.scrollHeight;
+      const [el, act] = what(ev.target);
+      q.push([Math.round(ev.pageX - w / 2), Math.round(ev.pageY), w, h, el, act]);
+      if (q.length >= 15) send();
+    }, { capture: true, passive: true });
+    addEventListener('pagehide', send);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') send(); });
+  }
   // Qué hacen al entrar (vera-backlog#80): hasta dónde bajan, qué secciones ven, dónde pulsan y cuánto se quedan.
   // Cada evento se manda una sola vez por visita; nada de lo que escriben.
   {

@@ -192,6 +192,7 @@ export async function hourlyDigest(env, send, force = false) {
   const { results = [] } = await env.DB.prepare('SELECT ts, e, d, p FROM activity WHERE ts > ?1 AND ts <= ?2 ORDER BY ts').bind(since, now).all();
   await env.KV.put('digest:last', String(now));
   try { await env.DB.prepare('DELETE FROM activity WHERE ts < ?1').bind(now - 31 * 86400000).run(); } catch { /* sin tabla */ }
+  try { await env.DB.prepare('DELETE FROM taps WHERE ts < ?1').bind(now - 31 * 86400000).run(); } catch { /* sin tabla */ }
   if (!results.length) return 0;
   const groups = new Map();
   for (const r of results) {

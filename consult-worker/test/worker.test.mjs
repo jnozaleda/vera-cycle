@@ -16,15 +16,16 @@ const metas = new Map();
 const KV = { async get(k, t) { const v = store.get(k); return v == null ? null : t === 'json' ? JSON.parse(v) : v; }, async put(k, v, o) { store.set(k, v); if (o?.metadata) metas.set(k, o.metadata); }, async delete(k) { store.delete(k); },
   async list({ prefix }) { return { keys: [...store.keys()].filter((k) => k.startsWith(prefix)).map((name) => ({ name, metadata: metas.get(name) })), list_complete: true }; } };
 const sent = [];
-const saldo = new Map(); const counts = new Map(); const visitors = new Set(); const activity = []; const opiniones = [];
-const DB = { prepare(sql) { return { bind(...a) { return { async run() {
+const saldo = new Map(); const counts = new Map(); const visitors = new Set(); const activity = []; const opiniones = []; const taps = [];
+const DB = { async batch(list) { const out = []; for (const st of list) out.push(await st.run()); return out; }, prepare(sql) { return { bind(...a) { return { async run() {
   if (sql.startsWith('INSERT INTO counts')) { const k = a[0] + '|' + a[1]; counts.set(k, (counts.get(k) || 0) + 1); return { meta: { changes: 1 } }; }
   if (sql.startsWith('UPDATE saldo SET n = (CASE')) { saldo.set(a[0], (saldo.get(a[0]) || 0) + a[1]); return { meta: { changes: 1 } }; }
   if (sql.startsWith('INSERT INTO opiniones')) { opiniones.push({ ts: a[0], pro: a[1], rating: a[2], texto: a[3], nombre: a[4], publicable: a[5] }); return { meta: { changes: 1 } }; }
+  if (sql.startsWith('INSERT INTO taps')) { taps.push({ ts: a[0], pg: a[1], x: a[2], y: a[3], w: a[4], h: a[5], el: a[6], act: a[7], d: a[8], p: a[9] }); return { meta: { changes: 1 } }; }
   if (sql.startsWith('INSERT INTO activity')) { activity.push({ ts: a[0], e: a[1], d: a[2], p: a[3] }); return { meta: { changes: 1 } }; }
   if (sql.startsWith('INSERT OR IGNORE')) { const k = a.join('|'); if (visitors.has(k)) return { meta: { changes: 0 } }; visitors.add(k); return { meta: { changes: 1 } }; }
   return { meta: { changes: 0 } }; },
-  async all() { if (sql.includes('FROM opiniones')) return { results: opiniones }; if (sql.includes('FROM activity')) return { results: activity.filter((r) => r.ts > a[0] && r.ts <= a[1]) }; return { results: [...counts].map(([k, n]) => ({ day: k.split('|')[0], k: k.split('|')[1], n })) }; } }; } }; } };
+  async all() { if (sql.includes('FROM taps')) return { results: taps.filter((t) => t.pg === a[0] && t.ts > a[1]) }; if (sql.includes('FROM opiniones')) return { results: opiniones }; if (sql.includes('FROM activity')) return { results: activity.filter((r) => r.ts > a[0] && r.ts <= a[1]) }; return { results: [...counts].map(([k, n]) => ({ day: k.split('|')[0], k: k.split('|')[1], n })) }; } }; } }; } };
 const env = { KV, DB, PANEL_CODE: 'panel', COPY_TO: 'copia@example.com', HASH_SALT: 'sal', ADMIN_TOKEN: 'adm', ALLOWED_ORIGINS: 'https://hera-gine.com', FROM: 'Hera <consultas@hera-gine.com>', FREE_LIMIT: '2', DRY_RUN: '0', RELAY: '1', RESEND_API_KEY: 'k', ADD_WINDOW_MIN: '0', BF_OFFER_END_MS: String(Date.parse('2026-12-01T23:59:59+01:00')) }; // las pruebas de Black Friday siguen como si estuviera en marcha // 0: sin «añadir a la consulta» salvo en su prueba
 let rid = 0;
 globalThis.fetch = async (u, o) => {
@@ -161,6 +162,17 @@ let pg = await worker.fetch(new Request('https://w/panel?k=dk&d=30'), env);
 assert.equal(pg.status, 200); const html = await pg.text();
 assert.match(html, /<h1>Panel<\/h1>/); assert.match(html, /Consultas/); assert.ok(!html.includes('copia@example.com'), 'sin correos en el panel');
 pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal(pg.status, 404);
+// Mapa de calor (24 nov): /tap guarda toques válidos (sin lo que escriben) y /panel/mapa los dibuja
+{
+  const r = await call('/tap', { pg: 'portada', p: 'AB12', d: 'ios-web', t: [[-20, 900, 390, 4100, 'section#ask › button#ask-send', 1], [80, 1500, 390, 4100, 'quien › img.face', 0], ['x', 1, 2, 3, 'malo', 0]] });
+  assert.equal(r.s, 200); assert.equal(taps.length, 2, 'descarta el toque mal formado'); assert.equal(taps[1].act, 0);
+  assert.equal((await call('/tap', { pg: 'portada', t: [] })).s, 400);
+  const big = await call('/tap', { pg: 'portada', t: [[0, 10, 390, 4000, '<script>x', 1]] }); assert.equal(big.s, 200); assert.ok(!taps.at(-1).el.includes('<'), 'sin etiquetas');
+  const m = await worker.fetch(new Request('https://w/panel/mapa?k=dk&d=7'), env); assert.equal(m.status, 200);
+  const mh = await m.text(); assert.match(mh, /Mapa de calor · portada/); assert.match(mh, /quien › img\.face/); assert.match(mh, /<circle[^>]+class="n"/);
+  assert.equal((await worker.fetch(new Request('https://w/panel/mapa?k=mal'), env)).status, 404);
+  console.log('Mapa de calor: OK');
+}
 // embudo: personas distintas por día, quien avanza cuenta en los pasos anteriores
 const { dropoff } = await import('../src/panel.js');
 const T = Date.UTC(2026, 9, 31, 12);

@@ -767,7 +767,7 @@ console.log('consultas: OK');
   const m1 = sent.slice(s0).find((x) => x.to[0] === 'meno@example.com');
   assert.match(m1.subject, /Tu resultado del cuestionario/); assert.match(m1.html, /Enviar mi resultado a Gonzalo · 29 €/); assert.match(m1.html, /30 de 48, te afectan mucho/);
   assert.ok(!/Mi duda:/.test(m1.text), 'sin el «Mi duda:» del final');
-  assert.ok(!sent.slice(s0).some((x) => /meno@example\.com/.test(x.text || '') && x.to[0] !== 'meno@example.com'), 'el aviso al equipo no lleva su correo');
+  assert.ok(sent.slice(s0).some((x) => x.to[0] !== 'meno@example.com' && /meno@example\.com/.test(x.subject || '') && /Correo: meno@example\.com/.test(x.text || '')), 'el aviso al equipo lleva su correo (Noza, 24 nov)');
   const pay = m1.text.match(/https:\/\/\S+\/menopausia\/pagar\?\S+/)[0]; const stop = m1.text.match(/https:\/\/\S+\/menopausia\/baja\?\S+/)[0];
   // pagar: crea la consulta guardada (prioritaria) y lleva a /pagar con el plan de 29 €
   const rp = await worker.fetch(new Request(pay.replace(/^https:\/\/[^/]+/, 'https://w')), env);

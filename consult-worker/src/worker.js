@@ -913,7 +913,8 @@ const handler = {
         await bump(env, 'menopausia_correo_resultado');
         await record(env, { e: 'menopausia:correo_resultado', p: await personTag(env, request, madridDay(), body.p) }, sendMail, ctx);
         const lvl = (text.match(/, (te afectan [^.]+)\./) || [])[1] || '';
-        const job = notify(env, `Cuestionario de menopausia · resultado por correo${lvl ? ` · ${lvl}` : ''}`, `Alguien ha completado el cuestionario de menopausia y ha pedido su resultado por correo${lvl ? ` (${lvl})` : ''}${m.src === 'ads' ? ', desde un anuncio' : ''}.\n\nVersión de precio: ${m.ab === 'prio' ? '29 €' : '9 €'}. En 2 días le escribimos una vez por si quiere enviárselo a Gonzalo. Su correo no se muestra aquí.`, sendMail);
+        // Noza (24 nov): el aviso lleva su correo, como el de «Avísame» de WhatsApp
+        const job = notify(env, `Cuestionario de menopausia · ${m.email}${lvl ? ` · ${lvl}` : ''}`, `Alguien ha completado el cuestionario de menopausia y ha pedido su resultado por correo${lvl ? ` (${lvl})` : ''}${m.src === 'ads' ? ', desde un anuncio' : ''}.\n\nCorreo: ${m.email}\nVersión de precio: ${m.ab === 'prio' ? '29 €' : '9 €'}\n\nSu resultado:\n${String(m.text).replace(/\s*Mi duda:\s*$/, '').trim()}\n\nEn 2 días le escribimos una vez por si quiere enviárselo a Gonzalo.`, sendMail);
         if (ctx?.waitUntil) ctx.waitUntil(job); else await job;
       }
       return reply(200, { ok: true });

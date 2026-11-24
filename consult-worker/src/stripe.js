@@ -15,7 +15,8 @@
 // Los precios se buscan por lookup_key (tools/stripe-setup.mjs los crea en cualquier cuenta).
 
 export const PLANS = {
-  suelta: { lookup: 'hera_suelta', mode: 'payment', credits: 1, label: 'Consulta suelta', eur: 9 },
+  // Noza, 24 nov: 5 € (antes 9 €, lookup 'hera_suelta')
+  suelta: { lookup: 'hera_suelta5', mode: 'payment', credits: 1, label: 'Consulta suelta', eur: 5 },
   // Black Friday (prueba A/B, hasta el 1 dic): consulta a 1 € para la mitad de las visitas de anuncio; solo para una consulta guardada
   bf1: { lookup: 'hera_bf1', mode: 'payment', credits: 1, label: 'Consulta (Black Friday)', eur: 1 },
   // Consulta prioritaria (campaña propia «prioritaria», desde el 2 dic): 29 €, respuesta en menos de 6 h; solo para una consulta guardada
@@ -59,6 +60,7 @@ async function api(env, method, path, params) {
 
 // Precios que el servicio crea solo si faltan en Stripe (mismos datos que tools/stripe-setup.mjs)
 const AUTO_PRICES = {
+  hera_suelta5: { name: 'Consulta suelta', desc: 'Una consulta por escrito con una profesional de Hera.', amount: 500 },
   hera_prio29: { name: 'Consulta prioritaria', desc: 'Una consulta por escrito con una profesional de Hera, con respuesta en menos de 6 horas.', amount: 2900 },
   hera_acomp99: { name: 'Acompañamiento mensual', desc: 'Consultas por escrito con respuesta en menos de 6 horas, una videollamada de 30 minutos al mes y WhatsApp con tu profesional. Sin permanencia.', amount: 9900, month: true },
 };

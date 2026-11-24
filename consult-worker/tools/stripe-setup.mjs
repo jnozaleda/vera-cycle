@@ -33,7 +33,7 @@ async function api(method, path, params = {}) {
 }
 
 const PRICES = [
-  { lookup: 'hera_suelta', name: 'Consulta suelta', desc: 'Una consulta por escrito con una profesional de Hera.', amount: 900 },
+  { lookup: 'hera_suelta5', name: 'Consulta suelta', desc: 'Una consulta por escrito con una profesional de Hera.', amount: 500 },
   { lookup: 'hera_bono5', name: 'Bono de 5 consultas', desc: 'Cinco consultas por escrito. Válido 12 meses.', amount: 3500 },
   { lookup: 'hera_mensual', name: 'Hera ilimitado', desc: 'Consultas por escrito sin límite (hasta una nueva al día). Sin permanencia.', amount: 1500, monthly: true },
   { lookup: 'hera_video30', name: 'Videollamada de 30 min', desc: 'Videollamada por Google Meet con el ginecólogo, la matrona o la pediatra de Hera.', amount: 5500 },

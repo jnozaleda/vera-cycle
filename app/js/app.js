@@ -1301,7 +1301,7 @@ const payTest = () => { try { return localStorage.getItem(PAY_TEST_KEY) === '1';
 // Sin consultas gratis (Noza, 22 nov; en el servicio, NO_FREE): 1 € hasta el 1 dic (Black Friday) y 9 € después
 const NO_FREE = true;
 const PLANS_UI = [
-  { k: 'suelta', name: 'Consulta suelta', price: '9 €', note: 'Solo esta pregunta' },
+  { k: 'suelta', name: 'Consulta suelta', price: '5 €', note: 'Solo esta pregunta' },
   { k: 'acomp', name: 'Acompañamiento mensual', price: '99 € / mes', note: 'Respuesta en menos de 6 h · videollamada y WhatsApp · sin permanencia' },
 ];
 
@@ -1315,7 +1315,7 @@ function askPayView(a) {
         ? `<div class="t-15 w-500 c-deep">Acompañamiento mensual</div>
       <p class="t-13 lh-4 c-deep">Si aún te quedan consultas gratuitas, se usan primero: lo que compres queda para después. Tu pregunta queda guardada y la envías al volver.</p>`
         : a.result.held ? `<div class="t-15 w-500 c-deep">Tu consulta está guardada</div>
-      <p class="t-13 lh-4 c-deep">${a.result.bf ? 'Con la oferta de Black Friday, cada consulta cuesta 1 € hasta el 1 de diciembre' : NO_FREE ? 'Cada consulta por escrito cuesta 9 €' : `Ya has usado tus ${a.result.freeLimit || 2} consultas gratis`}. En cuanto pagues, se la enviamos a ${esc((CONSULTS[a.sentTo] || CONSULTS.gineco).short)}: no tienes que volver a escribirla. También te hemos enviado el enlace por correo; si no pagas en 7 días, la borramos.</p>`
+      <p class="t-13 lh-4 c-deep">${a.result.bf ? 'Con la oferta de Black Friday, cada consulta cuesta 1 € hasta el 1 de diciembre' : NO_FREE ? 'Cada consulta por escrito cuesta 5 €' : `Ya has usado tus ${a.result.freeLimit || 2} consultas gratis`}. En cuanto pagues, se la enviamos a ${esc((CONSULTS[a.sentTo] || CONSULTS.gineco).short)}: no tienes que volver a escribirla. También te hemos enviado el enlace por correo; si no pagas en 7 días, la borramos.</p>`
         : `<div class="t-15 w-500 c-deep">Has usado tus ${a.result.freeLimit || 2} consultas gratuitas</div>
       <p class="t-13 lh-4 c-deep">Para seguir preguntando a Gonzalo, Marina y Lucía, elige cómo. Tu pregunta queda guardada y la envías al volver.</p>`}
     </div>
@@ -1366,7 +1366,7 @@ function askLimitView(a) {
     <div class="limit-card stack-8">
       ${consultPair('sm')}
       <div class="t-15 w-500 c-deep">Has usado tus ${a.result.freeLimit || 2} consultas gratuitas</div>
-      <p class="t-13 lh-4 c-deep">Muy pronto podrás seguir preguntando a Gonzalo, Marina y Lucía: 9 € por consulta o acompañamiento mensual por 99 €.</p>
+      <p class="t-13 lh-4 c-deep">Muy pronto podrás seguir preguntando a Gonzalo, Marina y Lucía: 5 € por consulta o acompañamiento mensual por 99 €.</p>
     </div>
     <p class="t-13 lh-4">Para seguir con una consulta anterior, responde al correo de la profesional: <b>no gasta consultas</b>.</p>
     ${notify}
@@ -1391,7 +1391,7 @@ function shareLink(r = {}) {
 function askRoute(freeOn) {
   return `<div class="ask-route" aria-label="Cómo funciona">
     <div class="rt-track" aria-hidden="true"><span class="ln"></span><span class="st"></span><span class="st s2"></span><span class="halo"></span><span class="st s3"></span><span class="dot"></span></div>
-    <div class="rt-lb"><div><b>1. Envías tu duda</b>sin registro</div><div><b>${freeOn ? '2. Sin pagar' : '2. Pagas'}</b>${freeOn ? 'las 2 primeras, gratis' : '9 €'}</div><div><b>3. Te responde</b>en menos de 24 h</div></div>
+    <div class="rt-lb"><div><b>1. Envías tu duda</b>sin registro</div><div><b>${freeOn ? '2. Sin pagar' : '2. Pagas'}</b>${freeOn ? 'las 2 primeras, gratis' : '5 €'}</div><div><b>3. Te responde</b>en menos de 24 h</div></div>
   </div>`;
 }
 

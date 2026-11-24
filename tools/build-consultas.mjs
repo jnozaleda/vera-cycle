@@ -72,7 +72,7 @@ const body = `${STYLE}<div class="w cq">
 <div class="cq-cards">
   <article class="cq-card" id="consulta">
     <div><p class="cq-k">Por escrito</p><h2 id="c1-t">Una consulta</h2></div>
-    <div class="cq-pr"><strong id="c1-eur">9 €</strong><span id="c1-sub">respuesta en menos de 24 h</span></div>
+    <div class="cq-pr"><strong id="c1-eur">5 €</strong><span id="c1-sub">respuesta en menos de 24 h</span></div>
     <ul class="cq-l" id="c1-l">
       <li>${tick}<span id="c1-l1">Respuesta personal y detallada en menos de 24 h</span></li>
       <li>${tick}<span>Seguimiento incluido: puedes responderle por correo</span></li>
@@ -157,12 +157,10 @@ const body = `${STYLE}<div class="w cq">
     hit(c ? 'anuncio_visita:' + c : 'anuncio_visita');
   }
   const ad = () => { try { const a = JSON.parse(store.get(AD_KEY) || 'null'); return a && Date.now() - a.at < 30 * 86400000 ? { src: 'ads', ...(a.c ? { camp: a.c } : {}) } : {}; } catch { return {}; } };
-  // Prueba de precio 9 € / 29 € (la misma que la portada, fija por dispositivo)
-  let ab = store.get('hera-ab-precio');
-  if (ab !== 'pago' && ab !== 'prio') { ab = Math.random() < 0.5 ? 'pago' : 'prio'; store.set('hera-ab-precio', ab); }
-  hit('ab_visita:' + ab);
+  // Noza, 24 nov: sin la prueba 9 € / 29 €; todas las consultas por escrito a 5 €
+  const ab = 'pago';
   const PRIO = ab === 'prio';
-  const PRICE = PRIO ? '29 €' : '9 €';
+  const PRICE = PRIO ? '29 €' : '5 €';
   if (PRIO) {
     document.getElementById('c1-t').textContent = 'Consulta prioritaria';
     document.getElementById('c1-eur').textContent = '29 €';
@@ -219,7 +217,7 @@ const body = `${STYLE}<div class="w cq">
         const plan = j.prio ? 'prio29' : 'suelta';
         hit('pago_elegido:' + plan);
         try { await checkout(plan, mail, { hold: j.held }); }
-        catch { form.remove(); btn.hidden = false; open = null; say('<b>Tu consulta está guardada</b>No se ha podido abrir el pago. Te hemos mandado un correo a ' + esc(mail) + ' con el enlace para pagar ' + (j.prio ? '29 €' : '9 €') + ' y enviarla.'); }
+        catch { form.remove(); btn.hidden = false; open = null; say('<b>Tu consulta está guardada</b>No se ha podido abrir el pago. Te hemos mandado un correo a ' + esc(mail) + ' con el enlace para pagar ' + (j.prio ? '29 €' : '5 €') + ' y enviarla.'); }
       } catch { fail('No hemos podido abrir el pago. Inténtalo en un momento o escríbenos a contacto@hera-gine.com.'); }
     });
   }
@@ -253,7 +251,7 @@ const html = shell({
   desc: 'Pregunta por escrito a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra) y recibe una respuesta personal. Consulta suelta o acompañamiento mensual con videollamada y WhatsApp.',
   path: '/consultas/',
   ld: { '@context': 'https://schema.org', '@type': 'Service', name: 'Consultas por escrito con profesionales de Hera', provider: { '@type': 'Organization', name: 'Hera', url: 'https://hera-gine.com' },
-    offers: [{ '@type': 'Offer', name: 'Una consulta por escrito', price: '9', priceCurrency: 'EUR' }, { '@type': 'Offer', name: 'Acompañamiento mensual', price: '99', priceCurrency: 'EUR' }] },
+    offers: [{ '@type': 'Offer', name: 'Una consulta por escrito', price: '5', priceCurrency: 'EUR' }, { '@type': 'Offer', name: 'Acompañamiento mensual', price: '99', priceCurrency: 'EUR' }] },
   body,
 });
 fs.mkdirSync(new URL('consultas/', ROOT), { recursive: true });

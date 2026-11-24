@@ -108,17 +108,17 @@ const body = `${CSS}<div class="w">
 <div class="p-hero"><div>
   <p class="ey">Pediatría · Por escrito y sin cita</p>
   <h1>Pregunta a una pediatra lo que te preocupa de tu hijo</h1>
-  <p class="p-lead">La Dra. Lucía Carrascón lee tu duda y te responde por escrito, a ti, <span id="p-plazo">en menos de 24 h</span>. <span id="p-precio">9 € la consulta.</span></p>
+  <p class="p-lead">La Dra. Lucía Carrascón lee tu duda y te responde por escrito, a ti, <span id="p-plazo">en menos de 24 h</span>. <span id="p-precio">5 € la consulta.</span></p>
   <div class="p-doc"><img src="/portada/equipo/lucia-grande.jpg" alt="" width="84" height="84"><span><b>Dra. Lucía Carrascón</b><span>Pediatra · Hospital Gregorio Marañón</span><span>Más de 15 años con bebés y niños · Colegiada</span></span></div>
   <div class="p-box" id="duda">
     <label for="p-ta">¿Qué le pasa?</label>
     <textarea id="p-ta" maxlength="1800" placeholder="Cuéntalo como en la consulta: edad, qué le pasa y desde cuándo."></textarea>
     <div class="p-chips" aria-label="Para empezar">${CHIPS.map(([t, v]) => `<button type="button" data-chip="${esc(v)}">${esc(t)}</button>`).join('')}</div>
-    <a class="p-go" id="p-go" href="/#preguntar-pediatra">Empezar mi consulta · <span id="p-go-p">9 €</span></a>
+    <a class="p-go" id="p-go" href="/#preguntar-pediatra">Empezar mi consulta · <span id="p-go-p">5 €</span></a>
     <p class="p-fine">${LOCK}Solo la lee Lucía · Si no te sirve, te devolvemos el dinero</p>
   </div>
   <div class="route" aria-label="Cómo funciona"><div class="track" aria-hidden="true"><span class="ln"></span><span class="st"></span><span class="st s2"></span><span class="halo"></span><span class="st s3"></span><span class="dot"></span></div>
-    <div class="lb"><div><b>1. Envías tu duda</b>sin registro</div><div><b>2. Pagas</b><span id="p-r2">9 €</span></div><div><b>3. Te responde Lucía</b><span id="p-r3">en menos de 24 h</span></div></div></div>
+    <div class="lb"><div><b>1. Envías tu duda</b>sin registro</div><div><b>2. Pagas</b><span id="p-r2">5 €</span></div><div><b>3. Te responde Lucía</b><span id="p-r3">en menos de 24 h</span></div></div></div>
 </div>
 <div class="p-side">
   <p class="p-tag">Ejemplo orientativo</p>
@@ -138,7 +138,7 @@ const body = `${CSS}<div class="w">
 <section class="p-blk"><h2>Guías para el día a día</h2><p class="p-sub">Lo que suele ser normal, cuándo consultar y cuándo ir a urgencias.</p>
 <div class="p-gl">${GUIAS.map(([s, t]) => `<a href="/guias/${s}/">${esc(t)}${CHEV}</a>`).join('')}</div></section>
 
-<section class="p-blk"><div class="p-price"><span><b id="p-pb">9 € la consulta</b>Una duda, respuesta por escrito y puedes contestar con lo que te quede. Si no te sirve, te devolvemos el dinero.</span><a href="/#preguntar-pediatra" data-hit="precio">Pregunta a Lucía</a></div>
+<section class="p-blk"><div class="p-price"><span><b id="p-pb">5 € la consulta</b>Una duda, respuesta por escrito y puedes contestar con lo que te quede. Si no te sirve, te devolvemos el dinero.</span><a href="/#preguntar-pediatra" data-hit="precio">Pregunta a Lucía</a></div>
 <p class="p-other"><span class="p-fc"><img src="/portada/equipo/gonzalo.jpg?v=2" alt="" width="32" height="32" loading="lazy"><img src="/portada/equipo/marina.jpg?v=2" alt="" width="32" height="32" loading="lazy"></span><span>¿La duda es tuya, del embarazo o la lactancia? <a href="/" data-hit="otra_profesional">Pregunta a Gonzalo o a Marina</a></span></p></section>
 </div>
 <script>(()=>{
@@ -153,18 +153,13 @@ ta.addEventListener('input',()=>h('pediatria:escribe'),{once:true});
 // Ir a la portada con Lucía elegida y la duda ya escrita (la portada lee «hera-ask-prefill» si tiene menos de 30 min)
 document.querySelectorAll('a[href*="preguntar-pediatra"]').forEach((a)=>a.addEventListener('click',()=>{const t=ta.value.trim();h(t?'pediatria:empezar':'pediatria:empezar_vacia');if(t){try{localStorage.setItem('hera-ask-prefill',JSON.stringify({text:t,at:Date.now()}))}catch(e){}}}));
 document.querySelectorAll('[data-hit]').forEach((a)=>a.addEventListener('click',()=>h('pediatria:'+a.dataset.hit)));
-// Precio y plazo: los mismos que verá en la portada. Prueba 9 € / 29 € («hera-ab-precio», 50/50 y fija por dispositivo, como index.html).
+// Precio y plazo: los mismos que verá en la portada (24 nov: 5 € la consulta, sin la prueba de 29 €).
 // Enlaces de amigas y de las profesionales (hera-via): las primeras consultas, gratis.
 try{
   const FREE=['q7m','k2v','g8w','ig_marina','reddit_gonzalo','x4d','p9t'];
   const r=JSON.parse(localStorage.getItem('hera-via')||'null');
   const free=r&&Date.now()-r.at<30*86400000&&FREE.includes(r.v);
   if(free){$('p-precio').textContent=['q7m','k2v'].includes(r.v)?'Tus 5 primeras consultas, gratis.':'Tus 2 primeras consultas son gratis: una con cada profesional.';$('p-go-p').textContent='gratis';$('p-r2').textContent='las primeras, gratis';$('p-pb').textContent='Tus primeras consultas, gratis'}
-  else{
-    let v=localStorage.getItem('hera-ab-precio');
-    if(v!=='pago'&&v!=='prio'){v=Math.random()<0.5?'pago':'prio';localStorage.setItem('hera-ab-precio',v)}
-    if(v==='prio'){$('p-plazo').textContent='en menos de 6 h';$('p-precio').textContent='Consulta prioritaria, 29 €.';$('p-go-p').textContent='29 €';$('p-r2').textContent='29 €';$('p-r3').textContent='en menos de 6 h';$('p-pb').textContent='29 € la consulta prioritaria'}
-  }
 }catch(e){}
 // Latinoamérica (anuncios …_latam, como /menopausia/): teléfono de urgencias de cada país
 let latam=false;try{if(/_latam$/.test((new URLSearchParams(location.search).get('utm_campaign')||'').toLowerCase()))sessionStorage.setItem('hera-latam','1');latam=sessionStorage.getItem('hera-latam')==='1'}catch(e){}

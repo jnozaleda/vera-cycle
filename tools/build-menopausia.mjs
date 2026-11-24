@@ -123,7 +123,7 @@ $('m-reset').addEventListener('click',()=>{f.reset();update()});
 $('m-mail').addEventListener('submit',async(ev)=>{ev.preventDefault();const em=$('m-email'),b=$('m-mail-b'),n=$('m-mail-n');const v=em.value.trim();
   if(!/^[^\s@<>()",;]+@[^\s@<>()",;]+\.[a-z]{2,24}$/i.test(v)){n.textContent='Revisa tu correo: parece que no está bien escrito.';em.focus();return}
   b.disabled=true;b.textContent='Enviando…';
-  let ab='pago',ad={};try{ab=localStorage.getItem('hera-ab-precio')==='prio'?'prio':'pago';localStorage.setItem('hera-ask-email',v);const q=new URLSearchParams(location.search);if(q.has('gclid')||/^(cpc|ppc|paid)$/i.test(q.get('utm_medium')||''))ad={src:'ads',camp:(q.get('utm_campaign')||'').toLowerCase().replace(/[^a-z0-9_]/g,'_').slice(0,24)}}catch(e){}
+  let ab='pago',ad={};try{localStorage.setItem('hera-ask-email',v);const q=new URLSearchParams(location.search);if(q.has('gclid')||/^(cpc|ppc|paid)$/i.test(q.get('utm_medium')||''))ad={src:'ads',camp:(q.get('utm_campaign')||'').toLowerCase().replace(/[^a-z0-9_]/g,'_').slice(0,24)}}catch(e){}
   try{const r=await fetch(A+'/menopausia/resultado',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:v,text:$('m-send').dataset.text,ab,...ad,...(off?{team:true}:{})})});
     if(!r.ok)throw new Error();$('m-mail').innerHTML='<p class="m-mail-ok">Enviado a <b></b>. Si no lo ves, mira en «Promociones» o «Spam».</p>';$('m-mail').querySelector('b').textContent=v}
   catch(e){b.disabled=false;b.textContent='Enviármelo';n.textContent='No se ha podido enviar. Inténtalo en un momento.'}});
@@ -131,12 +131,8 @@ document.querySelectorAll('[data-hit]').forEach((a)=>a.addEventListener('click',
 // Latinoamérica (anuncios …_latam, como la portada): teléfono de urgencias de cada país y sin el dato de España
 let latam=false;try{if(/_latam$/.test((new URLSearchParams(location.search).get('utm_campaign')||'').toLowerCase()))sessionStorage.setItem('hera-latam','1');latam=sessionStorage.getItem('hera-latam')==='1'}catch(e){}
 if(latam){const u=$('m-urg');if(u)u.textContent='Si es urgente, llama al número de emergencias de tu país (911 en México, 107 en Argentina, 131 en Chile, 123 en Colombia) o ve a urgencias.';const t=$('m-t51');if(t)t.innerHTML='<b>40–45</b><span>Cuando suelen empezar los cambios</span>'}
-// Precio de la consulta por escrito: 1 € hasta el 1 dic (Black Friday), 9 € después
-if(Date.now()>=Date.parse('2026-11-22T20:15:00+01:00')){const p=$('m-price');if(p)p.textContent='9 €'}
-// Prueba de precio (portada, «hera-ab-precio»): a quien le tocó la prioritaria, 29 € y menos de 6 h
-try{let ab=localStorage.getItem('hera-ab-precio');if(ab!=='pago'&&ab!=='prio'){ab=Math.random()<0.5?'pago':'prio';localStorage.setItem('hera-ab-precio',ab)}
-  if(ab==='prio'){const sp=$('m-send-p');if(sp)sp.textContent='29 €';const w=$('m-when');if(w)w.textContent='en menos de 6 h';}}catch(e){}
-try{if(localStorage.getItem('hera-ab-precio')==='prio'){const p=$('m-price');if(p){p.textContent='29 €';const s=p.previousElementSibling?.querySelector('span');if(s)s.textContent='Prioritaria: te responde en menos de 6 h'}}}catch(e){}
+// Precio de la consulta por escrito: 5 € (Noza, 24 nov; antes 9 € o 29 € en la prueba)
+{const p=$('m-price');if(p)p.textContent='5 €'}
 update();
 })()</script>`;
 
@@ -172,7 +168,7 @@ const body = `${CSS}<div class="w">
       <div class="m-lvl" id="m-lvl">Contesta las ${TOTAL} preguntas para ver cuánto te afectan.</div>
       <div class="m-offer" id="m-offer" hidden>
         <div class="m-ofw">${face(g)}<span><b>${g.name} puede revisar tu resultado</b> y decirte qué opciones tienes. Te responde por escrito <span id="m-when">en menos de 24 h</span>.</span></div>
-        <a class="m-btn p" id="m-send" href="/#preguntar-gineco" aria-disabled="true" style="text-align:center">Enviar mi resultado a ${g.name} <span style="white-space:nowrap">· <span id="m-send-p">9 €</span></span></a>
+        <a class="m-btn p" id="m-send" href="/#preguntar-gineco" aria-disabled="true" style="text-align:center">Enviar mi resultado a ${g.name} <span style="white-space:nowrap">· <span id="m-send-p">5 €</span></span></a>
         <p class="m-note">Primero lo revisas en la caja de consulta; no se cobra nada hasta que lo confirmas. Si no te sirve, te devolvemos el dinero.</p>
         <form class="m-mail" id="m-mail" novalidate>
           <p class="m-mail-t"><b>¿Prefieres pensarlo?</b> Te mandamos tu resultado por correo.</p>
@@ -202,7 +198,7 @@ const body = `${CSS}<div class="w">
   <div class="lnk" style="margin-top:16px"><a href="/guias/sintomas-menopausia/">Síntomas de la menopausia →</a><a href="/guias/sangrado-despues-de-la-menopausia/">Sangrado después de la menopausia →</a><a href="/guias/sangrado-entre-reglas/">Sangrado entre reglas →</a></div></section>
 
 <div class="m-final" id="consulta"><div><h2>Habla con ${g.name}</h2><p>Cuéntale lo que te pasa, con tu resultado si quieres. Te responde él, por escrito o cara a cara.</p></div>
-  <div class="m-opts"><a class="m-opt" href="/#preguntar-gineco" data-hit="clic_escrito"><div><b>Consulta por escrito</b><span>Te responde en menos de 24 h</span></div><em id="m-price">9 €</em></a>
+  <div class="m-opts"><a class="m-opt" href="/#preguntar-gineco" data-hit="clic_escrito"><div><b>Consulta por escrito</b><span>Te responde en menos de 24 h</span></div><em id="m-price">5 €</em></a>
   <a class="m-opt" href="/videollamada/#reservar-gineco" data-hit="clic_videollamada"><div><b>Videollamada de 30 min</b><span>Para hablarlo con calma</span></div><em>55 €</em></a></div></div>
 <p class="urg" style="margin-bottom:30px"><b id="m-urg">Si es urgente, llama al 112 o ve a urgencias.</b> Esta información es general y no sustituye la valoración de un profesional.</p>
 </div>${JS}`;

@@ -47,7 +47,7 @@ import { newThreadId, relayAddress, parseRelayAddress, sealEmail, openEmail, sav
 // Enlaces que siguen con las 2 gratis aunque no haya gratis para nadie más (NO_FREE): profesionales y grupo de Maite
 export const FREE_VIA = ['ig_marina', 'reddit_gonzalo', 'x4d', 'p9t', 'g8w'];
 // Enlaces de socios (Noza, 23 nov): precio fijo, sin gratis y fuera de la prueba 9 € / 29 €. pago = 9 €, prio = 29 € (menos de 6 h)
-export const PARTNER_LINKS = { lidia: 'pago', jaime: 'pago', atempocare: 'prio' }; // lidia y jaime: influencers; atempocare: clínica
+export const PARTNER_LINKS = { lidia: 'pago', jaime: 'pago', atempocare: 'pago' }; // 24 nov: los tres a 5 €, como todos // lidia y jaime: influencers; atempocare: clínica
 export const FRIEND_LINKS = { q7m: { free: 5, until: '2026-12-31T23:59:59+01:00' }, k2v: { free: 5, until: '2026-12-31T23:59:59+01:00' } }; // q7m Maite, k2v Noza
 
 export const PROS = {
@@ -251,7 +251,7 @@ const MENO_TTL = 3 * 86400; const MENO_FOLLOW_MS = 48 * 3600000;
 const menoSig = async (env, id, what) => (await hmac(env.HASH_SALT, `meno:${what}:${id}`)).slice(0, 16);
 const menoLinks = async (env, id) => ({ pay: `${WORKER_URL}/menopausia/pagar?c=${id}&s=${await menoSig(env, id, 'pagar')}`, stop: `${WORKER_URL}/menopausia/baja?c=${id}&s=${await menoSig(env, id, 'baja')}` });
 export function menoEmail(m, links, followup = false) {
-  const prio = m.ab === 'prio'; const price = prio ? '29 €' : '9 €'; const when = prio ? '6' : '24';
+  const prio = m.ab === 'prio'; const price = prio ? '29 €' : '5 €'; const when = prio ? '6' : '24';
   const lines = String(m.text || '').replace(/\s*Mi duda:\s*$/, '').trim();
   const subject = followup ? '¿Quieres que Gonzalo revise tu resultado?' : 'Tu resultado del cuestionario de menopausia';
   const btn = `<p style="margin:18px 0"><a href="${links.pay}" style="display:inline-block;background:#45574C;color:#fff;text-decoration:none;font-weight:600;padding:12px 18px;border-radius:8px">Enviar mi resultado a Gonzalo · ${price}</a></p>`;
@@ -291,8 +291,8 @@ export function holdEmail(pro, text, links, reminder = false, others = '', offer
   const bf = offer === 'bf' || offer === true; const prio = offer === 'prio';
   // others: la gratis que le queda es con otra especialista (1 gratis por especialista)
   // bf: prueba Black Friday (consulta a 1 € hasta el 1 dic). WhatsApp está en «Próximamente» desde el 19 nov: ya no se ofrece aquí
-  const why = prio ? 'Has elegido la consulta prioritaria (respuesta en menos de 6 h)' : offer === 'pago' ? 'Cada consulta por escrito cuesta 9 €' : bf ? 'Con la oferta de Black Friday, cada consulta cuesta 1 € hasta el 1 de diciembre' : others ? `Tu consulta gratis con ${pro.short} ya la usaste (la que te queda es para ${others})` : 'Ya has usado tus consultas gratis';
-  const price = prio ? '29 €' : bf ? '1 €' : '9 €'; const link = prio ? links.prio29 : bf ? links.bf1 : links.suelta;
+  const why = prio ? 'Has elegido la consulta prioritaria (respuesta en menos de 6 h)' : offer === 'pago' ? 'Cada consulta por escrito cuesta 5 €' : bf ? 'Con la oferta de Black Friday, cada consulta cuesta 1 € hasta el 1 de diciembre' : others ? `Tu consulta gratis con ${pro.short} ya la usaste (la que te queda es para ${others})` : 'Ya has usado tus consultas gratis';
+  const price = prio ? '29 €' : bf ? '1 €' : '5 €'; const link = prio ? links.prio29 : bf ? links.bf1 : links.suelta;
   const excerpt = text.length > 220 ? `${text.slice(0, 220).trim()}…` : text;
   const btn = `<p style="margin:16px 0"><a href="${link}" style="display:inline-block;background:#45574C;color:#ffffff;text-decoration:none;font-weight:600;border-radius:8px;padding:12px 20px">Pagar ${price} y enviarla</a></p>`;
   const quote = `<div style="background:#F6E0E2;border-radius:10px;padding:12px;margin:12px 0;font-size:14px">«${esc(excerpt)}»</div>`;
@@ -380,7 +380,7 @@ export function inviteBlock(code) {
 export function offerBlock(pro, freeLeft = 0, bf = false) {
   const base = 'https://hera-gine.com/videollamada/?de=oferta';
   const btn = (href, t, sub, price) => `<a href="${href}" style="display:block;text-decoration:none;color:#2F3631;border:1px solid #E5E1D8;border-radius:10px;padding:11px 12px;margin-top:8px;background:#ffffff"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td style="font-size:14.5px"><b style="display:block">${t}</b><span style="font-size:12.5px;color:#6E6C67">${sub}</span></td><td align="right" style="font-size:15px;font-weight:600;color:#45574C;white-space:nowrap">${price} ›</td></tr></table></a>`;
-  const next = freeLeft > 0 ? `te queda ${freeLeft === 1 ? '1 consulta gratis' : `${freeLeft} consultas gratis`}` : bf ? '1 € hasta el 1 de diciembre' : '9 €';
+  const next = freeLeft > 0 ? `te queda ${freeLeft === 1 ? '1 consulta gratis' : `${freeLeft} consultas gratis`}` : bf ? '1 € hasta el 1 de diciembre' : '5 €';
   const ask = 'https://hera-gine.com/?de=oferta#ask';
   return {
     html: `<div style="margin:18px 0 0;padding:14px;border-radius:12px;background:#F6E0E2"><div style="font-family:Georgia,serif;font-size:19px;color:#45574C;margin-bottom:2px">¿Quieres hablarlo con ${esc(pro.short)}?</div><div style="font-size:13.5px;color:#4F4E49">Para seguir con esta duda, responder a este correo es gratis. Si prefieres hablarlo de viva voz:</div>${btn(`${base}#llamada-${pro.key}`, 'Llamada de 15 min', `${esc(pro.short)} te llama a la hora que elijas`, '25 €')}${btn(`${base}#reservar-${pro.key}`, 'Videollamada de 30 min', `Con ${esc(pro.short)}, por Google Meet`, '55 €')}<div style="font-size:13px;color:#4F4E49;margin-top:10px">¿Tienes otra duda distinta? <a href="${ask}" style="color:#45574C;font-weight:600">Haz una consulta nueva · ${next}</a></div></div>`,
@@ -916,7 +916,7 @@ const handler = {
       {
         // Noza (24 nov): el aviso lleva su correo y su resultado. En modo equipo también llega (para probarlo), marcado como prueba
         const lvl = (text.match(/, (te afectan [^.]+)\./) || [])[1] || '';
-        const job = notify(env, `${m.team ? 'Prueba del equipo · ' : ''}Cuestionario de menopausia · ${m.email}${lvl ? ` · ${lvl}` : ''}`, `Alguien ha completado el cuestionario de menopausia y ha pedido su resultado por correo${lvl ? ` (${lvl})` : ''}${m.src === 'ads' ? ', desde un anuncio' : ''}.${m.team ? '\n\n(Es una prueba desde un dispositivo en modo equipo: no cuenta en el panel.)' : ''}\n\nCorreo: ${m.email}\nVersión de precio: ${m.ab === 'prio' ? '29 €' : '9 €'}\n\nSu resultado:\n${String(m.text).replace(/\s*Mi duda:\s*$/, '').trim()}\n\nEn 2 días le escribimos una vez por si quiere enviárselo a Gonzalo.`, sendMail);
+        const job = notify(env, `${m.team ? 'Prueba del equipo · ' : ''}Cuestionario de menopausia · ${m.email}${lvl ? ` · ${lvl}` : ''}`, `Alguien ha completado el cuestionario de menopausia y ha pedido su resultado por correo${lvl ? ` (${lvl})` : ''}${m.src === 'ads' ? ', desde un anuncio' : ''}.${m.team ? '\n\n(Es una prueba desde un dispositivo en modo equipo: no cuenta en el panel.)' : ''}\n\nCorreo: ${m.email}\nVersión de precio: ${m.ab === 'prio' ? '29 €' : '5 €'}\n\nSu resultado:\n${String(m.text).replace(/\s*Mi duda:\s*$/, '').trim()}\n\nEn 2 días le escribimos una vez por si quiere enviárselo a Gonzalo.`, sendMail);
         if (ctx?.waitUntil) ctx.waitUntil(job); else await job;
       }
       return reply(200, { ok: true });

@@ -598,10 +598,10 @@ console.log('consultas: OK');
   const ab0 = cnt('consulta_ab:prio') + cnt('consulta_ab:pago');
   const li = await call('/ask', { email: 'socio-lidia@example.com', to: 'gineco', text: 'Duda desde el enlace de Lidia', context: '', via: 'lidia', ab: 'prio' });
   assert.ok(li.j.held && !li.j.prio, JSON.stringify(li.j));
-  assert.ok(sent.slice(s0).some((x) => x.to[0] === 'socio-lidia@example.com' && /Pagar 9 € y enviarla/.test(x.html || '')), 'pago de 9 €');
+  assert.ok(sent.slice(s0).some((x) => x.to[0] === 'socio-lidia@example.com' && /Pagar 5 € y enviarla/.test(x.html || '')), 'pago de 5 €');
   const cl = await call('/ask', { email: 'socio-clinica@example.com', to: 'gineco', text: 'Duda desde la clínica', context: '', via: 'atempocare', ab: 'pago' });
-  assert.ok(cl.j.held && cl.j.prio, JSON.stringify(cl.j));
-  assert.ok(sent.slice(s0).some((x) => x.to[0] === 'socio-clinica@example.com' && /Pagar 29 € y enviarla/.test(x.html || '')), 'pago de 29 €');
+  assert.ok(cl.j.held && !cl.j.prio, JSON.stringify(cl.j)); // 24 nov: la clínica también a 5 €
+  assert.ok(sent.slice(s0).some((x) => x.to[0] === 'socio-clinica@example.com' && /Pagar 5 € y enviarla/.test(x.html || '')), 'clínica a 5 €');
   assert.equal(cnt('consulta_ab:prio') + cnt('consulta_ab:pago'), ab0, 'fuera de la prueba de precio');
   env.PAYMENTS = P0; env.STRIPE_SECRET_KEY = K0; env.RELAY = R0; env.DB = DB0; env.NO_FREE = N0; env.PRICE_AB = A0; env.BF_OFFER_END_MS = B0;
   console.log('Enlaces de socios: OK');
@@ -731,7 +731,7 @@ console.log('consultas: OK');
   const app = await call('/ask', { email: 'app-sin-gratis@example.com', to: 'pediatra', text: 'Desde la app, sin ab ni anuncio', context: '' });
   assert.ok(app.j.held && app.j.bf, 'también sin anuncio ni versión (la app)');
   const { holdEmail } = await import('../src/worker.js');
-  assert.match(holdEmail(PROS.gineco, 'x', { suelta: 's', bono: 'b', mensual: 'm' }, false, '', 'pago').html, /Cada consulta por escrito cuesta 9 €/);
+  assert.match(holdEmail(PROS.gineco, 'x', { suelta: 's', bono: 'b', mensual: 'm' }, false, '', 'pago').html, /Cada consulta por escrito cuesta 5 €/);
   delete env.NO_FREE; env.PAYMENTS = P0; env.STRIPE_SECRET_KEY = K0; env.RELAY = R0; env.DB = DB0;
   console.log('Sin consultas gratis: OK');
 }
@@ -786,7 +786,7 @@ console.log('consultas: OK');
   assert.equal(await env.KV.get(k0), null, 'tras el seguimiento se borra');
   // no quiero más: borra
   const r2 = await call('/menopausia/resultado', { email: 'meno2@example.com', text });
-  const m2 = sent.filter((x) => x.to[0] === 'meno2@example.com').pop(); assert.match(m2.html, /Gonzalo · 9 €/);
+  const m2 = sent.filter((x) => x.to[0] === 'meno2@example.com').pop(); assert.match(m2.html, /Gonzalo · 5 €/);
   const stop2 = m2.text.match(/https:\/\/\S+\/menopausia\/baja\?\S+/)[0];
   const rb = await worker.fetch(new Request(stop2.replace(/^https:\/\/[^/]+/, 'https://w')), env); assert.equal(rb.status, 200);
   assert.equal((await env.KV.list({ prefix: 'meno:' })).keys.length, 0, 'borrado al pedir no recibir más');
@@ -806,7 +806,7 @@ console.log('consultas: OK');
   const a = await call('/ask', { email: 'nueve-euros@example.com', to: 'gineco', text: 'Ya sin Black Friday', context: '', ab: 'pago' });
   assert.ok(a.j.held && !a.j.bf && !a.j.prio, JSON.stringify(a.j));
   const m = sent.slice(s0).find((x) => x.to[0] === 'nueve-euros@example.com');
-  assert.match(m.html, /Pagar 9 € y enviarla/); assert.match(m.html, /Cada consulta por escrito cuesta 9 €/);
+  assert.match(m.html, /Pagar 5 € y enviarla/); assert.match(m.html, /Cada consulta por escrito cuesta 5 €/);
   // Prueba 9 € / 29 € apagada: ab=prio no da la prioritaria (sin campaña)
   const p = await call('/ask', { email: 'sin-prio@example.com', to: 'gineco', text: 'Con ab=prio y la prueba apagada', context: '', ab: 'prio' });
   assert.ok(p.j.held && !p.j.prio, 'sin PRICE_AB no hay 29 €');

@@ -119,13 +119,13 @@ export function confirmEmail(pro, q, remaining, id = '', unlimited = false, left
   const left = leftText || (unlimited ? 'Tienes consultas ilimitadas' : remaining === 0 ? 'Era tu última consulta gratuita' : `Te ${remaining === 1 ? 'queda 1 consulta gratuita' : `quedan ${remaining} consultas gratuitas`}`);
   const subject = `Tu consulta a ${pro.short} · Hera${id ? ` #${id.toUpperCase()}` : ''}`;
   const html = shell(`<p>Hola,</p>
-<p>Tu consulta ha llegado a <b>${esc(pro.name)}, ${esc(pro.role)}</b>. ${q.val ? `La leerá y te contestará en menos de 24 h: te dirá si puede ayudarte y qué necesita saber. Si quieres su respuesta completa, son ${VAL_PRICE}; si no, no pagas nada.` : `Te responderá en esta misma conversación en menos de ${q.prio ? '6' : '24'} h.`}</p>
+<p>Tu consulta ha llegado a <b>${esc(pro.name)}, ${esc(pro.role)}</b>. ${q.val ? `La leerá y te contestará en menos de 24 h. Si es algo rápido, te lo dirá sin coste; si necesita más, te dirá antes qué necesita y que la respuesta completa son ${VAL_PRICE}. Si no la quieres, no pagas nada.` : `Te responderá en esta misma conversación en menos de ${q.prio ? '6' : '24'} h.`}</p>
 <div style="background:#F6E0E2;border-radius:10px;padding:12px;margin:12px 0;font-size:14px;color:#2F3631">«${esc(excerpt)}»${q.context ? `<br><span style="color:#6E6C67">Sobre: ${esc(q.context)}</span>` : ''}</div>
 <p><span style="display:inline-block;background:#ffffff;color:#45574C;border:1.5px solid #45574C;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600">${left}</span></p>
 <p style="font-size:13px;color:#6E6C67">¿Quieres añadir algo o enviar una foto? Responde a este correo y le llegará a ${esc(pro.short)}.</p>
 <p style="font-size:13px;color:#6E6C67">No es un servicio de urgencias. Si algo no va bien, llama al 112 o acude a tu centro de salud.</p>
 <p style="font-size:12px;color:#8A8A8E">¿No has escrito tú esta consulta? Escríbenos a contacto@hera-gine.com y la borramos.</p>`);
-  const text = `Tu consulta ha llegado a ${pro.name}, ${pro.role}. ${q.val ? `La leerá y te contestará en menos de 24 h: te dirá si puede ayudarte y qué necesita saber. Si quieres su respuesta completa, son ${VAL_PRICE}; si no, no pagas nada.` : `Te responderá en esta misma conversación en menos de ${q.prio ? '6' : '24'} h.`}\n\n«${excerpt}»\n\n${left}.\n\n¿Quieres añadir algo o enviar una foto? Responde a este correo y le llegará a ${pro.short}.\n\nNo es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.\n¿No has escrito tú esta consulta? Escríbenos a contacto@hera-gine.com y la borramos.`;
+  const text = `Tu consulta ha llegado a ${pro.name}, ${pro.role}. ${q.val ? `La leerá y te contestará en menos de 24 h. Si es algo rápido, te lo dirá sin coste; si necesita más, te dirá antes qué necesita y que la respuesta completa son ${VAL_PRICE}. Si no la quieres, no pagas nada.` : `Te responderá en esta misma conversación en menos de ${q.prio ? '6' : '24'} h.`}\n\n«${excerpt}»\n\n${left}.\n\n¿Quieres añadir algo o enviar una foto? Responde a este correo y le llegará a ${pro.short}.\n\nNo es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.\n¿No has escrito tú esta consulta? Escríbenos a contacto@hera-gine.com y la borramos.`;
   return { subject, html, text };
 }
 
@@ -249,13 +249,19 @@ const holdSig = async (env, id) => (await hmac(env.HASH_SALT, `hold:${id}`)).sli
 // entera. «Es urgente» (enlace firmado del correo de la profesional): v: 0, sin pago. Recordatorio de pago a las 24 h.
 const VAL_PRICE = '5 €';
 const valSig = async (env, id, what) => (await hmac(env.HASH_SALT, `val:${what}:${id}`)).slice(0, 16);
-export const valLinks = async (env, id) => ({ pay: `${WORKER_URL}/valorar/pagar?c=${id}&s=${await valSig(env, id, 'pagar')}`, urgent: `${WORKER_URL}/valorar/urgente?c=${id}&s=${await valSig(env, id, 'urgente')}` });
+export const valLinks = async (env, id) => ({ pay: `${WORKER_URL}/valorar/pagar?c=${id}&s=${await valSig(env, id, 'pagar')}`, urgent: `${WORKER_URL}/valorar/urgente?c=${id}&s=${await valSig(env, id, 'urgente')}`, free: `${WORKER_URL}/valorar/gratis?c=${id}&s=${await valSig(env, id, 'gratis')}` });
+// Tres caminos (Noza, 25 nov: «gratis si es rápido»): responder gratis, valorar con el pago (5 €) o urgente (gratis)
 function valProHtml(l) {
-  return `<div style="background:#DCEBE4;border-radius:10px;padding:12px 14px;margin:10px 0;font-size:14px;color:#2F3631"><b>Por valorar: aún no ha pagado.</b> Respóndele en 2 o 3 líneas: si puedes ayudarla, qué necesitas saber y que la respuesta completa cuesta ${VAL_PRICE}. Hera añade debajo el botón de pago. No le des todavía la respuesta: cuando pague, te avisamos en esta conversación.</div>
-<p style="font-size:13.5px;margin:0 0 12px">¿Es urgente? <a href="${l.urgent}" style="color:#9A3B2B;font-weight:600">Marcar como urgente (sin pago)</a> y respóndele que vaya a urgencias. Tu respuesta le llegará sin botón de pago.</p>`;
+  const opt = (t, d) => `<tr><td style="padding:8px 0;border-top:1px solid #E5E1D8;font-size:14px;color:#2F3631">${t}<div style="font-size:13px;color:#6E6C67;margin-top:2px">${d}</div></td></tr>`;
+  return `<div style="background:#DCEBE4;border-radius:10px;padding:12px 14px;margin:10px 0;font-size:14px;color:#2F3631"><b>Aún no ha pagado. Elige cómo contestarle:</b>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:6px">
+${opt(`<a href="${l.free}" style="color:#45574C;font-weight:700">Es algo rápido: responder gratis</a>`, 'Pulsa el enlace y después responde a este correo. Le llega sin botón de pago y con la oferta de seguir por 5 €.')}
+${opt('<b>Necesita más: valorar (5 €)</b>', `Responde a este correo en 2 o 3 líneas: si puedes ayudarla, qué necesitas saber y que la respuesta completa cuesta ${VAL_PRICE}. Hera añade debajo el botón de pago. No le des todavía la respuesta: cuando pague, te avisamos.`)}
+${opt(`<a href="${l.urgent}" style="color:#9A3B2B;font-weight:700">Es urgente (sin pago)</a>`, 'Pulsa el enlace y respóndele que vaya a urgencias.')}
+</table></div>`;
 }
 function valProText(l) {
-  return `POR VALORAR: aún no ha pagado. Respóndele en 2 o 3 líneas: si puedes ayudarla, qué necesitas saber y que la respuesta completa cuesta ${VAL_PRICE}. Hera añade debajo el botón de pago. No le des todavía la respuesta: cuando pague, te avisamos.\n¿Es urgente? Márcalo aquí (sin pago) y respóndele que vaya a urgencias: ${l.urgent}`;
+  return `AÚN NO HA PAGADO. Elige cómo contestarle:\n· Es algo rápido: pulsa aquí y responde gratis: ${l.free}\n· Necesita más: responde en 2-3 líneas con lo que necesitas y que la respuesta completa cuesta ${VAL_PRICE} (Hera añade el botón de pago). No le des todavía la respuesta.\n· Es urgente (sin pago): ${l.urgent}`;
 }
 /** Botón de pago debajo de la valoración de la profesional */
 export function valPayBlock(pro, link) {
@@ -664,12 +670,16 @@ const handler = {
       } catch (e) { console.log(e.message); return new Response('No se ha podido abrir el pago. Inténtalo en un rato.', { status: 502 }); }
     }
     // Escribir gratis, pagar después: «Pagar 5 € y recibir la respuesta» (usuaria) y «Es urgente» (profesional)
-    if (request.method === 'GET' && (url.pathname === '/valorar/pagar' || url.pathname === '/valorar/urgente')) {
-      const id = String(url.searchParams.get('c') || ''); const what = url.pathname.endsWith('pagar') ? 'pagar' : 'urgente';
+    if (request.method === 'GET' && ['/valorar/pagar', '/valorar/urgente', '/valorar/gratis'].includes(url.pathname)) {
+      const id = String(url.searchParams.get('c') || ''); const what = url.pathname.split('/')[2];
       const t = /^[a-z0-9]{8}$/.test(id) && url.searchParams.get('s') === await valSig(env, id, what) ? await loadThread(env, id) : null;
       const page = (h, p) => new Response(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Hera</title><body style="font:16px/1.5 -apple-system,sans-serif;max-width:32em;margin:40px auto;padding:0 18px;color:#2F3631;background:#FAF9F4"><h1 style="font:400 26px Georgia,serif;color:#45574C">${h}</h1><p>${p}</p><p><a href="https://hera-gine.com/" style="color:#45574C">Volver a Hera</a></p></body>`, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } });
       if (!t || !PROS[t.p]) return page('Este enlace ya no sirve', 'Puede que la consulta haya caducado. Si necesitas ayuda, escríbenos a contacto@hera-gine.com.');
       const pro = PROS[t.p];
+      if (what === 'gratis') {
+        if (t.v === 1 || t.v === 2) { t.v = 0; t.vg = Date.now(); await saveThread(env, t); await bump(env, 'valorada_gratis'); }
+        return page('Respuesta gratis', t.v === 3 ? 'Esta consulta ya estaba pagada: respóndele entera.' : 'Hecho. Responde al correo de la consulta: tu respuesta le llegará sin botón de pago y con la oferta de seguir contigo por 5 €.');
+      }
       if (what === 'urgente') {
         if (t.v === 1 || t.v === 2) { t.v = 0; t.vu = Date.now(); await saveThread(env, t); await bump(env, 'valorada_urgente'); }
         return page('Marcada como urgente', t.v === 3 ? 'Esta consulta ya estaba pagada.' : 'No se le pedirá pago. Responde al correo de la consulta: tu respuesta le llegará sin botón de pago.');
@@ -1286,7 +1296,7 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
   const invite = env.NO_FREE !== '1' && !t.v && role === 'p' && !t.a && t.h && t.p !== 'prueba' ? inviteBlock(await inviteCode(env, t.h, t.u)) : null;
   // Primera respuesta a una consulta de anuncio: oferta de llamada, videollamada o consulta nueva (Noza, 20 nov)
   let offer = null;
-  if (role === 'p' && !t.a && !t.v && t.ad && t.p !== 'prueba' && PROS[t.p]) {
+  if (role === 'p' && !t.a && !t.v && (t.ad || t.vg) && t.p !== 'prueba' && PROS[t.p]) {
     const rc = t.h ? await env.KV.get(`c:${t.h}`, 'json').catch(() => null) : null;
     // Sin gratis (NO_FREE): la consulta nueva cuesta 1 € hasta el 1 dic y 9 € después
     offer = env.NO_FREE === '1' ? offerBlock(pro, 0, Date.now() < Math.min(BF_END, Number(env.BF_OFFER_END_MS) || BF_OFFER_END)) : offerBlock(pro, Math.max(0, Number(env.FREE_LIMIT || 2) - (rc?.n || 0)), !!t.bf);

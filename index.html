@@ -1273,20 +1273,20 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
   }
   if (PAGO) {
     const a = document.getElementById('annc-t'); if (a) a.innerHTML = 'Envía tu duda gratis · <u>Pregunta ahora</u>';
-    const pk = document.querySelector('.perks li'); if (pk) pk.lastChild.textContent = 'Solo pagas 5 € si quieres la respuesta completa';
+    const pk = document.querySelector('.perks li'); if (pk) pk.lastChild.textContent = 'Solo pagas si necesitas más (5 €)';
     // Escribir gratis, pagar después (Noza, 24 nov): enviar es gratis; la profesional dice qué necesita y el precio
     $('ask-send-t').textContent = 'Enviar mi duda gratis'; $('ask-send-s').textContent = VAL_SUB;
-    { const ld = document.querySelector('.hero .lead'); if (ld) ld.textContent = 'Cuéntalo como en la consulta. Enviarlo es gratis: tu ginecólogo, matrona o pediatra lo lee y te contesta en menos de 24 h. Si quieres su respuesta completa, son 5 €.'; }
-    $('rt-p-t').textContent = '2. Te contesta'; $('rt-p').textContent = 'en menos de 24 h'; $('rt-h').textContent = 'completa, por 5 €';
-    { const cp = $('cx-price'); if (cp) cp.textContent = 'Gratis'; const bp = $('brief-price'); if (bp) bp.textContent = 'Enviar tu duda es gratis · Respuesta completa, 5 €'; }
+    { const ld = document.querySelector('.hero .lead'); if (ld) ld.textContent = 'Cuéntalo como en la consulta. Tu ginecólogo, matrona o pediatra lo lee y te contesta en menos de 24 h. Si es algo rápido, gratis. Si necesita una respuesta más completa, te dirá antes que son 5 €.'; }
+    $('rt-p-t').textContent = '2. Te contesta'; $('rt-p').textContent = 'gratis si es rápido'; $('rt-h').textContent = 'si hace falta más, 5 €';
+    { const cp = $('cx-price'); if (cp) cp.textContent = 'Gratis'; const bp = $('brief-price'); if (bp) bp.textContent = 'Dudas rápidas, gratis · Respuesta completa, 5 €'; }
     $('ask-steps').hidden = false;
     const to0 = $('top-open'); if (to0) { to0.textContent = 'Preguntar'; to0.href = '#ask'; to0.dataset.goask = ''; to0.dataset.cta = 'clic:top_preguntar_pago'; }
     const pr = document.getElementById('precio');
     if (pr?.querySelector('h2')) {
       pr.querySelector('h2').textContent = 'Precio';
-      pr.querySelector('.sub').textContent = 'El contenido de cada semana es gratis siempre. Enviar tu duda también: la profesional la lee y te contesta, y si quieres su respuesta completa, son 5 €.';
+      pr.querySelector('.sub').textContent = 'El contenido de cada semana es gratis siempre. Enviar tu duda también: si es algo rápido, la profesional te contesta gratis; si necesita una respuesta completa, te dice antes que son 5 €.';
     }
-    document.querySelectorAll('#faq-precio').forEach((x) => { { x.textContent = '¿Cuánto cuesta una consulta?'; const p2 = x.nextElementSibling; if (p2) p2.textContent = 'Enviar tu duda es gratis. La profesional la lee y te contesta en menos de 24 h. Si quieres su respuesta completa, son 5 €, y solo los pagas si la quieres, con tarjeta, Apple Pay o Google Pay. También está el acompañamiento mensual por 99 € (respuesta en menos de 6 h, videollamada y WhatsApp). Si no quedas satisfecha, te devolvemos el dinero.'; } });
+    document.querySelectorAll('#faq-precio').forEach((x) => { { x.textContent = '¿Cuánto cuesta una consulta?'; const p2 = x.nextElementSibling; if (p2) p2.textContent = 'Enviar tu duda es gratis. La profesional la lee y te contesta en menos de 24 h. Si es algo rápido, gratis. Si necesita una respuesta completa, te dice antes que son 5 €, y solo los pagas si la quieres, con tarjeta, Apple Pay o Google Pay. También está el acompañamiento mensual por 99 € (respuesta en menos de 6 h, videollamada y WhatsApp). Si no quedas satisfecha, te devolvemos el dinero.'; } });
     document.querySelectorAll('a.btn[data-goask]').forEach((x) => { x.textContent = x.textContent.replace(/ gratis$/, ''); });
     document.querySelectorAll('p.sub').forEach((x) => { x.textContent = x.textContent.replace('Tus dos primeras consultas, gratis.', 'Enviar tu duda es gratis.'); });
   }
@@ -1474,7 +1474,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
       // 23 nov: cada versión dice su precio y su plazo (antes la de 29 € decía «2 gratis» y «24 h»)
       if (lead) lead.textContent = PRIO ? page[1].replace('en menos de 24 h', 'en menos de 6 h').replace('Tus 2 primeras consultas, gratis.', 'Consulta prioritaria, 29 €.')
         : BF ? page[1].replace('Tus 2 primeras consultas, gratis.', 'Black Friday: cada consulta a 1 €.')
-        : PAGO ? page[1].replace('te responde por escrito en menos de 24 h', 'te contesta en menos de 24 h').replace('Tus 2 primeras consultas, gratis.', 'Enviarla es gratis; la respuesta completa, 5 €.')
+        : PAGO ? page[1].replace('te responde por escrito en menos de 24 h', 'te contesta en menos de 24 h').replace('Tus 2 primeras consultas, gratis.', 'Si es algo rápido, gratis; la respuesta completa, 5 €.')
         : FRIEND ? page[1].replace('Tus 2 primeras consultas, gratis.', `Con la invitación de ${FRIEND}, tus 5 primeras consultas son gratis.`)
         : page[1].replace('Tus 2 primeras consultas, gratis.', 'Tus 2 primeras consultas son gratis: una con cada profesional.');
       const who = document.querySelector('#ask-form .who');
@@ -1655,7 +1655,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     if (j.val) {
       swap(`<img src="portada/equipo/${p.img}.jpg?v=3" alt="" width="64" height="64">
       <h3>${p.name} ya tiene tu consulta</h3>
-      <p>La leerá y te escribirá a <b>${esc(lastEmail)}</b> en menos de 24 h. Te dirá si puede ayudarte y qué necesita saber. Si quieres su respuesta completa, son 5 €; si no, no pagas nada. Te hemos mandado una copia.</p>
+      <p>La leerá y te escribirá a <b>${esc(lastEmail)}</b> en menos de 24 h. Si es algo rápido, te lo dirá sin coste; si necesita más, te dirá antes qué necesita y que son 5 €. Si no la quieres, no pagas nada. Te hemos mandado una copia.</p>
       <p class="forgot" style="background:#F6E0E2;border-radius:10px;padding:10px 12px;font-size:14.5px;line-height:1.45">¿Se te ha olvidado algo? <button type="button" class="linkbtn" data-add style="display:inline;padding:0;font:inherit;text-decoration:underline">Escríbelo aquí</button> en los próximos 30 minutos, o responde al correo que te hemos mandado.</p>
       <p class="small">Mira también en promociones o spam. No es un servicio de urgencias: si algo no va bien, llama al 112 o acude a tu centro de salud.</p>
       ${guideCard(to)}

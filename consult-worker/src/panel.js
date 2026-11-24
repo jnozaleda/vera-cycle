@@ -306,6 +306,14 @@ export async function panel(env, url, openThreads) {
   // A medias (Noza, 22 nov): enviaron la consulta (se guardó) pero no pagaron
   const medias = (r) => (r.v === 'gratis' ? null : Math.max(0, r.gu - r.cq));
   const abCard = abRows.some((r) => r.pp || r.cq) ? `<div class="card" id="prueba-bf"><h2>Pruebas de precio</h2><table><tr><th>Versión</th><th>Personas</th><th>Enviaron</th><th>A medias</th><th>Pagadas</th><th>%</th><th>Pagos</th></tr>${abRows.map((r) => `<tr><td>${r.t}</td><td>${r.pp}</td><td>${r.v === 'gratis' ? r.cq : r.gu}</td><td>${medias(r) == null ? '—' : medias(r)}</td><td>${r.cq}</td><td>${r.pp ? fmtPct(r.cq, r.pp) : '—'}</td><td>${r.v === 'bf' ? g('pago:bf1') : r.v === 'prio' ? g('pago:prio29') : r.v === 'pago' ? g('pago:suelta') : '—'}</td></tr>`).join('')}</table><p class="mute" style="margin-top:6px">Black Friday y la de siempre: hasta el 21 nov, visitas de anuncio repartidas al azar 50/50; el 21 nov, cada uno vio la que le prometió su anuncio; desde el 22 nov ya no hay gratis para nadie (todos ven la de 1 €, salvo los enlaces de amigas y de las profesionales). Hasta el 1 dic; después, 9 €. Desde el 22 nov, 9 € y 29 € (respuesta en menos de 6 h) al azar, 50/50 y fijo por dispositivo, para todas las visitas salvo los enlaces con gratis; «Pagos» de 9 € cuenta todas las consultas sueltas. En las de pago, la consulta llega a la profesional al pagar: «Enviaron» son las que la escribieron y pulsaron enviar, «A medias» las que no han pagado (todavía) y «Pagadas» las que ya llegaron. El % es de pagadas sobre personas.</p></div>` : '';
+  // Página de menopausia y su cuestionario (Noza, 24 nov): personas por día que hicieron cada paso y qué pasó después en la portada
+  const menoBy = new Map();
+  for (const r of act) if (r.p) { const k = `${dayISO(r.ts)}:${r.p}`; (menoBy.get(k) || menoBy.set(k, []).get(k)).push(r.e); }
+  const menoPeople = [...menoBy.values()].filter((ev) => ev.some((e) => e.startsWith('menopausia:')));
+  const mDid = (...es) => menoPeople.filter((ev) => ev.some((e) => es.some((x) => e === x || e.startsWith(`${x}:`)))).length;
+  const menoRows = [['Vieron la página', menoPeople.length], ['Empezaron el cuestionario', mDid('menopausia:test_empezado')], ['Lo completaron', mDid('menopausia:test_completo')],
+    ['Enviaron su resultado a la portada', mDid('menopausia:enviar')], ['Pusieron el correo', mDid('correo_portada')], ['Fueron al pago', mDid('pago_abierto')], ['Pagaron o enviaron la consulta', mDid('pago_hecho', 'consulta')]];
+  const menoCard = menoPeople.length ? `<div class="card" id="menopausia"><h2>Página de menopausia</h2><table><tr><th>Paso</th><th>Personas</th><th>%</th></tr>${menoRows.map(([t, n2]) => `<tr><td>${t}</td><td>${n2}</td><td>${fmtPct(n2, menoPeople.length) || '—'}</td></tr>`).join('')}</table><p class="mute" style="margin-top:6px">Personas distintas por día. Las respuestas del cuestionario no se guardan: solo que lo empezaron, lo completaron o enviaron el resumen a la caja de la portada. Desde el 24 nov, al completarlo se enseña el botón con Gonzalo y el precio justo debajo del resultado.</p></div>` : '';
   // Embudo del pago (21 nov): eligió pagar → fue a Stripe → pagó, o volvió sin pagar / lo dejó a medias (caduca a las 24 h; videollamadas, 2 h).
   // Stripe no avisa de quién «ve» su pantalla: «Fueron a Stripe» son las veces que se le mandó allí (justo después de pulsar pagar).
   const payRows = Object.keys(PLANS).map((k2) => ({ k2, t: PLANS[k2].label, el: g(`pago_elegido:${k2}`), st: g(`pago_inicio:${k2}`), ok: g(`pago:${k2}`), no: g(`pago_cancelado:${k2}`), cad: g(`pago_caducado:${k2}`) }))
@@ -602,6 +610,7 @@ ${waCard}
 ${fun}${funNote ? `<p class="mute" style="margin-top:6px">${funNote}</p>` : ''}</div>
 ${dailyCard}
 ${abCard}
+${menoCard}
 ${payCard}
 
 <div class="card"><h2>De dónde vienen</h2>${srcTable}

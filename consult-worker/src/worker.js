@@ -241,6 +241,48 @@ export const BF_END = Date.parse('2026-12-01T23:59:59+01:00');
 // Noza, 22 nov: el 1 € deja de ofrecerse hoy (ver BF_OFFER_END_MS para pruebas). Las consultas guardadas antes lo mantienen hasta BF_END
 export const BF_OFFER_END = Date.parse('2026-11-22T20:15:00+01:00');
 const holdSig = async (env, id) => (await hmac(env.HASH_SALT, `hold:${id}`)).slice(0, 16);
+
+// ── Resultado del cuestionario de menopausia por correo (Noza, 24 nov; experimento, sin casilla) ──
+// Al completarlo, la usuaria puede pedir su resultado por correo. Se le envía al momento y, a los 2 días, un único
+// seguimiento por si quiere que Gonzalo lo revise (con el precio de su versión: 9 € o 29 €). Correo y resumen se guardan
+// cifrados (meno:<id>, 3 días) y se borran tras el seguimiento o si pide no recibir más. «Enviar mi resultado a Gonzalo»
+// crea una consulta guardada (hold:) con el resumen y abre el pago, como el correo de una consulta guardada.
+const MENO_TTL = 3 * 86400; const MENO_FOLLOW_MS = 48 * 3600000;
+const menoSig = async (env, id, what) => (await hmac(env.HASH_SALT, `meno:${what}:${id}`)).slice(0, 16);
+const menoLinks = async (env, id) => ({ pay: `${WORKER_URL}/menopausia/pagar?c=${id}&s=${await menoSig(env, id, 'pagar')}`, stop: `${WORKER_URL}/menopausia/baja?c=${id}&s=${await menoSig(env, id, 'baja')}` });
+export function menoEmail(m, links, followup = false) {
+  const prio = m.ab === 'prio'; const price = prio ? '29 €' : '9 €'; const when = prio ? '6' : '24';
+  const lines = String(m.text || '').replace(/\s*Mi duda:\s*$/, '').trim();
+  const subject = followup ? '¿Quieres que Gonzalo revise tu resultado?' : 'Tu resultado del cuestionario de menopausia';
+  const btn = `<p style="margin:18px 0"><a href="${links.pay}" style="display:inline-block;background:#45574C;color:#fff;text-decoration:none;font-weight:600;padding:12px 18px;border-radius:8px">Enviar mi resultado a Gonzalo · ${price}</a></p>`;
+  const intro = followup ? '<p>Hola. Hace dos días hiciste el cuestionario de menopausia de Hera. Te lo recordamos por si quieres que el Dr. Gonzalo Nozaleda, ginecólogo, lo revise.</p>' : '<p>Hola. Aquí tienes el resultado de tu cuestionario de menopausia. Es orientativo: no es un diagnóstico, sirve para ordenar lo que te pasa y llevarlo a la consulta.</p>';
+  const html = shell(`${intro}
+<div style="background:#F3F1EA;border-radius:10px;padding:12px 14px;font-size:14px;white-space:pre-line">${esc(lines)}</div>
+<p>El <b>Dr. Gonzalo Nozaleda</b>, ginecólogo del Hospital Gregorio Marañón, puede revisarlo y decirte qué opciones tienes. Te responde por escrito en menos de ${when} h. Si quieres añadir una duda concreta, se la escribes respondiendo a su correo.</p>${btn}
+<p style="font-size:13px;color:#6E6C67">No se cobra nada hasta que lo confirmas. Si no te sirve, te devolvemos el dinero.</p>
+<p style="font-size:13px;color:#6E6C67">${followup ? 'Es el único recordatorio: hoy borramos tu resultado y tu correo.' : 'En 2 días te escribiremos una sola vez por si quieres hacerlo.'} <a href="${links.stop}" style="color:#6E6C67">No quiero más correos</a></p>
+<p style="font-size:13px;color:#6E6C67">No es un servicio de urgencias. Si sangras después de 12 meses sin regla o algo no va bien, consulta con tu médico; si es urgente, llama al 112.</p>`);
+  const text = `${followup ? 'Hola. Hace dos días hiciste el cuestionario de menopausia de Hera. Te lo recordamos por si quieres que el Dr. Gonzalo Nozaleda, ginecólogo, lo revise.' : 'Hola. Aquí tienes el resultado de tu cuestionario de menopausia (orientativo, no es un diagnóstico).'}\n\n${lines}\n\nEl Dr. Gonzalo Nozaleda, ginecólogo del Hospital Gregorio Marañón, puede revisarlo y te responde por escrito en menos de ${when} h.\n\nEnviar mi resultado a Gonzalo (${price}): ${links.pay}\n\nNo se cobra nada hasta que lo confirmas. Si no te sirve, te devolvemos el dinero.\n${followup ? 'Es el único recordatorio: hoy borramos tu resultado y tu correo.' : 'En 2 días te escribiremos una sola vez por si quieres hacerlo.'}\nNo quiero más correos: ${links.stop}\n\nNo es un servicio de urgencias: si es urgente, llama al 112.`;
+  return { subject, html, text };
+}
+/** Seguimiento a los 2 días (en la pasada horaria). Si ya pagó (su consulta guardada ya no existe), no se le escribe. */
+export async function menoFollowups(env) {
+  let n = 0; let cursor;
+  do {
+    const page = await env.KV.list({ prefix: 'meno:', cursor });
+    for (const k of page.keys) {
+      const raw = await env.KV.get(k.name, 'json');
+      if (!raw || raw.fu || Date.now() - raw.at < MENO_FOLLOW_MS) continue;
+      const id = k.name.slice(5);
+      if (raw.hid && !(await env.KV.get(`hold:${raw.hid}`))) { await env.KV.delete(k.name); continue; } // ya pagó (o caducó su consulta)
+      const m = JSON.parse(await openEmail(env, raw.x));
+      const ok = await sendMail(env, { to: m.email, replyTo: 'contacto@hera-gine.com', ...menoEmail(m, await menoLinks(env, id), true) });
+      if (ok) { await env.KV.delete(k.name); if (!m.team) { await bump(env, 'menopausia_seguimiento'); await record(env, { e: 'menopausia:seguimiento' }, sendMail); } n++; }
+    }
+    cursor = page.list_complete ? null : page.cursor;
+  } while (cursor);
+  return n;
+}
 const holdLinks = async (env, id) => { const s = await holdSig(env, id); return ({ ...Object.fromEntries(['suelta', 'bono', 'mensual', 'acomp', 'bf1', 'prio29'].map((p) => [p, `${WORKER_URL}/pagar?c=${id}&s=${s}&plan=${p}`])) }); };
 
 // reminder: false (correo al guardar), 1 (primer recordatorio, 1 h) o 2 (último, 24 h). true cuenta como 1.
@@ -578,6 +620,27 @@ const handler = {
         return Response.redirect(u, 303);
       } catch (e) { console.log(e.message); return new Response('No se ha podido abrir el pago. Inténtalo en un rato.', { status: 502 }); }
     }
+    // Cuestionario de menopausia: enlaces de los correos (pagar o no recibir más)
+    if (request.method === 'GET' && (url.pathname === '/menopausia/pagar' || url.pathname === '/menopausia/baja')) {
+      const id = String(url.searchParams.get('c') || ''); const what = url.pathname.endsWith('pagar') ? 'pagar' : 'baja';
+      const raw = /^[a-z0-9]{8}$/.test(id) && url.searchParams.get('s') === await menoSig(env, id, what) ? await env.KV.get(`meno:${id}`, 'json') : null;
+      const page = (t, p) => new Response(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><body style="font:16px/1.5 -apple-system,sans-serif;max-width:32em;margin:40px auto;padding:0 16px;color:#2F3631"><h1 style="font:400 26px Georgia,serif;color:#45574C">${t}</h1><p>${p}</p><p><a href="https://hera-gine.com/menopausia/" style="color:#45574C;font-weight:600">Volver a Hera</a></p>`, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+      if (what === 'baja') {
+        if (raw) { await env.KV.delete(`meno:${id}`); await bump(env, 'menopausia_baja'); }
+        return page('Hecho', 'No te escribiremos más y hemos borrado tu resultado y tu correo.');
+      }
+      if (!raw) return page('Este enlace ya no está activo', 'Tu resultado se borra a los 3 días. Puedes volver a hacer el cuestionario o escribir tu duda en hera-gine.com.');
+      const m = JSON.parse(await openEmail(env, raw.x));
+      let hid = raw.hid && await env.KV.get(`hold:${raw.hid}`) ? raw.hid : '';
+      if (!hid) {
+        hid = newThreadId();
+        const held = { email: m.email, to: 'gineco', text: `${String(m.text || '').replace(/\s*Mi duda:\s*$/, '').trim()}\n\nTe envío mi resultado del cuestionario de menopausia para que lo revises. Si tengo una duda concreta, te la escribo respondiendo a este correo.`, context: 'Cuestionario de menopausia', situation: '', follow: false, src: m.src || '', camp: m.camp || '', team: m.team === true, ...(m.ab === 'prio' ? { ab: 'prio' } : { ab: 'pago' }) };
+        await env.KV.put(`hold:${hid}`, JSON.stringify({ x: await sealEmail(env, JSON.stringify(held)), at: Date.now(), h: raw.h, to: 'gineco', rem: 2, ...(m.ab === 'prio' ? { prio: 1 } : {}) }), { expirationTtl: HOLD_DAYS * 86400 });
+        await env.KV.put(`meno:${id}`, JSON.stringify({ ...raw, hid }), { expirationTtl: Math.max(60, Math.round((raw.at + MENO_TTL * 1000 - Date.now()) / 1000)) });
+      }
+      if (!m.team) { await bump(env, 'menopausia_pagar_correo'); await record(env, { e: 'menopausia:pagar_correo', p: await personTag(env, request, madridDay()) }, sendMail, ctx); }
+      return Response.redirect(`${WORKER_URL}/pagar?c=${hid}&s=${await holdSig(env, hid)}&plan=${m.ab === 'prio' ? 'prio29' : 'suelta'}`, 303);
+    }
     // Consulta por WhatsApp: abre el pago de Stripe (pide correo y móvil) y vuelve a hera-gine.com/whatsapp/
     // Precio de WhatsApp para esta visita (la web lo enseña): la mitad en Argentina
     // Cifras públicas de la portada (Noza, 21 nov): consultas y respondidas en 30 días y horas de media. Sin datos personales.
@@ -834,6 +897,28 @@ const handler = {
       } catch (e) { console.log(e.message); return reply(502, { error: 'stripe' }); }
     }
 
+    // Cuestionario de menopausia: «Quiero mi resultado por correo»
+    if (url.pathname === '/menopausia/resultado') {
+      const norm = normalizeEmail(body.email);
+      if (!norm) return reply(400, { error: 'bad_email' });
+      const text = String(body.text || '').slice(0, 1500);
+      if (!/^Mi cuestionario de menopausia/.test(text)) return reply(400, { error: 'bad_text' });
+      if (await rateLimited(env, request.headers.get('CF-Connecting-IP'))) return reply(429, { error: 'rate' });
+      const id = newThreadId();
+      const m = { email: String(body.email).trim(), text, ab: body.ab === 'prio' ? 'prio' : 'pago', src: body.src === 'ads' ? 'ads' : '', camp: /^[a-z0-9_]{1,24}$/.test(String(body.camp || '')) ? body.camp : '', team: body.team === true };
+      await env.KV.put(`meno:${id}`, JSON.stringify({ x: await sealEmail(env, JSON.stringify(m)), at: Date.now(), h: await hmac(env.HASH_SALT, norm), fu: 0 }), { expirationTtl: MENO_TTL });
+      const ok = await sendMail(env, { to: m.email, replyTo: 'contacto@hera-gine.com', ...menoEmail(m, await menoLinks(env, id)) });
+      if (!ok) return reply(502, { error: 'send' });
+      if (!m.team) {
+        await bump(env, 'menopausia_correo_resultado');
+        await record(env, { e: 'menopausia:correo_resultado', p: await personTag(env, request, madridDay(), body.p) }, sendMail, ctx);
+        const lvl = (text.match(/, (te afectan [^.]+)\./) || [])[1] || '';
+        const job = notify(env, `Cuestionario de menopausia · resultado por correo${lvl ? ` · ${lvl}` : ''}`, `Alguien ha completado el cuestionario de menopausia y ha pedido su resultado por correo${lvl ? ` (${lvl})` : ''}${m.src === 'ads' ? ', desde un anuncio' : ''}.\n\nVersión de precio: ${m.ab === 'prio' ? '29 €' : '9 €'}. En 2 días le escribimos una vez por si quiere enviárselo a Gonzalo. Su correo no se muestra aquí.`, sendMail);
+        if (ctx?.waitUntil) ctx.waitUntil(job); else await job;
+      }
+      return reply(200, { ok: true });
+    }
+
     // WhatsApp «Próximamente» (19 nov): quien pulsa «Avísame» deja su correo cifrado para avisarla cuando vuelva (12 meses como mucho)
     if (url.pathname === '/avisame') {
       const norm = normalizeEmail(body.email);
@@ -1073,6 +1158,7 @@ const handler = {
     const min = event?.scheduledTime ? new Date(event.scheduledTime).getUTCMinutes() : 15;
     if (min !== 15) { await remindHolds(env); return; }
     await remindOverdue(env);
+    await menoFollowups(env).catch((e) => console.log(`meno ${e.message}`));
     await sendFeedbackDue(env, sendMail, PROS);
     // Resumen de actividad por correo: apagado (Noza, 20 nov). La actividad sigue en el panel.
     // await hourlyDigest(env, sendMail);

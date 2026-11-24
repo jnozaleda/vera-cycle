@@ -755,6 +755,45 @@ console.log('consultas: OK');
   console.log('Grupo de Maite: 2 gratis, una por profesional: OK');
 }
 
+// Cuestionario de menopausia: resultado por correo, enlace de pago, «no quiero más» y seguimiento a los 2 días
+{
+  const { menoFollowups } = await import('../src/worker.js');
+  const text = 'Mi cuestionario de menopausia (orientativo): 30 de 48, te afectan mucho. Tu cuerpo 9/12.\n\nMi duda: ';
+  const s0 = sent.length;
+  const bad = await call('/menopausia/resultado', { email: 'meno@example.com', text: 'otra cosa' });
+  assert.equal(bad.j.error, 'bad_text');
+  const r1 = await call('/menopausia/resultado', { email: 'meno@example.com', text, ab: 'prio' });
+  assert.ok(r1.j.ok, JSON.stringify(r1.j));
+  const m1 = sent.slice(s0).find((x) => x.to[0] === 'meno@example.com');
+  assert.match(m1.subject, /Tu resultado del cuestionario/); assert.match(m1.html, /Enviar mi resultado a Gonzalo · 29 €/); assert.match(m1.html, /30 de 48, te afectan mucho/);
+  assert.ok(!/Mi duda:/.test(m1.text), 'sin el «Mi duda:» del final');
+  assert.ok(!sent.slice(s0).some((x) => /meno@example\.com/.test(x.text || '') && x.to[0] !== 'meno@example.com'), 'el aviso al equipo no lleva su correo');
+  const pay = m1.text.match(/https:\/\/\S+\/menopausia\/pagar\?\S+/)[0]; const stop = m1.text.match(/https:\/\/\S+\/menopausia\/baja\?\S+/)[0];
+  // pagar: crea la consulta guardada (prioritaria) y lleva a /pagar con el plan de 29 €
+  const rp = await worker.fetch(new Request(pay.replace(/^https:\/\/[^/]+/, 'https://w')), env);
+  assert.equal(rp.status, 303); const loc = rp.headers.get('Location');
+  assert.match(loc, /\/pagar\?c=[a-z0-9]{8}&s=[a-f0-9]{16}&plan=prio29$/);
+  const hid = loc.match(/c=([a-z0-9]{8})/)[1];
+  const hold = await env.KV.get(`hold:${hid}`, 'json'); assert.ok(hold && hold.prio === 1 && hold.to === 'gineco' && hold.rem === 2, JSON.stringify(hold));
+  const rp2 = await worker.fetch(new Request(pay.replace(/^https:\/\/[^/]+/, 'https://w')), env);
+  assert.match(rp2.headers.get('Location'), new RegExp(`c=${hid}`), 'el segundo clic reutiliza la misma consulta guardada');
+  // seguimiento: antes de 2 días, nada; después, uno (con la consulta aún sin pagar) y se borra
+  const s1 = sent.length; await menoFollowups(env); assert.equal(sent.length, s1, 'aún no');
+  const keys = (await env.KV.list({ prefix: 'meno:' })).keys; const k0 = keys[0].name; const raw = await env.KV.get(k0, 'json');
+  await env.KV.put(k0, JSON.stringify({ ...raw, at: Date.now() - 49 * 3600000 }));
+  await menoFollowups(env);
+  const f1 = sent.slice(s1).filter((x) => x.to[0] === 'meno@example.com'); assert.equal(f1.length, 1); assert.match(f1[0].subject, /revise tu resultado/);
+  assert.equal(await env.KV.get(k0), null, 'tras el seguimiento se borra');
+  // no quiero más: borra
+  const r2 = await call('/menopausia/resultado', { email: 'meno2@example.com', text });
+  const m2 = sent.filter((x) => x.to[0] === 'meno2@example.com').pop(); assert.match(m2.html, /Gonzalo · 9 €/);
+  const stop2 = m2.text.match(/https:\/\/\S+\/menopausia\/baja\?\S+/)[0];
+  const rb = await worker.fetch(new Request(stop2.replace(/^https:\/\/[^/]+/, 'https://w')), env); assert.equal(rb.status, 200);
+  assert.equal((await env.KV.list({ prefix: 'meno:' })).keys.length, 0, 'borrado al pedir no recibir más');
+  const rs = await worker.fetch(new Request(stop.replace(/^https:\/\/[^/]+/, 'https://w')), env); assert.equal(rs.status, 200);
+  console.log('Cuestionario de menopausia por correo: OK');
+}
+
 // Fin del 1 € (22 nov): sin gratis y pasado BF_OFFER_END, la consulta nueva se guarda a 9 € (las guardadas antes siguen a 1 €)
 {
   const P0 = env.PAYMENTS, K0 = env.STRIPE_SECRET_KEY, R0 = env.RELAY, B0 = env.BF_OFFER_END_MS;

@@ -89,6 +89,7 @@ html.hm-open{overflow:hidden}</style></head><body>
 .m-bar b{font-weight:600;text-align:right;color:#4F4E49}.m-track{height:10px;background:#E5E1D8;border-radius:5px;overflow:hidden}.m-track i{display:block;height:100%;width:0;background:#8A7045;border-radius:5px;transition:width .3s}
 .m-scale{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:12.5px}.m-scale div{border-radius:8px;padding:8px}.m-scale b{display:block;font-size:13px}
 .m-note{font-size:12.5px;color:#6E6C67;line-height:1.45}
+.m-mail{display:grid;gap:8px;border-top:1px solid #D9DFD7;padding-top:12px}.m-mail-t{margin:0;font-size:14px;color:#2F3631}.m-mail-t b{font-weight:600}.m-mail-r{display:flex;gap:8px}.m-quiz>*{min-width:0}.m-mail-r input{flex:1 1 0;width:100%;min-width:0;border:1px solid #D9D5CB;border-radius:8px;padding:10px 12px;font:16px Inter,system-ui,sans-serif;background:#fff;color:#2F3631}.m-mail-r .m-btn{white-space:nowrap}.m-mail-ok{font-size:14px;color:#2D4A3A;background:#DCEBE4;border-radius:8px;padding:10px 12px;margin:0}
 .m-offer{display:grid;gap:10px;border:1.5px solid #45574C;border-radius:12px;padding:14px;background:#F3F6F1}.m-offer[hidden]{display:none}.m-ofw{display:grid;grid-template-columns:48px 1fr;gap:12px;align-items:center;font-size:14.5px;line-height:1.45;color:#2F3631}.m-ofw img{width:48px;height:48px;border-radius:50%;object-fit:cover}.m-ofw b{font-weight:600}.m-res{scroll-margin-top:84px}
 .m-check{background:#fff;border:1px solid #E5E1D8;border-radius:14px;padding:20px 22px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 28px}
 .m-check ul{list-style:none;padding:0;margin:0}.m-check li{font-size:15px;padding:9px 0 9px 26px;border-bottom:1px solid #E5E1D8;position:relative}
@@ -132,6 +133,11 @@ html.hm-open{overflow:hidden}</style></head><body>
         <div class="m-ofw"><img src="/portada/equipo/gonzalo.jpg?v=2" alt="" width="52" height="52" loading="lazy"><span><b>Gonzalo puede revisar tu resultado</b> y decirte qué opciones tienes. Te responde por escrito <span id="m-when">en menos de 24 h</span>.</span></div>
         <a class="m-btn p" id="m-send" href="/#preguntar-gineco" aria-disabled="true" style="text-align:center">Enviar mi resultado a Gonzalo <span style="white-space:nowrap">· <span id="m-send-p">9 €</span></span></a>
         <p class="m-note">Primero lo revisas en la caja de consulta; no se cobra nada hasta que lo confirmas. Si no te sirve, te devolvemos el dinero.</p>
+        <form class="m-mail" id="m-mail" novalidate>
+          <p class="m-mail-t"><b>¿Prefieres pensarlo?</b> Te mandamos tu resultado por correo.</p>
+          <div class="m-mail-r"><input type="email" id="m-email" placeholder="Tu correo" autocomplete="email" inputmode="email" aria-label="Tu correo"><button type="submit" class="m-btn s" id="m-mail-b">Enviármelo</button></div>
+          <p class="m-note" id="m-mail-n">Te lo enviamos ahora y, en 2 días, un único correo por si quieres preguntárselo a Gonzalo. Puedes darte de baja desde el propio correo. <a href="/privacy.html#menopausia">Privacidad</a></p>
+        </form>
       </div>
       <div class="m-bar"><span>Tu cuerpo</span><div class="m-track"><i id="m-b0"></i></div><b id="m-n0">0</b></div><div class="m-bar"><span>Sueño y ánimo</span><div class="m-track"><i id="m-b1"></i></div><b id="m-n1">0</b></div><div class="m-bar"><span>Intimidad</span><div class="m-track"><i id="m-b2"></i></div><b id="m-n2">0</b></div><div class="m-bar"><span>Tu día a día</span><div class="m-track"><i id="m-b3"></i></div><b id="m-n3">0</b></div>
       <div class="m-scale"><div style="background:#EAF3EE"><b>0–12</b>Te afectan poco</div><div style="background:#FBF1E2"><b>13–24</b>Moderado</div><div style="background:#FCEAE6"><b>25–48</b>Te afectan mucho</div></div>
@@ -189,6 +195,14 @@ function update(){
 f.addEventListener('change',update);
 $('m-send').addEventListener('click',(ev)=>{if($('m-send').getAttribute('aria-disabled')==='true'){ev.preventDefault();return}h('menopausia:enviar');try{localStorage.setItem('hera-ask-prefill',JSON.stringify({text:$('m-send').dataset.text,at:Date.now()}))}catch(e){}});
 $('m-reset').addEventListener('click',()=>{f.reset();update()});
+// Resultado por correo (24 nov, experimento): correo ahora y un seguimiento a los 2 días (lo hace el servicio)
+$('m-mail').addEventListener('submit',async(ev)=>{ev.preventDefault();const em=$('m-email'),b=$('m-mail-b'),n=$('m-mail-n');const v=em.value.trim();
+  if(!/^[^s@<>()",;]+@[^s@<>()",;]+.[a-z]{2,24}$/i.test(v)){n.textContent='Revisa tu correo: parece que no está bien escrito.';em.focus();return}
+  b.disabled=true;b.textContent='Enviando…';
+  let ab='pago',ad={};try{ab=localStorage.getItem('hera-ab-precio')==='prio'?'prio':'pago';localStorage.setItem('hera-ask-email',v);const q=new URLSearchParams(location.search);if(q.has('gclid')||/^(cpc|ppc|paid)$/i.test(q.get('utm_medium')||''))ad={src:'ads',camp:(q.get('utm_campaign')||'').toLowerCase().replace(/[^a-z0-9_]/g,'_').slice(0,24)}}catch(e){}
+  try{const r=await fetch(A+'/menopausia/resultado',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:v,text:$('m-send').dataset.text,ab,...ad,...(off?{team:true}:{})})});
+    if(!r.ok)throw new Error();$('m-mail').innerHTML='<p class="m-mail-ok">Enviado a <b></b>. Si no lo ves, mira en «Promociones» o «Spam».</p>';$('m-mail').querySelector('b').textContent=v}
+  catch(e){b.disabled=false;b.textContent='Enviármelo';n.textContent='No se ha podido enviar. Inténtalo en un momento.'}});
 document.querySelectorAll('[data-hit]').forEach((a)=>a.addEventListener('click',()=>h('menopausia:'+a.dataset.hit)));
 // Latinoamérica (anuncios …_latam, como la portada): teléfono de urgencias de cada país y sin el dato de España
 let latam=false;try{if(/_latam$/.test((new URLSearchParams(location.search).get('utm_campaign')||'').toLowerCase()))sessionStorage.setItem('hera-latam','1');latam=sessionStorage.getItem('hera-latam')==='1'}catch(e){}

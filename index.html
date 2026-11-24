@@ -1115,11 +1115,12 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
   // Sin cookies ni nada guardado en el dispositivo; nunca lo que escriben: solo la posición (px desde el centro de la pantalla
   // y desde arriba de la página), el ancho, el alto de la página y qué se tocó (botón o enlace con su texto, o el bloque).
   {
-    const q = []; let n = 0;
+    const q = []; let n = 0; let timer = 0;
     const send = () => {
       if (!q.length || local || isTeam()) { q.length = 0; return; }
       const b = JSON.stringify({ pg: 'portada', p: ptag, d: device(), t: q.splice(0) });
-      if (!(navigator.sendBeacon && navigator.sendBeacon(`${API}/tap`, b))) fetch(`${API}/tap`, { method: 'POST', body: b, keepalive: true }).catch(() => {});
+      // fetch con keepalive (como /hit): manda siempre de qué web viene; sendBeacon de Safari no llegaba (0 toques el 24 nov)
+      fetch(`${API}/tap`, { method: 'POST', body: b, keepalive: true }).catch(() => {});
     };
     const what = (t) => {
       const a = t.closest('a,button,summary,label,input,textarea,select,[role=button],[data-goask]');
@@ -1139,7 +1140,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
       const w = document.documentElement.clientWidth, h = document.documentElement.scrollHeight;
       const [el, act] = what(ev.target);
       q.push([Math.round(ev.pageX - w / 2), Math.round(ev.pageY), w, h, el, act]);
-      if (q.length >= 15) send();
+      clearTimeout(timer); if (q.length >= 15) send(); else timer = setTimeout(send, 4000); // a los 4 s sin tocar, se envía
     }, { capture: true, passive: true });
     addEventListener('pagehide', send);
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') send(); });

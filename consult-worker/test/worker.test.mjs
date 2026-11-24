@@ -791,6 +791,8 @@ console.log('consultas: OK');
   const rb = await worker.fetch(new Request(stop2.replace(/^https:\/\/[^/]+/, 'https://w')), env); assert.equal(rb.status, 200);
   assert.equal((await env.KV.list({ prefix: 'meno:' })).keys.length, 0, 'borrado al pedir no recibir más');
   const rs = await worker.fetch(new Request(stop.replace(/^https:\/\/[^/]+/, 'https://w')), env); assert.equal(rs.status, 200);
+  const s9 = sent.length; await call('/menopausia/resultado', { email: 'equipo@example.com', text, team: true });
+  assert.ok(sent.slice(s9).some((x) => /^Prueba del equipo · Cuestionario de menopausia · equipo@example\.com/.test(x.subject || '')), 'en modo equipo también avisa, marcado como prueba');
   console.log('Cuestionario de menopausia por correo: OK');
 }
 

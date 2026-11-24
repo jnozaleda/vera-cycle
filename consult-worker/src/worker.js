@@ -912,9 +912,11 @@ const handler = {
       if (!m.team) {
         await bump(env, 'menopausia_correo_resultado');
         await record(env, { e: 'menopausia:correo_resultado', p: await personTag(env, request, madridDay(), body.p) }, sendMail, ctx);
+      }
+      {
+        // Noza (24 nov): el aviso lleva su correo y su resultado. En modo equipo también llega (para probarlo), marcado como prueba
         const lvl = (text.match(/, (te afectan [^.]+)\./) || [])[1] || '';
-        // Noza (24 nov): el aviso lleva su correo, como el de «Avísame» de WhatsApp
-        const job = notify(env, `Cuestionario de menopausia · ${m.email}${lvl ? ` · ${lvl}` : ''}`, `Alguien ha completado el cuestionario de menopausia y ha pedido su resultado por correo${lvl ? ` (${lvl})` : ''}${m.src === 'ads' ? ', desde un anuncio' : ''}.\n\nCorreo: ${m.email}\nVersión de precio: ${m.ab === 'prio' ? '29 €' : '9 €'}\n\nSu resultado:\n${String(m.text).replace(/\s*Mi duda:\s*$/, '').trim()}\n\nEn 2 días le escribimos una vez por si quiere enviárselo a Gonzalo.`, sendMail);
+        const job = notify(env, `${m.team ? 'Prueba del equipo · ' : ''}Cuestionario de menopausia · ${m.email}${lvl ? ` · ${lvl}` : ''}`, `Alguien ha completado el cuestionario de menopausia y ha pedido su resultado por correo${lvl ? ` (${lvl})` : ''}${m.src === 'ads' ? ', desde un anuncio' : ''}.${m.team ? '\n\n(Es una prueba desde un dispositivo en modo equipo: no cuenta en el panel.)' : ''}\n\nCorreo: ${m.email}\nVersión de precio: ${m.ab === 'prio' ? '29 €' : '9 €'}\n\nSu resultado:\n${String(m.text).replace(/\s*Mi duda:\s*$/, '').trim()}\n\nEn 2 días le escribimos una vez por si quiere enviárselo a Gonzalo.`, sendMail);
         if (ctx?.waitUntil) ctx.waitUntil(job); else await job;
       }
       return reply(200, { ok: true });

@@ -74,6 +74,7 @@ const CSS = `<style>
 .m-bar b{font-weight:600;text-align:right;color:#4F4E49}.m-track{height:10px;background:#E5E1D8;border-radius:5px;overflow:hidden}.m-track i{display:block;height:100%;width:0;background:#8A7045;border-radius:5px;transition:width .3s}
 .m-scale{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:12.5px}.m-scale div{border-radius:8px;padding:8px}.m-scale b{display:block;font-size:13px}
 .m-note{font-size:12.5px;color:#6E6C67;line-height:1.45}
+.m-offer{display:grid;gap:10px;border:1.5px solid #45574C;border-radius:12px;padding:14px;background:#F3F6F1}.m-offer[hidden]{display:none}.m-ofw{display:grid;grid-template-columns:48px 1fr;gap:12px;align-items:center;font-size:14.5px;line-height:1.45;color:#2F3631}.m-ofw img{width:48px;height:48px;border-radius:50%;object-fit:cover}.m-ofw b{font-weight:600}.m-res{scroll-margin-top:84px}
 .m-check{background:#fff;border:1px solid #E5E1D8;border-radius:14px;padding:20px 22px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 28px}
 .m-check ul{list-style:none;padding:0;margin:0}.m-check li{font-size:15px;padding:9px 0 9px 26px;border-bottom:1px solid #E5E1D8;position:relative}
 .m-check li::before{content:"";position:absolute;left:0;top:13px;width:14px;height:14px;border:1.5px solid #8A7045;border-radius:4px}
@@ -95,6 +96,7 @@ h('menopausia:visita');
 const f=document.getElementById('m-form'),$=(id)=>document.getElementById(id);
 const areas=[...new Set([...f.querySelectorAll('input')].map((i)=>i.dataset.area))];
 function read(){const r={};for(const i of f.querySelectorAll('input:checked'))r[i.name]={v:+i.value,a:i.dataset.area,t:document.getElementById(i.name+'t').textContent};return r}
+let done=false;
 function update(){
   const r=read(),k=Object.keys(r).length;if(k===1)h('menopausia:test_empezado');
   $('m-prog').textContent=k<T?'Respondidas '+k+' de '+T:'Cuestionario completo';
@@ -103,13 +105,14 @@ function update(){
   for(const x of Object.values(r)){by[x.a][0]+=x.v;tot+=x.v}
   areas.forEach((a,i)=>{$('m-b'+i).style.width=Math.round(by[a][0]*100/by[a][1])+'%';$('m-n'+i).textContent=by[a][0]+' de '+by[a][1]});
   const lvl=$('m-lvl'),btn=$('m-send');
-  if(k<T){lvl.className='m-lvl';$('m-h').textContent='Tu resultado';lvl.textContent='Contesta las '+T+' preguntas para ver cuánto te afectan.';btn.setAttribute('aria-disabled','true');return}
+  if(k<T){$('m-offer').hidden=true;lvl.className='m-lvl';$('m-h').textContent='Tu resultado';lvl.textContent='Contesta las '+T+' preguntas para ver cuánto te afectan.';btn.setAttribute('aria-disabled','true');return}
   h('menopausia:test_completo');
   const top=Object.values(r).filter((x)=>x.v>=3).sort((a,b)=>b.v-a.v).slice(0,3);
   const L=tot<=12?[1,'Te afectan poco','Si algo te preocupa, puedes preguntarlo igualmente.']:tot<=24?[2,'Te afectan de forma moderada','Hay tratamientos que ayudan: merece la pena comentarlo con tu ginecólogo.']:[3,'Te afectan mucho','No tienes por qué aguantarlo: coméntalo con tu ginecólogo, hay tratamientos que ayudan.'];
   lvl.className='m-lvl l'+L[0];$('m-h').textContent=L[1];
   lvl.innerHTML='<b>'+tot+' de '+MAX+'.</b> '+(top.length?'Lo que más te afecta: '+top.map((x)=>x.t.toLowerCase()).join('; ')+'. ':'')+L[2];
-  btn.removeAttribute('aria-disabled');
+  btn.removeAttribute('aria-disabled');$('m-offer').hidden=false;
+  if(!done){done=true;const rs=document.querySelector('.m-res');if(rs&&rs.getBoundingClientRect().top>innerHeight*0.5)rs.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'})}
   btn.dataset.text='Mi cuestionario de menopausia (orientativo): '+tot+' de '+MAX+', '+L[1].toLowerCase()+'. '+areas.map((a)=>a+' '+by[a][0]+'/'+by[a][1]).join(', ')+'.'+(top.length?' Lo que más me afecta: '+top.map((x)=>x.t.toLowerCase()+' ('+OPT[x.v].toLowerCase()+')').join('; ')+'.':'')+'\\n\\nMi duda: ';
 }
 f.addEventListener('change',update);
@@ -122,6 +125,8 @@ if(latam){const u=$('m-urg');if(u)u.textContent='Si es urgente, llama al número
 // Precio de la consulta por escrito: 1 € hasta el 1 dic (Black Friday), 9 € después
 if(Date.now()>=Date.parse('2026-11-22T20:15:00+01:00')){const p=$('m-price');if(p)p.textContent='9 €'}
 // Prueba de precio (portada, «hera-ab-precio»): a quien le tocó la prioritaria, 29 € y menos de 6 h
+try{let ab=localStorage.getItem('hera-ab-precio');if(ab!=='pago'&&ab!=='prio'){ab=Math.random()<0.5?'pago':'prio';localStorage.setItem('hera-ab-precio',ab)}
+  if(ab==='prio'){const sp=$('m-send-p');if(sp)sp.textContent='29 €';const w=$('m-when');if(w)w.textContent='en menos de 6 h';}}catch(e){}
 try{if(localStorage.getItem('hera-ab-precio')==='prio'){const p=$('m-price');if(p){p.textContent='29 €';const s=p.previousElementSibling?.querySelector('span');if(s)s.textContent='Prioritaria: te responde en menos de 6 h'}}}catch(e){}
 update();
 })()</script>`;
@@ -156,9 +161,13 @@ const body = `${CSS}<div class="w">
       <span class="m-prog" id="m-prog">Respondidas 0 de ${TOTAL}</span>
       <h3 id="m-h">Tu resultado</h3>
       <div class="m-lvl" id="m-lvl">Contesta las ${TOTAL} preguntas para ver cuánto te afectan.</div>
+      <div class="m-offer" id="m-offer" hidden>
+        <div class="m-ofw">${face(g)}<span><b>${g.name} puede revisar tu resultado</b> y decirte qué opciones tienes. Te responde por escrito <span id="m-when">en menos de 24 h</span>.</span></div>
+        <a class="m-btn p" id="m-send" href="/#preguntar-gineco" aria-disabled="true" style="text-align:center">Enviar mi resultado a ${g.name} <span style="white-space:nowrap">· <span id="m-send-p">9 €</span></span></a>
+        <p class="m-note">Primero lo revisas en la caja de consulta; no se cobra nada hasta que lo confirmas. Si no te sirve, te devolvemos el dinero.</p>
+      </div>
       ${AREAS.map(([a], i) => `<div class="m-bar"><span>${esc(a)}</span><div class="m-track"><i id="m-b${i}"></i></div><b id="m-n${i}">0</b></div>`).join('')}
       <div class="m-scale"><div style="background:#EAF3EE"><b>0–12</b>Te afectan poco</div><div style="background:#FBF1E2"><b>13–24</b>Moderado</div><div style="background:#FCEAE6"><b>25–48</b>Te afectan mucho</div></div>
-      <a class="m-btn p" id="m-send" href="/#preguntar-gineco" aria-disabled="true" style="text-align:center">Enviar mi resultado a ${g.name}</a>
       <button type="button" class="m-btn s" id="m-reset">Empezar de nuevo</button>
       <p class="m-note">Tus respuestas no se guardan ni se envían. Si pulsas «Enviar mi resultado», el resumen aparece en la caja de consulta para que lo revises antes de enviarlo.</p>
     </aside>

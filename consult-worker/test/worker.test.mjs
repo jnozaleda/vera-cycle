@@ -175,7 +175,7 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   const pm = sent.slice(s0).find((m) => m.to[0] === PROS.matrona.email);
   assert.match(pm.subject, /^POR VALORAR · /); assert.match(pm.html, /Por valorar: aún no ha pagado/); assert.match(pm.html, /\/valorar\/urgente\?c=/);
   const um = sent.slice(s0).find((m) => m.to[0] === 'valora@example.com');
-  assert.match(um.html, /Si no te convence, no pagas nada/); assert.match(um.html, /Enviarla ha sido gratis/);
+  assert.match(um.html, /si no, no pagas nada/); assert.match(um.html, /Enviarla ha sido gratis/);
   const k = [...store.keys()].find((x) => x.startsWith('t:') && !before.has(x));
   let t = await loadThread(env, k.slice(2)); assert.equal(t.v, 1);
   // Sin val (la app o /consultas/): sigue guardándose hasta pagar, como antes

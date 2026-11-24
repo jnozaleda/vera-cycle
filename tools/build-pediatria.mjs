@@ -108,7 +108,7 @@ const body = `${CSS}<div class="w">
 <div class="p-hero"><div>
   <p class="ey">Pediatría · Por escrito y sin cita</p>
   <h1>Pregunta a una pediatra lo que te preocupa de tu hijo</h1>
-  <p class="p-lead">La Dra. Lucía Carrascón lee tu duda y te dice <span id="p-plazo">en menos de 24 h</span> qué necesita y el precio de la respuesta completa, normalmente 5 €. <span id="p-precio">Enviarla es gratis.</span></p>
+  <p class="p-lead">La Dra. Lucía Carrascón lee tu duda y te contesta <span id="p-plazo">en menos de 24 h</span>. <span id="p-precio">Enviarla es gratis; su respuesta completa, 5 €.</span></p>
   <div class="p-doc"><img src="/portada/equipo/lucia-grande.jpg" alt="" width="84" height="84"><span><b>Dra. Lucía Carrascón</b><span>Pediatra · Hospital Gregorio Marañón</span><span>Más de 15 años con bebés y niños · Colegiada</span></span></div>
   <div class="p-box" id="duda">
     <label for="p-ta">¿Qué le pasa?</label>
@@ -118,7 +118,7 @@ const body = `${CSS}<div class="w">
     <p class="p-fine">${LOCK}Solo la lee Lucía · Si no te sirve, te devolvemos el dinero</p>
   </div>
   <div class="route" aria-label="Cómo funciona"><div class="track" aria-hidden="true"><span class="ln"></span><span class="st"></span><span class="st s2"></span><span class="halo"></span><span class="st s3"></span><span class="dot"></span></div>
-    <div class="lb"><div><b>1. Envías tu duda</b>sin registro</div><div><b>2. Lucía te valora</b><span id="p-r2">gratis, en 24 h</span></div><div><b>3. Te responde</b><span id="p-r3">si pagas 5 €</span></div></div></div>
+    <div class="lb"><div><b>1. Envías tu duda</b>sin registro</div><div><b>2. Lucía te contesta</b><span id="p-r2">en menos de 24 h</span></div><div><b>3. Respuesta completa</b><span id="p-r3">por 5 €</span></div></div></div>
 </div>
 <div class="p-side">
   <p class="p-tag">Ejemplo orientativo</p>
@@ -138,7 +138,7 @@ const body = `${CSS}<div class="w">
 <section class="p-blk"><h2>Guías para el día a día</h2><p class="p-sub">Lo que suele ser normal, cuándo consultar y cuándo ir a urgencias.</p>
 <div class="p-gl">${GUIAS.map(([s, t]) => `<a href="/guias/${s}/">${esc(t)}${CHEV}</a>`).join('')}</div></section>
 
-<section class="p-blk"><div class="p-price"><span><b id="p-pb">Enviar es gratis · respuesta completa, 5 €</b>Lucía te dice antes qué necesita y el precio; solo pagas si quieres la respuesta, por escrito y con lo que te quede por preguntar. Si no te sirve, te devolvemos el dinero.</span><a href="/#preguntar-pediatra" data-hit="precio">Pregunta a Lucía</a></div>
+<section class="p-blk"><div class="p-price"><span><b id="p-pb">Enviar es gratis · respuesta completa, 5 €</b>Lucía la lee y te contesta; solo pagas si quieres su respuesta completa, por escrito y con lo que te quede por preguntar. Si no te sirve, te devolvemos el dinero.</span><a href="/#preguntar-pediatra" data-hit="precio">Pregunta a Lucía</a></div>
 <p class="p-other"><span class="p-fc"><img src="/portada/equipo/gonzalo.jpg?v=2" alt="" width="32" height="32" loading="lazy"><img src="/portada/equipo/marina.jpg?v=2" alt="" width="32" height="32" loading="lazy"></span><span>¿La duda es tuya, del embarazo o la lactancia? <a href="/" data-hit="otra_profesional">Pregunta a Gonzalo o a Marina</a></span></p></section>
 </div>
 <script>(()=>{

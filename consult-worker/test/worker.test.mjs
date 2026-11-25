@@ -214,7 +214,7 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   // A las 24 h sin pagar, un recordatorio a la usuaria (una sola vez)
   t.va = Date.now() - 25 * 3600000; await saveThread(env, t);
   const sr = sent.length; await remindOverdue(env); await remindOverdue(env);
-  assert.equal(sent.slice(sr).filter((m) => m.to[0] === 'valora@example.com' && /leyó ayer tu consulta/.test(m.html)).length, 1, 'un recordatorio de pago');
+  assert.equal(sent.slice(sr).filter((m) => m.to[0] === 'valora@example.com' && /está esperando para responderte/.test(m.html)).length, 1, 'un recordatorio de pago');
   t = await loadThread(env, t.id);
   // Enlaces firmados: uno falso no sirve
   const bad = await worker.fetch(new Request(`https://w/valorar/pagar?c=${t.id}&s=mal`), env); assert.match(await bad.text(), /ya no sirve/);

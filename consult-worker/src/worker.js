@@ -265,7 +265,7 @@ function valProText(l) {
 /** Reenvío de los botones a petición del equipo (Noza, 25 nov): KV «val-reenvio» = [ids]; se envían y se borra la lista */
 async function resendValButtons(env) {
   const ids = await env.KV.get('val-reenvio', 'json');
-  if (!Array.isArray(ids) || !ids.length) return 0;
+  if (!Array.isArray(ids) || !ids.length) return remindValNow(env);
   await env.KV.delete('val-reenvio');
   let n = 0;
   for (const id of ids.filter((x) => /^[a-z0-9]{8}$/.test(String(x)))) {
@@ -278,6 +278,22 @@ async function resendValButtons(env) {
     if (await sendMail(env, { to: pro.email, from: `Consulta #${t.id.toUpperCase()} · Hera <consultas@hera-gine.com>`, replyTo: await relayAddress(env, 'p', t.id), subject: `Re: ${t.sp}`, refs: t.rp, html, text: `${state}\n\n${valProText(l)}` })) { t.vb = Date.now(); await saveThread(env, t); n++; }
   }
   console.log(`reenvio botones: ${n}`);
+  return n + await remindValNow(env);
+}
+/** Recordatorio de pago a petición del equipo (Noza, 25 nov): KV «val-recordar» = [ids] */
+async function remindValNow(env) {
+  const ids = await env.KV.get('val-recordar', 'json');
+  if (!Array.isArray(ids) || !ids.length) return 0;
+  await env.KV.delete('val-recordar');
+  let n = 0;
+  for (const id of ids.filter((x) => /^[a-z0-9]{8}$/.test(String(x)))) {
+    const t = await loadThread(env, id);
+    if (!t || t.v !== 2 || !PROS[t.p]) continue;
+    const { html, text } = valReminderEmail(PROS[t.p], (await valLinks(env, t.id)).pay);
+    const sent = await sendMail(env, { to: await openEmail(env, t.u), from: `${PROS[t.p].short} · Hera <${PROS[t.p].email}>`, replyTo: await relayAddress(env, 'u', t.id), subject: `Re: ${t.su}`, refs: t.ru, html, text });
+    if (sent) { t.vr = Date.now(); if (sent.id) t.ou = [...(t.ou || []), sent.id].slice(-10); await saveThread(env, t); await bump(env, 'valorada_recordatorio'); n++; }
+  }
+  console.log(`recordatorio de pago a petición: ${n}`);
   return n;
 }
 /** Valoración enviada desde el botón «Pedir el pago»: mensaje de la profesional + botón de pago a la usuaria */
@@ -305,10 +321,10 @@ export function valPayBlock(pro, link) {
   };
 }
 export function valReminderEmail(pro, link) {
-  const html = shell(`<p>Hola,</p><p>${esc(pro.name)}, ${esc(pro.role)}, leyó ayer tu consulta y te dijo lo que necesitaba para responderte. Si todavía quieres su respuesta completa, está a un paso:</p>
+  const html = shell(`<p>Hola,</p><p>${esc(pro.name)}, ${esc(pro.role)}, ha leído tu consulta y está esperando para responderte. Para recibir su respuesta completa, falta el pago:</p>
 <p style="margin:16px 0"><a href="${link}" style="display:inline-block;background:#45574C;color:#ffffff;text-decoration:none;font-weight:600;border-radius:8px;padding:12px 20px">Pagar ${VAL_PRICE} y recibir la respuesta</a></p>
 <p style="font-size:13px;color:#6E6C67">Si has tenido algún problema para pagar, responde a este correo y te ayudamos. Si ya no lo necesitas, no tienes que hacer nada.</p>`);
-  return { html, text: `Hola. ${pro.name}, ${pro.role}, leyó ayer tu consulta. Si todavía quieres su respuesta completa: ${link}\n\nSi has tenido algún problema para pagar, responde a este correo.` };
+  return { html, text: `Hola. ${pro.name}, ${pro.role}, ha leído tu consulta y está esperando para responderte. Para recibir su respuesta completa: ${link}\n\nSi has tenido algún problema para pagar, responde a este correo.` };
 }
 /** Al pagar una consulta valorada: se gasta la consulta pagada, avisos a la profesional y a la usuaria */
 export async function unlockVal(env, id) {

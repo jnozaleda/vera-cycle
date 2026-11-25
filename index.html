@@ -199,8 +199,8 @@ section { padding: 64px 0; }
 .nm-row #ask-sum-t { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .nm-row img { width: 26px; height: 26px; border-radius: 50%; object-fit: cover; flex: none; }
 .nm-row button { flex: none; font: 500 13.5px/1 'Inter', sans-serif; color: var(--plum); background: none; border: 0; padding: 4px 0; text-decoration: underline; cursor: pointer; }
-.nm-almost { display: flex; gap: 10px; align-items: flex-start; background: #EEF4EF; border-radius: 10px; padding: 11px 12px; font-size: 14px; }
-.nm-almost .ck { flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--plum); color: #fff; display: flex; align-items: center; justify-content: center; }
+.nm-almost { display: flex; gap: 10px; align-items: flex-start; background: #FFF4D9; border: 1px solid #E9D49A; border-radius: 10px; padding: 11px 12px; font-size: 14px; }
+.nm-almost .ck { flex: none; width: 24px; height: 24px; border-radius: 50%; background: #9A6A12; color: #fff; display: flex; align-items: center; justify-content: center; }
 .nm-almost b { display: block; } .nm-almost span span { color: #4F4E49; font-size: 13.5px; }
 .ask.needmail #ask-files, .ask.needmail .fld-ck, .ask.needmail #duda, .ask.needmail .picks, .ask.needmail #ask-hint, .ask.needmail #ask-soon, .ask.needmail .perks { display: none !important; }
 .ask.soonmail #ask-email:not(.nm-ok), .ask.needmail #ask-email:not(.nm-ok) { border-color: #B3261E; box-shadow: 0 0 0 3px #F6D6D2; }
@@ -816,7 +816,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
         </div>
         <p class="priv"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span><b>Solo la lee tu profesional.</b> No ve tu correo y no lo compartimos con nadie.</span></p>
         <div class="more" id="ask-more" hidden>
-          <div class="nm-almost" id="ask-almost" hidden><span class="ck"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span><span><b>Ya casi está.</b><span id="ask-almost-t">Solo falta tu correo para que te puedan responder.</span></span></div>
+          <div class="nm-almost" id="ask-almost" hidden><span class="ck"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7v6M12 17h.01"/></svg></span><span><b>Tu duda aún no se ha enviado.</b><span id="ask-almost-t">Escribe tu correo y pulsa «Enviar» para que te puedan responder.</span></span></div>
           <fieldset class="picks">
             <legend id="ask-lee-l">¿A quién se lo preguntas?</legend>
             <label class="pick"><input type="radio" name="to" value="gineco"><img src="portada/equipo/gonzalo-grande.jpg" alt="" width="88" height="88"><span><b>Gonzalo</b><small>Ginecólogo</small></span><em>Sugerido</em></label>
@@ -824,7 +824,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
             <label class="pick"><input type="radio" name="to" value="pediatra"><img src="portada/equipo/lucia-grande.jpg" alt="" width="88" height="88"><span><b>Lucía</b><small>Pediatra</small></span><em>Sugerido</em></label>
           </fieldset>
           <p class="lee" id="ask-lee" hidden aria-live="polite"><b id="ask-lee-n"></b><span id="ask-lee-r"></span></p>
-          <label class="fld"><span class="sr">Tu correo</span><input id="ask-email" type="email" inputmode="email" autocomplete="email" placeholder="Tu correo, para la respuesta"></label>
+          <label class="fld"><span class="sr">Tu correo</span><input id="ask-email" type="email" inputmode="email" autocomplete="email" enterkeyhint="send" placeholder="Tu correo, para la respuesta"></label>
           <div class="topro" id="ask-topro" hidden><img id="ask-topro-img" src="" alt="" width="26" height="26"><span id="ask-topro-t"></span><button type="button" id="ask-topro-b">Cambiar</button></div>
           <p class="hint" id="ask-hint" aria-live="polite"></p>
           <p class="urgent" id="ask-urgent" hidden>Si es algo urgente (sangrado abundante, pérdida de líquido, el bebé no se mueve, dolor muy fuerte), no esperes: llama al 112 o ve a urgencias.</p>
@@ -1364,6 +1364,8 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     else if (opened && !busy && (BF || PRIO)) $('ask-send-t').textContent = `Ir al pago · ${PRIO ? '29' : '1'} €`;
     else if (opened && !busy && !BF && !PRIO && !PAGO) $('ask-send-t').textContent = `Enviar${store.get('hera-free-left') === '0' || (to && !['q7m', 'k2v'].includes(viaSrc().via) && (store.get('hera-free-pros') || '').split(',').includes(to)) ? '' : ' gratis'}${to ? ` a ${PROS[to].name}` : ''}`;
     if (opened && !busy && !BF && !PRIO && !PAGO && !(to && lastSent?.to === to)) $('ask-send-s').textContent = `Te ${to ? 'responde' : 'responden'} por correo en menos de 24\u00a0h`;
+    // Falta el correo tras pulsar «Enviar»: el botón dice que aún no se ha enviado (25 nov)
+    if (!busy && box.classList.contains('needmail')) { const okM = isEmail(email.value), tn = PROS[to || 'gineco'].name; $('ask-send-t').textContent = okM ? `Enviar ahora mi duda a ${tn}` : `Enviar mi duda a ${tn}`; $('ask-send-s').textContent = 'Aún no se ha enviado'; }
     chat?.sync();
   }
   function open() {
@@ -1503,13 +1505,21 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
 
   // Enviar sin correo: «Ya casi está», duda y profesional recogidas, correo en rojo y botón inactivo hasta que esté bien escrito
   // El botón no se desactiva (en iPhone el autorrelleno puede no avisar): al pulsar sin correo válido, se vuelve a pedir
-  const nmOk = () => { if (box.classList.contains('needmail')) email.classList.toggle('nm-ok', isEmail(email.value)); };
+  const nmOk = () => {
+    if (!box.classList.contains('needmail')) return;
+    const ok = isEmail(email.value); email.classList.toggle('nm-ok', ok);
+    // 25 nov: tras «Enviar» sin correo, mucha gente escribía el correo y se iba creyendo que ya estaba enviada
+    const to = chosen() || 'gineco';
+    $('ask-send-t').textContent = ok ? `Enviar ahora mi duda a ${PROS[to].name}` : `Enviar mi duda a ${PROS[to].name}`;
+    $('ask-send-s').textContent = 'Aún no se ha enviado';
+  };
+  email.addEventListener('blur', () => { if (box.classList.contains('needmail') && isEmail(email.value)) setTimeout(() => send.scrollIntoView({ block: 'center', behavior: 'smooth' }), 150); });
   function needMail(to) {
     const p = PROS[to];
     $('ask-sum-t').textContent = ta.value.trim();
     $('ask-sum-pro').innerHTML = `Para <b>${esc(p.name)}</b>, ${esc(p.role || '')}`;
     $('ask-sum-img').src = `portada/equipo/${p.img}.jpg?v=3`;
-    $('ask-almost-t').textContent = `Solo falta tu correo para que ${p.name} te pueda responder.`;
+    $('ask-almost-t').textContent = `Escribe tu correo y pulsa «Enviar» para que ${p.name} te pueda responder.`;
     showErr('');
     box.classList.add('needmail');
     $('ask-sum').hidden = false; $('ask-almost').hidden = false;

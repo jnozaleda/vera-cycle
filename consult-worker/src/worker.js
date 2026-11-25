@@ -1367,7 +1367,7 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
   }
   if (valPending) offer = valPayBlock(pro, (await valLinks(env, t.id)).pay);
   // Cuando la usuaria responde y aún no está decidido (o no ha pagado), la profesional vuelve a tener los botones debajo
-  if (role === 'u' && (t.v === 1 || t.v === 2)) { const l = await valLinks(env, t.id); offer = t.v === 1 ? { html: valProHtml(l), text: valProText(l) } : { html: `<p style="font-size:13.5px;color:#6E6C67;margin-top:14px">Ya le pediste el pago de ${VAL_PRICE}; todavía no ha pagado. Si le respondes, tu mensaje le llega con el botón de pago.</p>`, text: `Ya le pediste el pago de ${VAL_PRICE}; todavía no ha pagado.` }; }
+  if (role === 'u' && (t.v === 1 || t.v === 2)) { const l = await valLinks(env, t.id); offer = t.v === 1 ? { html: valProHtml(l), text: valProText(l) } : { html: `<div style="background:#FFF6D6;border-radius:10px;padding:10px 12px;margin-top:14px;font-size:13.5px;color:#2F3631"><b>Todavía no ha pagado.</b> No hace falta que le respondas: le hemos enviado un correo automático para que complete el pago de ${VAL_PRICE}. Cuando pague, te avisamos aquí. Si ves algo urgente, respóndele y le llegará con el botón de pago.</div>`, text: `TODAVÍA NO HA PAGADO. No hace falta que le respondas: le hemos recordado que complete el pago de ${VAL_PRICE}. Cuando pague, te avisamos.` }; }
   const { html, text } = relayEmail(pro, role, t.id, msg.body || '(Sin texto: mira el archivo adjunto.)', msg.attachments.length, rate, invite, offer);
   const refsMine = toUser ? t.ru : t.rp;
   const sent = await sendMail(env, {
@@ -1396,6 +1396,16 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
   // Lo que le enviamos a la usuaria: solo el identificador de Resend, para poder reenviárselo si rebotó (panel)
   if (toUser && sent.id) t.ou = [...(t.ou || []), sent.id].slice(-10);
   t.n = (t.n || 0) + 1;
+  // Pago pedido y la usuaria sigue escribiendo (Gonzalo, 25 nov): correo automático con el botón de pago, como mucho cada 12 h
+  if (role === 'u' && t.v === 2 && PROS[t.p] && (!t.vq || Date.now() - t.vq > 12 * 3600000)) {
+    const link = (await valLinks(env, t.id)).pay;
+    const html = shell(`<p>Hola,</p><p>${esc(pro.short)} ha recibido tu mensaje. <b>Para que pueda responderte, falta completar el pago de ${VAL_PRICE}.</b> En cuanto pagues, te contestará en esta misma conversación en menos de 24 h.</p>
+<p style="margin:16px 0"><a href="${link}" style="display:inline-block;background:#45574C;color:#ffffff;text-decoration:none;font-weight:600;border-radius:8px;padding:12px 20px">Pagar ${VAL_PRICE} y recibir la respuesta</a></p>
+<p style="font-size:13px;color:#6E6C67">Tarjeta, Apple Pay o Google Pay. Si no te sirve, te devolvemos el dinero. Si has tenido un problema para pagar, responde a este correo.</p>
+<p style="font-size:13px;color:#9A3B2B">Si es urgente o empeora, no esperes: llama al 112 o acude a urgencias.</p>`);
+    const au = await sendMail(env, { to: await openEmail(env, t.u), from: `${pro.short} · Hera <${pro.email}>`, replyTo: await relayAddress(env, 'u', t.id), subject: `Re: ${t.su}`, refs: t.ru, html, text: `${pro.short} ha recibido tu mensaje. Para que pueda responderte, falta completar el pago de ${VAL_PRICE}: ${link}\n\nSi es urgente o empeora, llama al 112 o acude a urgencias.` });
+    if (au) { t.vq = Date.now(); if (au.id) t.ou = [...(t.ou || []), au.id].slice(-10); await bump(env, 'valorada_autorrespuesta'); }
+  }
   if (toUser && t.v === 3 && !t.vf) t.vf = Date.now();
   if (toUser && !t.a) {
     t.a = Date.now();

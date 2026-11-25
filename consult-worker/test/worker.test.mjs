@@ -199,6 +199,15 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   const v1 = sent.slice(sc).find((m) => m.to[0] === 'valora@example.com');
   assert.match(v1.html, /Pagar 5 € y recibir la respuesta/); assert.match(v1.html, /\/valorar\/pagar\?c=/);
   t = await loadThread(env, t.id); assert.equal(t.v, 2); assert.ok(t.va);
+  // Pago pedido y ella sigue escribiendo: correo automático con el botón de pago (una vez cada 12 h) y aviso a la profesional
+  const sq = sent.length;
+  assert.ok((await relayIncoming(env, t, 'u', mime('valora@example.com', await relayAddress(env, 'u', t.id), '¿Y si me duele más?'))).ok);
+  assert.ok(sent.slice(sq).some((m) => m.to[0] === 'valora@example.com' && /falta completar el pago de 5 €/.test(m.html) && /Pagar 5 €/.test(m.html)), 'respuesta automática');
+  assert.ok(sent.slice(sq).some((m) => m.to[0] === PROS.matrona.email && /Todavía no ha pagado/.test(m.html)), 'aviso a la profesional');
+  t = await loadThread(env, t.id); const sq2 = sent.length;
+  assert.ok((await relayIncoming(env, t, 'u', mime('valora@example.com', await relayAddress(env, 'u', t.id), 'Otra cosa'))).ok);
+  assert.ok(!sent.slice(sq2).some((m) => m.to[0] === 'valora@example.com'), 'no se repite en 12 h');
+  t = await loadThread(env, t.id);
   const sp = sent.length; assert.ok((await relayIncoming(env, t, 'p', mime(PROS.matrona.email, await relayAddress(env, 'p', t.id), 'Cuando pagues te lo explico.'))).ok);
   assert.match(sent.slice(sp).find((m) => m.to[0] === 'valora@example.com').html, /Pagar 5 €/, 'tras pedir el pago, sus mensajes llevan el botón');
   t = await loadThread(env, t.id);

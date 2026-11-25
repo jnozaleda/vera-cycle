@@ -183,12 +183,25 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   // Sin val (la app o /consultas/): sigue guardándose hasta pagar, como antes
   const old = await call('/ask', { email: 'valora-sin@example.com', to: 'matrona', text: 'Otra duda sin valoración', context: '' });
   assert.ok(old.j.held, 'sin val: consulta guardada');
-  // La valoración de la profesional lleva el botón de pago
+  // Pedir más datos antes de decidir (Lucía, 25 nov): contestar al correo no cobra
   const s1 = sent.length;
-  assert.ok((await relayIncoming(env, t, 'p', mime(PROS.matrona.email, await relayAddress(env, 'p', t.id), 'He leído tu caso. ¿Te han tomado la tensión?'))).ok);
-  const v1 = sent.slice(s1).find((m) => m.to[0] === 'valora@example.com');
-  assert.match(v1.html, /Pagar 5 € y recibir la respuesta/); assert.match(v1.html, /\/valorar\/pagar\?c=/); assert.ok(!/¿Te ha ayudado/.test(v1.html), 'sin opinión todavía');
+  assert.ok((await relayIncoming(env, t, 'p', mime(PROS.matrona.email, await relayAddress(env, 'p', t.id), '¿Te han tomado la tensión?'))).ok);
+  const v0 = sent.slice(s1).find((m) => m.to[0] === 'valora@example.com');
+  assert.ok(!/Pagar 5 €/.test(v0.html), 'pedir datos: sin botón de pago'); assert.ok(!/¿Te ha ayudado/.test(v0.html));
+  t = await loadThread(env, t.id); assert.equal(t.v, 1, 'sigue por valorar');
+  // La usuaria responde: a la profesional le llega con los botones debajo
+  const su1 = sent.length;
+  assert.ok((await relayIncoming(env, t, 'u', mime('valora@example.com', await relayAddress(env, 'u', t.id), 'Sí, 14/9'))).ok);
+  assert.ok(sent.slice(su1).some((m) => m.to[0] === PROS.matrona.email && /Pedir el pago de 5 €/.test(m.html)), 'botones tras la respuesta');
+  // Ya lo tiene claro: «Pedir el pago»; desde ahí sus mensajes llevan el botón
+  t = await loadThread(env, t.id);
+  const sc = sent.length; assert.match(await postForm((await valLinks(env, t.id)).charge, { m: 'Ya lo tengo todo.' }), /Enviado/);
+  const v1 = sent.slice(sc).find((m) => m.to[0] === 'valora@example.com');
+  assert.match(v1.html, /Pagar 5 € y recibir la respuesta/); assert.match(v1.html, /\/valorar\/pagar\?c=/);
   t = await loadThread(env, t.id); assert.equal(t.v, 2); assert.ok(t.va);
+  const sp = sent.length; assert.ok((await relayIncoming(env, t, 'p', mime(PROS.matrona.email, await relayAddress(env, 'p', t.id), 'Cuando pagues te lo explico.'))).ok);
+  assert.match(sent.slice(sp).find((m) => m.to[0] === 'valora@example.com').html, /Pagar 5 €/, 'tras pedir el pago, sus mensajes llevan el botón');
+  t = await loadThread(env, t.id);
   // A las 24 h sin pagar, un recordatorio a la usuaria (una sola vez)
   t.va = Date.now() - 25 * 3600000; await saveThread(env, t);
   const sr = sent.length; await remindOverdue(env); await remindOverdue(env);

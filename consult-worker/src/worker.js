@@ -253,14 +253,14 @@ export const valLinks = async (env, id) => ({ pay: `${WORKER_URL}/valorar/pagar?
 // Tres caminos con botones (Noza, 25 nov: las profesionales no veían nada clicable para pedir el pago)
 const valBtn = (href, label, sub, main) => `<a href="${href}" style="display:block;text-decoration:none;border-radius:10px;padding:13px 14px;margin-top:8px;text-align:center;${main ? 'background:#45574C;color:#ffffff;' : 'background:#ffffff;color:#2F3631;border:1.5px solid #45574C;'}"><span style="display:block;font-size:16px;font-weight:700">${label}</span><span style="display:block;font-size:12.5px;margin-top:2px;${main ? 'color:#E6EEE9' : 'color:#6E6C67'}">${sub}</span></a>`;
 function valProHtml(l) {
-  return `<div style="background:#DCEBE4;border-radius:12px;padding:14px;margin:10px 0;color:#2F3631"><div style="font-size:15px;font-weight:700">Aún no ha pagado. Elige con un toque:</div>
-${valBtn(l.charge, `Pedir el pago de ${VAL_PRICE}`, 'Le llega tu mensaje con el botón de pago. Si quieres, le dices qué necesitas saber.', true)}
+  return `<div style="background:#DCEBE4;border-radius:12px;padding:14px;margin:10px 0;color:#2F3631"><div style="font-size:15px;font-weight:700">Aún no ha pagado. Elige con un toque:</div><div style="font-size:13px;color:#4F4E49;margin-top:3px">¿Necesitas más datos antes de decidir? Respóndele a este correo: le llega sin pago, y cuando conteste volverás a tener estos botones.</div>
+${valBtn(l.charge, `Pedir el pago de ${VAL_PRICE}`, 'Le llega tu mensaje con el botón de pago.', true)}
 ${valBtn(l.free, 'Es rápido: responder gratis', 'Después respondes a este correo; le llega sin pago y con la oferta de seguir por 5 €.', false)}
 ${valBtn(l.urgent, 'Es urgente', 'Sin pago. Después respóndele que vaya a urgencias.', false)}
 </div>`;
 }
 function valProText(l) {
-  return `AÚN NO HA PAGADO. Elige:\n· Pedir el pago de ${VAL_PRICE}: ${l.charge}\n· Es rápido, responder gratis: ${l.free}\n· Es urgente (sin pago): ${l.urgent}`;
+  return `AÚN NO HA PAGADO. Elige (si necesitas más datos antes, respóndele a este correo: le llega sin pago):\n· Pedir el pago de ${VAL_PRICE}: ${l.charge}\n· Es rápido, responder gratis: ${l.free}\n· Es urgente (sin pago): ${l.urgent}`;
 }
 /** Reenvío de los botones a petición del equipo (Noza, 25 nov): KV «val-reenvio» = [ids]; se envían y se borra la lista */
 async function resendValButtons(env) {
@@ -1349,7 +1349,9 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
   let rate = null;
   // Escribir gratis, pagar después: mientras no ha pagado (v 1 o 2), cada mensaje de la profesional lleva el botón de pago;
   // «¿Te ha ayudado?» va con la primera respuesta tras pagar (o la primera de siempre en las demás)
-  const valPending = role === 'p' && (t.v === 1 || t.v === 2);
+  // Lucía, 25 nov: antes de cobrar a veces necesita más datos. Contestar al correo no cobra: el botón de pago solo va
+  // cuando la profesional pulsa «Pedir el pago» (v 2) y, desde entonces, en cada mensaje suyo hasta que pague
+  const valPending = role === 'p' && t.v === 2;
   const firstFull = t.v === 3 ? !t.vf : t.v ? false : !t.a;
   if (role === 'p' && firstFull && !t.fr) { const sig = await feedbackSig(env, t.id); rate = rateBlock(pro, (r) => `https://hera-gine.com/opinion/?t=${t.id}&s=${sig}&r=${r}`); }
   // Primera respuesta: su enlace para invitar (invite.js), aunque no valore
@@ -1364,6 +1366,8 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
     await bump(env, 'oferta_respuesta');
   }
   if (valPending) offer = valPayBlock(pro, (await valLinks(env, t.id)).pay);
+  // Cuando la usuaria responde y aún no está decidido (o no ha pagado), la profesional vuelve a tener los botones debajo
+  if (role === 'u' && (t.v === 1 || t.v === 2)) { const l = await valLinks(env, t.id); offer = t.v === 1 ? { html: valProHtml(l), text: valProText(l) } : { html: `<p style="font-size:13.5px;color:#6E6C67;margin-top:14px">Ya le pediste el pago de ${VAL_PRICE}; todavía no ha pagado. Si le respondes, tu mensaje le llega con el botón de pago.</p>`, text: `Ya le pediste el pago de ${VAL_PRICE}; todavía no ha pagado.` }; }
   const { html, text } = relayEmail(pro, role, t.id, msg.body || '(Sin texto: mira el archivo adjunto.)', msg.attachments.length, rate, invite, offer);
   const refsMine = toUser ? t.ru : t.rp;
   const sent = await sendMail(env, {
@@ -1392,7 +1396,6 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
   // Lo que le enviamos a la usuaria: solo el identificador de Resend, para poder reenviárselo si rebotó (panel)
   if (toUser && sent.id) t.ou = [...(t.ou || []), sent.id].slice(-10);
   t.n = (t.n || 0) + 1;
-  if (valPending && t.v === 1) { t.v = 2; t.va = Date.now(); if (t.p !== 'prueba') { await bump(env, 'valorada'); await record(env, { e: `valorada:${t.p}` }, sendMail); } }
   if (toUser && t.v === 3 && !t.vf) t.vf = Date.now();
   if (toUser && !t.a) {
     t.a = Date.now();

@@ -70,7 +70,7 @@ export const EVENTS = {
   enviada_consultas: ['Envió una consulta desde la página de consultas', false],
   consulta_guardada: ['Envió la consulta y aún no ha pagado, para', false],
   valorada: ['La profesional valoró una consulta (aún sin pagar):', false],
-  valorada_pagada: ['Pagó la respuesta completa tras la valoración de', true],
+  valorada_pagada: ['Pagó la respuesta completa tras la valoración de', false], // sin aviso propio: ya llega el del pago (Noza, 25 nov)
   consulta_anadida: ['Añadió algo a su consulta (dentro de los 30 min) para', false],
   gratuitas_agotadas: ['Intentó consultar con las gratuitas agotadas', true],
   anuncio_visita: ['Llegó desde un anuncio', false],

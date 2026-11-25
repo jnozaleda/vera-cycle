@@ -223,7 +223,8 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   await unlockVal(env, t.id);
   t = await loadThread(env, t.id); assert.equal(t.v, 3);
   assert.ok(sent.slice(s2).some((m) => m.to[0] === PROS.matrona.email && /Ha pagado la respuesta completa/.test(m.html)), 'aviso a la profesional');
-  assert.ok(sent.slice(s2).some((m) => m.to[0] === 'copia@example.com' && /PAGADA/.test(m.subject)), 'aviso al equipo del pago');
+  assert.ok(!sent.slice(s2).some((m) => m.to[0] === 'copia@example.com' && /PAGADA/.test(m.subject)), 'sin aviso duplicado al equipo');
+  assert.ok(sent.slice(s2).some((m) => m.to[0] === 'valora@example.com' && /Hemos recibido tu pago de 5 €/.test(m.html)), 'confirmación de pago a la usuaria');
   const s3 = sent.length;
   assert.ok((await relayIncoming(env, t, 'p', mime(PROS.matrona.email, await relayAddress(env, 'p', t.id), 'Respuesta completa.'))).ok);
   const full = sent.slice(s3).find((m) => m.to[0] === 'valora@example.com');

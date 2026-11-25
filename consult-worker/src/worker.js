@@ -338,10 +338,12 @@ export async function unlockVal(env, id) {
   await saveThread(env, t);
   await bump(env, 'valorada_pagada');
   await record(env, { e: `valorada_pagada:${t.p}` }, sendMail);
-  if (env.COPY_TO) {
-    const tc = teamCopy({ subject: `Consulta · #${t.id.toUpperCase()} · PAGADA (${VAL_PRICE}) · ${pro.short} ya puede responder`, intro: `La usuaria de la consulta #${t.id.toUpperCase()} ha pagado la respuesta completa de <b>${esc(pro.name)}</b>.`, body: `Le hemos avisado a ${pro.short} en la conversación para que le responda entera (plazo: 24 h).`, nFiles: 0, withFiles: false, extra: '' });
-    await sendMail(env, { to: env.COPY_TO, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc });
-  }
+  // Confirmación a la usuaria (Noza, 25 nov): pago recibido y cuándo le responde
+  const ok = shell(`<p>Hola,</p><p><b>Hemos recibido tu pago de ${VAL_PRICE}.</b> ${esc(pro.name)}, ${esc(pro.role)}, ya tiene todo para responderte: te escribirá en esta misma conversación en menos de 24 h.</p>
+<p style="font-size:13px;color:#6E6C67">Si quieres añadir algo o mandarle una foto, responde a este correo y le llegará. Si no te sirve la respuesta, te devolvemos el dinero.</p>
+<p style="font-size:13px;color:#9A3B2B">Si es urgente o empeora, no esperes: llama al 112 o acude a urgencias.</p>`);
+  const cu = await sendMail(env, { to: await openEmail(env, t.u), from: `${pro.short} · Hera <${pro.email}>`, replyTo: await relayAddress(env, 'u', t.id), subject: `Re: ${t.su}`, refs: t.ru, html: ok, text: `Hemos recibido tu pago de ${VAL_PRICE}. ${pro.name}, ${pro.role}, te responderá en esta misma conversación en menos de 24 h.\n\nSi es urgente o empeora, llama al 112 o acude a urgencias.` });
+  if (cu?.id) { t.ou = [...(t.ou || []), cu.id].slice(-10); await saveThread(env, t); }
 }
 
 // ── Resultado del cuestionario de menopausia por correo (Noza, 24 nov; experimento, sin casilla) ──
@@ -679,8 +681,9 @@ const handler = {
         // Aviso al equipo: sin correo de la usuaria; enlace al pago en el panel de Stripe
         const dash = `https://dashboard.stripe.com/${s.livemode ? '' : 'test/'}${s.payment_intent ? `payments/${s.payment_intent}` : s.subscription ? `subscriptions/${typeof s.subscription === 'string' ? s.subscription : s.subscription.id}` : 'payments'}`;
         const hora = new Date().toLocaleString('es-ES', { timeZone: 'Europe/Madrid', dateStyle: 'medium', timeStyle: 'short' });
-        await notify(env, `Pago · ${PLANS[plan].label} · ${PLANS[plan].eur} €${s.metadata?.src === 'ads' ? ' · desde anuncio' : ''}${s.livemode ? '' : ' · prueba'}`,
-          `${PLANS[plan].label}: ${PLANS[plan].eur} €${s.livemode ? '' : ' (modo de prueba, sin dinero real)'}\n${hora}\n\nVer en Stripe: ${dash}`, sendMail);
+        const valT = /^[a-z0-9]{8}$/.test(String(s.metadata?.val || '')) ? `Consulta #${s.metadata.val.toUpperCase()}${PROS[s.metadata?.pro] ? ` · ${PROS[s.metadata.pro].short}` : ''} · ` : '';
+        await notify(env, `Pago · ${valT}${PLANS[plan].label} · ${PLANS[plan].eur} €${s.metadata?.src === 'ads' ? ' · desde anuncio' : ''}${s.livemode ? '' : ' · prueba'}`,
+          `${valT ? `${valT}pagó la respuesta completa tras la valoración; ya le hemos avisado para que responda.\n` : ''}${PLANS[plan].label}: ${PLANS[plan].eur} €${s.livemode ? '' : ' (modo de prueba, sin dinero real)'}\n${hora}\n\nVer en Stripe: ${dash}`, sendMail);
       },
       cancelled: async (plan) => { await bump(env, plan === 'acomp' ? 'pago:baja_acomp' : 'pago:baja_mensual'); },
       // Pago que caduca sin pagar: cuenta para el embudo y sale en el recorrido de esa persona (si se sabe quién era)

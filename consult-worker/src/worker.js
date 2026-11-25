@@ -1416,8 +1416,9 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
   // Lo que le enviamos a la usuaria: solo el identificador de Resend, para poder reenviárselo si rebotó (panel)
   if (toUser && sent.id) t.ou = [...(t.ou || []), sent.id].slice(-10);
   t.n = (t.n || 0) + 1;
-  // Pago pedido y la usuaria sigue escribiendo (Gonzalo, 25 nov): correo automático con el botón de pago, como mucho cada 12 h
-  if (role === 'u' && t.v === 2 && PROS[t.p] && (!t.vq || Date.now() - t.vq > 12 * 3600000)) {
+  // Pago pedido y la usuaria sigue escribiendo (Gonzalo, 25 nov): correo automático con el botón de pago a CADA mensaje suyo
+  // (Noza, 25 nov: antes era uno cada 12 h y no bastaba)
+  if (role === 'u' && t.v === 2 && PROS[t.p]) {
     const link = (await valLinks(env, t.id)).pay;
     const html = shell(`<p>Hola,</p><p>${esc(pro.short)} ha recibido tu mensaje. <b>Para que pueda responderte, falta completar el pago de ${VAL_PRICE}.</b> En cuanto pagues, te contestará en esta misma conversación en menos de 24 h.</p>
 <p style="margin:16px 0"><a href="${link}" style="display:inline-block;background:#45574C;color:#ffffff;text-decoration:none;font-weight:600;border-radius:8px;padding:12px 20px">Pagar ${VAL_PRICE} y recibir la respuesta</a></p>

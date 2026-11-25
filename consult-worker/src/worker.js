@@ -1460,7 +1460,7 @@ async function openThreads(env) {
   const out = { pendientes: {}, fuera_plazo: {}, recientes: [] };
   const keys = await listThreads(env);
   // Consultas de los últimos 3 días con su estado (panel, «Consultas recientes»; Noza 25 nov: ver si le llegó el pago)
-  for (const k of keys) { const m = k.metadata || {}; if (m.p && m.p !== 'prueba' && Date.now() - (m.c || 0) < 3 * 86400000) out.recientes.push({ id: k.name.slice(2), ...m }); }
+  for (const k of keys) { const m = k.metadata || {}; if (m.p && m.p !== 'prueba' && Date.now() - (m.c || 0) < 3 * 86400000) out.recientes.push({ id: k.name.slice(2), ...m, ...(m.v === 2 ? { pay: (await valLinks(env, k.name.slice(2))).pay } : {}) }); }
   for (const k of keys) {
     const m = k.metadata || {};
     if (!m.p || m.a || m.p === 'prueba') continue;

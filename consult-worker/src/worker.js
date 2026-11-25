@@ -322,6 +322,10 @@ export async function unlockVal(env, id) {
   await saveThread(env, t);
   await bump(env, 'valorada_pagada');
   await record(env, { e: `valorada_pagada:${t.p}` }, sendMail);
+  if (env.COPY_TO) {
+    const tc = teamCopy({ subject: `Consulta · #${t.id.toUpperCase()} · PAGADA (${VAL_PRICE}) · ${pro.short} ya puede responder`, intro: `La usuaria de la consulta #${t.id.toUpperCase()} ha pagado la respuesta completa de <b>${esc(pro.name)}</b>.`, body: `Le hemos avisado a ${pro.short} en la conversación para que le responda entera (plazo: 24 h).`, nFiles: 0, withFiles: false, extra: '' });
+    await sendMail(env, { to: env.COPY_TO, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc });
+  }
 }
 
 // ── Resultado del cuestionario de menopausia por correo (Noza, 24 nov; experimento, sin casilla) ──
@@ -731,6 +735,12 @@ const handler = {
         if (!form) return page(h, p, `<form method="post">${hidden}${btn(what === 'gratis' ? 'Sí, responder gratis' : 'Sí, es urgente')}</form>`);
         t.v = 0; if (what === 'gratis') t.vg = Date.now(); else t.vu = Date.now();
         await saveThread(env, t); await bump(env, what === 'gratis' ? 'valorada_gratis' : 'valorada_urgente');
+        // Aviso al equipo, como cuando responden (Noza, 25 nov)
+        if (env.COPY_TO) {
+          const what2 = what === 'gratis' ? 'la marcó para responder gratis (es rápida)' : 'la marcó como urgente (sin pago)';
+          const tc = teamCopy({ subject: `Consulta · #${t.id.toUpperCase()} · ${pro.short} ${what2}`, intro: `<b>${esc(pro.name)}</b> ${what2} la consulta #${t.id.toUpperCase()}.`, body: what === 'gratis' ? 'Su respuesta le llegará a la usuaria sin botón de pago y con la oferta de seguir por 5 €.' : 'Su respuesta le llegará a la usuaria sin botón de pago. Debería decirle que vaya a urgencias.', nFiles: 0, withFiles: false, extra: '' });
+          await sendMail(env, { to: env.COPY_TO, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc });
+        }
         return page('Hecho', 'Ahora responde al correo de la consulta: tu respuesta le llegará sin botón de pago.');
       }
       // Usuaria: abrir el pago

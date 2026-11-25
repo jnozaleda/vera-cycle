@@ -201,6 +201,7 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   await unlockVal(env, t.id);
   t = await loadThread(env, t.id); assert.equal(t.v, 3);
   assert.ok(sent.slice(s2).some((m) => m.to[0] === PROS.matrona.email && /Ha pagado la respuesta completa/.test(m.html)), 'aviso a la profesional');
+  assert.ok(sent.slice(s2).some((m) => m.to[0] === 'copia@example.com' && /PAGADA/.test(m.subject)), 'aviso al equipo del pago');
   const s3 = sent.length;
   assert.ok((await relayIncoming(env, t, 'p', mime(PROS.matrona.email, await relayAddress(env, 'p', t.id), 'Respuesta completa.'))).ok);
   const full = sent.slice(s3).find((m) => m.to[0] === 'valora@example.com');
@@ -213,7 +214,8 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   const ul = (await valLinks(env, k2.slice(2))).urgent;
   assert.match(await (await worker.fetch(new Request(local(ul)), env)).text(), /Sí, es urgente/);
   assert.equal((await loadThread(env, k2.slice(2))).v, 1, 'abrir el enlace no cambia nada (los correos de empresa lo abren solos)');
-  assert.match(await postForm(ul), /Hecho/);
+  const su = sent.length; assert.match(await postForm(ul), /Hecho/);
+  assert.ok(sent.slice(su).some((m) => m.to[0] === 'copia@example.com' && /Gonzalo la marcó como urgente/.test(m.subject)), 'aviso al equipo');
   const t2 = await loadThread(env, k2.slice(2)); assert.equal(t2.v, 0);
   const s4 = sent.length;
   assert.ok((await relayIncoming(env, t2, 'p', mime(PROS.gineco.email, await relayAddress(env, 'p', t2.id), 'Ve a urgencias ahora.'))).ok);
@@ -236,6 +238,7 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   assert.match(await (await worker.fetch(new Request(local(cl)), env)).text(), /Enviarle el pago de 5 €/);
   const s6 = sent.length;
   assert.match(await postForm(cl, { m: '¿Tienes fiebre o una zona roja?' }), /Enviado/);
+  assert.ok(sent.slice(s6).some((m) => m.to[0] === 'copia@example.com' && /Marina pidió el pago/.test(m.subject)), 'aviso al equipo del cobro');
   const cm = sent.slice(s6).find((m) => m.to[0] === 'valora-cobro@example.com');
   assert.match(cm.html, /¿Tienes fiebre o una zona roja\?/); assert.match(cm.html, /Pagar 5 € y recibir la respuesta/);
   const t4 = await loadThread(env, k4.slice(2)); assert.equal(t4.v, 2); assert.ok(t4.a);

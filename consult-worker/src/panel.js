@@ -517,7 +517,7 @@ ${MODES.map(([m, t]) => `<div class="cv cv-${m}"><h3 class="fh">Personas · ${su
     return [m.a ? 'ok' : 'warn', m.a ? 'Respondida' : 'Sin responder', m.a ? hhmm(m.a) : ''];
   };
   const rec = (open.recientes || []).sort((x, y) => y.c - x.c).slice(0, 30);
-  const recCard = rec.length ? `<div class="card" id="recientes"><h2>Consultas recientes</h2><div style="overflow-x:auto"><table><tr><th>Consulta</th><th>Llegó</th><th>Estado</th></tr>${rec.map((m) => { const [cls, st, det] = stateOf(m); return `<tr><td><b>#${esc(m.id.toUpperCase())}</b><br><span class="mute">${PRO_N[m.p] || esc(m.p)}</span></td><td>${hhmm(m.c)}</td><td><span class="chip ${cls}">${st}</span>${det ? `<br><span class="mute">${det}</span>` : ''}</td></tr>`; }).join('')}</table></div><p class="mute" style="margin-top:6px">Últimos 3 días. «Enlace de pago enviado» = el correo salió y el proveedor lo aceptó; si rebota, aparece en «Correos que no han llegado».</p></div>` : '';
+  const recCard = rec.length ? `<div class="card" id="recientes"><h2>Consultas recientes</h2><div style="overflow-x:auto"><table><tr><th>Consulta</th><th>Llegó</th><th>Estado</th></tr>${rec.map((m) => { const [cls, st, det] = stateOf(m); return `<tr><td><a href="/panel/consulta?k=${encodeURIComponent(url.searchParams.get('k') || '')}&c=${esc(m.id)}" style="color:var(--plum);font-weight:700">#${esc(m.id.toUpperCase())}</a><br><span class="mute">${PRO_N[m.p] || esc(m.p)}</span></td><td>${hhmm(m.c)}</td><td><span class="chip ${cls}">${st}</span>${det ? `<br><span class="mute">${det}</span>` : ''}</td></tr>`; }).join('')}</table></div><p class="mute" style="margin-top:6px">Últimos 3 días. «Enlace de pago enviado» = el correo salió y el proveedor lo aceptó; si rebota, aparece en «Correos que no han llegado».</p></div>` : '';
   // Correos que no han llegado (bounces.js): corregir el correo y reenviar, o quitar de la lista
   const kRaw = esc(url.searchParams.get('k') || '');
   const failCard = fails.length ? `<div class="card" id="fallos"><h2>Correos que no han llegado</h2><p class="mute" style="margin-bottom:8px">Antes de reenviar a un correo corregido, confirma con ella que es el suyo.</p>${fails.map((x) => {
@@ -608,7 +608,7 @@ table.wa-t td,table.wa-t th{white-space:nowrap;padding-left:8px}table.wa-t td:fi
 </style></head><body><div class="w">
 <p class="mute">HERA · sin el equipo (modo equipo)</p><h1>Panel</h1>
 <p class="mute">Actualizado ${madrid(now, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })} (hora de Madrid). Datos anónimos, sin cookies.</p>
-<p class="mute" style="margin-top:6px"><a href="/panel/mapa?k=${k}" style="color:var(--plum);font-weight:600">Mapa de calor de la portada →</a> dónde tocan y dónde se van</p>
+<p class="mute" style="margin-top:6px"><a href="/panel/mapa?k=${k}" style="color:var(--plum);font-weight:600">Mapa de calor de la portada →</a> dónde tocan y dónde se van · <a href="/panel/consulta?k=${k}" style="color:var(--plum);font-weight:600">Buscar una consulta →</a></p>
 <div class="tabs">${tab(1, 'Hoy')}${tab(7, '7 días')}${tab(30, '30 días')}</div>
 
 <div class="card"><p class="lead">${lead}</p><div class="chips">${chips}</div></div>

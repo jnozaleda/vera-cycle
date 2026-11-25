@@ -903,6 +903,32 @@ const handler = {
         headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex, nofollow', 'referrer-policy': 'no-referrer' },
       });
     }
+    // Buscador de consultas del panel (Noza, 25 nov: «no encuentro el primer correo de esta consulta»). Solo con la clave del panel.
+    // Enseña el correo de la usuaria (descifrado), el estado y los correos que aún guarda Resend (el texto no se guarda en Hera).
+    if (request.method === 'GET' && url.pathname === '/panel/consulta') {
+      if (!env.DASH_KEY || url.searchParams.get('k') !== env.DASH_KEY) return new Response('Not found', { status: 404, headers: { 'x-robots-tag': 'noindex' } });
+      const k = encodeURIComponent(url.searchParams.get('k') || '');
+      const id = String(url.searchParams.get('c') || '').trim().replace(/^#/, '').toLowerCase();
+      const t = /^[a-z0-9]{8}$/.test(id) ? await loadThread(env, id) : null;
+      const when = (ms) => (ms ? new Date(ms).toLocaleString('es-ES', { timeZone: 'Europe/Madrid', dateStyle: 'medium', timeStyle: 'short' }) : '—');
+      const strip = (h) => String(h || '').replace(/<style[\s\S]*?<\/style>/gi, '').replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|tr|h\d)>/gi, '\n').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&').replace(/\n{3,}/g, '\n\n').trim();
+      let body = '';
+      if (id && !t) body = `<p>No hay ninguna consulta #${esc(id.toUpperCase())}. Puede que haya caducado (se borran 30 días después del último mensaje) o que el número esté mal.</p>`;
+      if (t) {
+        const pro = PROS[t.p] || { name: t.p };
+        const st = t.v === 1 ? 'Por valorar' : t.v === 2 ? (t.vc && !t.va ? 'Pago pedido (esperando su respuesta por correo)' : 'Pago pedido, sin pagar') : t.v === 3 ? 'Pagada' : t.v === 0 ? (t.vu ? 'Urgente (sin pago)' : 'Gratis (rápida)') : t.a ? 'Respondida' : 'Sin responder';
+        const ids = [...new Set([t.po, ...(t.ou || [])].filter(Boolean))];
+        const mails = [];
+        for (const rid of ids) {
+          try { const r = await fetch(`https://api.resend.com/emails/${rid}`, { headers: { Authorization: `Bearer ${env.RESEND_READ_KEY || env.RESEND_API_KEY}` } }); if (r.ok) { const j = await r.json(); mails.push({ who: rid === t.po ? `A ${pro.short || pro.name} (la consulta)` : 'A la usuaria', at: j.created_at, subject: j.subject, text: j.text || strip(j.html) }); } } catch { /* sin correo */ }
+        }
+        body = `<table><tr><td>Profesional</td><td><b>${esc(pro.name)}</b></td></tr><tr><td>Llegó</td><td>${when(t.c)}</td></tr><tr><td>Estado</td><td>${esc(st)}</td></tr><tr><td>Correo de la usuaria</td><td><b>${esc(await openEmail(env, t.u))}</b></td></tr><tr><td>Mensajes en la conversación</td><td>${t.n || 0}</td></tr><tr><td>Primera respuesta</td><td>${when(t.a)}</td></tr>${t.ad ? '<tr><td>Origen</td><td>Anuncio</td></tr>' : ''}</table>
+<h2 style="margin-top:22px">Correos que guarda Resend</h2>${mails.length ? mails.map((m) => `<div class="card"><p class="mute">${esc(m.who)} · ${esc(m.at ? when(Date.parse(m.at)) : '')}<br><b>${esc(m.subject || '')}</b></p><pre>${esc(m.text || '(sin texto)')}</pre></div>`).join('') : '<p class="mute">Resend ya no tiene ninguno (los guarda un tiempo limitado) o la consulta es anterior a que se guardaran sus identificadores. Busca el número en tu correo: la copia de control llevaba el texto entero.</p>'}
+<p class="mute" style="margin-top:14px">El texto de las consultas no se guarda en Hera: solo se ve en los correos. Las respuestas de la profesional y de la usuaria van entre sus correos; en tu bandeja están las copias de control.</p>`;
+      }
+      const html = `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Consulta · Hera</title><style>body{margin:0;background:#FAF9F4;color:#2F3631;font:15px/1.5 -apple-system,sans-serif}.w{max-width:720px;margin:0 auto;padding:18px 16px 40px}h1{font:500 26px Georgia,serif;color:#45574C;margin:4px 0 10px}h2{font-size:15px;color:#45574C}table{width:100%;border-collapse:collapse}td{padding:7px 6px;border-bottom:1px solid #E5E1D8;vertical-align:top;word-break:break-word}td:first-child{color:#6E6C67;width:42%}.card{background:#fff;border:1px solid #E5E1D8;border-radius:12px;padding:12px 14px;margin-top:10px}.mute{color:#6E6C67;font-size:13px;margin:0 0 6px}pre{white-space:pre-wrap;word-break:break-word;font:14px/1.5 -apple-system,sans-serif;margin:0}input{font:16px -apple-system,sans-serif;padding:10px;border:1px solid #E5E1D8;border-radius:8px;width:12em}button{font:600 15px -apple-system,sans-serif;background:#45574C;color:#fff;border:0;border-radius:8px;padding:10px 14px}a{color:#45574C}</style></head><body><div class="w"><p class="mute"><a href="/panel?k=${k}">← Panel</a></p><h1>Buscar consulta</h1><form method="get" action="/panel/consulta"><input type="hidden" name="k" value="${esc(url.searchParams.get('k') || '')}"><input name="c" value="${esc(id.toUpperCase())}" placeholder="8ADQ77QD" autocapitalize="characters"> <button>Buscar</button></form>${id ? `<h1 style="margin-top:18px">#${esc(id.toUpperCase())}</h1>` : ''}${body}</div></body></html>`;
+      return new Response(html, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex, nofollow', 'referrer-policy': 'no-referrer' } });
+    }
     if (request.method === 'GET' && url.pathname === '/panel/mapa') {
       if (!env.DASH_KEY || url.searchParams.get('k') !== env.DASH_KEY) return new Response('Not found', { status: 404, headers: { 'x-robots-tag': 'noindex' } });
       return new Response(await heatmap(env, url), { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex, nofollow', 'referrer-policy': 'no-referrer' } });

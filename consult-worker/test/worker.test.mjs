@@ -301,6 +301,10 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   assert.match(await postForm((await valLinks(env, k2.slice(2))).charge), /Enviado/);
   assert.ok(sent.slice(s9).some((m) => m.to[0] === 'valora-urg@example.com' && /Pagar 5 € y recibir la respuesta/.test(m.html)), 'tras urgente, puede pedir el pago');
   const ph = await (await worker.fetch(new Request('https://w/panel?k=dk&d=7'), env)).text();
+  const bq = await (await worker.fetch(new Request(`https://w/panel/consulta?k=dk&c=${k4.slice(2).toUpperCase()}`), env)).text();
+  assert.match(bq, /valora-cobro@example\.com/); assert.match(bq, /Pago pedido/);
+  assert.match(await (await worker.fetch(new Request('https://w/panel/consulta?k=dk&c=ZZZZZZZZ'), env)).text(), /No hay ninguna consulta/);
+  assert.equal((await worker.fetch(new Request('https://w/panel/consulta?k=mal&c=x'), env)).status, 404);
   assert.match(ph, /Consultas recientes/); assert.match(ph, /Pago pedido/); assert.match(ph, /Urgente/); assert.match(ph, /\/valorar\/pagar\?c=[a-z0-9]{8}&amp;s=|\/valorar\/pagar\?c=[a-z0-9]{8}&s=/);
   env.PAYMENTS = P0; env.STRIPE_SECRET_KEY = K0; env.RELAY = R0; env.NO_FREE = N0; env.VALORA = V0; env.BF_OFFER_END_MS = B0; env.DB = DB0;
   console.log('Escribir gratis, pagar después: OK');

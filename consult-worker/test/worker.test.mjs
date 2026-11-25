@@ -246,6 +246,14 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   const t5 = await loadThread(env, k5.slice(2)); delete t5.vb; await saveThread(env, t5);
   const s7 = sent.length; await remindOverdue(env); await remindOverdue(env);
   assert.equal(sent.slice(s7).filter((m) => m.to[0] === PROS.pediatra.email && /Pedir el pago de 5 €/.test(m.html)).length, 1, 'botones reenviados una vez');
+  // Reenvío pedido por el equipo (KV val-reenvio): también a una marcada urgente, que luego puede pedir el pago
+  await env.KV.put('val-reenvio', JSON.stringify([k2.slice(2), k4.slice(2)]));
+  const s8 = sent.length; await worker.scheduled({ scheduledTime: Date.parse('2026-11-25T09:00:00Z') }, env);
+  const rs = sent.slice(s8).filter((m) => /Pedir el pago de 5 €/.test(m.html));
+  assert.equal(rs.length, 2, 'reenviados'); assert.match(rs[0].html, /La marcaste como urgente/); assert.equal(await env.KV.get('val-reenvio'), null);
+  const s9 = sent.length;
+  assert.match(await postForm((await valLinks(env, k2.slice(2))).charge), /Enviado/);
+  assert.ok(sent.slice(s9).some((m) => m.to[0] === 'valora-urg@example.com' && /Pagar 5 € y recibir la respuesta/.test(m.html)), 'tras urgente, puede pedir el pago');
   env.PAYMENTS = P0; env.STRIPE_SECRET_KEY = K0; env.RELAY = R0; env.NO_FREE = N0; env.VALORA = V0; env.BF_OFFER_END_MS = B0; env.DB = DB0;
   console.log('Escribir gratis, pagar después: OK');
 }

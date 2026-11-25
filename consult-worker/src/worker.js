@@ -262,6 +262,24 @@ ${valBtn(l.urgent, 'Es urgente', 'Sin pago. Después respóndele que vaya a urge
 function valProText(l) {
   return `AÚN NO HA PAGADO. Elige:\n· Pedir el pago de ${VAL_PRICE}: ${l.charge}\n· Es rápido, responder gratis: ${l.free}\n· Es urgente (sin pago): ${l.urgent}`;
 }
+/** Reenvío de los botones a petición del equipo (Noza, 25 nov): KV «val-reenvio» = [ids]; se envían y se borra la lista */
+async function resendValButtons(env) {
+  const ids = await env.KV.get('val-reenvio', 'json');
+  if (!Array.isArray(ids) || !ids.length) return 0;
+  await env.KV.delete('val-reenvio');
+  let n = 0;
+  for (const id of ids.filter((x) => /^[a-z0-9]{8}$/.test(String(x)))) {
+    const t = await loadThread(env, id);
+    if (!t || !PROS[t.p] || t.v === undefined || t.v === 3) continue;
+    const pro = PROS[t.p];
+    const state = t.v === 2 ? 'Ya le pediste el pago; todavía no ha pagado.' : t.vu ? `La marcaste como urgente${t.a ? ' y ya le respondiste' : ''}. Si en realidad quieres pedirle el pago de ${VAL_PRICE}, pulsa el primer botón.` : t.vg ? `La marcaste para responder gratis${t.a ? ' y ya le respondiste' : ''}. Si quieres pedirle el pago de ${VAL_PRICE}, pulsa el primer botón.` : 'Todavía no has elegido qué hacer.';
+    const l = await valLinks(env, t.id);
+    const html = shell(`<p>Hola, ${esc(pro.short)}: estos son los botones de esta consulta (la tienes más arriba en esta conversación). ${state}</p>${valProHtml(l)}`);
+    if (await sendMail(env, { to: pro.email, from: `Consulta #${t.id.toUpperCase()} · Hera <consultas@hera-gine.com>`, replyTo: await relayAddress(env, 'p', t.id), subject: `Re: ${t.sp}`, refs: t.rp, html, text: `${state}\n\n${valProText(l)}` })) { t.vb = Date.now(); await saveThread(env, t); n++; }
+  }
+  console.log(`reenvio botones: ${n}`);
+  return n;
+}
 /** Valoración enviada desde el botón «Pedir el pago»: mensaje de la profesional + botón de pago a la usuaria */
 async function sendValuation(env, t, pro, msg) {
   const body = msg || `He leído tu consulta y puedo ayudarte. Para darte una respuesta completa, por escrito y con lo que puedes hacer, son ${VAL_PRICE}.`;
@@ -697,7 +715,8 @@ const handler = {
       const hidden = `<input type="hidden" name="c" value="${id}"><input type="hidden" name="s" value="${esc(sig)}">`;
       const btn = (label) => `<button style="display:block;width:100%;background:#45574C;color:#fff;border:0;border-radius:10px;padding:15px;font:600 17px -apple-system,sans-serif;margin-top:14px">${label}</button>`;
       if (what !== 'pagar' && t.v === 3) return page('Ya está pagada', 'Respóndele entera respondiendo al correo de la consulta.');
-      if (what !== 'pagar' && t.v !== 1 && t.v !== 2) return page('Ya está elegida', 'Esta consulta ya va sin pago. Respóndele respondiendo al correo de la consulta.');
+      if (t.v === undefined || t.v === null) return page('Esta consulta no necesita pago', 'Respóndele respondiendo al correo de la consulta.');
+      if ((what === 'gratis' || what === 'urgente') && t.v === 0) return page('Ya va sin pago', 'Respóndele respondiendo al correo de la consulta. Si prefieres pedirle el pago de 5 €, usa el botón «Pedir el pago».');
       if (what === 'cobrar') {
         if (t.v === 2 && !form) return page('Ya le pediste el pago', `Le llegó tu mensaje con el botón de pago de ${VAL_PRICE}. Si quieres añadir algo, responde al correo de la consulta.`);
         if (!form) return page(`Pedir el pago de ${VAL_PRICE}`, `Le llegará un mensaje tuyo con el botón «Pagar ${VAL_PRICE} y recibir la respuesta». Si quieres, escribe qué necesitas saber; si lo dejas vacío, le llega este texto:<br><i>«He leído tu consulta y puedo ayudarte. Para darte una respuesta completa, por escrito y con lo que puedes hacer, son ${VAL_PRICE}.»</i>`,
@@ -1288,6 +1307,7 @@ const handler = {
 
   /** Cada hora: recordatorio al profesional si una consulta lleva 16 h sin respuesta */
   async scheduled(event, env) {
+    await resendValButtons(env).catch((e) => console.log(`reenvio ${e.message}`));
     // Un solo cron cada 15 min (el plan gratis de Cloudflare permite 5 por cuenta y ya están usados):
     // los recordatorios de pago, siempre; lo demás, una vez por hora (en la pasada de los :15)
     const min = event?.scheduledTime ? new Date(event.scheduledTime).getUTCMinutes() : 15;

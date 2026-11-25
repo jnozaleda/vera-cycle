@@ -297,6 +297,23 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   assert.equal((await worker.fetch(new Request('https://w/panel/mapa?k=mal'), env)).status, 404);
   console.log('Mapa de calor: OK');
 }
+// Resend al límite (429): la consulta se envía igual (correo en cola) y sale en la siguiente vuelta del cron
+{
+  const { retryMailQueue } = await import('../src/worker.js');
+  const f0 = globalThis.fetch; let blocked = true;
+  globalThis.fetch = async (u, o) => (blocked && String(u).includes('api.resend.com/emails') && o?.method === 'POST' ? new Response('{"message":"daily quota"}', { status: 429 }) : f0(u, o));
+  const s0 = sent.length;
+  const r = await call('/ask', { email: 'cola-resend@example.com', to: 'matrona', text: 'Duda con Resend al límite', context: '' });
+  assert.ok(r.j.ok, JSON.stringify(r.j)); assert.equal(sent.length, s0, 'nada enviado todavía');
+  assert.ok(((await env.KV.get('mailq', 'json')) || []).length >= 2, 'en cola: a la profesional y a la usuaria');
+  const panelHtml = await (await worker.fetch(new Request('https://w/panel?k=dk&d=7'), env)).text(); assert.match(panelHtml, /en espera: Resend no los aceptó/);
+  blocked = false;
+  const out = await retryMailQueue(env);
+  assert.ok(out.sent >= 2 && out.left === 0, JSON.stringify(out));
+  assert.ok(sent.slice(s0).some((m) => m.to[0] === PROS.matrona.email) && sent.slice(s0).some((m) => m.to[0] === 'cola-resend@example.com'), 'salen al reintentar');
+  globalThis.fetch = f0;
+  console.log('Cola de reintentos: OK');
+}
 // Cuestionario de menopausia sin duda escrita: la profesional no ve un «Mi duda:» vacío
 {
   const s0 = sent.length;

@@ -552,11 +552,43 @@ async function countPerson(env, request, key) {
 }
 
 /** Envía con Resend. Devuelve {id} si sale bien o null. refs: identificadores anteriores del hilo (para In-Reply-To/References) */
-async function sendMail(env, { to, replyTo, subject, html, text, bcc, from, refs, attachments }) {
+// Cola de reintentos (Noza, 25 nov: se llegó al límite diario de Resend). Si Resend no acepta un correo por saturación (429),
+// fallo suyo (5xx) o sin conexión, se guarda cifrado (KV mailq:<id>, 3 días) y se reintenta en cada vuelta del cron (15 min).
+// sendMail devuelve entonces { id: null, queued: true }: la consulta sigue su curso y el correo sale en cuanto Resend lo acepte.
+const MAILQ_TTL = 3 * 86400;
+async function queueMail(env, mail, detail) {
+  try {
+    const id = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+    await env.KV.put(`mailq:${id}`, await sealEmail(env, JSON.stringify({ ...mail, at: Date.now(), tries: 1, why: String(detail).slice(0, 160) })), { expirationTtl: MAILQ_TTL });
+    const idx = (await env.KV.get('mailq', 'json')) || [];
+    await env.KV.put('mailq', JSON.stringify([...idx, id].slice(-500)));
+    return true;
+  } catch (e) { console.log(`mailq ${e.message}`); return false; }
+}
+/** Reintenta los correos en cola (cron cada 15 min). Una sola lectura de KV si la cola está vacía. */
+export async function retryMailQueue(env) {
+  const idx = (await env.KV.get('mailq', 'json')) || [];
+  if (!idx.length) return { sent: 0, left: 0 };
+  const left = []; let sent = 0;
+  for (const id of idx) {
+    const raw = await env.KV.get(`mailq:${id}`);
+    if (!raw) continue; // caducado (3 días) o ya enviado
+    const mail = JSON.parse(await openEmail(env, raw));
+    const r = await sendMail(env, { ...mail, noQueue: true });
+    if (r) { await env.KV.delete(`mailq:${id}`); sent++; continue; }
+    left.push(id);
+  }
+  await env.KV.put('mailq', JSON.stringify(left));
+  if (sent) { await bump(env, 'correo_reintentado', madridDay(), sent); console.log(`mailq: ${sent} enviados, ${left.length} en espera`); }
+  return { sent, left: left.length };
+}
+
+async function sendMail(env, { to, replyTo, subject, html, text, bcc, from, refs, attachments, noQueue }) {
   if (env.DRY_RUN === '1') { console.log(`[ensayo] correo a ${to}: ${subject}`); return { id: null }; }
   // Resend pone su propio Message-ID; el real de cada correo enviado lo conocemos cuando nos responden (In-Reply-To)
   const headers = refs?.length ? { 'In-Reply-To': refs[refs.length - 1], References: refs.slice(-20).join(' ') } : undefined;
   let res, detail = '';
+  let retry = false;
   try {
     res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -564,9 +596,15 @@ async function sendMail(env, { to, replyTo, subject, html, text, bcc, from, refs
       body: JSON.stringify({ from: from || env.FROM, to: [to], reply_to: replyTo, subject, html, text, ...(bcc ? { bcc: [bcc] } : {}),
         ...(headers ? { headers } : {}), ...(attachments?.length ? { attachments } : {}) }),
     });
-    if (!res.ok) detail = `Resend respondió ${res.status}: ${(await res.text()).slice(0, 300)}`;
-  } catch (e) { detail = `No se pudo conectar con Resend: ${e.message}`; }
-  if (detail) { console.log(detail); await alertSendFailure(env, subject, detail); return null; }
+    if (!res.ok) { detail = `Resend respondió ${res.status}: ${(await res.text()).slice(0, 300)}`; retry = res.status === 429 || res.status >= 500; }
+  } catch (e) { detail = `No se pudo conectar con Resend: ${e.message}`; retry = true; }
+  if (detail) {
+    console.log(detail);
+    if (noQueue) return null;
+    const queued = retry && await queueMail(env, { to, replyTo, subject, html, text, bcc, from, refs, attachments }, detail);
+    await alertSendFailure(env, subject, `${detail}${queued ? '\n\nSe ha guardado y se reintentará solo cada 15 minutos (hasta 3 días).' : ''}`);
+    return queued ? { id: null, queued: true } : null;
+  }
   const j = await res.json().catch(() => ({}));
   return { id: j.id || null };
 }
@@ -1337,6 +1375,7 @@ const handler = {
 
   /** Cada hora: recordatorio al profesional si una consulta lleva 16 h sin respuesta */
   async scheduled(event, env) {
+    await retryMailQueue(env).catch((e) => console.log(`mailq ${e.message}`));
     await resendValButtons(env).catch((e) => console.log(`reenvio ${e.message}`));
     // Un solo cron cada 15 min (el plan gratis de Cloudflare permite 5 por cuenta y ya están usados):
     // los recordatorios de pago, siempre; lo demás, una vez por hora (en la pasada de los :15)

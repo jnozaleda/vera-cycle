@@ -418,7 +418,10 @@ ${MODES.map(([m, t]) => `<div class="cv cv-${m}"><h3 class="fh">Personas · ${su
   const errores = g('error_portada') + g('consulta_error');
   const guardadas = Math.max(0, g('consulta_guardada') - g('guardada_pagada'));
   const bounced = fails.filter((x) => x.kind !== 'retrasado').length;
+  // Correos en espera de reintento (Resend saturado o caído; worker.js, mailq)
+  const mailq = ((await env.KV.get('mailq', 'json').catch(() => null)) || []).length;
   const chips = [
+    mailq ? `<span class="chip warn">${mailq === 1 ? '1 correo' : `${mailq} correos`} en espera: Resend no los aceptó y se reintentan solos cada 15 min</span>` : '',
     fails.length ? `<a class="chip red" href="#fallos" style="text-decoration:none">${fails.length === 1 ? '1 correo no ha llegado' : `${fails.length} correos no han llegado`}${bounced < fails.length ? ` (${fails.length - bounced} retrasado${fails.length - bounced === 1 ? '' : 's'})` : ''}</a>` : '',
     pendientes ? `<span class="chip warn">${pendientes} ${pendientes === 1 ? 'consulta esperando' : 'consultas esperando'} respuesta: ${pendBy.join(' · ')}</span>` : '<span class="chip ok">Ninguna consulta esperando respuesta</span>',
     late ? `<span class="chip red">${late} fuera de plazo (más de 24 h)</span>` : pendientes ? '<span class="chip ok">Ninguna fuera de plazo (24 h)</span>' : '',

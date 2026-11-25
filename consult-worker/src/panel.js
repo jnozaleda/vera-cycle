@@ -680,12 +680,13 @@ export async function heatmap(env, url) {
   const k = encodeURIComponent(url.searchParams.get('k') || '');
   const v = url.searchParams.get('v') === 'ordenador' ? 'ordenador' : 'movil';
   const days = url.searchParams.get('d') === '1' ? 1 : 7;
+  const all = url.searchParams.get('a') === '1'; // también los toques de antes del 25 nov (con deslizamientos)
   const now = Date.now();
   // Hoy = desde las 0:00 de Madrid; 7 días = las últimas 7×24 h
   const since = days === 1 ? Date.parse(`${dayISO(now)}T00:00:00+01:00`) : now - 7 * 86400000;
   let taps = [];
   // Hasta el 25 nov se contaba también empezar a deslizar el dedo (pointerdown): esos toques no se dibujan
-  try { taps = (await env.DB.prepare('SELECT x, y, w, h, el, act, p FROM taps WHERE pg = ?1 AND ts > ?2').bind('portada', Math.max(since, TAPS_FROM)).all()).results || []; } catch { /* sin tabla */ }
+  try { taps = (await env.DB.prepare('SELECT x, y, w, h, el, act, p FROM taps WHERE pg = ?1 AND ts > ?2').bind('portada', all ? since : Math.max(since, TAPS_FROM)).all()).results || []; } catch { /* sin tabla */ }
   const inV = (t) => (v === 'movil' ? t.w < 700 : t.w >= 1000);
   const mine = taps.filter(inV);
   // Fondo: foto fija de la portada (portada/mapa/*.jpg, hecha con tools: ver ESTADO 25 nov). El iframe no se pintaba en Safari del iPhone
@@ -708,7 +709,8 @@ export async function heatmap(env, url) {
   for (const t of mine) { const r = by.get(t.el) || { n: 0, p: new Set(), act: t.act }; r.n++; if (t.p) r.p.add(t.p); by.set(t.el, r); }
   const rows = [...by].sort((a, b) => b[1].p.size - a[1].p.size || b[1].n - a[1].n).slice(0, 25)
     .map(([el, r]) => `<tr><td>${esc(el)}</td><td>${r.act ? 'Sí' : '<span class="no">No</span>'}</td><td>${r.n}</td><td>${r.p.size}</td></tr>`).join('');
-  const tab = (key, val, label, cur) => `<a class="${cur === val ? 'on' : ''}" href="/panel/mapa?k=${k}&${key === 'v' ? `v=${val}&d=${days}` : `v=${v}&d=${val}`}">${label}</a>`;
+  const q = (o) => { const x = { v, d: days, a: all ? 1 : 0, ...o }; return `/panel/mapa?k=${k}&v=${x.v}&d=${x.d}${x.a ? '&a=1' : ''}`; };
+  const tab = (key, val, label, cur) => `<a class="${cur === val ? 'on' : ''}" href="${q({ [key]: val })}">${label}</a>`;
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Mapa de calor · Hera</title>
 <style>
 :root{--bg:#FAF9F4;--card:#fff;--ink:#2F3631;--mute:#6E6C67;--line:#E5E1D8;--bar:#EFECE4;--plum:#45574C;--red:#B4442F}
@@ -733,6 +735,8 @@ table{width:100%;border-collapse:collapse;font-size:13.5px}th,td{text-align:left
 <p class="mute">Dónde tocan quienes visitan la portada. Sin cookies y sin lo que escriben. Los dispositivos en modo equipo no cuentan.</p>
 <div class="tabs">${tab('v', 'movil', 'Móvil', v)}${tab('v', 'ordenador', 'Ordenador', v)}</div>
 <div class="tabs">${tab('d', 1, 'Hoy', days)}${tab('d', 7, '7 días', days)}</div>
+<div class="tabs">${tab('a', 0, 'Solo toques', all ? 1 : 0)}${tab('a', 1, 'Con los de antes', all ? 1 : 0)}</div>
+${all ? '<p class="mute" style="margin-top:8px">Incluye los toques de antes del 25 nov a las 8:23: entonces también contaba empezar a deslizar el dedo para bajar, así que hay más puntos rojos de los reales.</p>' : ''}
 <div class="card"><h2>Dónde se van</h2>${funnel}<p class="mute" style="margin-top:6px">Personas distintas en la portada (móvil y ordenador juntos). «Tocaron algo» cuenta desde el 25 nov por la mañana (antes, deslizar el dedo también contaba como toque).</p></div>
 <div class="card"><h2>Toques en ${v === 'movil' ? 'el móvil' : 'el ordenador'} (${mine.length})</h2>
 <div class="leg"><span><i style="background:var(--plum);opacity:.6"></i>Botón o enlace</span><span><i style="background:var(--red);opacity:.7"></i>No es botón: lo tocaron esperando algo</span></div>

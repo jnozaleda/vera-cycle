@@ -165,6 +165,7 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
 // Escribir gratis, pagar después (24 nov): llega a la profesional por valorar, su valoración lleva el pago, al pagar se desbloquea
 {
   const { unlockVal, valLinks } = await import('../src/worker.js');
+  const k6x = '';
   const local = (u) => u.replace(/^https:\/\/[^/]+/, 'https://w');
   const postForm = async (u, extra = {}) => { const q = new URL(u).searchParams; const f = new URLSearchParams({ c: q.get('c'), s: q.get('s'), ...extra }); return (await worker.fetch(new Request(local(u), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: f }), env)).text(); };
   const P0 = env.PAYMENTS, K0 = env.STRIPE_SECRET_KEY, R0 = env.RELAY, N0 = env.NO_FREE, V0 = env.VALORA, B0 = env.BF_OFFER_END_MS, DB0 = env.DB;
@@ -175,7 +176,7 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   const r = await call('/ask', { email: 'valora@example.com', to: 'matrona', text: 'Tengo 34 semanas y las manos hinchadas', context: '', val: true });
   assert.ok(r.j.ok && r.j.val && !r.j.held, JSON.stringify(r.j));
   const pm = sent.slice(s0).find((m) => m.to[0] === PROS.matrona.email);
-  assert.match(pm.subject, /^POR VALORAR · /); assert.match(pm.html, /Aún no ha pagado\. Elige con un toque/); assert.match(pm.html, /Pedir el pago de 5 €/); assert.match(pm.html, /\/valorar\/cobrar\?c=/); assert.match(pm.html, /\/valorar\/gratis\?c=/); assert.match(pm.html, /\/valorar\/urgente\?c=/);
+  assert.match(pm.subject, /^POR VALORAR · /); assert.match(pm.html, /Aún no ha pagado\. Elige con un toque/); assert.match(pm.html, /pedir el pago de 5 €/i); assert.match(pm.html, /\/valorar\/cobrar\?c=/); assert.match(pm.html, /\/valorar\/gratis\?c=/); assert.match(pm.html, /\/valorar\/urgente\?c=/);
   const um = sent.slice(s0).find((m) => m.to[0] === 'valora@example.com');
   assert.match(um.html, /Si es algo rápido, te lo dirá sin coste/); assert.match(um.html, /Enviarla ha sido gratis/);
   const k = [...store.keys()].find((x) => x.startsWith('t:') && !before.has(x));
@@ -192,7 +193,7 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   // La usuaria responde: a la profesional le llega con los botones debajo
   const su1 = sent.length;
   assert.ok((await relayIncoming(env, t, 'u', mime('valora@example.com', await relayAddress(env, 'u', t.id), 'Sí, 14/9'))).ok);
-  assert.ok(sent.slice(su1).some((m) => m.to[0] === PROS.matrona.email && /Pedir el pago de 5 €/.test(m.html)), 'botones tras la respuesta');
+  assert.ok(sent.slice(su1).some((m) => m.to[0] === PROS.matrona.email && /pedir el pago de 5 €/i.test(m.html)), 'botones tras la respuesta');
   // Ya lo tiene claro: «Pedir el pago»; desde ahí sus mensajes llevan el botón
   t = await loadThread(env, t.id);
   const sc = sent.length; assert.match(await postForm((await valLinks(env, t.id)).charge, { m: 'Ya lo tengo todo.' }), /Enviado/);
@@ -258,7 +259,7 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   assert.ok(r4.j.ok && r4.j.val);
   const k4 = [...store.keys()].find((x) => x.startsWith('t:') && !before.has(x) && ![k, k2, k3].includes(x));
   const cl = (await valLinks(env, k4.slice(2))).charge;
-  assert.match(await (await worker.fetch(new Request(local(cl)), env)).text(), /Enviarle el pago de 5 €/);
+  assert.match(await (await worker.fetch(new Request(local(cl)), env)).text(), /Enviar con el pago de 5 €/);
   const s6 = sent.length;
   assert.match(await postForm(cl, { m: '¿Tienes fiebre o una zona roja?' }), /Enviado/);
   assert.ok(sent.slice(s6).some((m) => m.to[0] === 'copia@example.com' && /Marina pidió el pago/.test(m.subject)), 'aviso al equipo del cobro');
@@ -266,16 +267,35 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   assert.match(cm.html, /¿Tienes fiebre o una zona roja\?/); assert.match(cm.html, /Pagar 5 € y recibir la respuesta/);
   const t4 = await loadThread(env, k4.slice(2)); assert.equal(t4.v, 2); assert.ok(t4.a);
   assert.match(await postForm(cl), /Ya le pediste el pago/);
+  // «Prefiero contestarle desde el correo»: no sale nada; su respuesta lleva el pago; si no escribe en 2 h, mensaje corto
+  const r6 = await call('/ask', { email: 'valora-correo@example.com', to: 'gineco', text: 'Me ha bajado la regla dos veces este mes', context: '', val: true });
+  const k6 = [...store.keys()].find((x) => x.startsWith('t:') && !before.has(x) && ![k, k2, k3, k4].includes(x) && x !== k6x);
+  const cl6 = (await valLinks(env, k6.slice(2))).charge;
+  const s10 = sent.length; assert.match(await postForm(cl6, { modo: 'correo' }), /Ahora contesta al correo/);
+  assert.ok(!sent.slice(s10).some((m) => m.to[0] === 'valora-correo@example.com'), 'no sale nada todavía');
+  let t6 = await loadThread(env, k6.slice(2)); assert.equal(t6.v, 2); assert.ok(t6.vc && !t6.va);
+  const s11 = sent.length;
+  assert.ok((await relayIncoming(env, t6, 'p', mime(PROS.gineco.email, await relayAddress(env, 'p', t6.id), 'Puede ser normal, pero quiero revisarlo bien.'))).ok);
+  const one = sent.slice(s11).filter((m) => m.to[0] === 'valora-correo@example.com');
+  assert.equal(one.length, 1); assert.match(one[0].html, /quiero revisarlo bien/); assert.match(one[0].html, /Pagar 5 € y recibir la respuesta/);
+  t6 = await loadThread(env, t6.id); assert.ok(t6.va && !t6.vc, 'enlace enviado con su respuesta');
+  // respaldo a las 2 h
+  const r7 = await call('/ask', { email: 'valora-correo2@example.com', to: 'gineco', text: 'Otra duda para el respaldo', context: '', val: true });
+  const k7 = [...store.keys()].find((x) => x.startsWith('t:') && !before.has(x) && ![k, k2, k3, k4, k6].includes(x) && x !== k6x);
+  await postForm((await valLinks(env, k7.slice(2))).charge, { modo: 'correo' });
+  let t7 = await loadThread(env, k7.slice(2)); t7.vc = Date.now() - 3 * 3600000; await saveThread(env, t7);
+  const s12 = sent.length; await worker.scheduled({ scheduledTime: Date.parse('2026-11-25T09:00:00Z') }, env);
+  assert.ok(sent.slice(s12).some((m) => m.to[0] === 'valora-correo2@example.com' && /Pagar 5 €/.test(m.html)), 'respaldo a las 2 h');
   // Consultas por valorar de antes de los botones: se le reenvían una vez a la profesional
   const r5 = await call('/ask', { email: 'valora-vieja@example.com', to: 'pediatra', text: 'Duda de antes de los botones', context: '', val: true });
-  const k5 = [...store.keys()].find((x) => x.startsWith('t:') && !before.has(x) && ![k, k2, k3, k4].includes(x));
+  const k5 = [...store.keys()].find((x) => x.startsWith('t:') && !before.has(x) && ![k, k2, k3, k4, k6, k7].includes(x));
   const t5 = await loadThread(env, k5.slice(2)); delete t5.vb; await saveThread(env, t5);
   const s7 = sent.length; await remindOverdue(env); await remindOverdue(env);
-  assert.equal(sent.slice(s7).filter((m) => m.to[0] === PROS.pediatra.email && /Pedir el pago de 5 €/.test(m.html)).length, 1, 'botones reenviados una vez');
+  assert.equal(sent.slice(s7).filter((m) => m.to[0] === PROS.pediatra.email && /pedir el pago de 5 €/i.test(m.html)).length, 1, 'botones reenviados una vez');
   // Reenvío pedido por el equipo (KV val-reenvio): también a una marcada urgente, que luego puede pedir el pago
   await env.KV.put('val-reenvio', JSON.stringify([k2.slice(2), k4.slice(2)]));
   const s8 = sent.length; await worker.scheduled({ scheduledTime: Date.parse('2026-11-25T09:00:00Z') }, env);
-  const rs = sent.slice(s8).filter((m) => /Pedir el pago de 5 €/.test(m.html));
+  const rs = sent.slice(s8).filter((m) => /pedir el pago de 5 €/i.test(m.html));
   assert.equal(rs.length, 2, 'reenviados'); assert.match(rs[0].html, /La marcaste como urgente/); assert.equal(await env.KV.get('val-reenvio'), null);
   const s9 = sent.length;
   assert.match(await postForm((await valLinks(env, k2.slice(2))).charge), /Enviado/);

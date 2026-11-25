@@ -509,6 +509,7 @@ ${MODES.map(([m, t]) => `<div class="cv cv-${m}"><h3 class="fh">Personas · ${su
   const PRO_N = { gineco: 'Gonzalo', matrona: 'Marina', pediatra: 'Lucía' };
   const stateOf = (m) => {
     if (m.v === 1) return m.a ? ['warn', 'Pidió más datos', `Le escribió ${hhmm(m.a)} · aún no ha decidido si cobrar`] : ['warn', 'Por valorar', 'Aún no ha elegido qué hacer'];
+    if (m.v === 2 && m.vc && !m.va) return ['warn', 'Pago pedido', `Esperando su respuesta por correo, que irá con el botón de pago (desde ${hhmm(m.vc)}; si no escribe en 2 h, sale un mensaje corto con el pago)`];
     if (m.v === 2) return ['warn', 'Pago pedido', `Enlace de pago enviado a la usuaria ${hhmm(m.va)}${m.vr ? ' · recordatorio enviado' : ''} · sin pagar${m.pay ? ` · <a href="${esc(m.pay)}" style="color:var(--plum);font-weight:600" rel="noopener">enlace de pago</a> (para copiarlo y mandárselo; si lo abres tú, cuenta como que ella abrió el pago)` : ''}`];
     if (m.v === 3) return m.vf ? ['ok', 'Pagada y respondida', `Pagó ${hhmm(m.vp)}`] : ['warn', 'Pagada · falta responder', `Pagó ${hhmm(m.vp)}`];
     if (m.v === 0 && m.vu) return [m.a ? 'ok' : 'warn', 'Urgente', m.a ? `Respondida ${hhmm(m.a)}` : 'Falta responder'];

@@ -254,13 +254,27 @@ export const valLinks = async (env, id) => ({ pay: `${WORKER_URL}/valorar/pagar?
 const valBtn = (href, label, sub, main) => `<a href="${href}" style="display:block;text-decoration:none;border-radius:10px;padding:13px 14px;margin-top:8px;text-align:center;${main ? 'background:#45574C;color:#ffffff;' : 'background:#ffffff;color:#2F3631;border:1.5px solid #45574C;'}"><span style="display:block;font-size:16px;font-weight:700">${label}</span><span style="display:block;font-size:12.5px;margin-top:2px;${main ? 'color:#E6EEE9' : 'color:#6E6C67'}">${sub}</span></a>`;
 function valProHtml(l) {
   return `<div style="background:#DCEBE4;border-radius:12px;padding:14px;margin:10px 0;color:#2F3631"><div style="font-size:15px;font-weight:700">Aún no ha pagado. Elige con un toque:</div><div style="font-size:13px;color:#4F4E49;margin-top:3px">¿Necesitas más datos antes de decidir? Respóndele a este correo: le llega sin pago, y cuando conteste volverás a tener estos botones.</div>
-${valBtn(l.charge, `Pedir el pago de ${VAL_PRICE}`, 'Le llega tu mensaje con el botón de pago.', true)}
+${valBtn(l.charge, `Responder y pedir el pago de ${VAL_PRICE}`, 'Escribes tu respuesta y le llega con el botón de pago, en un solo correo.', true)}
 ${valBtn(l.free, 'Es rápido: responder gratis', 'Después respondes a este correo; le llega sin pago y con la oferta de seguir por 5 €.', false)}
 ${valBtn(l.urgent, 'Es urgente', 'Sin pago. Después respóndele que vaya a urgencias.', false)}
 </div>`;
 }
 function valProText(l) {
-  return `AÚN NO HA PAGADO. Elige (si necesitas más datos antes, respóndele a este correo: le llega sin pago):\n· Pedir el pago de ${VAL_PRICE}: ${l.charge}\n· Es rápido, responder gratis: ${l.free}\n· Es urgente (sin pago): ${l.urgent}`;
+  return `AÚN NO HA PAGADO. Elige (si necesitas más datos antes, respóndele a este correo: le llega sin pago):\n· Responder y pedir el pago de ${VAL_PRICE}: ${l.charge}\n· Es rápido, responder gratis: ${l.free}\n· Es urgente (sin pago): ${l.urgent}`;
+}
+/** «Contestaré desde el correo» y a las 2 h no ha escrito: sale el mensaje corto con el pago. Lista en KV «val-cobro» */
+async function chargeFallback(env) {
+  const list = (await env.KV.get('val-cobro', 'json')) || [];
+  if (!list.length) return;
+  const keep = [];
+  for (const id of list) {
+    const t = await loadThread(env, id);
+    if (!t || t.v !== 2 || !t.vc || t.va || !PROS[t.p]) continue;
+    if (Date.now() - t.vc < 2 * 3600000) { keep.push(id); continue; }
+    delete t.vc;
+    if (!(await sendValuation(env, t, PROS[t.p], ''))) { t.vc = Date.now() - 2 * 3600000; await saveThread(env, t); keep.push(id); }
+  }
+  await env.KV.put('val-cobro', JSON.stringify(keep));
 }
 /** Reenvío de los botones a petición del equipo (Noza, 25 nov): KV «val-reenvio» = [ids]; se envían y se borra la lista */
 async function resendValButtons(env) {
@@ -779,13 +793,24 @@ const handler = {
       if (t.v === undefined || t.v === null) return page('Esta consulta no necesita pago', 'Respóndele respondiendo al correo de la consulta.');
       if ((what === 'gratis' || what === 'urgente') && t.v === 0) return page('Ya va sin pago', 'Respóndele respondiendo al correo de la consulta. Si prefieres pedirle el pago de 5 €, usa el botón «Pedir el pago».');
       if (what === 'cobrar') {
+        // Un solo correo: su respuesta con el botón de pago debajo (Noza, 25 nov: era raro recibir la respuesta y, aparte, el pago)
+        const DEF = `He leído tu consulta y puedo ayudarte. Para darte una respuesta completa, por escrito y con lo que puedes hacer, son ${VAL_PRICE}.`;
+        if (t.v === 2 && t.vc && !t.va && !form) return page('Pendiente de tu respuesta', 'Contesta al correo de la consulta: tu respuesta le llegará con el botón de pago.');
         if (t.v === 2 && !form) return page('Ya le pediste el pago', `Le llegó tu mensaje con el botón de pago de ${VAL_PRICE}. Si quieres añadir algo, responde al correo de la consulta.`);
-        if (!form) return page(`Pedir el pago de ${VAL_PRICE}`, `Le llegará un mensaje tuyo con el botón «Pagar ${VAL_PRICE} y recibir la respuesta». Si quieres, escribe qué necesitas saber; si lo dejas vacío, le llega este texto:<br><i>«He leído tu consulta y puedo ayudarte. Para darte una respuesta completa, por escrito y con lo que puedes hacer, son ${VAL_PRICE}.»</i>`,
-          `<form method="post">${hidden}<textarea name="m" rows="5" maxlength="1500" placeholder="Opcional: qué necesitas saber (por ejemplo, si le han tomado la tensión)" style="width:100%;box-sizing:border-box;border:1px solid #E5E1D8;border-radius:10px;padding:12px;font:16px -apple-system,sans-serif"></textarea>${btn(`Enviarle el pago de ${VAL_PRICE}`)}</form>`);
+        if (!form) return page(`Responder y pedir el pago de ${VAL_PRICE}`, `Escribe tu respuesta: le llegará en un solo correo, con el botón «Pagar ${VAL_PRICE} y recibir la respuesta» debajo.`,
+          `<form method="post">${hidden}<textarea name="m" rows="8" maxlength="1500" style="width:100%;box-sizing:border-box;border:1px solid #E5E1D8;border-radius:10px;padding:12px;font:16px/1.45 -apple-system,sans-serif">${esc(DEF)}</textarea>${btn(`Enviar con el pago de ${VAL_PRICE}`)}</form>
+<form method="post" style="margin-top:18px">${hidden}<input type="hidden" name="modo" value="correo"><button style="display:block;width:100%;background:#fff;color:#45574C;border:1.5px solid #45574C;border-radius:10px;padding:13px;font:600 15px -apple-system,sans-serif">Prefiero contestarle desde el correo</button><p style="font-size:13px;color:#6E6C67;margin:6px 0 0">Tu próxima respuesta desde el correo le llegará con el botón de pago. Si en 2 horas no le has escrito, le mandamos un mensaje corto con el pago.</p></form>`);
         if (t.v === 2) return page('Ya le pediste el pago', 'No se ha enviado de nuevo.');
+        if (form.get('modo') === 'correo') {
+          t.v = 2; t.vc = Date.now(); delete t.va; await saveThread(env, t);
+          const vlist = (await env.KV.get('val-cobro', 'json')) || []; await env.KV.put('val-cobro', JSON.stringify([...vlist.filter((x) => x !== t.id), t.id].slice(-200)));
+          await bump(env, 'valorada');
+          if (env.COPY_TO) { const tc = teamCopy({ subject: `Consulta · #${t.id.toUpperCase()} · ${pro.short} pidió el pago (${VAL_PRICE}) · contestará desde el correo`, intro: `<b>${esc(pro.name)}</b> ha pedido el pago de la consulta #${t.id.toUpperCase()}. Su próxima respuesta le llegará con el botón de pago (si no escribe en 2 h, sale un mensaje corto con el pago).`, body: '', nFiles: 0, withFiles: false, extra: '' }); await sendMail(env, { to: env.COPY_TO, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc }); }
+          return page('Hecho', 'Ahora contesta al correo de la consulta: tu respuesta le llegará con el botón de pago debajo. Si en 2 horas no le has escrito, le mandamos un mensaje corto con el pago.');
+        }
         const msg = String(form.get('m') || '').trim().slice(0, 1500);
         if (!(await sendValuation(env, t, pro, msg))) return page('No se ha podido enviar', 'Inténtalo otra vez en un minuto o responde al correo de la consulta.');
-        return page('Enviado', `Le ha llegado tu mensaje con el botón de pago de ${VAL_PRICE}. Cuando pague, te avisamos en la conversación de la consulta para que le respondas entera.`);
+        return page('Enviado', `Le ha llegado tu respuesta con el botón de pago de ${VAL_PRICE}. Cuando pague, te avisamos en la conversación de la consulta para que le respondas entera.`);
       }
       if (what === 'gratis' || what === 'urgente') {
         const [h, p] = what === 'gratis' ? ['Responder gratis', 'Su consulta irá sin pago. Después responde al correo de la consulta: tu respuesta le llegará sin botón de pago y con la oferta de seguir contigo por 5 €.'] : ['Es urgente', 'Su consulta irá sin pago. Después respóndele, respondiendo al correo de la consulta, que vaya a urgencias.'];
@@ -1375,6 +1400,7 @@ const handler = {
 
   /** Cada hora: recordatorio al profesional si una consulta lleva 16 h sin respuesta */
   async scheduled(event, env) {
+    await chargeFallback(env).catch((e) => console.log(`cobro ${e.message}`));
     await retryMailQueue(env).catch((e) => console.log(`mailq ${e.message}`));
     await resendValButtons(env).catch((e) => console.log(`reenvio ${e.message}`));
     // Un solo cron cada 15 min (el plan gratis de Cloudflare permite 5 por cuenta y ya están usados):
@@ -1464,8 +1490,9 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
 <p style="font-size:13px;color:#6E6C67">Tarjeta, Apple Pay o Google Pay. Si no te sirve, te devolvemos el dinero. Si has tenido un problema para pagar, responde a este correo.</p>
 <p style="font-size:13px;color:#9A3B2B">Si es urgente o empeora, no esperes: llama al 112 o acude a urgencias.</p>`);
     const au = await sendMail(env, { to: await openEmail(env, t.u), from: `${pro.short} · Hera <${pro.email}>`, replyTo: await relayAddress(env, 'u', t.id), subject: `Re: ${t.su}`, refs: t.ru, html, text: `${pro.short} ha recibido tu mensaje. Para que pueda responderte, falta completar el pago de ${VAL_PRICE}: ${link}\n\nSi es urgente o empeora, llama al 112 o acude a urgencias.` });
-    if (au) { t.vq = Date.now(); if (au.id) t.ou = [...(t.ou || []), au.id].slice(-10); await bump(env, 'valorada_autorrespuesta'); }
+    if (au) { t.vq = Date.now(); if (t.vc && !t.va) { t.va = Date.now(); delete t.vc; } if (au.id) t.ou = [...(t.ou || []), au.id].slice(-10); await bump(env, 'valorada_autorrespuesta'); }
   }
+  if (valPending && t.vc && !t.va) { t.va = Date.now(); delete t.vc; }
   if (toUser && t.v === 3 && !t.vf) t.vf = Date.now();
   if (toUser && !t.a) {
     t.a = Date.now();

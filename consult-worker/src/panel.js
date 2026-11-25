@@ -501,6 +501,19 @@ ${MODES.map(([m, t]) => `<div class="cv cv-${m}"><h3 class="fh">Personas · ${su
   const tripsHtml = trips.slice(0, 15).map((t) => t.html).join('');
   const opTotal = sum('opinion:');
 
+  // Consultas recientes con su estado (25 nov): por valorar, pago pedido, pagada, gratis, urgente, respondida
+  const hhmm = (ts) => madrid(ts, { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+  const PRO_N = { gineco: 'Gonzalo', matrona: 'Marina', pediatra: 'Lucía' };
+  const stateOf = (m) => {
+    if (m.v === 1) return ['warn', 'Por valorar', 'Aún no ha elegido qué hacer'];
+    if (m.v === 2) return ['warn', 'Pago pedido', `Enlace de pago enviado a la usuaria ${hhmm(m.va)}${m.vr ? ' · recordatorio enviado' : ''} · sin pagar`];
+    if (m.v === 3) return m.vf ? ['ok', 'Pagada y respondida', `Pagó ${hhmm(m.vp)}`] : ['warn', 'Pagada · falta responder', `Pagó ${hhmm(m.vp)}`];
+    if (m.v === 0 && m.vu) return [m.a ? 'ok' : 'warn', 'Urgente', m.a ? `Respondida ${hhmm(m.a)}` : 'Falta responder'];
+    if (m.v === 0) return [m.a ? 'ok' : 'warn', 'Gratis (rápida)', m.a ? `Respondida ${hhmm(m.a)}` : 'Falta responder'];
+    return [m.a ? 'ok' : 'warn', m.a ? 'Respondida' : 'Sin responder', m.a ? hhmm(m.a) : ''];
+  };
+  const rec = (open.recientes || []).sort((x, y) => y.c - x.c).slice(0, 30);
+  const recCard = rec.length ? `<div class="card" id="recientes"><h2>Consultas recientes</h2><div style="overflow-x:auto"><table><tr><th>Consulta</th><th>Llegó</th><th>Estado</th></tr>${rec.map((m) => { const [cls, st, det] = stateOf(m); return `<tr><td><b>#${esc(m.id.toUpperCase())}</b><br><span class="mute">${PRO_N[m.p] || esc(m.p)}</span></td><td>${hhmm(m.c)}</td><td><span class="chip ${cls}">${st}</span>${det ? `<br><span class="mute">${det}</span>` : ''}</td></tr>`; }).join('')}</table></div><p class="mute" style="margin-top:6px">Últimos 3 días. «Enlace de pago enviado» = el correo salió y el proveedor lo aceptó; si rebota, aparece en «Correos que no han llegado».</p></div>` : '';
   // Correos que no han llegado (bounces.js): corregir el correo y reenviar, o quitar de la lista
   const kRaw = esc(url.searchParams.get('k') || '');
   const failCard = fails.length ? `<div class="card" id="fallos"><h2>Correos que no han llegado</h2><p class="mute" style="margin-bottom:8px">Antes de reenviar a un correo corregido, confirma con ella que es el suyo.</p>${fails.map((x) => {
@@ -613,7 +626,7 @@ ${waCard}
 <div class="leg"><span><i class="i-es"></i>Anuncio España</span><span><i class="i-la"></i>Anuncio Latinoamérica</span><span><i class="i-ot"></i>Resto (Google, directo, enlaces)</span></div>
 ${fun}${funNote ? `<p class="mute" style="margin-top:6px">${funNote}</p>` : ''}</div>
 ${dailyCard}
-${valCard}${abCard}
+${recCard}${valCard}${abCard}
 ${menoCard}
 ${payCard}
 

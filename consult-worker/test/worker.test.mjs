@@ -257,6 +257,8 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   const s9 = sent.length;
   assert.match(await postForm((await valLinks(env, k2.slice(2))).charge), /Enviado/);
   assert.ok(sent.slice(s9).some((m) => m.to[0] === 'valora-urg@example.com' && /Pagar 5 € y recibir la respuesta/.test(m.html)), 'tras urgente, puede pedir el pago');
+  const ph = await (await worker.fetch(new Request('https://w/panel?k=dk&d=7'), env)).text();
+  assert.match(ph, /Consultas recientes/); assert.match(ph, /Pago pedido/); assert.match(ph, /Urgente/);
   env.PAYMENTS = P0; env.STRIPE_SECRET_KEY = K0; env.RELAY = R0; env.NO_FREE = N0; env.VALORA = V0; env.BF_OFFER_END_MS = B0; env.DB = DB0;
   console.log('Escribir gratis, pagar después: OK');
 }

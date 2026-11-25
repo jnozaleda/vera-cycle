@@ -297,6 +297,15 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   assert.equal((await worker.fetch(new Request('https://w/panel/mapa?k=mal'), env)).status, 404);
   console.log('Mapa de calor: OK');
 }
+// Cuestionario de menopausia sin duda escrita: la profesional no ve un «Mi duda:» vacío
+{
+  const s0 = sent.length;
+  const r = await call('/ask', { email: 'meno-sin-duda@example.com', to: 'gineco', text: 'Mi cuestionario de menopausia (orientativo): 11 de 48.\n\nSofocos y sudores (2 de 8):\n· Sofocos: poco\n\nMi duda: ', context: '' });
+  assert.ok(r.j.ok || r.j.limit, JSON.stringify(r.j));
+  const pm = sent.slice(s0).find((m) => m.to[0] === PROS.gineco.email);
+  assert.ok(pm, 'le llega a la profesional'); assert.match(pm.html, /no ha escrito ninguna duda concreta/);
+  console.log('Menopausia sin duda: OK');
+}
 // embudo: personas distintas por día, quien avanza cuenta en los pasos anteriores
 const { dropoff } = await import('../src/panel.js');
 const T = Date.UTC(2026, 9, 31, 12);

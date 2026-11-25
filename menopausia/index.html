@@ -190,7 +190,9 @@ function update(){
   lvl.innerHTML='<b>'+tot+' de '+MAX+'.</b> '+(top.length?'Lo que más te afecta: '+top.map((x)=>x.t.toLowerCase()).join('; ')+'. ':'')+L[2];
   btn.removeAttribute('aria-disabled');$('m-offer').hidden=false;
   if(!done){done=true;const rs=document.querySelector('.m-res');if(rs&&rs.getBoundingClientRect().top>innerHeight*0.5)rs.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'})}
-  btn.dataset.text='Mi cuestionario de menopausia (orientativo): '+tot+' de '+MAX+', '+L[1].toLowerCase()+'. '+areas.map((a)=>a+' '+by[a][0]+'/'+by[a][1]).join(', ')+'.'+(top.length?' Lo que más me afecta: '+top.map((x)=>x.t.toLowerCase()+' ('+OPT[x.v].toLowerCase()+')').join('; ')+'.':'')+'\n\nMi duda: ';
+  // Para el ginecólogo (Noza, 25 nov: «la información le llega pobre»): cada respuesta, por áreas, no solo las puntuaciones
+  const ans=areas.map((a)=>a+' ('+by[a][0]+' de '+by[a][1]+'):\n'+Object.values(r).filter((x)=>x.a===a).map((x)=>'· '+x.t+': '+OPT[x.v].toLowerCase()).join('\n')).join('\n\n');
+  btn.dataset.text='Mi cuestionario de menopausia (orientativo): '+tot+' de '+MAX+', '+L[1].toLowerCase()+'.'+(top.length?' Lo que más me afecta: '+top.map((x)=>x.t.toLowerCase()+' ('+OPT[x.v].toLowerCase()+')').join('; ')+'.':'')+'\n\n'+ans+'\n\nMi duda: ';
 }
 f.addEventListener('change',update);
 $('m-send').addEventListener('click',(ev)=>{if($('m-send').getAttribute('aria-disabled')==='true'){ev.preventDefault();return}h('menopausia:enviar');try{localStorage.setItem('hera-ask-prefill',JSON.stringify({text:$('m-send').dataset.text,at:Date.now()}))}catch(e){}});

@@ -1135,7 +1135,8 @@ const handler = {
         ? { name: 'Prueba de Hera', short: 'Prueba', role: 'prueba', email: env.COPY_TO, key: 'prueba' } : null);
       if (!pro) return reply(400, { error: 'bad_to' });
       // Se puede enviar sin escribir nada: la profesional responde preguntando qué necesita
-      const text = String(body.text || '').trim() || 'Hola, me gustaría hacer una consulta.';
+      // Cuestionario de menopausia sin duda escrita (25 nov): que la profesional no vea un «Mi duda:» vacío
+      const text = (String(body.text || '').trim() || 'Hola, me gustaría hacer una consulta.').replace(/\n*Mi duda:\s*$/, '\n\nMi duda: (no ha escrito ninguna duda concreta; quiere que revises su resultado)');
       if (text.length > 2000) return reply(400, { error: 'bad_text' });
       const { files, error: fileError } = validateAttachments(body.attachments);
       if (fileError) return reply(fileError === 'too_large' ? 413 : 400, { error: fileError });

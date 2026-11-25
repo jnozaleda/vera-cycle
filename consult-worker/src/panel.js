@@ -674,6 +674,8 @@ ${opFeed || opRows ? `<div class="card"><h2>Opiniones tras la consulta</h2>${opR
 // Mapa de calor de la portada (Noza, 24 nov): GET /panel/mapa?k=…&v=movil|ordenador&d=1|7
 // Dónde tocan (tabla taps, 31 días) dibujado encima de la portada real (iframe en modo equipo: no cuenta en las métricas),
 // el embudo de la portada (personas distintas de la tabla activity) y la lista de lo que más tocan.
+const TAPS_FROM = Date.parse('2026-11-25T07:23:00Z');
+const MAP_IMG = { movil: [390, 8061, 'https://hera-gine.com/portada/mapa/movil.jpg?v=20261125'], ordenador: [1280, 4847, 'https://hera-gine.com/portada/mapa/ordenador.jpg?v=20261125'] };
 export async function heatmap(env, url) {
   const k = encodeURIComponent(url.searchParams.get('k') || '');
   const v = url.searchParams.get('v') === 'ordenador' ? 'ordenador' : 'movil';
@@ -682,12 +684,12 @@ export async function heatmap(env, url) {
   // Hoy = desde las 0:00 de Madrid; 7 días = las últimas 7×24 h
   const since = days === 1 ? Date.parse(`${dayISO(now)}T00:00:00+01:00`) : now - 7 * 86400000;
   let taps = [];
-  try { taps = (await env.DB.prepare('SELECT x, y, w, h, el, act, p FROM taps WHERE pg = ?1 AND ts > ?2').bind('portada', since).all()).results || []; } catch { /* sin tabla */ }
+  // Hasta el 25 nov se contaba también empezar a deslizar el dedo (pointerdown): esos toques no se dibujan
+  try { taps = (await env.DB.prepare('SELECT x, y, w, h, el, act, p FROM taps WHERE pg = ?1 AND ts > ?2').bind('portada', Math.max(since, TAPS_FROM)).all()).results || []; } catch { /* sin tabla */ }
   const inV = (t) => (v === 'movil' ? t.w < 700 : t.w >= 1000);
   const mine = taps.filter(inV);
-  const W = v === 'movil' ? 390 : 1280; const S = v === 'movil' ? 0.76 : 0.23; // cabe en la tarjeta del panel en el móvil (~300 px)
-  const hs = mine.map((t) => t.h * (v === 'movil' ? 1 : W / t.w)).sort((a, b) => a - b);
-  const H = Math.round(hs.length ? hs[Math.floor(hs.length / 2)] : (v === 'movil' ? 4200 : 2600));
+  // Fondo: foto fija de la portada (portada/mapa/*.jpg, hecha con tools: ver ESTADO 25 nov). El iframe no se pintaba en Safari del iPhone
+  const [W, H, IMG] = MAP_IMG[v]; const S = v === 'movil' ? 0.76 : 0.23; // cabe en la tarjeta del panel en el móvil (~300 px)
   const dots = mine.map((t) => {
     const f = v === 'movil' ? W / t.w : 1; // en el móvil, los anchos van de 360 a 430: se ajusta al de 390
     const x = (W / 2 + t.x * f) * S, y = t.y * S;
@@ -721,7 +723,7 @@ export async function heatmap(env, url) {
 .leg{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--mute);margin-bottom:10px}.leg i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:-1px}
 .map{overflow:auto;border:1px solid var(--line);border-radius:8px;max-height:80vh;background:#fff}
 .stage{position:relative;width:${Math.round(W * S)}px;height:${Math.round(H * S)}px;margin:0 auto}
-.stage iframe{position:absolute;left:0;top:0;width:${W}px;height:${H}px;border:0;transform:scale(${S});transform-origin:0 0;pointer-events:none}
+.stage img{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
 .stage svg{position:absolute;left:0;top:0}circle.a{fill:#3E6B52;fill-opacity:.55;stroke:#fff;stroke-width:1.5}circle.n{fill:#C2412B;fill-opacity:.6;stroke:#fff;stroke-width:1.5}
 table{width:100%;border-collapse:collapse;font-size:13.5px}th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--mute);font-weight:500}td:nth-child(n+3),th:nth-child(n+3){text-align:right;font-variant-numeric:tabular-nums}td:first-child{word-break:break-word}.no{color:var(--red);font-weight:600}
 @media (max-width:520px){.fr{grid-template-columns:110px minmax(0,1fr) 30px 40px;font-size:13px}}
@@ -731,10 +733,10 @@ table{width:100%;border-collapse:collapse;font-size:13.5px}th,td{text-align:left
 <p class="mute">Dónde tocan quienes visitan la portada. Sin cookies y sin lo que escriben. Los dispositivos en modo equipo no cuentan.</p>
 <div class="tabs">${tab('v', 'movil', 'Móvil', v)}${tab('v', 'ordenador', 'Ordenador', v)}</div>
 <div class="tabs">${tab('d', 1, 'Hoy', days)}${tab('d', 7, '7 días', days)}</div>
-<div class="card"><h2>Dónde se van</h2>${funnel}<p class="mute" style="margin-top:6px">Personas distintas en la portada (móvil y ordenador juntos). «Tocaron algo» cuenta desde el 24 nov, cuando empezó el mapa.</p></div>
+<div class="card"><h2>Dónde se van</h2>${funnel}<p class="mute" style="margin-top:6px">Personas distintas en la portada (móvil y ordenador juntos). «Tocaron algo» cuenta desde el 25 nov por la mañana (antes, deslizar el dedo también contaba como toque).</p></div>
 <div class="card"><h2>Toques en ${v === 'movil' ? 'el móvil' : 'el ordenador'} (${mine.length})</h2>
 <div class="leg"><span><i style="background:var(--plum);opacity:.6"></i>Botón o enlace</span><span><i style="background:var(--red);opacity:.7"></i>No es botón: lo tocaron esperando algo</span></div>
-${mine.length ? `<div class="map"><div class="stage"><iframe src="https://hera-gine.com/?mapa=1#equipo" title="Portada" loading="lazy" scrolling="no" tabindex="-1"></iframe><svg width="${Math.round(W * S)}" height="${Math.round(H * S)}" aria-hidden="true">${dots}</svg></div></div>
+${mine.length ? `<div class="map"><div class="stage"><img src="${IMG}" alt="Portada de Hera" width="${Math.round(W * S)}" height="${Math.round(H * S)}"><svg width="${Math.round(W * S)}" height="${Math.round(H * S)}" aria-hidden="true">${dots}</svg></div></div>
 <p class="mute" style="margin-top:8px">El dibujo es la portada de hoy, a ${W} px de ancho y a escala para que quepa. Si alguien la vio con otro texto o más alta (por ejemplo, con la caja de consulta abierta), los puntos de abajo pueden no caer en su sitio: la lista de abajo dice qué tocaron exactamente.</p>` : '<p class="mute">Todavía no hay toques en este periodo.</p>'}</div>
 <div class="card"><h2>Lo que más tocan</h2>${rows ? `<table><tr><th>Qué</th><th>¿Botón?</th><th>Toques</th><th>Personas</th></tr>${rows}</table>` : '<p class="mute">Todavía no hay toques.</p>'}
 <p class="mute" style="margin-top:8px">«Sección › elemento». Si mucha gente toca algo que no es botón (una foto, una tarjeta, un precio), esperaban que hiciera algo.</p></div>

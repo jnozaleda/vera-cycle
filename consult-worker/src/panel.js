@@ -685,13 +685,13 @@ export async function heatmap(env, url) {
   try { taps = (await env.DB.prepare('SELECT x, y, w, h, el, act, p FROM taps WHERE pg = ?1 AND ts > ?2').bind('portada', since).all()).results || []; } catch { /* sin tabla */ }
   const inV = (t) => (v === 'movil' ? t.w < 700 : t.w >= 1000);
   const mine = taps.filter(inV);
-  const W = v === 'movil' ? 390 : 1280; const S = v === 'movil' ? 1 : 0.5;
+  const W = v === 'movil' ? 390 : 1280; const S = v === 'movil' ? 0.76 : 0.23; // cabe en la tarjeta del panel en el móvil (~300 px)
   const hs = mine.map((t) => t.h * (v === 'movil' ? 1 : W / t.w)).sort((a, b) => a - b);
   const H = Math.round(hs.length ? hs[Math.floor(hs.length / 2)] : (v === 'movil' ? 4200 : 2600));
   const dots = mine.map((t) => {
     const f = v === 'movil' ? W / t.w : 1; // en el móvil, los anchos van de 360 a 430: se ajusta al de 390
     const x = (W / 2 + t.x * f) * S, y = t.y * S;
-    return y < H * S + 40 ? `<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="9" class="${t.act ? 'a' : 'n'}"/>` : '';
+    return y < H * S + 40 ? `<circle cx="${x.toFixed(0)}" cy="${y.toFixed(0)}" r="${v === 'movil' ? 9 : 6}" class="${t.act ? 'a' : 'n'}"/>` : '';
   }).join('');
   // Embudo: personas distintas de la portada en el periodo (mismo dispositivo y día)
   let act = [];
@@ -722,7 +722,7 @@ export async function heatmap(env, url) {
 .map{overflow:auto;border:1px solid var(--line);border-radius:8px;max-height:80vh;background:#fff}
 .stage{position:relative;width:${Math.round(W * S)}px;height:${Math.round(H * S)}px;margin:0 auto}
 .stage iframe{position:absolute;left:0;top:0;width:${W}px;height:${H}px;border:0;transform:scale(${S});transform-origin:0 0;pointer-events:none}
-.stage svg{position:absolute;left:0;top:0}circle.a{fill:var(--plum);fill-opacity:.35}circle.n{fill:var(--red);fill-opacity:.4}
+.stage svg{position:absolute;left:0;top:0}circle.a{fill:#3E6B52;fill-opacity:.55;stroke:#fff;stroke-width:1.5}circle.n{fill:#C2412B;fill-opacity:.6;stroke:#fff;stroke-width:1.5}
 table{width:100%;border-collapse:collapse;font-size:13.5px}th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--mute);font-weight:500}td:nth-child(n+3),th:nth-child(n+3){text-align:right;font-variant-numeric:tabular-nums}td:first-child{word-break:break-word}.no{color:var(--red);font-weight:600}
 @media (max-width:520px){.fr{grid-template-columns:110px minmax(0,1fr) 30px 40px;font-size:13px}}
 </style></head><body><div class="w">
@@ -735,7 +735,7 @@ table{width:100%;border-collapse:collapse;font-size:13.5px}th,td{text-align:left
 <div class="card"><h2>Toques en ${v === 'movil' ? 'el móvil' : 'el ordenador'} (${mine.length})</h2>
 <div class="leg"><span><i style="background:var(--plum);opacity:.6"></i>Botón o enlace</span><span><i style="background:var(--red);opacity:.7"></i>No es botón: lo tocaron esperando algo</span></div>
 ${mine.length ? `<div class="map"><div class="stage"><iframe src="https://hera-gine.com/?mapa=1#equipo" title="Portada" loading="lazy" scrolling="no" tabindex="-1"></iframe><svg width="${Math.round(W * S)}" height="${Math.round(H * S)}" aria-hidden="true">${dots}</svg></div></div>
-<p class="mute" style="margin-top:8px">El dibujo es la portada de hoy, a ${W} px de ancho${v === 'ordenador' ? ' (a la mitad de tamaño)' : ''}. Si alguien la vio con otro texto o más alta (por ejemplo, con la caja de consulta abierta), los puntos de abajo pueden no caer en su sitio: la lista de abajo dice qué tocaron exactamente.</p>` : '<p class="mute">Todavía no hay toques en este periodo.</p>'}</div>
+<p class="mute" style="margin-top:8px">El dibujo es la portada de hoy, a ${W} px de ancho y a escala para que quepa. Si alguien la vio con otro texto o más alta (por ejemplo, con la caja de consulta abierta), los puntos de abajo pueden no caer en su sitio: la lista de abajo dice qué tocaron exactamente.</p>` : '<p class="mute">Todavía no hay toques en este periodo.</p>'}</div>
 <div class="card"><h2>Lo que más tocan</h2>${rows ? `<table><tr><th>Qué</th><th>¿Botón?</th><th>Toques</th><th>Personas</th></tr>${rows}</table>` : '<p class="mute">Todavía no hay toques.</p>'}
 <p class="mute" style="margin-top:8px">«Sección › elemento». Si mucha gente toca algo que no es botón (una foto, una tarjeta, un precio), esperaban que hiciera algo.</p></div>
 </div></body></html>`;

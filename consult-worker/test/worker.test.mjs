@@ -165,6 +165,8 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
 // Escribir gratis, pagar después (24 nov): llega a la profesional por valorar, su valoración lleva el pago, al pagar se desbloquea
 {
   const { unlockVal, valLinks } = await import('../src/worker.js');
+  const local = (u) => u.replace(/^https:\/\/[^/]+/, 'https://w');
+  const postForm = async (u, extra = {}) => { const q = new URL(u).searchParams; const f = new URLSearchParams({ c: q.get('c'), s: q.get('s'), ...extra }); return (await worker.fetch(new Request(local(u), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: f }), env)).text(); };
   const P0 = env.PAYMENTS, K0 = env.STRIPE_SECRET_KEY, R0 = env.RELAY, N0 = env.NO_FREE, V0 = env.VALORA, B0 = env.BF_OFFER_END_MS, DB0 = env.DB;
   env.PAYMENTS = 'on'; env.STRIPE_SECRET_KEY = 'sk_test_x'; env.RELAY = '1'; env.NO_FREE = '1'; env.VALORA = '1'; env.BF_OFFER_END_MS = '1';
   env.DB = { batch: DB0.batch, prepare: (sql) => { const st = DB0.prepare(sql); return { ...st, bind: (...a) => { const b = st.bind(...a); return Object.assign(Object.create(Object.getPrototypeOf(b) || Object.prototype), b, { first: b.first ? b.first.bind(b) : async () => null }); } }; } };
@@ -173,7 +175,7 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   const r = await call('/ask', { email: 'valora@example.com', to: 'matrona', text: 'Tengo 34 semanas y las manos hinchadas', context: '', val: true });
   assert.ok(r.j.ok && r.j.val && !r.j.held, JSON.stringify(r.j));
   const pm = sent.slice(s0).find((m) => m.to[0] === PROS.matrona.email);
-  assert.match(pm.subject, /^POR VALORAR · /); assert.match(pm.html, /Aún no ha pagado\. Elige cómo contestarle/); assert.match(pm.html, /\/valorar\/gratis\?c=/); assert.match(pm.html, /\/valorar\/urgente\?c=/);
+  assert.match(pm.subject, /^POR VALORAR · /); assert.match(pm.html, /Aún no ha pagado\. Elige con un toque/); assert.match(pm.html, /Pedir el pago de 5 €/); assert.match(pm.html, /\/valorar\/cobrar\?c=/); assert.match(pm.html, /\/valorar\/gratis\?c=/); assert.match(pm.html, /\/valorar\/urgente\?c=/);
   const um = sent.slice(s0).find((m) => m.to[0] === 'valora@example.com');
   assert.match(um.html, /Si es algo rápido, te lo dirá sin coste/); assert.match(um.html, /Enviarla ha sido gratis/);
   const k = [...store.keys()].find((x) => x.startsWith('t:') && !before.has(x));
@@ -208,7 +210,10 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   const r2 = await call('/ask', { email: 'valora-urg@example.com', to: 'gineco', text: 'Sangro mucho y estoy embarazada', context: '', val: true });
   assert.ok(r2.j.ok && r2.j.val);
   const k2 = [...store.keys()].find((x) => x.startsWith('t:') && !before.has(x) && x !== k);
-  const up = await (await worker.fetch(new Request((await valLinks(env, k2.slice(2))).urgent.replace(/^https:\/\/[^/]+/, 'https://w')), env)).text(); assert.match(up, /Marcada como urgente/);
+  const ul = (await valLinks(env, k2.slice(2))).urgent;
+  assert.match(await (await worker.fetch(new Request(local(ul)), env)).text(), /Sí, es urgente/);
+  assert.equal((await loadThread(env, k2.slice(2))).v, 1, 'abrir el enlace no cambia nada (los correos de empresa lo abren solos)');
+  assert.match(await postForm(ul), /Hecho/);
   const t2 = await loadThread(env, k2.slice(2)); assert.equal(t2.v, 0);
   const s4 = sent.length;
   assert.ok((await relayIncoming(env, t2, 'p', mime(PROS.gineco.email, await relayAddress(env, 'p', t2.id), 'Ve a urgencias ahora.'))).ok);
@@ -217,12 +222,30 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   const r3 = await call('/ask', { email: 'valora-rapida@example.com', to: 'pediatra', text: '¿Puedo bañar al bebé con fiebre?', context: '', val: true });
   assert.ok(r3.j.ok && r3.j.val);
   const k3 = [...store.keys()].find((x) => x.startsWith('t:') && !before.has(x) && x !== k && x !== k2);
-  const gp = await (await worker.fetch(new Request((await valLinks(env, k3.slice(2))).free.replace(/^https:\/\/[^/]+/, 'https://w')), env)).text(); assert.match(gp, /Respuesta gratis/);
+  assert.match(await postForm((await valLinks(env, k3.slice(2))).free), /Hecho/);
   const t3 = await loadThread(env, k3.slice(2)); assert.equal(t3.v, 0); assert.ok(t3.vg);
   const s5 = sent.length;
   assert.ok((await relayIncoming(env, t3, 'p', mime(PROS.pediatra.email, await relayAddress(env, 'p', t3.id), 'Sí, puedes bañarlo con agua templada.'))).ok);
   const fr = sent.slice(s5).find((m) => m.to[0] === 'valora-rapida@example.com');
   assert.ok(!/Pagar 5 €/.test(fr.html), 'gratis: sin botón de pago'); assert.match(fr.html, /¿Quieres hablarlo con Lucía\?/); assert.match(fr.html, /¿Te ha ayudado/);
+  // «Pedir el pago de 5 €» con un toque: formulario, mensaje opcional y le llega a la usuaria con el botón de pago
+  const r4 = await call('/ask', { email: 'valora-cobro@example.com', to: 'matrona', text: 'Me duele el pecho al dar el pecho', context: '', val: true });
+  assert.ok(r4.j.ok && r4.j.val);
+  const k4 = [...store.keys()].find((x) => x.startsWith('t:') && !before.has(x) && ![k, k2, k3].includes(x));
+  const cl = (await valLinks(env, k4.slice(2))).charge;
+  assert.match(await (await worker.fetch(new Request(local(cl)), env)).text(), /Enviarle el pago de 5 €/);
+  const s6 = sent.length;
+  assert.match(await postForm(cl, { m: '¿Tienes fiebre o una zona roja?' }), /Enviado/);
+  const cm = sent.slice(s6).find((m) => m.to[0] === 'valora-cobro@example.com');
+  assert.match(cm.html, /¿Tienes fiebre o una zona roja\?/); assert.match(cm.html, /Pagar 5 € y recibir la respuesta/);
+  const t4 = await loadThread(env, k4.slice(2)); assert.equal(t4.v, 2); assert.ok(t4.a);
+  assert.match(await postForm(cl), /Ya le pediste el pago/);
+  // Consultas por valorar de antes de los botones: se le reenvían una vez a la profesional
+  const r5 = await call('/ask', { email: 'valora-vieja@example.com', to: 'pediatra', text: 'Duda de antes de los botones', context: '', val: true });
+  const k5 = [...store.keys()].find((x) => x.startsWith('t:') && !before.has(x) && ![k, k2, k3, k4].includes(x));
+  const t5 = await loadThread(env, k5.slice(2)); delete t5.vb; await saveThread(env, t5);
+  const s7 = sent.length; await remindOverdue(env); await remindOverdue(env);
+  assert.equal(sent.slice(s7).filter((m) => m.to[0] === PROS.pediatra.email && /Pedir el pago de 5 €/.test(m.html)).length, 1, 'botones reenviados una vez');
   env.PAYMENTS = P0; env.STRIPE_SECRET_KEY = K0; env.RELAY = R0; env.NO_FREE = N0; env.VALORA = V0; env.BF_OFFER_END_MS = B0; env.DB = DB0;
   console.log('Escribir gratis, pagar después: OK');
 }

@@ -249,19 +249,35 @@ const holdSig = async (env, id) => (await hmac(env.HASH_SALT, `hold:${id}`)).sli
 // entera. «Es urgente» (enlace firmado del correo de la profesional): v: 0, sin pago. Recordatorio de pago a las 24 h.
 const VAL_PRICE = '5 €';
 const valSig = async (env, id, what) => (await hmac(env.HASH_SALT, `val:${what}:${id}`)).slice(0, 16);
-export const valLinks = async (env, id) => ({ pay: `${WORKER_URL}/valorar/pagar?c=${id}&s=${await valSig(env, id, 'pagar')}`, urgent: `${WORKER_URL}/valorar/urgente?c=${id}&s=${await valSig(env, id, 'urgente')}`, free: `${WORKER_URL}/valorar/gratis?c=${id}&s=${await valSig(env, id, 'gratis')}` });
-// Tres caminos (Noza, 25 nov: «gratis si es rápido»): responder gratis, valorar con el pago (5 €) o urgente (gratis)
+export const valLinks = async (env, id) => ({ pay: `${WORKER_URL}/valorar/pagar?c=${id}&s=${await valSig(env, id, 'pagar')}`, urgent: `${WORKER_URL}/valorar/urgente?c=${id}&s=${await valSig(env, id, 'urgente')}`, free: `${WORKER_URL}/valorar/gratis?c=${id}&s=${await valSig(env, id, 'gratis')}`, charge: `${WORKER_URL}/valorar/cobrar?c=${id}&s=${await valSig(env, id, 'cobrar')}` });
+// Tres caminos con botones (Noza, 25 nov: las profesionales no veían nada clicable para pedir el pago)
+const valBtn = (href, label, sub, main) => `<a href="${href}" style="display:block;text-decoration:none;border-radius:10px;padding:13px 14px;margin-top:8px;text-align:center;${main ? 'background:#45574C;color:#ffffff;' : 'background:#ffffff;color:#2F3631;border:1.5px solid #45574C;'}"><span style="display:block;font-size:16px;font-weight:700">${label}</span><span style="display:block;font-size:12.5px;margin-top:2px;${main ? 'color:#E6EEE9' : 'color:#6E6C67'}">${sub}</span></a>`;
 function valProHtml(l) {
-  const opt = (t, d) => `<tr><td style="padding:8px 0;border-top:1px solid #E5E1D8;font-size:14px;color:#2F3631">${t}<div style="font-size:13px;color:#6E6C67;margin-top:2px">${d}</div></td></tr>`;
-  return `<div style="background:#DCEBE4;border-radius:10px;padding:12px 14px;margin:10px 0;font-size:14px;color:#2F3631"><b>Aún no ha pagado. Elige cómo contestarle:</b>
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top:6px">
-${opt(`<a href="${l.free}" style="color:#45574C;font-weight:700">Es algo rápido: responder gratis</a>`, 'Pulsa el enlace y después responde a este correo. Le llega sin botón de pago y con la oferta de seguir por 5 €.')}
-${opt('<b>Necesita más: valorar (5 €)</b>', `Responde a este correo en 2 o 3 líneas: si puedes ayudarla, qué necesitas saber y que la respuesta completa cuesta ${VAL_PRICE}. Hera añade debajo el botón de pago. No le des todavía la respuesta: cuando pague, te avisamos.`)}
-${opt(`<a href="${l.urgent}" style="color:#9A3B2B;font-weight:700">Es urgente (sin pago)</a>`, 'Pulsa el enlace y respóndele que vaya a urgencias.')}
-</table></div>`;
+  return `<div style="background:#DCEBE4;border-radius:12px;padding:14px;margin:10px 0;color:#2F3631"><div style="font-size:15px;font-weight:700">Aún no ha pagado. Elige con un toque:</div>
+${valBtn(l.charge, `Pedir el pago de ${VAL_PRICE}`, 'Le llega tu mensaje con el botón de pago. Si quieres, le dices qué necesitas saber.', true)}
+${valBtn(l.free, 'Es rápido: responder gratis', 'Después respondes a este correo; le llega sin pago y con la oferta de seguir por 5 €.', false)}
+${valBtn(l.urgent, 'Es urgente', 'Sin pago. Después respóndele que vaya a urgencias.', false)}
+</div>`;
 }
 function valProText(l) {
-  return `AÚN NO HA PAGADO. Elige cómo contestarle:\n· Es algo rápido: pulsa aquí y responde gratis: ${l.free}\n· Necesita más: responde en 2-3 líneas con lo que necesitas y que la respuesta completa cuesta ${VAL_PRICE} (Hera añade el botón de pago). No le des todavía la respuesta.\n· Es urgente (sin pago): ${l.urgent}`;
+  return `AÚN NO HA PAGADO. Elige:\n· Pedir el pago de ${VAL_PRICE}: ${l.charge}\n· Es rápido, responder gratis: ${l.free}\n· Es urgente (sin pago): ${l.urgent}`;
+}
+/** Valoración enviada desde el botón «Pedir el pago»: mensaje de la profesional + botón de pago a la usuaria */
+async function sendValuation(env, t, pro, msg) {
+  const body = msg || `He leído tu consulta y puedo ayudarte. Para darte una respuesta completa, por escrito y con lo que puedes hacer, son ${VAL_PRICE}.`;
+  const { html, text } = relayEmail(pro, 'p', t.id, body, 0, null, null, valPayBlock(pro, (await valLinks(env, t.id)).pay));
+  const sent = await sendMail(env, { to: await openEmail(env, t.u), from: `${pro.short} · Hera <${pro.email}>`, replyTo: await relayAddress(env, 'u', t.id), subject: `Re: ${t.su}`, refs: t.ru, html, text });
+  if (!sent) return false;
+  if (sent.id) t.ou = [...(t.ou || []), sent.id].slice(-10);
+  t.v = 2; t.va = Date.now(); t.n = (t.n || 0) + 1;
+  if (!t.a) { t.a = Date.now(); await bump(env, `respondida:${t.p}`); await bump(env, `resp_horas:${t.p}`, madridDay(), Math.max(1, Math.round((t.a - t.c) / 3600000))); }
+  await saveThread(env, t);
+  await bump(env, 'valorada'); await record(env, { e: `valorada:${t.p}` }, sendMail);
+  if (env.COPY_TO) {
+    const tc = teamCopy({ subject: `Consulta · #${t.id.toUpperCase()} · ${pro.short} pidió el pago (${VAL_PRICE})`, intro: `<b>${esc(pro.name)}</b> ha pedido el pago de la consulta #${t.id.toUpperCase()} con este mensaje:`, body, nFiles: 0, withFiles: false, extra: '' });
+    await sendMail(env, { to: env.COPY_TO, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc });
+  }
+  return true;
 }
 /** Botón de pago debajo de la valoración de la profesional */
 export function valPayBlock(pro, link) {
@@ -670,20 +686,35 @@ const handler = {
       } catch (e) { console.log(e.message); return new Response('No se ha podido abrir el pago. Inténtalo en un rato.', { status: 502 }); }
     }
     // Escribir gratis, pagar después: «Pagar 5 € y recibir la respuesta» (usuaria) y «Es urgente» (profesional)
-    if (request.method === 'GET' && ['/valorar/pagar', '/valorar/urgente', '/valorar/gratis'].includes(url.pathname)) {
-      const id = String(url.searchParams.get('c') || ''); const what = url.pathname.split('/')[2];
-      const t = /^[a-z0-9]{8}$/.test(id) && url.searchParams.get('s') === await valSig(env, id, what) ? await loadThread(env, id) : null;
-      const page = (h, p) => new Response(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Hera</title><body style="font:16px/1.5 -apple-system,sans-serif;max-width:32em;margin:40px auto;padding:0 18px;color:#2F3631;background:#FAF9F4"><h1 style="font:400 26px Georgia,serif;color:#45574C">${h}</h1><p>${p}</p><p><a href="https://hera-gine.com/" style="color:#45574C">Volver a Hera</a></p></body>`, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } });
+    if (['GET', 'POST'].includes(request.method) && ['/valorar/pagar', '/valorar/urgente', '/valorar/gratis', '/valorar/cobrar'].includes(url.pathname)) {
+      const what = url.pathname.split('/')[2];
+      const form = request.method === 'POST' ? await request.formData().catch(() => null) : null;
+      const id = String((form ? form.get('c') : url.searchParams.get('c')) || ''); const sig = String((form ? form.get('s') : url.searchParams.get('s')) || '');
+      const t = /^[a-z0-9]{8}$/.test(id) && sig === await valSig(env, id, what) ? await loadThread(env, id) : null;
+      const page = (h, p, extra = '') => new Response(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Hera</title><body style="font:16px/1.5 -apple-system,sans-serif;max-width:32em;margin:40px auto;padding:0 18px;color:#2F3631;background:#FAF9F4"><h1 style="font:400 26px Georgia,serif;color:#45574C">${h}</h1><p>${p}</p>${extra}</body>`, { headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'x-robots-tag': 'noindex' } });
       if (!t || !PROS[t.p]) return page('Este enlace ya no sirve', 'Puede que la consulta haya caducado. Si necesitas ayuda, escríbenos a contacto@hera-gine.com.');
       const pro = PROS[t.p];
-      if (what === 'gratis') {
-        if (t.v === 1 || t.v === 2) { t.v = 0; t.vg = Date.now(); await saveThread(env, t); await bump(env, 'valorada_gratis'); }
-        return page('Respuesta gratis', t.v === 3 ? 'Esta consulta ya estaba pagada: respóndele entera.' : 'Hecho. Responde al correo de la consulta: tu respuesta le llegará sin botón de pago y con la oferta de seguir contigo por 5 €.');
+      const hidden = `<input type="hidden" name="c" value="${id}"><input type="hidden" name="s" value="${esc(sig)}">`;
+      const btn = (label) => `<button style="display:block;width:100%;background:#45574C;color:#fff;border:0;border-radius:10px;padding:15px;font:600 17px -apple-system,sans-serif;margin-top:14px">${label}</button>`;
+      if (what !== 'pagar' && t.v === 3) return page('Ya está pagada', 'Respóndele entera respondiendo al correo de la consulta.');
+      if (what !== 'pagar' && t.v !== 1 && t.v !== 2) return page('Ya está elegida', 'Esta consulta ya va sin pago. Respóndele respondiendo al correo de la consulta.');
+      if (what === 'cobrar') {
+        if (t.v === 2 && !form) return page('Ya le pediste el pago', `Le llegó tu mensaje con el botón de pago de ${VAL_PRICE}. Si quieres añadir algo, responde al correo de la consulta.`);
+        if (!form) return page(`Pedir el pago de ${VAL_PRICE}`, `Le llegará un mensaje tuyo con el botón «Pagar ${VAL_PRICE} y recibir la respuesta». Si quieres, escribe qué necesitas saber; si lo dejas vacío, le llega este texto:<br><i>«He leído tu consulta y puedo ayudarte. Para darte una respuesta completa, por escrito y con lo que puedes hacer, son ${VAL_PRICE}.»</i>`,
+          `<form method="post">${hidden}<textarea name="m" rows="5" maxlength="1500" placeholder="Opcional: qué necesitas saber (por ejemplo, si le han tomado la tensión)" style="width:100%;box-sizing:border-box;border:1px solid #E5E1D8;border-radius:10px;padding:12px;font:16px -apple-system,sans-serif"></textarea>${btn(`Enviarle el pago de ${VAL_PRICE}`)}</form>`);
+        if (t.v === 2) return page('Ya le pediste el pago', 'No se ha enviado de nuevo.');
+        const msg = String(form.get('m') || '').trim().slice(0, 1500);
+        if (!(await sendValuation(env, t, pro, msg))) return page('No se ha podido enviar', 'Inténtalo otra vez en un minuto o responde al correo de la consulta.');
+        return page('Enviado', `Le ha llegado tu mensaje con el botón de pago de ${VAL_PRICE}. Cuando pague, te avisamos en la conversación de la consulta para que le respondas entera.`);
       }
-      if (what === 'urgente') {
-        if (t.v === 1 || t.v === 2) { t.v = 0; t.vu = Date.now(); await saveThread(env, t); await bump(env, 'valorada_urgente'); }
-        return page('Marcada como urgente', t.v === 3 ? 'Esta consulta ya estaba pagada.' : 'No se le pedirá pago. Responde al correo de la consulta: tu respuesta le llegará sin botón de pago.');
+      if (what === 'gratis' || what === 'urgente') {
+        const [h, p] = what === 'gratis' ? ['Responder gratis', 'Su consulta irá sin pago. Después responde al correo de la consulta: tu respuesta le llegará sin botón de pago y con la oferta de seguir contigo por 5 €.'] : ['Es urgente', 'Su consulta irá sin pago. Después respóndele, respondiendo al correo de la consulta, que vaya a urgencias.'];
+        if (!form) return page(h, p, `<form method="post">${hidden}${btn(what === 'gratis' ? 'Sí, responder gratis' : 'Sí, es urgente')}</form>`);
+        t.v = 0; if (what === 'gratis') t.vg = Date.now(); else t.vu = Date.now();
+        await saveThread(env, t); await bump(env, what === 'gratis' ? 'valorada_gratis' : 'valorada_urgente');
+        return page('Hecho', 'Ahora responde al correo de la consulta: tu respuesta le llegará sin botón de pago.');
       }
+      // Usuaria: abrir el pago
       if (t.v === 3) return page('Ya está pagada', `${esc(pro.short)} te responderá por correo en menos de 24 h.`);
       if (t.v !== 1 && t.v !== 2) return page('No tienes que pagar nada', `${esc(pro.short)} te responde por correo sin coste.`);
       if (!env.STRIPE_SECRET_KEY) return page('El pago no está disponible', 'Inténtalo en un rato o escríbenos a contacto@hera-gine.com.');
@@ -1151,7 +1182,7 @@ const handler = {
       // La consulta se guarda ya (antes de contadores y correos): si la usuaria sale de la página y la petición se corta,
       // la respuesta de la profesional igual le llega (B45WUAX3, 18 nov). Al final se vuelve a guardar completa.
       const baseThread = relay ? { id, p: pro.key || body.to, u: await sealEmail(env, q.email), uh: (await hmac(env.HASH_SALT, norm)).slice(0, 24),
-        sp: pm.subject, su: `Tu consulta a ${pro.short} · Hera #${id.toUpperCase()}`, rp: [], ru: [], c: Date.now(), a: 0, rem: false, n: 0, h, ...(body.src === 'ads' ? { ad: 1 } : {}), ...(bf ? { bf: 1 } : {}), ...(prio ? { pr: 1 } : {}), ...(sent.id ? { po: sent.id } : {}), ...(body.follow === true ? { f: 1 } : {}), ...(valora ? { v: 1 } : {}) } : null;
+        sp: pm.subject, su: `Tu consulta a ${pro.short} · Hera #${id.toUpperCase()}`, rp: [], ru: [], c: Date.now(), a: 0, rem: false, n: 0, h, ...(body.src === 'ads' ? { ad: 1 } : {}), ...(bf ? { bf: 1 } : {}), ...(prio ? { pr: 1 } : {}), ...(sent.id ? { po: sent.id } : {}), ...(body.follow === true ? { f: 1 } : {}), ...(valora ? { v: 1, vb: 1 } : {}) } : null;
       if (baseThread) await saveThread(env, baseThread);
       const now = new Date().toISOString();
       // Primero se gastan las gratuitas y después las pagadas
@@ -1417,6 +1448,15 @@ export async function remindOverdue(env) {
       if (!t || t.vf || t.vr2 || !t.vp || Date.now() - t.vp < 16 * 3600000 || !PROS[t.p]) continue;
       const { html, text } = reminderEmail(PROS[t.p], t.id);
       if (await sendMail(env, { to: PROS[t.p].email, replyTo: await relayAddress(env, 'p', t.id), subject: `Re: ${t.sp}`, refs: t.rp, html, text })) { t.vr2 = Date.now(); await saveThread(env, t); n++; }
+      continue;
+    }
+    // Consultas por valorar de antes de los botones (25 nov): se le reenvían a la profesional, una vez
+    if (m.v === 1) {
+      const t = await loadThread(env, k.name.slice(2));
+      if (!t || t.v !== 1 || t.vb || !PROS[t.p]) continue;
+      const l = await valLinks(env, t.id);
+      const html = shell(`<p>Hola, ${esc(PROS[t.p].short)}: ahora puedes elegir con un toque qué hacer con esta consulta (está más arriba en esta conversación).</p>${valProHtml(l)}`);
+      if (await sendMail(env, { to: PROS[t.p].email, from: `Consulta #${t.id.toUpperCase()} · Hera <consultas@hera-gine.com>`, replyTo: await relayAddress(env, 'p', t.id), subject: `Re: ${t.sp}`, refs: t.rp, html, text: valProText(l) })) { t.vb = Date.now(); await saveThread(env, t); n++; }
       continue;
     }
     if (m.v !== 2 || m.vr || !m.va || Date.now() - m.va < 24 * 3600000) continue;

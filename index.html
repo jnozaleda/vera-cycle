@@ -1663,6 +1663,16 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
       done.querySelector('[data-again]').addEventListener('click', () => { ta.value = ''; done.hidden = true; form.hidden = false; refresh(); ta.focus(); });
       return;
     }
+    // Enviada sin texto (26 nov): no le llega a la profesional hasta que conteste al correo con su duda
+    if (j.empty) {
+      swap(`<img src="portada/equipo/${p.img}.jpg?v=3" alt="" width="64" height="64">
+      <h3>Falta tu duda</h3>
+      <p>No has escrito nada, así que todavía no le ha llegado a ${p.name}. Te hemos enviado un correo a <b>${esc(lastEmail)}</b>: <b>contéstalo contándonos qué te pasa y desde cuándo</b> y le llegará a ${p.name}.</p>
+      <p class="small">Mira también en promociones o spam. Si es urgente, llama al 112 o acude a urgencias.</p>
+      <button type="button" class="linkbtn" data-again style="font-size:13px;opacity:.8">Escribir mi duda aquí</button>`);
+      done.querySelector('[data-again]').addEventListener('click', () => { ta.value = ''; manual = false; done.hidden = true; form.hidden = false; refresh(); ta.focus(); });
+      return;
+    }
     if (j.val) {
       swap(`<img src="portada/equipo/${p.img}.jpg?v=3" alt="" width="64" height="64">
       <h3>${p.name} ya tiene tu consulta</h3>

@@ -364,6 +364,26 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   globalThis.fetch = f0;
   console.log('Cola de reintentos: OK');
 }
+// Consulta sin texto (26 nov): no va a la profesional; a la usuaria le pedimos su duda y su respuesta llega como consulta nueva
+{
+  const P0 = env.PAYMENTS, K0 = env.STRIPE_SECRET_KEY, R0 = env.RELAY;
+  env.RELAY = '1';
+  const s0 = sent.length; const before = new Set([...store.keys()].filter((k) => k.startsWith('t:')));
+  const r = await call('/ask', { email: 'sin-texto@example.com', to: 'gineco', text: '  ', context: '' });
+  assert.ok(r.j.ok && r.j.empty, JSON.stringify(r.j));
+  assert.ok(!sent.slice(s0).some((m) => m.to[0] === PROS.gineco.email), 'nada a la profesional');
+  assert.ok(sent.slice(s0).some((m) => m.to[0] === 'sin-texto@example.com' && /no has escrito tu duda/.test(m.html)), 'correo a la usuaria');
+  assert.ok(sent.slice(s0).some((m) => m.to[0] === 'copia@example.com' && /Consulta sin texto/.test(m.subject)), 'aviso al equipo');
+  const k = [...store.keys()].find((x) => x.startsWith('t:') && !before.has(x));
+  let t = await loadThread(env, k.slice(2)); assert.equal(t.ve, 1);
+  const s1 = sent.length;
+  assert.ok((await relayIncoming(env, t, 'u', mime('sin-texto@example.com', await relayAddress(env, 'u', t.id), 'Tengo dolor al orinar desde hace dos días'))).ok);
+  const pm = sent.slice(s1).find((m) => m.to[0] === PROS.gineco.email);
+  assert.ok(pm, 'le llega a la profesional'); assert.match(pm.html, /Tengo dolor al orinar/); assert.match(pm.subject, /Consulta Hera #/);
+  t = await loadThread(env, t.id); assert.ok(!t.ve && t.sp, 'ya es una consulta normal');
+  env.PAYMENTS = P0; env.STRIPE_SECRET_KEY = K0; env.RELAY = R0;
+  console.log('Consulta sin texto: OK');
+}
 // Cuestionario de menopausia sin duda escrita: la profesional no ve un «Mi duda:» vacío
 {
   const s0 = sent.length;

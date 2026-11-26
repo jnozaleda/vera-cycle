@@ -1293,7 +1293,9 @@ ${fuera ? '<p style="font-size:14px;color:#6E6C67;margin:6px 0 0">Lo pagas con t
       if (!pro) return reply(400, { error: 'bad_to' });
       // Se puede enviar sin escribir nada: la profesional responde preguntando qué necesita
       // Cuestionario de menopausia sin duda escrita (25 nov): que la profesional no vea un «Mi duda:» vacío
-      const text = (String(body.text || '').trim() || 'Hola, me gustaría hacer una consulta.').replace(/\n*Mi duda:\s*$/, '\n\nMi duda: (no ha escrito ninguna duda concreta; quiere que revises su resultado)');
+      // Sin texto (Noza, 26 nov): no va a la profesional; a la usuaria le pedimos su duda por correo (más abajo, «emptyText»)
+      const emptyText = String(body.text || '').trim().length < 3;
+      const text = String(body.text || '').trim().replace(/\n*Mi duda:\s*$/, '\n\nMi duda: (no ha escrito ninguna duda concreta; quiere que revises su resultado)');
       if (text.length > 2000) return reply(400, { error: 'bad_text' });
       const { files, error: fileError } = validateAttachments(body.attachments);
       if (fileError) return reply(fileError === 'too_large' ? 413 : 400, { error: fileError });
@@ -1316,7 +1318,7 @@ ${fuera ? '<p style="font-size:14px;color:#6E6C67;margin:6px 0 0">Lo pagas con t
       const unlimited = beta || subscriber;
       // Se le olvidó algo (Noza, 21 nov): si vuelve a escribir al mismo profesional en 30 min y aún no le han respondido,
       // se añade a su consulta (misma conversación) en vez de abrir otra y gastar otra consulta.
-      if (!test && env.RELAY === '1' && body.held !== true && rec.lt?.to === body.to && Date.now() - rec.lt.at < Number(env.ADD_WINDOW_MIN ?? 30) * 60000 && /^[a-z0-9]{8}$/.test(String(rec.lt.id || ''))) {
+      if (!test && !emptyText && env.RELAY === '1' && body.held !== true && rec.lt?.to === body.to && Date.now() - rec.lt.at < Number(env.ADD_WINDOW_MIN ?? 30) * 60000 && /^[a-z0-9]{8}$/.test(String(rec.lt.id || ''))) {
         const t = await loadThread(env, rec.lt.id);
         if (t && !t.a && t.p === body.to) {
           const mins = Math.max(1, Math.round((Date.now() - t.c) / 60000));
@@ -1373,6 +1375,29 @@ ${fuera ? '<p style="font-size:14px;color:#6E6C67;margin:6px 0 0">Lo pagas con t
       // La marca de 6 h solo va con lo pagado como prioritaria (la guardada de 29 €, al llegar tras el pago) o con el acompañamiento;
       // quien ve la versión de 29 € pero envía con su bono o su ilimitado va con el plazo normal de 24 h
       if (!acomp && body.held !== true) prio = false;
+
+      // Consulta sin texto (Noza, 26 nov): antes se rellenaba con «Hola, me gustaría hacer una consulta» y la profesional tenía que
+      // preguntar. Ahora no le llega nada: a la usuaria le pedimos su duda por correo; cuando contesta, su respuesta le llega a la
+      // profesional como consulta nueva (relayIncoming, «ve»). No gasta nada ni cuenta como consulta hasta entonces.
+      if (emptyText && !test && env.RELAY === '1') {
+        const id = newThreadId();
+        const su = `Tu consulta a ${pro.short} · Hera #${id.toUpperCase()}`;
+        const t0 = { id, p: pro.key || body.to, u: await sealEmail(env, q.email), uh: (await hmac(env.HASH_SALT, norm)).slice(0, 24), sp: '', su, rp: [], ru: [], c: Date.now(), a: 0, rem: false, n: 0, h, ve: 1,
+          ...(valora ? { v: 1, vb: 1 } : {}), ...(body.src === 'ads' ? { ad: 1 } : {}), ...(via ? { vi: via } : {}) };
+        await saveThread(env, t0);
+        const html = shell(`<p>Hola,</p><p>Has enviado una consulta para <b>${esc(pro.name)}, ${esc(pro.role)}</b>, pero <b>no has escrito tu duda</b>.</p>
+<p><b>Contesta a este correo</b> contándonos qué te pasa y desde cuándo (si quieres, con fotos o informes), y le llegará a ${esc(pro.short)}. Te responderá en menos de 24 h.</p>
+<p style="font-size:13px;color:#9A3B2B">Si es urgente o empeora, no esperes: llama al 112 o acude a urgencias.</p>`);
+        const sentU = await sendMail(env, { to: q.email, replyTo: await relayAddress(env, 'u', id), subject: su, html, text: `Hola. Has enviado una consulta para ${pro.name}, pero no has escrito tu duda. Contesta a este correo contándonos qué te pasa y desde cuándo, y le llegará a ${pro.short}. Te responderá en menos de 24 h.\n\nSi es urgente o empeora, llama al 112 o acude a urgencias.` });
+        if (sentU?.id) { t0.ou = [sentU.id]; await saveThread(env, t0); }
+        if (body.team !== true) { await bump(env, 'consulta_sin_texto'); await record(env, { e: `consulta_sin_texto:${body.to}`, p: await personTag(env, request, madridDay(), body.p) }, sendMail, ctx); }
+        if (env.COPY_TO) {
+          const who = env.COPY_EMAIL === '1' ? `<p style="font-size:13px;color:#6E6C67">Correo de la usuaria: <b>${esc(q.email)}</b></p>` : '';
+          const tc = teamCopy({ subject: `Consulta sin texto · ${pro.short} · #${id.toUpperCase()} · le hemos pedido los detalles${body.team === true ? ' · prueba del equipo' : ''}`, intro: `Una usuaria ha enviado una consulta para <b>${esc(pro.name)}</b> sin escribir nada. No le ha llegado a ${esc(pro.short)}: la usuaria ha recibido un correo automático pidiéndole su duda. Cuando conteste, le llegará a ${esc(pro.short)} como consulta nueva.`, body: '(sin texto)', extra: who });
+          await sendMail(env, { to: env.COPY_TO, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc });
+        }
+        return reply(200, { ok: true, empty: true, id, remaining: Math.max(0, limit - rec.n), freeLimit: limit });
+      }
 
       // Hilo: el profesional y la usuaria se responden a través de direcciones de Hera de un solo uso
       const id = newThreadId();
@@ -1524,6 +1549,24 @@ export async function relayIncoming(env, t, role, raw, envelopeFrom = '') {
     if (!from || (await hmac(env.HASH_SALT, from)).slice(0, 24) !== t.uh) return { ok: false, why: 'sender' };
   }
   if (!msg.body && !msg.attachments.length) return { ok: false, why: 'empty' };
+  // Consulta que llegó sin texto (ve): su respuesta es la consulta; le llega a la profesional como consulta nueva
+  if (role === 'u' && t.ve && PROS[t.p]) {
+    const vl = t.v === 1 ? await valLinks(env, t.id) : null;
+    const pm = proEmail(pro, { text: msg.body || '(Sin texto: mira el archivo adjunto.)', context: '', files: msg.attachments.length, ...(t.vi ? { via: LINK_NAME[t.vi] || '' } : {}), ...(vl ? { val: vl } : {}) }, t.id, true, await reassignLinks(env, t.id, pro.key));
+    const sent = await sendMail(env, { to: pro.email, replyTo: await relayAddress(env, 'p', t.id), ...pm, attachments: msg.attachments });
+    if (!sent) return { ok: false, why: 'send' };
+    delete t.ve; t.sp = pm.subject; t.c = Date.now(); t.n = 0; if (sent.id) t.po = sent.id;
+    for (const x of [msg.messageId]) { const v = x && (x.startsWith('<') ? x : `<${x}>`); if (v && !t.ru.includes(v)) t.ru.push(v); }
+    await saveThread(env, t);
+    await bump(env, `consulta:${t.p}`); if (t.v === 1) { await bump(env, 'valora_enviada'); await bump(env, `valora_enviada:${t.p}`); }
+    await bump(env, 'consulta_sin_texto_completada');
+    await record(env, { e: `consulta:${t.p}`, note: 'mandó su duda tras pedírsela por correo' }, sendMail);
+    if (env.COPY_TO) {
+      const tc = teamCopy({ subject: `Consulta · ${pro.short} · #${t.id.toUpperCase()} · ya ha escrito su duda${t.v === 1 ? ' · POR VALORAR (sin pagar)' : ''}`, intro: `La usuaria de la consulta #${t.id.toUpperCase()} (que llegó sin texto) ha contestado con su duda. Le ha llegado a <b>${esc(pro.name)}</b> como consulta nueva:`, body: msg.body || '(Sin texto: solo adjuntos.)', nFiles: msg.attachments.length, withFiles: false, extra: '' });
+      await sendMail(env, { to: env.COPY_TO, from: TEAM_FROM, replyTo: 'contacto@hera-gine.com', ...tc });
+    }
+    return { ok: true };
+  }
   const toUser = role === 'p';
   // Primera respuesta de la profesional: «¿Te ha ayudado?» al pie (si aún no ha valorado)
   let rate = null;
@@ -1624,7 +1667,7 @@ async function openThreads(env) {
   for (const k of keys) { const m = k.metadata || {}; if (m.p && m.p !== 'prueba' && Date.now() - (m.c || 0) < 3 * 86400000) out.recientes.push({ id: k.name.slice(2), ...m, ...(m.v === 2 ? { pay: (await valLinks(env, k.name.slice(2))).pay } : {}) }); }
   for (const k of keys) {
     const m = k.metadata || {};
-    if (!m.p || m.a || m.p === 'prueba') continue;
+    if (!m.p || m.a || m.ve || m.p === 'prueba') continue;
     // Consulta repetida (la misma duda enviada dos veces seguidas) ya contestada en la otra: no cuenta como pendiente
     if (await answeredTwin(env, { id: k.name.slice(2), p: m.p, c: m.c, u8: m.u }, keys)) continue;
     out.pendientes[m.p] = (out.pendientes[m.p] || 0) + 1;
@@ -1653,7 +1696,7 @@ export async function remindOverdue(env) {
     for (const k of keys) {
       const m = k.metadata || {};
       // Prioritaria: recordatorio a las 4 h (plazo de 6 h); el resto, a las 16 h (plazo de 24 h)
-      if (!m.p || m.a || m.r || Date.now() - m.c < (m.pr ? 4 : 16) * 3600000) continue;
+      if (!m.p || m.a || m.r || m.ve || Date.now() - m.c < (m.pr ? 4 : 16) * 3600000) continue;
       const t = await loadThread(env, k.name.slice(2));
       if (!t || t.a || t.rem) continue;
       const pro = PROS[t.p] || (t.p === 'prueba' && env.COPY_TO ? { short: 'Prueba', email: env.COPY_TO } : null);

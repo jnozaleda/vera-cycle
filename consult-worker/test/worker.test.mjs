@@ -230,6 +230,18 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   const sm = sent.length; await worker.fetch(new Request(opl, { method: 'POST', body: new URLSearchParams({ m: 'En pesos sería más fácil' }) }), env);
   assert.ok(sent.slice(sm).some((m) => /con comentario/.test(m.subject) && /En pesos/.test(m.text || m.html)), 'comentario al equipo');
   assert.match(await (await worker.fetch(new Request(opl.replace(/s=[^&]+/, 's=mal')), env)).text(), /no funciona/);
+  // Página de pago de Hera antes de Stripe (GET) y Stripe con nombre, plazo y garantía (POST)
+  { const payUrl = (await valLinks(env, t.id)).pay.replace(/^https:\/\/[^/]+/, 'https://w');
+    const pg = await (await worker.fetch(new Request(payUrl), env)).text();
+    assert.match(pg, /Marina ya ha leído tu consulta/); assert.match(pg, /te devolvemos el dinero/); assert.match(pg, /method="post"/);
+    const f1 = globalThis.fetch; let body = '';
+    globalThis.fetch = async (u, o) => { if (String(u).includes('api.stripe.com/v1/checkout/sessions')) { body = String(o.body); return new Response('{"url":"https://checkout.stripe.com/x"}', { status: 200 }); } return f1(u, o); };
+    const q = new URL(payUrl).searchParams;
+    const rr = await worker.fetch(new Request('https://w/valorar/pagar', { method: 'POST', body: new URLSearchParams({ c: q.get('c'), s: q.get('s') }) }), env);
+    globalThis.fetch = f1;
+    assert.equal(rr.status, 303); const b = new URLSearchParams(body);
+    assert.match(b.get('line_items[0][price_data][product_data][name]'), /Respuesta completa · Marina Fernández, matrona/);
+    assert.match(b.get('custom_text[submit][message]'), /devolvemos el dinero/); assert.equal(b.get('line_items[0][price_data][unit_amount]'), '500'); }
   t = await loadThread(env, t.id);
   // Enlaces firmados: uno falso no sirve
   const bad = await worker.fetch(new Request(`https://w/valorar/pagar?c=${t.id}&s=mal`), env); assert.match(await bad.text(), /ya no sirve/);

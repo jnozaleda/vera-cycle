@@ -248,6 +248,8 @@ const holdSig = async (env, id) => (await hmac(env.HASH_SALT, `hold:${id}`)).sli
 // (v: 2). Al pagar (metadata val) se gasta la consulta pagada, v: 3, y se avisa a la profesional de que ya puede responder
 // entera. «Es urgente» (enlace firmado del correo de la profesional): v: 0, sin pago. Recordatorio de pago a las 24 h.
 const VAL_PRICE = '5 €';
+// Zona euro: ahí no hace falta explicar el cambio de moneda en la página de pago
+const EU_COUNTRIES = new Set(['ES', 'PT', 'FR', 'DE', 'IT', 'NL', 'BE', 'AT', 'IE', 'FI', 'GR', 'LU', 'SK', 'SI', 'EE', 'LV', 'LT', 'MT', 'CY', 'HR', 'AD', 'MC', 'SM', 'VA']);
 const valSig = async (env, id, what) => (await hmac(env.HASH_SALT, `val:${what}:${id}`)).slice(0, 16);
 export const valLinks = async (env, id) => ({ pay: `${WORKER_URL}/valorar/pagar?c=${id}&s=${await valSig(env, id, 'pagar')}`, urgent: `${WORKER_URL}/valorar/urgente?c=${id}&s=${await valSig(env, id, 'urgente')}`, free: `${WORKER_URL}/valorar/gratis?c=${id}&s=${await valSig(env, id, 'gratis')}`, charge: `${WORKER_URL}/valorar/cobrar?c=${id}&s=${await valSig(env, id, 'cobrar')}` });
 // Tres caminos con botones (Noza, 25 nov: las profesionales no veían nada clicable para pedir el pago)
@@ -854,9 +856,31 @@ const handler = {
       if (t.v === 3) return page('Ya está pagada', `${esc(pro.short)} te responderá por correo en menos de 24 h.`);
       if (t.v !== 1 && t.v !== 2) return page('No tienes que pagar nada', `${esc(pro.short)} te responde por correo sin coste.`);
       if (!env.STRIPE_SECRET_KEY) return page('El pago no está disponible', 'Inténtalo en un rato o escríbenos a contacto@hera-gine.com.');
+      // Antes de Stripe, una página de Hera con quién responde, qué recibe, plazo y garantía (Noza, 26 nov: 5 abrieron el
+      // pago y ninguna pagó). El botón es un POST: los correos que abren enlaces solos ya no crean pagos ni cuentan.
+      if (request.method === 'GET') {
+        await bump(env, 'pago_pagina:valorada');
+        const foto = { gineco: 'gonzalo', matrona: 'marina', pediatra: 'lucia' }[t.p];
+        const fuera = !EU_COUNTRIES.has(String(request.cf?.country || 'ES'));
+        const li = (path, txt) => `<li style="display:flex;gap:10px;align-items:flex-start;margin-top:8px"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#45574C" stroke-width="1.8" style="flex:0 0 20px;margin-top:2px">${path}</svg><span>${txt}</span></li>`;
+        return new Response(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Hera · Respuesta completa</title><body style="font:16px/1.5 -apple-system,Segoe UI,sans-serif;max-width:30em;margin:0 auto;padding:28px 18px 40px;color:#2F3631;background:#FAF9F4">
+<div style="font:400 26px Georgia,serif;color:#45574C;margin-bottom:20px">Hera</div>
+<div style="display:flex;gap:14px;align-items:center"><img src="https://hera-gine.com/portada/equipo/${foto}.jpg" alt="" width="64" height="64" style="width:64px;height:64px;border-radius:50%;object-fit:cover"><div><b style="display:block">${esc(pro.name)}</b><span style="font-size:14px;color:#6E6C67">${esc(pro.role[0].toUpperCase() + pro.role.slice(1))} · más de 15 años de experiencia</span></div></div>
+<h1 style="font:400 25px/1.25 Georgia,serif;margin:22px 0 6px">${esc(pro.short)} ya ha leído tu consulta y te responde entera</h1>
+<ul style="list-style:none;padding:0;margin:0 0 18px">
+${li('<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', 'Te contesta por escrito en menos de 24 h')}
+${li('<path d="M4 5h16v11H8l-4 4z"/>', 'En esta misma conversación, por correo')}
+${li('<path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/>', 'Si no te sirve, te devolvemos el dinero')}
+</ul>
+<div style="display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid #E2DFD6;padding-top:12px"><span>Respuesta completa</span><b style="font-size:28px">${VAL_PRICE}</b></div>
+${fuera ? '<p style="font-size:14px;color:#6E6C67;margin:6px 0 0">Lo pagas con tu tarjeta en tu moneda; tu banco aplica el cambio del día.</p>' : ''}
+<form method="post" action="/valorar/pagar">${hidden}<button style="display:block;width:100%;background:#45574C;color:#fff;border:0;border-radius:12px;padding:16px;font:700 17px -apple-system,sans-serif;margin-top:18px;cursor:pointer">Pagar ${VAL_PRICE} y recibir la respuesta</button></form>
+<p style="font-size:13px;color:#6E6C67;text-align:center;margin-top:10px">Pago seguro con Stripe</p>
+<p style="font-size:13px;color:#6E6C67;margin-top:26px">Si es urgente o empeora, llama al ${fuera ? 'número de emergencias de tu país' : '112'} o acude a urgencias.</p>`, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+      }
       try {
         const who = await personTag(env, request, madridDay());
-        const u = await createCheckout(env, { email: await openEmail(env, t.u), plan: 'suelta', h: t.h, origin: 'https://hera-gine.com', back: 'web', ad: !!t.ad, pro: t.p, val: id, p: who });
+        const u = await createCheckout(env, { email: await openEmail(env, t.u), plan: 'suelta', h: t.h, origin: 'https://hera-gine.com', back: 'web', ad: !!t.ad, pro: t.p, val: id, valPro: `${pro.name}, ${pro.role}`, p: who });
         await bump(env, 'pago_inicio:valorada');
         await record(env, { e: 'pago_abierto:suelta', p: who, note: 'desde la valoración de la profesional' }, sendMail, ctx);
         return Response.redirect(u, 303);

@@ -88,7 +88,7 @@ export async function waCode(sessionId) {
 }
 
 /** Crea la sesión de pago y devuelve su URL */
-export async function createCheckout(env, { email, plan, h, origin, back, ad, pro, camp, hold, val, country, p: who }) {
+export async function createCheckout(env, { email, plan, h, origin, back, ad, pro, camp, hold, val, valPro, country, p: who }) {
   const p = PLANS[plan];
   // Vuelve al mismo sitio desde el que se pagó (la web real, o localhost en pruebas)
   // back = 'web': desde la portada, vuelve a la portada (?web=1 evita que salte a la app instalada)
@@ -96,7 +96,13 @@ export async function createCheckout(env, { email, plan, h, origin, back, ad, pr
   const ret = back === 'wa' ? `${root}/whatsapp/?` : back === 'video' ? `${root}/videollamada/?` : back === 'consultas' ? `${root}/consultas/?` : back === 'web' ? `${root}/?web=1&` : `${root}/app/?`;
   const params = {
     mode: p.mode,
-    'line_items[0][price]': await priceId(env, country === 'AR' && p.ar ? p.ar.lookup : p.lookup),
+    // Respuesta tras la valoración (Noza, 26 nov): en Stripe, el nombre de la profesional, el plazo y la garantía
+    ...(val && valPro ? {
+      'line_items[0][price_data][currency]': 'eur', 'line_items[0][price_data][unit_amount]': String(Math.round(p.eur * 100)), 'line_items[0][price_data][tax_behavior]': 'inclusive',
+      'line_items[0][price_data][product_data][name]': `Respuesta completa · ${valPro}`,
+      'line_items[0][price_data][product_data][description]': 'Te responde por escrito en menos de 24 h, en la misma conversación.',
+      'custom_text[submit][message]': 'Si no te sirve, te devolvemos el dinero.',
+    } : { 'line_items[0][price]': await priceId(env, country === 'AR' && p.ar ? p.ar.lookup : p.lookup) }),
     ...(country === 'AR' && p.ar ? { 'metadata[pais]': 'AR' } : {}),
     'line_items[0][quantity]': '1',
     ...(email ? { customer_email: email } : {}),

@@ -17,6 +17,7 @@ registro de cambios publicados, el más reciente primero. Sin datos personales n
 ## Registro
 
 ### 2026-11-26
+- **Correo de opinión a quien no pagó los 5 €** (Noza). 6 h después del recordatorio de pago de las 24 h, si sigue sin pagar, un único correo de «Juan, del equipo de producto de Hera» (desde y con respuesta a contacto@hera-gine.com, fuera de la conversación con la profesional): «¿Qué te frenó?» con seis botones (precio, pago, no sabía qué iba a recibir, no me fiaba, ya no lo necesitaba, otra cosa). Un toque cuenta el motivo (`opinion:<motivo>`, una vez por consulta) y avisa al equipo; en la página puede añadir un comentario, que llega al equipo por correo y no se guarda. Ruta `/motivo` (firmada). Panel: filas nuevas en «Escribir gratis, pagar después». Privacidad actualizada. Hoy salen 4 (las que ya tuvieron recordatorio) y el resto según les llegue el suyo. Worker 3b20d3fa. (publicado)
 - **Google Ads: unos 6,50 €/día** (Noza). En pausa «Hera | Guías | España» (0 consultas en 3 días); España (Prueba Nov) de 3,50 € a 1,50 €. Argentina 3 € y México/Chile/Colombia 2 € sin cambios. Motivo: unas 12 consultas al día, 10 con el pago pedido y ninguna pagada. Via Spain no se toca.
 
 ### 2026-11-25

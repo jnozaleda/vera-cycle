@@ -164,7 +164,7 @@ assert.match(html, /<h1>Panel<\/h1>/); assert.match(html, /Consultas/); assert.o
 pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal(pg.status, 404);
 // Escribir gratis, pagar después (24 nov): llega a la profesional por valorar, su valoración lleva el pago, al pagar se desbloquea
 {
-  const { unlockVal, valLinks } = await import('../src/worker.js');
+  const { unlockVal, valLinks, sendOpinions } = await import('../src/worker.js');
   const k6x = '';
   const local = (u) => u.replace(/^https:\/\/[^/]+/, 'https://w');
   const postForm = async (u, extra = {}) => { const q = new URL(u).searchParams; const f = new URLSearchParams({ c: q.get('c'), s: q.get('s'), ...extra }); return (await worker.fetch(new Request(local(u), { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: f }), env)).text(); };
@@ -216,6 +216,20 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   t.va = Date.now() - 25 * 3600000; await saveThread(env, t);
   const sr = sent.length; await remindOverdue(env); await remindOverdue(env);
   assert.equal(sent.slice(sr).filter((m) => m.to[0] === 'valora@example.com' && /está esperando para responderte/.test(m.html)).length, 1, 'un recordatorio de pago');
+  t = await loadThread(env, t.id);
+  // Opinión (Noza, 26 nov): 6 h después del recordatorio, un único correo de producto con un toque por motivo
+  const so = sent.length; await sendOpinions(env); assert.equal(sent.length, so, 'todavía no (recordatorio reciente)');
+  t.vr = Date.now() - 7 * 3600000; await saveThread(env, t);
+  await sendOpinions(env); await sendOpinions(env);
+  const op = sent.slice(so).filter((m) => m.to[0] === 'valora@example.com');
+  assert.equal(op.length, 1, 'un solo correo de opinión'); assert.match(op[0].subject, /Qué te frenó con tu consulta a Marina/); assert.match(op[0].html, /Soy Juan/);
+  const opl = op[0].html.match(/https:\/\/[^"]+\/motivo\?c=[^"]+r=precio[^"]+/)[0].replace(/&amp;/g, '&').replace(/^https:\/\/[^/]+/, 'https://w');
+  assert.match(await (await worker.fetch(new Request(opl), env)).text(), /Has elegido: <b>El precio/);
+  await worker.fetch(new Request(opl), env);
+  assert.equal([...counts].filter(([k]) => k.endsWith('|opinion:precio')).reduce((a, [, n]) => a + n, 0), 1, 'el motivo cuenta una vez');
+  const sm = sent.length; await worker.fetch(new Request(opl, { method: 'POST', body: new URLSearchParams({ m: 'En pesos sería más fácil' }) }), env);
+  assert.ok(sent.slice(sm).some((m) => /con comentario/.test(m.subject) && /En pesos/.test(m.text || m.html)), 'comentario al equipo');
+  assert.match(await (await worker.fetch(new Request(opl.replace(/s=[^&]+/, 's=mal')), env)).text(), /no funciona/);
   t = await loadThread(env, t.id);
   // Enlaces firmados: uno falso no sirve
   const bad = await worker.fetch(new Request(`https://w/valorar/pagar?c=${t.id}&s=mal`), env); assert.match(await bad.text(), /ya no sirve/);

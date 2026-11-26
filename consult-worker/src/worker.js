@@ -294,6 +294,31 @@ async function resendValButtons(env) {
   console.log(`reenvio botones: ${n}`);
   return n + await remindValNow(env);
 }
+// ── Opinión de quien no pagó (Noza, 26 nov): un único correo de producto (no comercial) a quien le pidieron el pago y no
+// pagó, 6 h después del recordatorio de las 24 h. Cada motivo es un enlace firmado: un toque lo cuenta en el panel
+// (opinion:<motivo>) y avisa al equipo; en la página puede añadir algo (llega al equipo por correo, no se guarda).
+export const OPINION = { precio: 'El precio', pago: 'El pago: tarjeta, moneda o no funcionó', saber: 'No sabía qué iba a recibir', confianza: 'No me fiaba', ya: 'Ya no lo necesitaba', otra: 'Otra cosa' };
+const opSig = async (env, id) => (await hmac(env.HASH_SALT, `opinion:${id}`)).slice(0, 16);
+export async function opinionEmail(env, t) {
+  const pro = PROS[t.p]; const s = await opSig(env, t.id);
+  const link = (r) => `${WORKER_URL}/motivo?c=${t.id}&r=${r}&s=${s}`;
+  const intro = `Soy Juan, del equipo de producto de Hera. No te escribo para venderte nada. ${pro.short} leyó tu consulta y te pidió ${VAL_PRICE} para darte la respuesta completa, y vimos que no seguiste. Queremos entender por qué, para hacerlo mejor.`;
+  const html = shell(`<p>Hola:</p><p>${esc(intro)}</p><p><b>¿Qué te frenó?</b> Con un toque basta:</p>${Object.entries(OPINION).map(([r, l]) => `<a href="${link(r)}" style="display:block;text-decoration:none;border:1.5px solid #45574C;border-radius:10px;padding:11px 14px;margin-top:8px;color:#2F3631;font-weight:600;text-align:center">${esc(l)}</a>`).join('')}<p style="margin-top:18px">Si quieres contarme más, responde a este correo: lo leo yo.</p><p>Gracias,<br>Juan · Hera</p><p style="font-size:12px;color:#8A8A8E">Es el único correo que te enviaremos sobre esto.</p>`);
+  const text = `Hola:\n\n${intro}\n\n¿Qué te frenó? Con un toque basta:\n${Object.entries(OPINION).map(([r, l]) => `- ${l}: ${link(r)}`).join('\n')}\n\nSi quieres contarme más, responde a este correo: lo leo yo.\n\nGracias,\nJuan · Hera\n\nEs el único correo que te enviaremos sobre esto.`;
+  return { subject: `¿Qué te frenó con tu consulta a ${pro.short}?`, html, text };
+}
+export async function sendOpinions(env) {
+  let n = 0;
+  for (const k of await listThreads(env)) {
+    const m = k.metadata || {};
+    if (m.v !== 2 || !m.vr || m.vo || !m.va || Date.now() - m.va < 24 * 3600000) continue;
+    const t = await loadThread(env, k.name.slice(2));
+    if (!t || t.v !== 2 || t.vo || !t.vr || Date.now() - t.vr < 6 * 3600000 || !PROS[t.p]) continue;
+    const sent = await sendMail(env, { to: await openEmail(env, t.u), from: 'Juan · Hera <contacto@hera-gine.com>', replyTo: 'contacto@hera-gine.com', ...(await opinionEmail(env, t)) });
+    if (sent) { t.vo = Date.now(); await saveThread(env, t); await bump(env, 'opinion_enviada'); n++; }
+  }
+  return n;
+}
 /** Recordatorio de pago a petición del equipo (Noza, 25 nov): KV «val-recordar» = [ids] */
 async function remindValNow(env) {
   const ids = await env.KV.get('val-recordar', 'json');
@@ -836,6 +861,25 @@ const handler = {
         await record(env, { e: 'pago_abierto:suelta', p: who, note: 'desde la valoración de la profesional' }, sendMail, ctx);
         return Response.redirect(u, 303);
       } catch (e) { console.log(e.message); return page('No se ha podido abrir el pago', 'Inténtalo en un rato o escríbenos a contacto@hera-gine.com.'); }
+    }
+    // Opinión de quien no pagó: el toque en el correo cuenta el motivo; la página deja añadir algo
+    if (['GET', 'POST'].includes(request.method) && url.pathname === '/motivo') {
+      const id = String(url.searchParams.get('c') || ''); const r = String(url.searchParams.get('r') || '');
+      const page = (h, p) => new Response(`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hera</title><body style="font:16px/1.5 -apple-system,sans-serif;max-width:32em;margin:40px auto;padding:0 16px;color:#2F3631;background:#FAF9F4"><h1 style="font:400 26px Georgia,serif;color:#45574C">${h}</h1>${p}`, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+      const ok = /^[a-z0-9]{8}$/.test(id) && OPINION[r] && url.searchParams.get('s') === await opSig(env, id);
+      const t = ok ? await loadThread(env, id) : null;
+      if (!t || !PROS[t.p]) return page('Este enlace no funciona', '<p>Si quieres contarnos algo, escríbenos a contacto@hera-gine.com.</p>');
+      if (request.method === 'POST') {
+        const f = await request.formData().catch(() => null);
+        const more = String(f?.get('m') || '').trim().slice(0, 1500);
+        if (more) await notify(env, `Opinión · #${id.toUpperCase()} · ${PROS[t.p].short} · ${OPINION[r]} (con comentario)`, `Consulta #${id.toUpperCase()} (${PROS[t.p].name}), no pagó los ${VAL_PRICE}.\nMotivo: ${OPINION[r]}\n\nComentario:\n${more}`, sendMail);
+        return page('Gracias', '<p>Lo leemos todo y nos ayuda mucho a mejorar Hera.</p><p><a href="https://hera-gine.com" style="color:#45574C;font-weight:600">Ir a Hera</a></p>');
+      }
+      if (!t.vor) {
+        t.vor = r; await saveThread(env, t); await bump(env, `opinion:${r}`);
+        await notify(env, `Opinión · #${id.toUpperCase()} · ${PROS[t.p].short} · ${OPINION[r]}`, `Consulta #${id.toUpperCase()} (${PROS[t.p].name}), no pagó los ${VAL_PRICE}.\nMotivo: ${OPINION[r]}`, sendMail);
+      }
+      return page('Gracias por contárnoslo', `<p>Has elegido: <b>${esc(OPINION[r])}</b>.</p><form method="post"><p style="margin-bottom:6px">¿Quieres añadir algo? (opcional)</p><textarea name="m" rows="5" maxlength="1500" style="width:100%;box-sizing:border-box;font:inherit;padding:10px;border:1.5px solid #C9C4B8;border-radius:10px" placeholder="Por ejemplo, qué esperabas o qué te habría ayudado"></textarea><button style="margin-top:10px;width:100%;padding:13px;border:0;border-radius:10px;background:#45574C;color:#fff;font:600 16px -apple-system,sans-serif">Enviar</button></form>`);
     }
     // Cuestionario de menopausia: enlaces de los correos (pagar o no recibir más)
     if (request.method === 'GET' && (url.pathname === '/menopausia/pagar' || url.pathname === '/menopausia/baja')) {
@@ -1435,6 +1479,7 @@ const handler = {
     if (min !== 15) { await remindHolds(env); return; }
     await remindOverdue(env);
     await menoFollowups(env).catch((e) => console.log(`meno ${e.message}`));
+    await sendOpinions(env).catch((e) => console.log(`opinion ${e.message}`));
     await sendFeedbackDue(env, sendMail, PROS);
     // Resumen de actividad por correo: apagado (Noza, 20 nov). La actividad sigue en el panel.
     // await hourlyDigest(env, sendMail);

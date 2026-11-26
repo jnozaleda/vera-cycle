@@ -16,6 +16,9 @@ registro de cambios publicados, el más reciente primero. Sin datos personales n
 
 ## Registro
 
+### 2026-11-26
+- **Google Ads: unos 6,50 €/día** (Noza). En pausa «Hera | Guías | España» (0 consultas en 3 días); España (Prueba Nov) de 3,50 € a 1,50 €. Argentina 3 € y México/Chile/Colombia 2 € sin cambios. Motivo: unas 12 consultas al día, 10 con el pago pedido y ninguna pagada. Via Spain no se toca.
+
 ### 2026-11-25
 - **Panel: buscador de consultas** (Noza: «no encuentro el primer correo de #8ADQ77QD»). `/panel/consulta?k=…&c=ID` (enlace «Buscar una consulta →» arriba del panel; cada número de «Consultas recientes» enlaza ahí): profesional, fecha, estado, **correo de la usuaria** (descifrado, solo con la clave del panel), mensajes, primera respuesta y los correos que aún guarda Resend (la consulta a la profesional y los enviados a la usuaria, con su texto). El texto sigue sin guardarse en Hera. (publicado)
 - **Respuesta y pago en un solo correo** (Noza: «es raro que el experto pida el pago y la usuaria reciba el enlace en otro correo»). El botón pasa a «Responder y pedir el pago de 5 €»: la página abre con su respuesta para escribir (con un texto de partida editable) y le llega a la usuaria en un solo correo con el botón de pago. Nueva opción «Prefiero contestarle desde el correo»: no se envía nada; su próxima respuesta desde el correo lleva el botón de pago; si en 2 h no ha escrito, sale el mensaje corto con el pago (lista `val-cobro`, cron cada 15 min). Si la usuaria escribe antes, su correo automático ya lleva el pago. Panel: «Pago pedido · esperando su respuesta por correo». (publicado)

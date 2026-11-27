@@ -840,7 +840,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
         <label class="sr" for="prog-mail">Tu correo</label>
         <input id="prog-mail" type="email" inputmode="email" autocomplete="email" enterkeyhint="send" placeholder="Tu correo, para reservar tu plaza">
         <button class="btn btn-p sbx-go" type="submit"><span>Reservar mi plaza</span><small>49 € los 3 meses · no pagas nada ahora</small></button>
-        <p class="sbx-n" aria-live="polite">Cómo funciona: reservas sin pagar, te escribimos antes de abrirlo y, si te apuntas, pagas 49 € (precio de lanzamiento) y empiezan tus 3 meses.</p>
+        <p class="sbx-n" aria-live="polite">Cómo funciona: reservas sin pagar, tu especialista te escribe con unas preguntas para conocer tu caso y, cuando lo tengáis claro, te envía el enlace de pago y empieza tu plan.</p>
       </form>
     </div>
   </div>
@@ -1142,7 +1142,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
         if (ev.target.name !== 'etapa') return;
         const p = pick(); hit(`clic:programa_${p}`);
         box.querySelectorAll('.sdet').forEach((d) => { d.hidden = d.dataset.etapa !== p; });
-        note.classList.remove('err'); note.textContent = 'Cómo funciona: reservas sin pagar, te escribimos antes de abrirlo y, si te apuntas, pagas 49 € (precio de lanzamiento) y empiezan tus 3 meses.';
+        note.classList.remove('err'); note.textContent = 'Cómo funciona: reservas sin pagar, tu especialista te escribe con unas preguntas para conocer tu caso y, cuando lo tengáis claro, te envía el enlace de pago y empieza tu plan.';
         if (!mail.value) mail.value = store.get('hera-ask-email');
       });
       box.addEventListener('submit', async (ev) => {
@@ -1159,7 +1159,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
         store.set('hera-ask-email', v);
         const name = { embarazo: 'Hera Embarazo', bebe: 'Hera Bebé', menopausia: 'Hera Menopausia' }[p];
         box.classList.add('reservada');
-        box.insertAdjacentHTML('beforeend', `<p class="sbx-ok"><b>Plaza reservada en ${name}.</b> Te escribiremos a ${esc(v)} antes de abrirlo, con todos los detalles. No se ha cobrado nada.</p>`);
+        box.insertAdjacentHTML('beforeend', `<p class="sbx-ok"><b>Reserva hecha en ${name}.</b> Te escribiremos a ${esc(v)} con unas preguntas para conocer tu caso. No se ha cobrado nada.</p>`);
       });
     }
   }

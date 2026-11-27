@@ -337,20 +337,21 @@ async function remindValNow(env) {
   console.log(`recordatorio de pago a petición: ${n}`);
   return n;
 }
-/** Correo de confirmación de una reserva de programa (sin pago) */
+/** Correo de confirmación de una reserva de programa (sin pago). Tono personal (Noza, 27 nov): sin «lanzamiento» */
 export function reservaEmail(name, who) {
-  const subject = `Tu plaza en ${name} está reservada`;
+  const subject = `Hemos recibido tu reserva · ${name}`;
   const html = shell(`<p>Hola,</p>
-<p><b>Hemos recibido tu reserva en ${esc(name)}.</b> Es un programa de acompañamiento de 3 meses con ${esc(who)}, que estamos preparando ahora: qué esperar en cada momento y tus dudas sin límite, por WhatsApp o por correo, con respuesta en menos de 24 h.</p>
+<p><b>Hemos recibido tu reserva en ${esc(name)}</b>: tres meses de acompañamiento con ${esc(who)}, con tus dudas resueltas sin límite por WhatsApp o por correo, en menos de 24 h.</p>
 <p><b>Qué pasa ahora:</b></p>
 <ul style="padding-left:18px;margin:0 0 12px">
-<li style="margin-bottom:6px">Antes de abrirlo te escribiremos a este correo con todos los detalles: cuándo empieza y el precio final (el de lanzamiento es 49 € los 3 meses).</li>
-<li style="margin-bottom:6px">Entonces decides si te apuntas. <b>No se te ha cobrado nada</b> y reservar no te compromete.</li>
+<li style="margin-bottom:6px">Te escribiremos a este correo con unas preguntas para conocer tu caso: tu situación, lo que te preocupa y lo que necesitas.</li>
+<li style="margin-bottom:6px">Cuando lo tengáis claro, te enviaremos el enlace de pago (49 € los 3 meses) y empezará tu plan.</li>
+<li style="margin-bottom:6px"><b>No se te ha cobrado nada</b> y reservar no te compromete.</li>
 </ul>
-<p>Si mientras tanto tienes una duda concreta, puedes preguntarla ya, por escrito: <a href="https://hera-gine.com/#consulta" style="color:#45574C;font-weight:600">hera-gine.com</a>. Si es algo rápido, es gratis.</p>
-<p style="font-size:13px;color:#6E6C67">¿Quieres contarnos qué te gustaría que incluyera el programa? Responde a este correo: lo leemos todo.</p>
+<p>Si quieres adelantar, responde a este correo contándonos un poco tu situación (por ejemplo, de cuántas semanas estás o cuántos días tiene tu bebé).</p>
+<p style="font-size:13px;color:#9A3B2B">Si es urgente o empeora, no esperes: llama al 112 o acude a urgencias.</p>
 <p style="font-size:13px;color:#6E6C67">Si no has hecho tú esta reserva o ya no te interesa, responde «baja» y borramos tu correo.</p>`);
-  const text = `Hola. Hemos recibido tu reserva en ${name}, un programa de acompañamiento de 3 meses con ${who} que estamos preparando: qué esperar en cada momento y tus dudas sin límite, por WhatsApp o por correo, con respuesta en menos de 24 h.\n\nAntes de abrirlo te escribiremos con todos los detalles (cuándo empieza y el precio final; el de lanzamiento es 49 € los 3 meses) y entonces decides. No se te ha cobrado nada y reservar no te compromete.\n\nSi tienes una duda concreta, puedes preguntarla ya en https://hera-gine.com (si es algo rápido, es gratis).\n\n¿Quieres contarnos qué te gustaría que incluyera? Responde a este correo. Si no has hecho tú esta reserva, responde «baja» y borramos tu correo.`;
+  const text = `Hola. Hemos recibido tu reserva en ${name}: tres meses de acompañamiento con ${who}, con tus dudas resueltas sin límite por WhatsApp o por correo, en menos de 24 h.\n\nQué pasa ahora: te escribiremos con unas preguntas para conocer tu caso. Cuando lo tengáis claro, te enviaremos el enlace de pago (49 € los 3 meses) y empezará tu plan. No se te ha cobrado nada y reservar no te compromete.\n\nSi quieres adelantar, responde a este correo contándonos tu situación.\n\nSi es urgente o empeora, llama al 112 o acude a urgencias. Si no has hecho tú esta reserva, responde «baja».`;
   return { subject, html, text };
 }
 /** Valoración enviada desde el botón «Pedir el pago»: mensaje de la profesional + botón de pago a la usuaria */
@@ -1289,7 +1290,7 @@ ${fuera ? '<p style="font-size:14px;color:#6E6C67;margin:6px 0 0">Lo pagas con t
         await sendMail(env, { to: norm, replyTo: 'contacto@hera-gine.com', ...reservaEmail(PROGS[prog], WHO[prog]) });
         await bump(env, `reserva:${prog}`);
         await record(env, { e: `reserva:${prog}`, p: await personTag(env, request, madridDay(), body.p) }, sendMail, ctx);
-        const job = notify(env, `Reserva · ${PROGS[prog]} · ${norm}`, `Alguien ha reservado plaza (sin pagar) en ${PROGS[prog]} (49 €, precio de lanzamiento).\n\nCorreo: ${norm}${src ? `\nOrigen: ${src}` : ''}\n\nEstá en el panel, en «Programas: reservas».`, sendMail);
+        const job = notify(env, `Reserva · ${PROGS[prog]} · ${norm}`, `Alguien ha reservado plaza (sin pagar) en ${PROGS[prog]} (49 € los 3 meses). Toca escribirle con unas preguntas para conocer su caso y, cuando esté de acuerdo, pasarle el enlace de pago.\n\nCorreo: ${norm}${src ? `\nOrigen: ${src}` : ''}\n\nEstá en el panel, en «Programas: reservas».`, sendMail);
         if (ctx?.waitUntil) ctx.waitUntil(job); else await job;
       }
       return reply(200, { ok: true });

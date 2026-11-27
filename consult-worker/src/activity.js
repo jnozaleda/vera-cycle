@@ -70,7 +70,7 @@ export const EVENTS = {
   enviada_consultas: ['Envió una consulta desde la página de consultas', false],
   consulta_guardada: ['Envió la consulta y aún no ha pagado, para', false],
   valorada: ['La profesional valoró una consulta (aún sin pagar):', false],
-  reserva: ['Reservó plaza (sin pagar) en el programa', true],
+  reserva: ['Reservó plaza (sin pagar) en el programa', false], // sin aviso de actividad: ya llega el de la reserva con el correo (Noza, 27 nov)
   programas_vistos: ['Vio los programas de la portada', false],
   consulta_sin_texto: ['Envió una consulta sin escribir nada (le pedimos su duda por correo), para', false],
   valorada_pagada: ['Pagó la respuesta completa tras la valoración de', false], // sin aviso propio: ya llega el del pago (Noza, 25 nov)

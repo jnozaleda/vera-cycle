@@ -82,16 +82,16 @@ const body = `${STYLE}<div class="w cq">
   </article>
 
   <article class="cq-card cq-top" id="acompanamiento">
-    <div><p class="cq-k">Lo más completo</p><h2>Acompañamiento mensual</h2></div>
-    <div class="cq-pr"><strong>99 €</strong><span>al mes · sin permanencia</span></div>
+    <div><p class="cq-k">Lo más completo</p><h2>Acompañamiento por etapa</h2></div>
+    <div class="cq-pr"><strong>49 €</strong><span>los 3 meses · Plus, 149 €</span></div>
     <ul class="cq-l">
-      <li>${tick}<span>Consultas por escrito cuando lo necesites</span></li>
-      <li>${tick}<span>Respuesta en menos de 6 h</span></li>
-      <li>${tick}<span>Una videollamada de 30 min al mes</span></li>
-      <li>${tick}<span>WhatsApp con la profesional que elijas, de 9:00 a 21:00</span></li>
-      <li>${tick}<span>Para embarazo, posparto, crianza o menopausia</span></li>
+      <li>${tick}<span>Embarazo, tu bebé (los primeros 100 días) o menopausia</span></li>
+      <li>${tick}<span>Tus dudas sin límite, por WhatsApp o por correo</span></li>
+      <li>${tick}<span>Respuesta en menos de 24 h (Plus: en menos de 6 h)</span></li>
+      <li>${tick}<span>Qué esperar en cada momento de tu etapa</span></li>
+      <li>${tick}<span>Plus: una videollamada de 30 min al mes y llamadas de 15 min (hasta 2 al mes)</span></li>
     </ul>
-    <button type="button" class="cq-btn" data-open="acomp">Empezar el acompañamiento</button>
+    <a class="cq-btn" href="/#etapa" data-hit="clic:consultas_acomp">Reservar mi plaza</a>
   </article>
 </div>
 
@@ -248,10 +248,10 @@ const body = `${STYLE}<div class="w cq">
 
 const html = shell({
   title: 'Consultas con ginecólogo, matrona o pediatra · Hera',
-  desc: 'Pregunta por escrito a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra) y recibe una respuesta personal. Consulta suelta o acompañamiento mensual con videollamada y WhatsApp.',
+  desc: 'Pregunta por escrito a Gonzalo (ginecólogo), Marina (matrona) o Lucía (pediatra) y recibe una respuesta personal. Consulta suelta o acompañamiento por etapa, desde 49 € los 3 meses.',
   path: '/consultas/',
   ld: { '@context': 'https://schema.org', '@type': 'Service', name: 'Consultas por escrito con profesionales de Hera', provider: { '@type': 'Organization', name: 'Hera', url: 'https://hera-gine.com' },
-    offers: [{ '@type': 'Offer', name: 'Una consulta por escrito', price: '5', priceCurrency: 'EUR' }, { '@type': 'Offer', name: 'Acompañamiento mensual', price: '99', priceCurrency: 'EUR' }] },
+    offers: [{ '@type': 'Offer', name: 'Una consulta por escrito', price: '5', priceCurrency: 'EUR' }, { '@type': 'Offer', name: 'Acompañamiento por etapa (3 meses)', price: '49', priceCurrency: 'EUR' }, { '@type': 'Offer', name: 'Acompañamiento Plus (3 meses)', price: '149', priceCurrency: 'EUR' }] },
   body,
 });
 fs.mkdirSync(new URL('consultas/', ROOT), { recursive: true });

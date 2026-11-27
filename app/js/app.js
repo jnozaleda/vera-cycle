@@ -1302,7 +1302,6 @@ const payTest = () => { try { return localStorage.getItem(PAY_TEST_KEY) === '1';
 const NO_FREE = true;
 const PLANS_UI = [
   { k: 'suelta', name: 'Consulta suelta', price: '5 €', note: 'Solo esta pregunta' },
-  { k: 'acomp', name: 'Acompañamiento mensual', price: '99 € / mes', note: 'Respuesta en menos de 6 h · videollamada y WhatsApp · sin permanencia' },
 ];
 
 /** Pantalla B con pagos: elegir plan; la pregunta escrita se guarda para enviarla al volver */
@@ -1366,7 +1365,7 @@ function askLimitView(a) {
     <div class="limit-card stack-8">
       ${consultPair('sm')}
       <div class="t-15 w-500 c-deep">Has usado tus ${a.result.freeLimit || 2} consultas gratuitas</div>
-      <p class="t-13 lh-4 c-deep">Muy pronto podrás seguir preguntando a Gonzalo, Marina y Lucía: 5 € por consulta o acompañamiento mensual por 99 €.</p>
+      <p class="t-13 lh-4 c-deep">Muy pronto podrás seguir preguntando a Gonzalo, Marina y Lucía: 5 € por consulta o el acompañamiento por etapa, desde 49 € los 3 meses.</p>
     </div>
     <p class="t-13 lh-4">Para seguir con una consulta anterior, responde al correo de la profesional: <b>no gasta consultas</b>.</p>
     ${notify}

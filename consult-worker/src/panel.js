@@ -423,10 +423,10 @@ ${MODES.map(([m, t]) => `<div class="cv cv-${m}"><h3 class="fh">Personas · ${su
   // Programas por etapa (27 nov): reservas sin pagar (D1 reservas) y clics en «Reservar mi plaza»
   const PROG_N = { embarazo: 'Hera Embarazo', bebe: 'Hera Bebé · 100 días', menopausia: 'Hera Menopausia' };
   let reservas = [];
-  try { reservas = (await env.DB.prepare('SELECT ts, prog, u, src FROM reservas ORDER BY ts DESC LIMIT 200').bind().all()).results || []; } catch { /* sin tabla */ }
+  try { reservas = (await env.DB.prepare('SELECT ts, prog, u, src, plan FROM reservas ORDER BY ts DESC LIMIT 200').bind().all()).results || []; } catch { /* sin tabla */ }
   for (const r of reservas) r.email = await openEmail(env, r.u).catch(() => '');
-  const progRows = Object.keys(PROG_N).map((p) => `<tr><td>${PROG_N[p]}</td><td style="text-align:right">${g(`clic:programa_${p}`)}</td><td style="text-align:right"><b>${reservas.filter((r) => r.prog === p).length}</b></td></tr>`).join('');
-  const progCard = `<div class="card" id="programas"><h2>Programas: reservas (49 €, sin pagar)</h2><p class="mute" style="margin-bottom:8px">Vieron la sección (periodo): <b>${g('programas_vistos')}</b>. «Pulsaron» = abrieron «Reservar mi plaza» en el periodo; «Reservas» = total desde el 27 nov.</p><table><tr><th>Programa</th><th style="text-align:right">Pulsaron</th><th style="text-align:right">Reservas</th></tr>${progRows}</table>${reservas.length ? `<table style="margin-top:10px">${reservas.slice(0, 30).map((r) => `<tr><td>${madrid(r.ts, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td><td>${PROG_N[r.prog] || esc(r.prog)}</td><td>${esc(r.email || '—')}</td><td class="mute">${esc(r.src || '')}</td></tr>`).join('')}</table>` : ''}<p class="mute" style="margin-top:6px">Su correo solo para avisarles del programa; se borra a los 12 meses.</p></div>`;
+  const progRows = Object.keys(PROG_N).map((p) => `<tr><td>${PROG_N[p]}</td><td style="text-align:right">${g(`clic:programa_${p}`)}</td><td style="text-align:right"><b>${reservas.filter((r) => r.prog === p).length}</b>${reservas.filter((r) => r.prog === p && r.plan === 'plus').length ? ` <span class="mute">(${reservas.filter((r) => r.prog === p && r.plan === 'plus').length} Plus)</span>` : ''}</td></tr>`).join('');
+  const progCard = `<div class="card" id="programas"><h2>Programas: reservas (49 € o Plus 149 €, sin pagar)</h2><p class="mute" style="margin-bottom:8px">Vieron la sección (periodo): <b>${g('programas_vistos')}</b>. «Pulsaron» = abrieron «Reservar mi plaza» en el periodo; «Reservas» = total desde el 27 nov.</p><table><tr><th>Programa</th><th style="text-align:right">Pulsaron</th><th style="text-align:right">Reservas</th></tr>${progRows}</table>${reservas.length ? `<table style="margin-top:10px">${reservas.slice(0, 30).map((r) => `<tr><td>${madrid(r.ts, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td><td>${PROG_N[r.prog] || esc(r.prog)}${r.plan === 'plus' ? ' <b>Plus</b>' : ''}</td><td>${esc(r.email || '—')}</td><td class="mute">${esc(r.src || '')}</td></tr>`).join('')}</table>` : ''}<p class="mute" style="margin-top:6px">Su correo solo para avisarles del programa; se borra a los 12 meses.</p></div>`;
   const chips = [
     mailq ? `<span class="chip warn">${mailq === 1 ? '1 correo' : `${mailq} correos`} en espera: Resend no los aceptó y se reintentan solos cada 15 min</span>` : '',
     fails.length ? `<a class="chip red" href="#fallos" style="text-decoration:none">${fails.length === 1 ? '1 correo no ha llegado' : `${fails.length} correos no han llegado`}${bounced < fails.length ? ` (${fails.length - bounced} retrasado${fails.length - bounced === 1 ? '' : 's'})` : ''}</a>` : '',
@@ -699,8 +699,8 @@ ${opFeed || opRows ? `<div class="card"><h2>Opiniones tras la consulta</h2>${opR
 // Mapa de calor de la portada (Noza, 24 nov): GET /panel/mapa?k=…&v=movil|ordenador&d=1|7
 // Dónde tocan (tabla taps, 31 días) dibujado encima de la portada real (iframe en modo equipo: no cuenta en las métricas),
 // el embudo de la portada (personas distintas de la tabla activity) y la lista de lo que más tocan.
-const TAPS_FROM = Date.parse('2026-11-27T20:47:00Z'); // 27 nov (noche): etapas arriba y la consulta antes de la app (foto rehecha)
-const MAP_IMG = { movil: [390, 8796, 'https://hera-gine.com/portada/mapa/movil.jpg?v=202611273'], ordenador: [1280, 5488, 'https://hera-gine.com/portada/mapa/ordenador.jpg?v=202611273'] };
+const TAPS_FROM = Date.parse('2026-11-27T22:38:00Z'); // 27 nov (noche): planes Acompañamiento y Plus en la tarjeta (foto rehecha)
+const MAP_IMG = { movil: [390, 9204, 'https://hera-gine.com/portada/mapa/movil.jpg?v=202611274'], ordenador: [1280, 5762, 'https://hera-gine.com/portada/mapa/ordenador.jpg?v=202611274'] };
 export async function heatmap(env, url) {
   const k = encodeURIComponent(url.searchParams.get('k') || '');
   const v = url.searchParams.get('v') === 'ordenador' ? 'ordenador' : 'movil';

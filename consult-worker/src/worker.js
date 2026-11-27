@@ -338,20 +338,26 @@ async function remindValNow(env) {
   return n;
 }
 /** Correo de confirmación de una reserva de programa (sin pago). Tono personal (Noza, 27 nov): sin «lanzamiento» */
-export function reservaEmail(name, who) {
-  const subject = `Hemos recibido tu reserva · ${name}`;
+export function reservaEmail(name, who, plan = 'base') {
+  const plus = plan === 'plus';
+  const full = `${name}${plus ? ' Plus' : ''}`;
+  const what = plus
+    ? `tres meses de acompañamiento con ${who}: tus dudas sin límite por WhatsApp o por correo, con respuesta en menos de 6 h, una videollamada de 30 minutos al mes y llamadas de 15 minutos cuando lo necesites (hasta 2 al mes)`
+    : `tres meses de acompañamiento con ${who}, con tus dudas resueltas sin límite por WhatsApp o por correo, en menos de 24 h`;
+  const price = plus ? '149 €' : '49 €';
+  const subject = `Hemos recibido tu reserva · ${full}`;
   const html = shell(`<p>Hola,</p>
-<p><b>Hemos recibido tu reserva en ${esc(name)}</b>: tres meses de acompañamiento con ${esc(who)}, con tus dudas resueltas sin límite por WhatsApp o por correo, en menos de 24 h.</p>
+<p><b>Hemos recibido tu reserva en ${esc(full)}</b>: ${esc(what)}.</p>
 <p><b>Qué pasa ahora:</b></p>
 <ul style="padding-left:18px;margin:0 0 12px">
 <li style="margin-bottom:6px">Te escribiremos a este correo con unas preguntas para conocer tu caso: tu situación, lo que te preocupa y lo que necesitas.</li>
-<li style="margin-bottom:6px">Cuando lo tengáis claro, te enviaremos el enlace de pago (49 € los 3 meses) y empezará tu plan.</li>
+<li style="margin-bottom:6px">Cuando lo tengáis claro, te enviaremos el enlace de pago (${price} los 3 meses) y empezará tu plan.</li>
 <li style="margin-bottom:6px"><b>No se te ha cobrado nada</b> y reservar no te compromete.</li>
 </ul>
 <p>Si quieres adelantar, responde a este correo contándonos un poco tu situación (por ejemplo, de cuántas semanas estás o cuántos días tiene tu bebé).</p>
 <p style="font-size:13px;color:#9A3B2B">Si es urgente o empeora, no esperes: llama al 112 o acude a urgencias.</p>
 <p style="font-size:13px;color:#6E6C67">Si no has hecho tú esta reserva o ya no te interesa, responde «baja» y borramos tu correo.</p>`);
-  const text = `Hola. Hemos recibido tu reserva en ${name}: tres meses de acompañamiento con ${who}, con tus dudas resueltas sin límite por WhatsApp o por correo, en menos de 24 h.\n\nQué pasa ahora: te escribiremos con unas preguntas para conocer tu caso. Cuando lo tengáis claro, te enviaremos el enlace de pago (49 € los 3 meses) y empezará tu plan. No se te ha cobrado nada y reservar no te compromete.\n\nSi quieres adelantar, responde a este correo contándonos tu situación.\n\nSi es urgente o empeora, llama al 112 o acude a urgencias. Si no has hecho tú esta reserva, responde «baja».`;
+  const text = `Hola. Hemos recibido tu reserva en ${full}: ${what}.\n\nQué pasa ahora: te escribiremos con unas preguntas para conocer tu caso. Cuando lo tengáis claro, te enviaremos el enlace de pago (${price} los 3 meses) y empezará tu plan. No se te ha cobrado nada y reservar no te compromete.\n\nSi quieres adelantar, responde a este correo contándonos tu situación.\n\nSi es urgente o empeora, llama al 112 o acude a urgencias. Si no has hecho tú esta reserva, responde «baja».`;
   return { subject, html, text };
 }
 /** Valoración enviada desde el botón «Pedir el pago»: mensaje de la profesional + botón de pago a la usuaria */
@@ -545,8 +551,8 @@ export function offerBlock(pro, freeLeft = 0, bf = false) {
   const next = freeLeft > 0 ? `te queda ${freeLeft === 1 ? '1 consulta gratis' : `${freeLeft} consultas gratis`}` : bf ? '1 € hasta el 1 de diciembre' : '5 €';
   const ask = 'https://hera-gine.com/?de=oferta#ask';
   return {
-    html: `<div style="margin:18px 0 0;padding:14px;border-radius:12px;background:#F6E0E2"><div style="font-family:Georgia,serif;font-size:19px;color:#45574C;margin-bottom:2px">¿Quieres hablarlo con ${esc(pro.short)}?</div><div style="font-size:13.5px;color:#4F4E49">Para seguir con esta duda, responder a este correo es gratis. Si prefieres hablarlo de viva voz:</div>${btn(`${base}#llamada-${pro.key}`, 'Llamada de 15 min', `${esc(pro.short)} te llama a la hora que elijas`, '25 €')}${btn(`${base}#reservar-${pro.key}`, 'Videollamada de 30 min', `Con ${esc(pro.short)}, por Google Meet`, '55 €')}<div style="font-size:13px;color:#4F4E49;margin-top:10px">¿Tienes otra duda distinta? <a href="${ask}" style="color:#45574C;font-weight:600">Haz una consulta nueva · ${next}</a></div></div>`,
-    text: `¿Quieres hablarlo con ${pro.short}? Para seguir con esta duda, responder a este correo es gratis. Si prefieres hablarlo de viva voz:\n· Llamada de 15 min (25 €): ${base}#llamada-${pro.key}\n· Videollamada de 30 min (55 €): ${base}#reservar-${pro.key}\n¿Otra duda distinta? Consulta nueva (${next}): ${ask}`,
+    html: `<div style="margin:18px 0 0;padding:14px;border-radius:12px;background:#F6E0E2"><div style="font-family:Georgia,serif;font-size:19px;color:#45574C;margin-bottom:2px">¿Quieres hablarlo con ${esc(pro.short)}?</div><div style="font-size:13.5px;color:#4F4E49">Para seguir con esta duda, responder a este correo es gratis. Si prefieres hablarlo de viva voz:</div>${btn(`${base}#llamada-${pro.key}`, 'Llamada de 15 min', `${esc(pro.short)} te llama a la hora que elijas`, '25 €')}${btn(`${base}#reservar-${pro.key}`, 'Videollamada de 30 min', `Con ${esc(pro.short)}, por Google Meet`, '55 €')}<div style="font-size:13px;color:#4F4E49;margin-top:10px">¿Tienes otra duda distinta? <a href="${ask}" style="color:#45574C;font-weight:600">Haz una consulta nueva · ${next}</a></div><div style="margin-top:10px;font-size:13.5px;color:#4F4E49">¿Quieres que te acompañe toda la etapa? <a href="https://hera-gine.com/#etapa" style="color:#45574C;font-weight:600">Acompañamiento con ${esc(pro.short)} · 49 € los 3 meses</a>, con tus dudas sin límite por WhatsApp o correo.</div></div>`,
+    text: `¿Quieres hablarlo con ${pro.short}? Para seguir con esta duda, responder a este correo es gratis. Si prefieres hablarlo de viva voz:\n· Llamada de 15 min (25 €): ${base}#llamada-${pro.key}\n· Videollamada de 30 min (55 €): ${base}#reservar-${pro.key}\n¿Otra duda distinta? Consulta nueva (${next}): ${ask}\n¿Quieres que te acompañe toda la etapa? Acompañamiento con ${pro.short}, 49 € los 3 meses, con tus dudas sin límite por WhatsApp o correo: https://hera-gine.com/#etapa`,
   };
 }
 
@@ -1277,20 +1283,21 @@ ${fuera ? '<p style="font-size:14px;color:#6E6C67;margin:6px 0 0">Lo pagas con t
     if (url.pathname === '/reserva') {
       const PROGS = { embarazo: 'Hera Embarazo', bebe: 'Hera Bebé · primeros 100 días', menopausia: 'Hera Menopausia' };
       const prog = PROGS[body.prog] ? body.prog : '';
+      const plan = body.plan === 'plus' ? 'plus' : 'base'; // Plus (27 nov): 149 € los 3 meses, con videollamadas y llamadas
       const norm = normalizeEmail(body.email);
       if (!prog) return reply(400, { error: 'bad_prog' });
       if (!norm) return reply(400, { error: 'bad_email' });
       const h = (await hmac(env.HASH_SALT, norm)).slice(0, 24);
       const src = body.src === 'ads' ? `anuncio${body.camp ? `:${String(body.camp).slice(0, 24)}` : ''}` : /^[a-z0-9_]{1,20}$/.test(String(body.via || '')) ? `via:${body.via}` : '';
       let isNew = true;
-      try { const r = await env.DB.prepare('INSERT OR IGNORE INTO reservas (ts, prog, h, u, src) VALUES (?1, ?2, ?3, ?4, ?5)').bind(Date.now(), prog, h, await sealEmail(env, norm), src).run(); isNew = (r?.meta?.changes ?? 1) > 0; } catch (e) { console.log(`reservas ${e.message}`); }
+      try { const r = await env.DB.prepare('INSERT OR IGNORE INTO reservas (ts, prog, h, u, src, plan) VALUES (?1, ?2, ?3, ?4, ?5, ?6)').bind(Date.now(), prog, h, await sealEmail(env, norm), src, plan).run(); isNew = (r?.meta?.changes ?? 1) > 0; } catch (e) { console.log(`reservas ${e.message}`); }
       if (isNew) {
         // Confirmación a la usuaria (Noza, 27 nov: «no ha recibido ningún correo tipo "hemos recibido tu reserva"»)
         const WHO = { embarazo: 'Gonzalo, ginecólogo, y Marina, matrona', bebe: 'Lucía, pediatra, y Marina, matrona', menopausia: 'Gonzalo, ginecólogo' };
-        await sendMail(env, { to: norm, replyTo: 'contacto@hera-gine.com', ...reservaEmail(PROGS[prog], WHO[prog]) });
-        await bump(env, `reserva:${prog}`);
+        await sendMail(env, { to: norm, replyTo: 'contacto@hera-gine.com', ...reservaEmail(PROGS[prog], WHO[prog], plan) });
+        await bump(env, `reserva:${prog}`); if (plan === 'plus') await bump(env, `reserva_plus:${prog}`);
         await record(env, { e: `reserva:${prog}`, p: await personTag(env, request, madridDay(), body.p) }, sendMail, ctx);
-        const job = notify(env, `Reserva · ${PROGS[prog]} · ${norm}`, `Alguien ha reservado plaza (sin pagar) en ${PROGS[prog]} (49 € los 3 meses). Toca escribirle con unas preguntas para conocer su caso y, cuando esté de acuerdo, pasarle el enlace de pago.\n\nCorreo: ${norm}${src ? `\nOrigen: ${src}` : ''}\n\nEstá en el panel, en «Programas: reservas».`, sendMail);
+        const job = notify(env, `Reserva · ${PROGS[prog]}${plan === 'plus' ? ' Plus' : ''} · ${norm}`, `Alguien ha reservado plaza (sin pagar) en ${PROGS[prog]}${plan === 'plus' ? ' Plus (149 € los 3 meses: respuesta en menos de 6 h, una videollamada de 30 min al mes y llamadas de 15 min, hasta 2 al mes)' : ' (49 € los 3 meses)'}. Toca escribirle con unas preguntas para conocer su caso y, cuando esté de acuerdo, pasarle el enlace de pago.\n\nCorreo: ${norm}${src ? `\nOrigen: ${src}` : ''}\n\nEstá en el panel, en «Programas: reservas».`, sendMail);
         if (ctx?.waitUntil) ctx.waitUntil(job); else await job;
       }
       return reply(200, { ok: true });

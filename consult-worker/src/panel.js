@@ -699,8 +699,8 @@ ${opFeed || opRows ? `<div class="card"><h2>Opiniones tras la consulta</h2>${opR
 // Mapa de calor de la portada (Noza, 24 nov): GET /panel/mapa?k=…&v=movil|ordenador&d=1|7
 // Dónde tocan (tabla taps, 31 días) dibujado encima de la portada real (iframe en modo equipo: no cuenta en las métricas),
 // el embudo de la portada (personas distintas de la tabla activity) y la lista de lo que más tocan.
-const TAPS_FROM = Date.parse('2026-11-27T19:34:00Z'); // 27 nov: portada nueva con programas (foto rehecha)
-const MAP_IMG = { movil: [390, 9940, 'https://hera-gine.com/portada/mapa/movil.jpg?v=20261127'], ordenador: [1280, 5719, 'https://hera-gine.com/portada/mapa/ordenador.jpg?v=20261127'] };
+const TAPS_FROM = Date.parse('2026-11-27T20:17:00Z'); // 27 nov (noche): portada con el acompañamiento arriba (foto rehecha)
+const MAP_IMG = { movil: [390, 8814, 'https://hera-gine.com/portada/mapa/movil.jpg?v=202611272'], ordenador: [1280, 5553, 'https://hera-gine.com/portada/mapa/ordenador.jpg?v=202611272'] };
 export async function heatmap(env, url) {
   const k = encodeURIComponent(url.searchParams.get('k') || '');
   const v = url.searchParams.get('v') === 'ordenador' ? 'ordenador' : 'movil';

@@ -16,16 +16,17 @@ const metas = new Map();
 const KV = { async get(k, t) { const v = store.get(k); return v == null ? null : t === 'json' ? JSON.parse(v) : v; }, async put(k, v, o) { store.set(k, v); if (o?.metadata) metas.set(k, o.metadata); }, async delete(k) { store.delete(k); },
   async list({ prefix }) { return { keys: [...store.keys()].filter((k) => k.startsWith(prefix)).map((name) => ({ name, metadata: metas.get(name) })), list_complete: true }; } };
 const sent = [];
-const saldo = new Map(); const counts = new Map(); const visitors = new Set(); const activity = []; const opiniones = []; const taps = [];
+const saldo = new Map(); const counts = new Map(); const visitors = new Set(); const activity = []; const opiniones = []; const taps = []; const reservas = [];
 const DB = { async batch(list) { const out = []; for (const st of list) out.push(await st.run()); return out; }, prepare(sql) { return { bind(...a) { return { async run() {
   if (sql.startsWith('INSERT INTO counts')) { const k = a[0] + '|' + a[1]; counts.set(k, (counts.get(k) || 0) + 1); return { meta: { changes: 1 } }; }
   if (sql.startsWith('UPDATE saldo SET n = (CASE')) { saldo.set(a[0], (saldo.get(a[0]) || 0) + a[1]); return { meta: { changes: 1 } }; }
   if (sql.startsWith('INSERT INTO opiniones')) { opiniones.push({ ts: a[0], pro: a[1], rating: a[2], texto: a[3], nombre: a[4], publicable: a[5] }); return { meta: { changes: 1 } }; }
   if (sql.startsWith('INSERT INTO taps')) { taps.push({ ts: a[0], pg: a[1], x: a[2], y: a[3], w: a[4], h: a[5], el: a[6], act: a[7], d: a[8], p: a[9] }); return { meta: { changes: 1 } }; }
   if (sql.startsWith('INSERT INTO activity')) { activity.push({ ts: a[0], e: a[1], d: a[2], p: a[3] }); return { meta: { changes: 1 } }; }
+  if (sql.startsWith('INSERT OR IGNORE INTO reservas')) { if (reservas.some((r) => r.prog === a[1] && r.h === a[2])) return { meta: { changes: 0 } }; reservas.push({ ts: a[0], prog: a[1], h: a[2], u: a[3], src: a[4] }); return { meta: { changes: 1 } }; }
   if (sql.startsWith('INSERT OR IGNORE')) { const k = a.join('|'); if (visitors.has(k)) return { meta: { changes: 0 } }; visitors.add(k); return { meta: { changes: 1 } }; }
   return { meta: { changes: 0 } }; },
-  async all() { if (sql.includes('FROM taps')) return { results: taps.filter((t) => t.pg === a[0] && t.ts > a[1]) }; if (sql.includes('FROM opiniones')) return { results: opiniones }; if (sql.includes('FROM activity')) return { results: activity.filter((r) => r.ts > a[0] && r.ts <= a[1]) }; return { results: [...counts].map(([k, n]) => ({ day: k.split('|')[0], k: k.split('|')[1], n })) }; } }; } }; } };
+  async all() { if (sql.includes('FROM reservas')) return { results: reservas }; if (sql.includes('FROM taps')) return { results: taps.filter((t) => t.pg === a[0] && t.ts > a[1]) }; if (sql.includes('FROM opiniones')) return { results: opiniones }; if (sql.includes('FROM activity')) return { results: activity.filter((r) => r.ts > a[0] && r.ts <= a[1]) }; return { results: [...counts].map(([k, n]) => ({ day: k.split('|')[0], k: k.split('|')[1], n })) }; } }; } }; } };
 const env = { KV, DB, PANEL_CODE: 'panel', COPY_TO: 'copia@example.com', HASH_SALT: 'sal', ADMIN_TOKEN: 'adm', ALLOWED_ORIGINS: 'https://hera-gine.com', FROM: 'Hera <consultas@hera-gine.com>', FREE_LIMIT: '2', DRY_RUN: '0', RELAY: '1', RESEND_API_KEY: 'k', ADD_WINDOW_MIN: '0', BF_OFFER_END_MS: String(Date.parse('2026-12-01T23:59:59+01:00')) }; // las pruebas de Black Friday siguen como si estuviera en marcha // 0: sin «añadir a la consulta» salvo en su prueba
 let rid = 0;
 globalThis.fetch = async (u, o) => {
@@ -363,6 +364,16 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   assert.ok(sent.slice(s0).some((m) => m.to[0] === PROS.matrona.email) && sent.slice(s0).some((m) => m.to[0] === 'cola-resend@example.com'), 'salen al reintentar');
   globalThis.fetch = f0;
   console.log('Cola de reintentos: OK');
+}
+// Reserva de plaza en un programa (27 nov): sin pagar, una por programa y correo, en el panel
+{
+  const r1 = await call('/reserva', { email: 'reserva@example.com', prog: 'bebe' });
+  assert.equal(r1.s, 200); assert.equal(reservas.length, 1);
+  await call('/reserva', { email: 'Reserva@Example.com', prog: 'bebe' }); assert.equal(reservas.length, 1, 'sin duplicados');
+  assert.equal((await call('/reserva', { email: 'reserva@example.com', prog: 'otro' })).s, 400);
+  const ph = await (await worker.fetch(new Request('https://w/panel?k=dk&d=7'), env)).text();
+  assert.match(ph, /Programas: reservas/); assert.match(ph, /reserva@example\.com/);
+  console.log('Reservas de programas: OK');
 }
 // Consulta sin texto (26 nov): no va a la profesional; a la usuaria le pedimos su duda y su respuesta llega como consulta nueva
 {

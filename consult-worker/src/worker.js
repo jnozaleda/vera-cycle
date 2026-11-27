@@ -1256,6 +1256,25 @@ ${fuera ? '<p style="font-size:14px;color:#6E6C67;margin:6px 0 0">Lo pagas con t
     }
 
     // WhatsApp «Próximamente» (19 nov): quien pulsa «Avísame» deja su correo cifrado para avisarla cuando vuelva (12 meses como mucho)
+    // Reserva de plaza en un programa por etapa (Noza, 27 nov): sin pagar. Correo cifrado en D1 (reservas), aviso al equipo y panel
+    if (url.pathname === '/reserva') {
+      const PROGS = { embarazo: 'Hera Embarazo', bebe: 'Hera Bebé · primeros 100 días', menopausia: 'Hera Menopausia' };
+      const prog = PROGS[body.prog] ? body.prog : '';
+      const norm = normalizeEmail(body.email);
+      if (!prog) return reply(400, { error: 'bad_prog' });
+      if (!norm) return reply(400, { error: 'bad_email' });
+      const h = (await hmac(env.HASH_SALT, norm)).slice(0, 24);
+      const src = body.src === 'ads' ? `anuncio${body.camp ? `:${String(body.camp).slice(0, 24)}` : ''}` : /^[a-z0-9_]{1,20}$/.test(String(body.via || '')) ? `via:${body.via}` : '';
+      let isNew = true;
+      try { const r = await env.DB.prepare('INSERT OR IGNORE INTO reservas (ts, prog, h, u, src) VALUES (?1, ?2, ?3, ?4, ?5)').bind(Date.now(), prog, h, await sealEmail(env, norm), src).run(); isNew = (r?.meta?.changes ?? 1) > 0; } catch (e) { console.log(`reservas ${e.message}`); }
+      if (isNew) {
+        await bump(env, `reserva:${prog}`);
+        await record(env, { e: `reserva:${prog}`, p: await personTag(env, request, madridDay(), body.p) }, sendMail, ctx);
+        const job = notify(env, `Reserva · ${PROGS[prog]} · ${norm}`, `Alguien ha reservado plaza (sin pagar) en ${PROGS[prog]} (49 €, precio de lanzamiento).\n\nCorreo: ${norm}${src ? `\nOrigen: ${src}` : ''}\n\nEstá en el panel, en «Programas: reservas».`, sendMail);
+        if (ctx?.waitUntil) ctx.waitUntil(job); else await job;
+      }
+      return reply(200, { ok: true });
+    }
     if (url.pathname === '/avisame') {
       const norm = normalizeEmail(body.email);
       if (!norm) return reply(400, { error: 'bad_email' });

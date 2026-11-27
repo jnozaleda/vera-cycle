@@ -13,11 +13,13 @@ registro de cambios publicados, el más reciente primero. Sin datos personales n
 | WhatsApp | En «Próximamente · Avísame» (pago desactivado); la lista de avisos está en el panel | Hasta que Noza decida volver a encenderlo (`SOON = false` en `tools/build-whatsapp.mjs`) | `tools/build-whatsapp.mjs`, `index.html` |
 | Enlaces propios | `?via=` de las profesionales, enlaces de amigas (5 gratis hasta el 31 dic) y del grupo (2 gratis). Socios sin gratis y a 5 €, como todos: `?via=lidia`, `?via=jaime`, `?via=atempocare` | 31 dic | `worker.js` (`FRIEND_LINKS`), `panel.js` (`VIA_NAME`) |
 | Google Ads | Todas las campañas de Hera en pausa desde el 26 nov (Noza) | Hasta que Noza diga | Google Ads |
+| Programas por etapa | Prueba de interés en la portada desde el 27 nov: tres programas a 49 € con reserva sin pagar. Leer en el panel «Programas: reservas» | Hasta decidir cuál lanzar | `index.html` (#programas), `worker.js` (`/reserva`), `panel.js` |
 | Pendientes | Backlog de producto | — | Issues de `jnozaleda/vera-backlog` |
 
 ## Registro
 
 ### 2026-11-27
+- **Portada: programas por etapa (prueba de interés)** (Noza, a partir del documento de estrategia para Gonzalo: «vender acompañamiento en una etapa, no una duda suelta»; decidió los tres programas, 49 € y que sea la portada). Arriba del todo, «Te acompañamos en los momentos que más importan» con tres tarjetas: **Hera Embarazo** (Gonzalo y Marina), **Hera Bebé · primeros 100 días** (Lucía y Marina) y **Hera Menopausia** (Gonzalo), cada una con qué incluirá, «49 € el programa · precio de lanzamiento» y «Reservar mi plaza» → correo → **reserva sin pagar** (`POST /reserva`, D1 `reservas`, correo cifrado, 12 meses; aviso a Noza con el correo). Debajo sigue la consulta («¿Tienes una duda ahora?», escribir gratis igual que antes). Panel: tarjeta «Programas: reservas» (vieron la sección, pulsaron y reservas por programa, con los correos). Eventos `programas_vistos`, `clic:programa_<p>`, `reserva:<p>`. **Lo que dice cada programa son promesas a confirmar con Gonzalo, Marina y Lucía** (están marcados «próximamente» y no se cobra nada). Mapa de calor: foto de la portada rehecha y toques desde ahora. Política de privacidad actualizada. (publicado)
 - **Prueba de entrega de correo: 10/10 en mail-tester** (Noza). Firmas del dominio, contenido y reputación bien. Limpieza: borrada la consulta de esa prueba (#ZUMB7MMN, modo equipo, a Gonzalo; entró como consulta normal, no «sin texto», así que a Gonzalo le llegó el correo «POR VALORAR»).
 
 ### 2026-11-26

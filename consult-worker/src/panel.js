@@ -420,6 +420,13 @@ ${MODES.map(([m, t]) => `<div class="cv cv-${m}"><h3 class="fh">Personas · ${su
   const bounced = fails.filter((x) => x.kind !== 'retrasado').length;
   // Correos en espera de reintento (Resend saturado o caído; worker.js, mailq)
   const mailq = ((await env.KV.get('mailq', 'json').catch(() => null)) || []).length;
+  // Programas por etapa (27 nov): reservas sin pagar (D1 reservas) y clics en «Reservar mi plaza»
+  const PROG_N = { embarazo: 'Hera Embarazo', bebe: 'Hera Bebé · 100 días', menopausia: 'Hera Menopausia' };
+  let reservas = [];
+  try { reservas = (await env.DB.prepare('SELECT ts, prog, u, src FROM reservas ORDER BY ts DESC LIMIT 200').bind().all()).results || []; } catch { /* sin tabla */ }
+  for (const r of reservas) r.email = await openEmail(env, r.u).catch(() => '');
+  const progRows = Object.keys(PROG_N).map((p) => `<tr><td>${PROG_N[p]}</td><td style="text-align:right">${g(`clic:programa_${p}`)}</td><td style="text-align:right"><b>${reservas.filter((r) => r.prog === p).length}</b></td></tr>`).join('');
+  const progCard = `<div class="card" id="programas"><h2>Programas: reservas (49 €, sin pagar)</h2><p class="mute" style="margin-bottom:8px">Vieron la sección (periodo): <b>${g('programas_vistos')}</b>. «Pulsaron» = abrieron «Reservar mi plaza» en el periodo; «Reservas» = total desde el 27 nov.</p><table><tr><th>Programa</th><th style="text-align:right">Pulsaron</th><th style="text-align:right">Reservas</th></tr>${progRows}</table>${reservas.length ? `<table style="margin-top:10px">${reservas.slice(0, 30).map((r) => `<tr><td>${madrid(r.ts, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</td><td>${PROG_N[r.prog] || esc(r.prog)}</td><td>${esc(r.email || '—')}</td><td class="mute">${esc(r.src || '')}</td></tr>`).join('')}</table>` : ''}<p class="mute" style="margin-top:6px">Su correo solo para avisarles del programa; se borra a los 12 meses.</p></div>`;
   const chips = [
     mailq ? `<span class="chip warn">${mailq === 1 ? '1 correo' : `${mailq} correos`} en espera: Resend no los aceptó y se reintentan solos cada 15 min</span>` : '',
     fails.length ? `<a class="chip red" href="#fallos" style="text-decoration:none">${fails.length === 1 ? '1 correo no ha llegado' : `${fails.length} correos no han llegado`}${bounced < fails.length ? ` (${fails.length - bounced} retrasado${fails.length - bounced === 1 ? '' : 's'})` : ''}</a>` : '',
@@ -631,7 +638,7 @@ ${waCard}
 <div class="leg"><span><i class="i-es"></i>Anuncio España</span><span><i class="i-la"></i>Anuncio Latinoamérica</span><span><i class="i-ot"></i>Resto (Google, directo, enlaces)</span></div>
 ${fun}${funNote ? `<p class="mute" style="margin-top:6px">${funNote}</p>` : ''}</div>
 ${dailyCard}
-${recCard}${valCard}${abCard}
+${progCard}${recCard}${valCard}${abCard}
 ${menoCard}
 ${payCard}
 
@@ -692,8 +699,8 @@ ${opFeed || opRows ? `<div class="card"><h2>Opiniones tras la consulta</h2>${opR
 // Mapa de calor de la portada (Noza, 24 nov): GET /panel/mapa?k=…&v=movil|ordenador&d=1|7
 // Dónde tocan (tabla taps, 31 días) dibujado encima de la portada real (iframe en modo equipo: no cuenta en las métricas),
 // el embudo de la portada (personas distintas de la tabla activity) y la lista de lo que más tocan.
-const TAPS_FROM = Date.parse('2026-11-25T07:23:00Z');
-const MAP_IMG = { movil: [390, 8061, 'https://hera-gine.com/portada/mapa/movil.jpg?v=20261125'], ordenador: [1280, 4847, 'https://hera-gine.com/portada/mapa/ordenador.jpg?v=20261125'] };
+const TAPS_FROM = Date.parse('2026-11-27T19:34:00Z'); // 27 nov: portada nueva con programas (foto rehecha)
+const MAP_IMG = { movil: [390, 9940, 'https://hera-gine.com/portada/mapa/movil.jpg?v=20261127'], ordenador: [1280, 5719, 'https://hera-gine.com/portada/mapa/ordenador.jpg?v=20261127'] };
 export async function heatmap(env, url) {
   const k = encodeURIComponent(url.searchParams.get('k') || '');
   const v = url.searchParams.get('v') === 'ordenador' ? 'ordenador' : 'movil';

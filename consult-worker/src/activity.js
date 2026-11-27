@@ -70,6 +70,8 @@ export const EVENTS = {
   enviada_consultas: ['Envió una consulta desde la página de consultas', false],
   consulta_guardada: ['Envió la consulta y aún no ha pagado, para', false],
   valorada: ['La profesional valoró una consulta (aún sin pagar):', false],
+  reserva: ['Reservó plaza (sin pagar) en el programa', true],
+  programas_vistos: ['Vio los programas de la portada', false],
   consulta_sin_texto: ['Envió una consulta sin escribir nada (le pedimos su duda por correo), para', false],
   valorada_pagada: ['Pagó la respuesta completa tras la valoración de', false], // sin aviso propio: ya llega el del pago (Noza, 25 nov)
   consulta_anadida: ['Añadió algo a su consulta (dentro de los 30 min) para', false],
@@ -196,6 +198,7 @@ export async function hourlyDigest(env, send, force = false) {
   await env.KV.put('digest:last', String(now));
   try { await env.DB.prepare('DELETE FROM activity WHERE ts < ?1').bind(now - 31 * 86400000).run(); } catch { /* sin tabla */ }
   try { await env.DB.prepare('DELETE FROM taps WHERE ts < ?1').bind(now - 31 * 86400000).run(); } catch { /* sin tabla */ }
+  try { await env.DB.prepare('DELETE FROM reservas WHERE ts < ?1').bind(now - 365 * 86400000).run(); } catch { /* sin tabla */ }
   if (!results.length) return 0;
   const groups = new Map();
   for (const r of results) {

@@ -341,16 +341,16 @@ async function remindValNow(env) {
 export function reservaEmail(name, who) {
   const subject = `Tu plaza en ${name} está reservada`;
   const html = shell(`<p>Hola,</p>
-<p><b>Hemos recibido tu reserva en ${esc(name)}.</b> Es un programa de acompañamiento con ${esc(who)}, que estamos preparando ahora.</p>
+<p><b>Hemos recibido tu reserva en ${esc(name)}.</b> Es un programa de acompañamiento de 3 meses con ${esc(who)}, que estamos preparando ahora: qué esperar en cada momento y tus dudas sin límite, por WhatsApp o por correo, con respuesta en menos de 24 h.</p>
 <p><b>Qué pasa ahora:</b></p>
 <ul style="padding-left:18px;margin:0 0 12px">
-<li style="margin-bottom:6px">Antes de abrirlo te escribiremos a este correo con todos los detalles: qué incluye, cuándo empieza y el precio final (el de lanzamiento es 49 €).</li>
+<li style="margin-bottom:6px">Antes de abrirlo te escribiremos a este correo con todos los detalles: cuándo empieza y el precio final (el de lanzamiento es 49 € los 3 meses).</li>
 <li style="margin-bottom:6px">Entonces decides si te apuntas. <b>No se te ha cobrado nada</b> y reservar no te compromete.</li>
 </ul>
 <p>Si mientras tanto tienes una duda concreta, puedes preguntarla ya, por escrito: <a href="https://hera-gine.com/#consulta" style="color:#45574C;font-weight:600">hera-gine.com</a>. Si es algo rápido, es gratis.</p>
 <p style="font-size:13px;color:#6E6C67">¿Quieres contarnos qué te gustaría que incluyera el programa? Responde a este correo: lo leemos todo.</p>
 <p style="font-size:13px;color:#6E6C67">Si no has hecho tú esta reserva o ya no te interesa, responde «baja» y borramos tu correo.</p>`);
-  const text = `Hola. Hemos recibido tu reserva en ${name}, un programa de acompañamiento con ${who} que estamos preparando.\n\nAntes de abrirlo te escribiremos con todos los detalles (qué incluye, cuándo empieza y el precio final; el de lanzamiento es 49 €) y entonces decides. No se te ha cobrado nada y reservar no te compromete.\n\nSi tienes una duda concreta, puedes preguntarla ya en https://hera-gine.com (si es algo rápido, es gratis).\n\n¿Quieres contarnos qué te gustaría que incluyera? Responde a este correo. Si no has hecho tú esta reserva, responde «baja» y borramos tu correo.`;
+  const text = `Hola. Hemos recibido tu reserva en ${name}, un programa de acompañamiento de 3 meses con ${who} que estamos preparando: qué esperar en cada momento y tus dudas sin límite, por WhatsApp o por correo, con respuesta en menos de 24 h.\n\nAntes de abrirlo te escribiremos con todos los detalles (cuándo empieza y el precio final; el de lanzamiento es 49 € los 3 meses) y entonces decides. No se te ha cobrado nada y reservar no te compromete.\n\nSi tienes una duda concreta, puedes preguntarla ya en https://hera-gine.com (si es algo rápido, es gratis).\n\n¿Quieres contarnos qué te gustaría que incluyera? Responde a este correo. Si no has hecho tú esta reserva, responde «baja» y borramos tu correo.`;
   return { subject, html, text };
 }
 /** Valoración enviada desde el botón «Pedir el pago»: mensaje de la profesional + botón de pago a la usuaria */

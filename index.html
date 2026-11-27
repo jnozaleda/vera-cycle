@@ -1149,6 +1149,8 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     const box = $('stagebox'), mail = $('prog-mail'), note = box?.querySelector('.sbx-n');
     if (box) {
       if ('IntersectionObserver' in window) { const io = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) { hit('programas_vistos'); io.disconnect(); } }, { threshold: 0.3 }); io.observe(box); }
+      // Anuncios de acompañamiento (27 nov): ?etapa=embarazo|bebe|menopausia llega con esa etapa ya elegida
+      { const e0 = new URLSearchParams(location.search).get('etapa'); const r0 = e0 && box.querySelector(`input[name="etapa"][value="${e0.replace(/[^a-z]/g, '')}"]`); if (r0) { r0.checked = true; setTimeout(() => r0.dispatchEvent(new Event('change', { bubbles: true })), 0); } }
       const pick = () => box.querySelector('input[name="etapa"]:checked')?.value || '';
       const plan = () => box.querySelector('input[name="plan"]:checked')?.value || 'base';
       box.addEventListener('change', (ev) => { if (ev.target.name === 'plan') { $('sbx-price').textContent = `${plan() === 'plus' ? 149 : 49} € los 3 meses · no pagas nada ahora`; hit(`clic:plan_${plan()}`); } });

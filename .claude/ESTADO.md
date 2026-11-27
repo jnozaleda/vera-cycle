@@ -17,6 +17,9 @@ registro de cambios publicados, el más reciente primero. Sin datos personales n
 
 ## Registro
 
+### 2026-11-27
+- **Prueba de entrega de correo: 10/10 en mail-tester** (Noza). Firmas del dominio, contenido y reputación bien. Limpieza: borrada la consulta de esa prueba (#ZUMB7MMN, modo equipo, a Gonzalo; entró como consulta normal, no «sin texto», así que a Gonzalo le llegó el correo «POR VALORAR»).
+
 ### 2026-11-26
 - **Google Ads: todas las campañas de Hera en pausa** (Noza, 26 nov a las 13:30, hora de Madrid). En pausa: «Hera | Trafico | Prueba Nov» (España, 24438513813), «Hera | Argentina» (24455080524), «Hera | México, Chile y Colombia» (24470727027); «Hera | Guías | España» (24530266070) ya lo estaba. Via Spain no se toca. Para reactivar: `enable_campaign` con el id (pedirlo a Noza). Las consultas que ya están en marcha, los recordatorios y los correos de opinión siguen igual.
 - **Consultas sin texto** (Noza: llegaban «Hola, me gustaría hacer una consulta» y había que preguntarles). Ese texto lo ponía el servicio cuando la consulta llegaba vacía (en la portada se puede enviar solo con el correo). Ahora no le llega nada a la profesional: la usuaria recibe «No has escrito tu duda. Contesta a este correo… y le llegará a Gonzalo» y la portada le dice «Falta tu duda». Cuando contesta, su respuesta le llega a la profesional como consulta nueva (con los botones si es de pago). A Noza: «Consulta sin texto · … · le hemos pedido los detalles» y, cuando contesta, «ya ha escrito su duda». Sin recordatorios a la profesional mientras tanto (`ve`). Panel: estado «Sin texto». (publicado)

@@ -367,9 +367,13 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
 }
 // Reserva de plaza en un programa (27 nov): sin pagar, una por programa y correo, en el panel
 {
+  const sr0 = sent.length;
   const r1 = await call('/reserva', { email: 'reserva@example.com', prog: 'bebe' });
   assert.equal(r1.s, 200); assert.equal(reservas.length, 1);
+  assert.ok(sent.slice(sr0).some((m) => m.to[0] === 'reserva@example.com' && /Tu plaza en Hera Bebé/.test(m.subject) && /No se te ha cobrado nada/.test(m.html)), 'confirmación a la usuaria');
+  const sr1 = sent.length;
   await call('/reserva', { email: 'Reserva@Example.com', prog: 'bebe' }); assert.equal(reservas.length, 1, 'sin duplicados');
+  assert.ok(!sent.slice(sr1).some((m) => m.to[0] === 'reserva@example.com'), 'una sola confirmación');
   assert.equal((await call('/reserva', { email: 'reserva@example.com', prog: 'otro' })).s, 400);
   const ph = await (await worker.fetch(new Request('https://w/panel?k=dk&d=7'), env)).text();
   assert.match(ph, /Programas: reservas/); assert.match(ph, /reserva@example\.com/);

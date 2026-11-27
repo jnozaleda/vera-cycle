@@ -82,29 +82,35 @@ h3 { font-size: 21px; line-height: 1.2; margin: 0 0 6px; }
 .lead { font-size: 18px; color: var(--text); margin: 0; max-width: 34em; }
 .sub { color: var(--text); margin: 0; max-width: 40em; }
 @media (min-width: 900px) { h1 { font-size: 58px; } h2 { font-size: 40px; } .lead { font-size: 19px; } }
-/* Programas dentro de «Para cada etapa» (Noza, 27 nov: integrados en el diseño, sin bloque aparte). Reserva sin pagar: /reserva */
-.stg-list { display: grid; gap: 8px; }
-@media (max-width: 899px) { .etapas .lifering { order: 2; } } /* en el móvil, primero las etapas y los programas; el dibujo, después */
-.stg { background: #fff; border: 1px solid var(--line); border-radius: 12px; min-width: 0; }
-.stg-r { display: flex; align-items: stretch; }
-.stg-n { flex: 1; min-width: 0; padding: 12px 14px; text-decoration: none; }
-.stg-n b { display: block; font: 500 17px/1.25 'Newsreader', Georgia, serif; color: var(--ink); }
-.stg-n span { display: block; font-size: 12.5px; color: var(--muted); margin-top: 2px; }
-.stg-p { flex: none; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; gap: 1px; padding: 10px 14px; border: 0; border-left: 1px solid var(--line); background: var(--soft, #F3F1EA); border-radius: 0 12px 12px 0; cursor: pointer; font: inherit; color: var(--plum); }
-.stg-p small { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--mauve); }
-.stg-p b { font: 400 20px/1 'Newsreader', Georgia, serif; }
-.stg-p[aria-expanded="true"] { background: var(--sage); }
-.stg-more { border-top: 1px solid var(--line); padding: 12px 14px 14px; display: grid; gap: 10px; }
-.stg-t { margin: 0; font-size: 14px; color: var(--text); } .stg-t b { color: var(--ink); }
-.prog-l { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14px; color: var(--ink); }
+/* Acompañamiento arriba (Noza, 27 nov: «más importancia al acompañamiento; las dudas, secundario; otro CTA principal») */
+.phx .plead { margin: 0 auto; max-width: 34em; font-size: 18px; color: var(--text); }
+.stagebox { margin: 26px auto 0; max-width: 620px; text-align: left; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 16px; box-shadow: 0 12px 32px -24px rgba(47,54,49,.35); display: grid; gap: 12px; }
+.sbx-q { margin: 0; font: 400 22px/1.2 'Newsreader', Georgia, serif; color: var(--plum); }
+.sopts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.sopt { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; padding: 12px 6px; border: 1.5px solid var(--line); border-radius: 10px; cursor: pointer; background: var(--ivory); }
+.sopt input { position: absolute; opacity: 0; pointer-events: none; }
+.sopt-ic { width: 40px; height: 40px; border-radius: 50%; background: var(--sage); color: var(--plum); display: flex; align-items: center; justify-content: center; }
+.sopt-t b { display: block; font: 500 17px/1.2 'Newsreader', Georgia, serif; color: var(--ink); }
+.sopt-t small { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.3; }
+.sopt:has(input:checked) { border-color: var(--plum); background: #fff; box-shadow: 0 0 0 2px var(--plum) inset; }
+.sopt:has(input:focus-visible) { outline: 2px solid var(--plum); outline-offset: 2px; }
+.sdet { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 12px; }
+.sdet-who { display: flex; align-items: center; gap: 10px; font-size: 13.5px; color: var(--muted); }
+.sdet-who .who-faces img { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; margin-right: -8px; object-fit: cover; }
+.prog-l { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 14.5px; color: var(--ink); }
 .prog-l li { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 8px; } .prog-l svg { margin-top: 3px; color: var(--plum); }
-.prog-f { display: grid; gap: 8px; }
-.prog-f input { font: 16px 'Inter', sans-serif; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--ivory); width: 100%; }
-.prog-f input.bad { border-color: #B3261E; box-shadow: 0 0 0 3px #F6D6D2; }
-.prog-f .btn { width: 100%; }
-.prog-n { margin: 0; font-size: 12.5px; color: var(--muted); }
-.stg.reservada .prog-f { display: none; }
-.prog-ok { margin: 0; background: var(--sage); border-radius: 10px; padding: 11px 12px; font-size: 14px; color: var(--ink); }
+#prog-mail { font: 16px 'Inter', sans-serif; padding: 13px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--ivory); width: 100%; }
+#prog-mail.bad { border-color: #B3261E; box-shadow: 0 0 0 3px #F6D6D2; }
+.sbx-go { display: grid; gap: 3px; width: 100%; white-space: normal; text-align: center; padding-block: 12px; font-size: 16px; }
+.sbx-go small { font: 400 12.5px/1.25 'Inter', sans-serif; opacity: .9; }
+.sbx-n { margin: 0; font-size: 12.5px; color: var(--muted); text-align: center; }
+.sbx-n.err { color: #B3261E; }
+.sbx-ok { margin: 0; background: var(--sage); border-radius: 10px; padding: 12px; font-size: 14.5px; color: var(--ink); }
+.stagebox.reservada .sopts, .stagebox.reservada #prog-mail, .stagebox.reservada .sbx-go, .stagebox.reservada .sbx-n { display: none; }
+.sbx-alt { margin: 16px 0 0; font-size: 14.5px; } .sbx-alt a { color: var(--plum); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.qhx { padding-top: 48px !important; } .qhx .qh { font-size: clamp(34px, 6vw, 56px); margin: 12px auto 12px; }
+@media (max-width: 420px) { .sopt-t small { font-size: 11px; } .sopt-t b { font-size: 15.5px; } }
+
 
 
 section { padding: 64px 0; }
@@ -810,7 +816,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     </nav>
     <div class="top-cta">
       <a class="btn btn-pill btn-sm" href="app/" data-cta="abrir_portada" id="top-open">Abrir la app</a>
-      <a class="btn btn-p btn-sm" href="#ask" data-goask id="top-ask">Pregunta tu duda</a>
+      <a class="btn btn-p btn-sm" href="#etapa" id="top-ask" data-cta="clic:top_reservar">Reservar plaza</a>
     </div>
     <!-- menu:btn --><button type="button" class="hm-btn" aria-label="Abrir el menú" aria-expanded="false" aria-controls="hm"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button><!-- /menu:btn -->
   </div>
@@ -818,11 +824,30 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
 <nav class="rail mono" aria-label="Índice de la portada"><a href="#ask" data-r="ask" class="on">Tu duda</a><a href="#quien" data-r="quien">Equipo</a><a href="#como" data-r="como">Cómo</a><a href="#etapas" data-r="etapas">Etapas</a><a href="#app" data-r="app">La app</a></nav>
 <main class="frame">
 <div class="wrap">
-  <div class="hero hx">
+  <div class="hero hx phx" id="etapa">
+    <div>
+      <p class="live mono mv-in mv-d1"><i></i>Embarazo · Bebé · Menopausia</p>
+      <h1 class="mv-in mv-d1">Contigo toda la etapa.</h1>
+      <p class="plead mv-in mv-d2">Programas de acompañamiento con tu ginecólogo, matrona o pediatra: qué esperar en cada momento, tus dudas resueltas por escrito y alguien que ya conoce tu caso.</p>
+      <form class="stagebox" id="stagebox" novalidate>
+        <p class="sbx-q">¿En qué etapa estás?</p>
+        <div class="sopts" role="radiogroup" aria-label="Tu etapa"><label class="sopt"><input type="radio" name="etapa" value="embarazo"><span class="sopt-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM9 21v-5l-1-4a4 4 0 0 1 4-4c2.5 0 4.5 2 4.5 4.5S14.5 17 12.5 17H12v4"/></svg></span><span class="sopt-t"><b>Embarazo</b><small>Del test positivo al parto</small></span></label><label class="sopt"><input type="radio" name="etapa" value="bebe"><span class="sopt-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4a5 5 0 1 0 0 10 5 5 0 0 0 0-10zM9.5 8.5h.01M14.5 8.5h.01M10 11c.6.6 1.3.9 2 .9s1.4-.3 2-.9M6 20c1.2-2.5 3.4-4 6-4s4.8 1.5 6 4"/></svg></span><span class="sopt-t"><b>Bebé</b><small>Los primeros 100 días</small></span></label><label class="sopt"><input type="radio" name="etapa" value="menopausia"><span class="sopt-ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v3M12 18v3M4.2 7.5l2.6 1.5M17.2 15l2.6 1.5M4.2 16.5l2.6-1.5M17.2 9l2.6-1.5M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg></span><span class="sopt-t"><b>Menopausia</b><small>Entender lo que te pasa</small></span></label></div>
+        <div class="sdet" data-etapa="embarazo" hidden><div class="sdet-who"><span class="who-faces"><img src="portada/equipo/gonzalo.jpg?v=3" alt="" width="30" height="30"><img src="portada/equipo/marina.jpg?v=3" alt="" width="30" height="30"></span><span>Con Gonzalo y Marina</span></div><ul class="prog-l"><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Qué esperar cada semana, contado por tu matrona y tu ginecólogo</span></li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Tus dudas por escrito con ellos durante todo el embarazo</span></li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Ayuda para preparar cada revisión y el parto</span></li></ul></div><div class="sdet" data-etapa="bebe" hidden><div class="sdet-who"><span class="who-faces"><img src="portada/equipo/lucia.jpg?v=3" alt="" width="30" height="30"><img src="portada/equipo/marina.jpg?v=3" alt="" width="30" height="30"></span><span>Con Lucía y Marina</span></div><ul class="prog-l"><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Sueño, lactancia, alimentación, piel, fiebre y desarrollo, día a día</span></li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Tus dudas por escrito con tu pediatra y tu matrona</span></li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Señales para ir a urgencias, claras y a mano</span></li></ul></div><div class="sdet" data-etapa="menopausia" hidden><div class="sdet-who"><span class="who-faces"><img src="portada/equipo/gonzalo.jpg?v=3" alt="" width="30" height="30"></span><span>Con Gonzalo</span></div><ul class="prog-l"><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Tus síntomas ordenados, con el cuestionario revisado por tu ginecólogo</span></li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Tus dudas por escrito con él durante el programa</span></li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Preparar la conversación sobre tratamientos</span></li></ul></div>
+        <label class="sr" for="prog-mail">Tu correo</label>
+        <input id="prog-mail" type="email" inputmode="email" autocomplete="email" enterkeyhint="send" placeholder="Tu correo, para reservar tu plaza">
+        <button class="btn btn-p sbx-go" type="submit"><span>Reservar mi plaza</span><small>49 € el programa · no pagas nada ahora</small></button>
+        <p class="sbx-n" aria-live="polite">Precio de lanzamiento. Te escribimos antes de abrirlo y decides entonces.</p>
+      </form>
+      <p class="sbx-alt"><a href="#duda" data-cta="clic:programas_a_consulta">¿Solo tienes una duda? Pregúntala gratis ↓</a></p>
+    </div>
+  </div>
+</div>
+<div class="wrap">
+  <div class="hero hx qhx" id="duda">
     <div class="dmw d1" aria-hidden="true"><svg width="134" height="134" viewBox="0 0 134 134"><circle cx="41" cy="14" r="1.3" opacity="0.15"/><circle cx="50" cy="14" r="1.3" opacity="0.19"/><circle cx="59" cy="14" r="1.3" opacity="0.25"/><circle cx="68" cy="14" r="1.3" opacity="0.27"/><circle cx="77" cy="14" r="1.3" opacity="0.24"/><circle cx="86" cy="14" r="1.3" opacity="0.18"/><circle cx="95" cy="14" r="1.3" opacity="0.15"/><circle cx="32" cy="23" r="1.3" opacity="0.18"/><circle cx="41" cy="23" r="1.3" opacity="0.32"/><circle cx="50" cy="23" r="1.3" opacity="0.42"/><circle cx="59" cy="23" r="1.3" opacity="0.48"/><circle cx="68" cy="23" r="1.3" opacity="0.50"/><circle cx="77" cy="23" r="1.3" opacity="0.47"/><circle cx="86" cy="23" r="1.3" opacity="0.40"/><circle cx="95" cy="23" r="1.3" opacity="0.29"/><circle cx="104" cy="23" r="1.3" opacity="0.15"/><circle cx="23" cy="32" r="1.3" opacity="0.18"/><circle cx="32" cy="32" r="1.3" opacity="0.36"/><circle cx="41" cy="32" r="1.3" opacity="0.51"/><circle cx="50" cy="32" r="1.3" opacity="0.61"/><circle cx="59" cy="32" r="1.3" opacity="0.66"/><circle cx="68" cy="32" r="1.3" opacity="0.68"/><circle cx="77" cy="32" r="1.3" opacity="0.66"/><circle cx="86" cy="32" r="1.3" opacity="0.59"/><circle cx="95" cy="32" r="1.3" opacity="0.48"/><circle cx="104" cy="32" r="1.3" opacity="0.33"/><circle cx="113" cy="32" r="1.3" opacity="0.15"/><circle cx="14" cy="41" r="1.3" opacity="0.15"/><circle cx="23" cy="41" r="1.3" opacity="0.32"/><circle cx="32" cy="41" r="1.3" opacity="0.51"/><circle cx="41" cy="41" r="1.3" opacity="0.65"/><circle cx="50" cy="41" r="1.3" opacity="0.75"/><circle cx="59" cy="41" r="1.3" opacity="0.81"/><circle cx="68" cy="41" r="1.3" opacity="0.82"/><circle cx="77" cy="41" r="1.3" opacity="0.80"/><circle cx="86" cy="41" r="1.3" opacity="0.73"/><circle cx="95" cy="41" r="1.3" opacity="0.62"/><circle cx="104" cy="41" r="1.3" opacity="0.47"/><circle cx="113" cy="41" r="1.3" opacity="0.27"/><circle cx="122" cy="41" r="1.3" opacity="0.15"/><circle cx="14" cy="50" r="1.3" opacity="0.19"/><circle cx="23" cy="50" r="1.3" opacity="0.42"/><circle cx="32" cy="50" r="1.3" opacity="0.61"/><circle cx="41" cy="50" r="1.3" opacity="0.75"/><circle cx="50" cy="50" r="1.3" opacity="0.85"/><circle cx="59" cy="50" r="1.3" opacity="0.91"/><circle cx="68" cy="50" r="1.3" opacity="0.92"/><circle cx="77" cy="50" r="1.3" opacity="0.90"/><circle cx="86" cy="50" r="1.3" opacity="0.83"/><circle cx="95" cy="50" r="1.3" opacity="0.72"/><circle cx="104" cy="50" r="1.3" opacity="0.57"/><circle cx="113" cy="50" r="1.3" opacity="0.37"/><circle cx="122" cy="50" r="1.3" opacity="0.15"/><circle cx="14" cy="59" r="1.3" opacity="0.25"/><circle cx="23" cy="59" r="1.3" opacity="0.48"/><circle cx="32" cy="59" r="1.3" opacity="0.66"/><circle cx="41" cy="59" r="1.3" opacity="0.81"/><circle cx="50" cy="59" r="1.3" opacity="0.91"/><circle cx="59" cy="59" r="1.3" opacity="0.97"/><circle cx="68" cy="59" r="1.3" opacity="0.98"/><circle cx="77" cy="59" r="1.3" opacity="0.96"/><circle cx="86" cy="59" r="1.3" opacity="0.89"/><circle cx="95" cy="59" r="1.3" opacity="0.78"/><circle cx="104" cy="59" r="1.3" opacity="0.63"/><circle cx="113" cy="59" r="1.3" opacity="0.43"/><circle cx="122" cy="59" r="1.3" opacity="0.20"/><circle cx="14" cy="68" r="1.3" opacity="0.27"/><circle cx="23" cy="68" r="1.3" opacity="0.50"/><circle cx="32" cy="68" r="1.3" opacity="0.68"/><circle cx="41" cy="68" r="1.3" opacity="0.82"/><circle cx="50" cy="68" r="1.3" opacity="0.92"/><circle cx="59" cy="68" r="1.3" opacity="0.98"/><circle cx="68" cy="68" r="1.3" opacity="1.00"/><circle cx="77" cy="68" r="1.3" opacity="0.97"/><circle cx="86" cy="68" r="1.3" opacity="0.91"/><circle cx="95" cy="68" r="1.3" opacity="0.80"/><circle cx="104" cy="68" r="1.3" opacity="0.64"/><circle cx="113" cy="68" r="1.3" opacity="0.45"/><circle cx="122" cy="68" r="1.3" opacity="0.21"/><circle cx="14" cy="77" r="1.3" opacity="0.24"/><circle cx="23" cy="77" r="1.3" opacity="0.47"/><circle cx="32" cy="77" r="1.3" opacity="0.66"/><circle cx="41" cy="77" r="1.3" opacity="0.80"/><circle cx="50" cy="77" r="1.3" opacity="0.90"/><circle cx="59" cy="77" r="1.3" opacity="0.96"/><circle cx="68" cy="77" r="1.3" opacity="0.97"/><circle cx="77" cy="77" r="1.3" opacity="0.95"/><circle cx="86" cy="77" r="1.3" opacity="0.88"/><circle cx="95" cy="77" r="1.3" opacity="0.77"/><circle cx="104" cy="77" r="1.3" opacity="0.62"/><circle cx="113" cy="77" r="1.3" opacity="0.42"/><circle cx="122" cy="77" r="1.3" opacity="0.19"/><circle cx="14" cy="86" r="1.3" opacity="0.18"/><circle cx="23" cy="86" r="1.3" opacity="0.40"/><circle cx="32" cy="86" r="1.3" opacity="0.59"/><circle cx="41" cy="86" r="1.3" opacity="0.73"/><circle cx="50" cy="86" r="1.3" opacity="0.83"/><circle cx="59" cy="86" r="1.3" opacity="0.89"/><circle cx="68" cy="86" r="1.3" opacity="0.91"/><circle cx="77" cy="86" r="1.3" opacity="0.88"/><circle cx="86" cy="86" r="1.3" opacity="0.81"/><circle cx="95" cy="86" r="1.3" opacity="0.70"/><circle cx="104" cy="86" r="1.3" opacity="0.55"/><circle cx="113" cy="86" r="1.3" opacity="0.36"/><circle cx="122" cy="86" r="1.3" opacity="0.15"/><circle cx="14" cy="95" r="1.3" opacity="0.15"/><circle cx="23" cy="95" r="1.3" opacity="0.29"/><circle cx="32" cy="95" r="1.3" opacity="0.48"/><circle cx="41" cy="95" r="1.3" opacity="0.62"/><circle cx="50" cy="95" r="1.3" opacity="0.72"/><circle cx="59" cy="95" r="1.3" opacity="0.78"/><circle cx="68" cy="95" r="1.3" opacity="0.80"/><circle cx="77" cy="95" r="1.3" opacity="0.77"/><circle cx="86" cy="95" r="1.3" opacity="0.70"/><circle cx="95" cy="95" r="1.3" opacity="0.59"/><circle cx="104" cy="95" r="1.3" opacity="0.44"/><circle cx="113" cy="95" r="1.3" opacity="0.25"/><circle cx="122" cy="95" r="1.3" opacity="0.15"/><circle cx="23" cy="104" r="1.3" opacity="0.15"/><circle cx="32" cy="104" r="1.3" opacity="0.33"/><circle cx="41" cy="104" r="1.3" opacity="0.47"/><circle cx="50" cy="104" r="1.3" opacity="0.57"/><circle cx="59" cy="104" r="1.3" opacity="0.63"/><circle cx="68" cy="104" r="1.3" opacity="0.64"/><circle cx="77" cy="104" r="1.3" opacity="0.62"/><circle cx="86" cy="104" r="1.3" opacity="0.55"/><circle cx="95" cy="104" r="1.3" opacity="0.44"/><circle cx="104" cy="104" r="1.3" opacity="0.29"/><circle cx="113" cy="104" r="1.3" opacity="0.15"/><circle cx="32" cy="113" r="1.3" opacity="0.15"/><circle cx="41" cy="113" r="1.3" opacity="0.27"/><circle cx="50" cy="113" r="1.3" opacity="0.37"/><circle cx="59" cy="113" r="1.3" opacity="0.43"/><circle cx="68" cy="113" r="1.3" opacity="0.45"/><circle cx="77" cy="113" r="1.3" opacity="0.42"/><circle cx="86" cy="113" r="1.3" opacity="0.36"/><circle cx="95" cy="113" r="1.3" opacity="0.25"/><circle cx="104" cy="113" r="1.3" opacity="0.15"/><circle cx="41" cy="122" r="1.3" opacity="0.15"/><circle cx="50" cy="122" r="1.3" opacity="0.15"/><circle cx="59" cy="122" r="1.3" opacity="0.20"/><circle cx="68" cy="122" r="1.3" opacity="0.21"/><circle cx="77" cy="122" r="1.3" opacity="0.19"/><circle cx="86" cy="122" r="1.3" opacity="0.15"/><circle cx="95" cy="122" r="1.3" opacity="0.15"/></svg></div><div class="dmw d2" aria-hidden="true"><svg width="118" height="118" viewBox="0 0 118 118"><circle cx="59" cy="5" r="1.3" opacity="0.15"/><circle cx="32" cy="14" r="1.3" opacity="0.15"/><circle cx="41" cy="14" r="1.3" opacity="0.19"/><circle cx="50" cy="14" r="1.3" opacity="0.28"/><circle cx="59" cy="14" r="1.3" opacity="0.31"/><circle cx="68" cy="14" r="1.3" opacity="0.28"/><circle cx="77" cy="14" r="1.3" opacity="0.19"/><circle cx="86" cy="14" r="1.3" opacity="0.15"/><circle cx="23" cy="23" r="1.3" opacity="0.15"/><circle cx="32" cy="23" r="1.3" opacity="0.31"/><circle cx="41" cy="23" r="1.3" opacity="0.44"/><circle cx="50" cy="23" r="1.3" opacity="0.53"/><circle cx="59" cy="23" r="1.3" opacity="0.56"/><circle cx="68" cy="23" r="1.3" opacity="0.53"/><circle cx="77" cy="23" r="1.3" opacity="0.44"/><circle cx="86" cy="23" r="1.3" opacity="0.31"/><circle cx="95" cy="23" r="1.3" opacity="0.15"/><circle cx="14" cy="32" r="1.3" opacity="0.15"/><circle cx="23" cy="32" r="1.3" opacity="0.31"/><circle cx="32" cy="32" r="1.3" opacity="0.50"/><circle cx="41" cy="32" r="1.3" opacity="0.64"/><circle cx="50" cy="32" r="1.3" opacity="0.72"/><circle cx="59" cy="32" r="1.3" opacity="0.75"/><circle cx="68" cy="32" r="1.3" opacity="0.72"/><circle cx="77" cy="32" r="1.3" opacity="0.64"/><circle cx="86" cy="32" r="1.3" opacity="0.50"/><circle cx="95" cy="32" r="1.3" opacity="0.31"/><circle cx="104" cy="32" r="1.3" opacity="0.15"/><circle cx="14" cy="41" r="1.3" opacity="0.19"/><circle cx="23" cy="41" r="1.3" opacity="0.44"/><circle cx="32" cy="41" r="1.3" opacity="0.64"/><circle cx="41" cy="41" r="1.3" opacity="0.78"/><circle cx="50" cy="41" r="1.3" opacity="0.86"/><circle cx="59" cy="41" r="1.3" opacity="0.89"/><circle cx="68" cy="41" r="1.3" opacity="0.86"/><circle cx="77" cy="41" r="1.3" opacity="0.78"/><circle cx="86" cy="41" r="1.3" opacity="0.64"/><circle cx="95" cy="41" r="1.3" opacity="0.44"/><circle cx="104" cy="41" r="1.3" opacity="0.19"/><circle cx="14" cy="50" r="1.3" opacity="0.28"/><circle cx="23" cy="50" r="1.3" opacity="0.53"/><circle cx="32" cy="50" r="1.3" opacity="0.72"/><circle cx="41" cy="50" r="1.3" opacity="0.86"/><circle cx="50" cy="50" r="1.3" opacity="0.94"/><circle cx="59" cy="50" r="1.3" opacity="0.97"/><circle cx="68" cy="50" r="1.3" opacity="0.94"/><circle cx="77" cy="50" r="1.3" opacity="0.86"/><circle cx="86" cy="50" r="1.3" opacity="0.72"/><circle cx="95" cy="50" r="1.3" opacity="0.53"/><circle cx="104" cy="50" r="1.3" opacity="0.28"/><circle cx="5" cy="59" r="1.3" opacity="0.15"/><circle cx="14" cy="59" r="1.3" opacity="0.31"/><circle cx="23" cy="59" r="1.3" opacity="0.56"/><circle cx="32" cy="59" r="1.3" opacity="0.75"/><circle cx="41" cy="59" r="1.3" opacity="0.89"/><circle cx="50" cy="59" r="1.3" opacity="0.97"/><circle cx="59" cy="59" r="1.3" opacity="1.00"/><circle cx="68" cy="59" r="1.3" opacity="0.97"/><circle cx="77" cy="59" r="1.3" opacity="0.89"/><circle cx="86" cy="59" r="1.3" opacity="0.75"/><circle cx="95" cy="59" r="1.3" opacity="0.56"/><circle cx="104" cy="59" r="1.3" opacity="0.31"/><circle cx="113" cy="59" r="1.3" opacity="0.15"/><circle cx="14" cy="68" r="1.3" opacity="0.28"/><circle cx="23" cy="68" r="1.3" opacity="0.53"/><circle cx="32" cy="68" r="1.3" opacity="0.72"/><circle cx="41" cy="68" r="1.3" opacity="0.86"/><circle cx="50" cy="68" r="1.3" opacity="0.94"/><circle cx="59" cy="68" r="1.3" opacity="0.97"/><circle cx="68" cy="68" r="1.3" opacity="0.94"/><circle cx="77" cy="68" r="1.3" opacity="0.86"/><circle cx="86" cy="68" r="1.3" opacity="0.72"/><circle cx="95" cy="68" r="1.3" opacity="0.53"/><circle cx="104" cy="68" r="1.3" opacity="0.28"/><circle cx="14" cy="77" r="1.3" opacity="0.19"/><circle cx="23" cy="77" r="1.3" opacity="0.44"/><circle cx="32" cy="77" r="1.3" opacity="0.64"/><circle cx="41" cy="77" r="1.3" opacity="0.78"/><circle cx="50" cy="77" r="1.3" opacity="0.86"/><circle cx="59" cy="77" r="1.3" opacity="0.89"/><circle cx="68" cy="77" r="1.3" opacity="0.86"/><circle cx="77" cy="77" r="1.3" opacity="0.78"/><circle cx="86" cy="77" r="1.3" opacity="0.64"/><circle cx="95" cy="77" r="1.3" opacity="0.44"/><circle cx="104" cy="77" r="1.3" opacity="0.19"/><circle cx="14" cy="86" r="1.3" opacity="0.15"/><circle cx="23" cy="86" r="1.3" opacity="0.31"/><circle cx="32" cy="86" r="1.3" opacity="0.50"/><circle cx="41" cy="86" r="1.3" opacity="0.64"/><circle cx="50" cy="86" r="1.3" opacity="0.72"/><circle cx="59" cy="86" r="1.3" opacity="0.75"/><circle cx="68" cy="86" r="1.3" opacity="0.72"/><circle cx="77" cy="86" r="1.3" opacity="0.64"/><circle cx="86" cy="86" r="1.3" opacity="0.50"/><circle cx="95" cy="86" r="1.3" opacity="0.31"/><circle cx="104" cy="86" r="1.3" opacity="0.15"/><circle cx="23" cy="95" r="1.3" opacity="0.15"/><circle cx="32" cy="95" r="1.3" opacity="0.31"/><circle cx="41" cy="95" r="1.3" opacity="0.44"/><circle cx="50" cy="95" r="1.3" opacity="0.53"/><circle cx="59" cy="95" r="1.3" opacity="0.56"/><circle cx="68" cy="95" r="1.3" opacity="0.53"/><circle cx="77" cy="95" r="1.3" opacity="0.44"/><circle cx="86" cy="95" r="1.3" opacity="0.31"/><circle cx="95" cy="95" r="1.3" opacity="0.15"/><circle cx="32" cy="104" r="1.3" opacity="0.15"/><circle cx="41" cy="104" r="1.3" opacity="0.19"/><circle cx="50" cy="104" r="1.3" opacity="0.28"/><circle cx="59" cy="104" r="1.3" opacity="0.31"/><circle cx="68" cy="104" r="1.3" opacity="0.28"/><circle cx="77" cy="104" r="1.3" opacity="0.19"/><circle cx="86" cy="104" r="1.3" opacity="0.15"/><circle cx="59" cy="113" r="1.3" opacity="0.15"/></svg></div>
     <div>
-      <p class="live mono mv-in mv-d1"><i></i>Ginecólogo · Matrona · Pediatra</p>
-      <h1 class="mv-in mv-d1">¿Qué te preocupa?</h1>
+      <p class="mono k">Consulta por escrito · gratis si es rápido</p>
+      <h2 class="qh" id="ask-h">¿Solo tienes una duda?</h2>
       <p class="lead mv-in mv-d2">Cuéntalo como en la consulta. Te responde por escrito tu ginecólogo, matrona o pediatra, en menos de 24 h. 5 € la consulta.</p>
 
       <div class="askwrap">
@@ -888,81 +913,6 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
   </div>
 </div>
 
-
-<section class="etapas rv" id="etapas" aria-labelledby="stages-h">
-  <div class="wrap stages-in">
-    <div class="lifering" aria-hidden="true">
-      <svg viewBox="0 0 320 320" width="280" height="280">
-        <circle class="ob-ring" cx="160" cy="160" r="60"/><circle class="ob-ring" cx="160" cy="160" r="140"/>
-        <circle class="ob-route" cx="160" cy="160" r="110"/>
-        <path id="lr-arc" class="lr-arc" d="M160 50 A110 110 0 1 1 159.9 50"/>
-        <circle class="ob-pulse" cx="160" cy="160" r="8"/>
-        <circle cx="160" cy="160" r="26" fill="#fff" stroke="#45574C" stroke-width="1.5"/>
-        <text x="160" y="165" text-anchor="middle" class="lr-c">Hera</text>
-        <g fill="#fff" stroke="#45574C" stroke-width="1.5"><circle cx="160" cy="50" r="7"/><circle cx="270" cy="160" r="7"/><circle cx="160" cy="270" r="7"/><circle cx="50" cy="160" r="7"/></g>
-        <text class="lr-l" x="160" y="32" text-anchor="middle">Regla y ciclo</text><text class="lr-l" x="278" y="185" text-anchor="middle">Embarazo</text>
-        <text class="lr-l" x="160" y="298" text-anchor="middle">Posparto y bebé</text><text class="lr-l" x="44" y="185" text-anchor="middle">Menopausia</text>
-        <g class="ob-motion"><circle r="5" fill="#45574C"><animateMotion dur="12s" repeatCount="indefinite"><mpath href="#lr-arc"/></animateMotion></circle></g>
-      </svg>
-    </div>
-    <div>
-      <p class="mono k">Para cada etapa · programas próximamente</p>
-      <h2 id="stages-h">Te acompañamos en cada etapa.</h2>
-      <p class="stages-s">Guías gratis para cada momento y, muy pronto, programas con tu ginecólogo, matrona o pediatra a tu lado durante toda la etapa. Reserva tu plaza sin pagar.</p>
-      <div class="stg-list" id="programas">
-        <div class="stg" id="prog-embarazo">
-          <div class="stg-r">
-            <a class="stg-n" href="embarazo/" data-cta="clic:etapa_embarazo"><b>Embarazo</b><span>Semana a semana · guía gratis</span></a>
-            <button type="button" class="stg-p prog-go" data-prog="embarazo" aria-expanded="false"><small>Programa</small><b>49 €</b></button>
-          </div>
-          <div class="stg-more" hidden>
-            <p class="stg-t"><b>Hera Embarazo, del test positivo al parto</b> · con Gonzalo y Marina</p>
-            <ul class="prog-l"><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Qué esperar cada semana, contado por tu matrona y tu ginecólogo</span></li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Tus dudas por escrito con ellos durante el embarazo</span></li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Ayuda para preparar cada revisión y el parto</span></li></ul>
-            <form class="prog-f" data-prog="embarazo" novalidate>
-              <label class="sr" for="prog-mail-embarazo">Tu correo</label>
-              <input id="prog-mail-embarazo" type="email" inputmode="email" autocomplete="email" enterkeyhint="send" placeholder="Tu correo">
-              <button class="btn btn-p" type="submit">Reservar mi plaza sin pagar</button>
-              <p class="prog-n" aria-live="polite">Precio de lanzamiento. No se cobra nada ahora: te escribimos antes de abrirlo y decides entonces.</p>
-            </form>
-          </div>
-        </div>
-        <div class="stg" id="prog-bebe">
-          <div class="stg-r">
-            <a class="stg-n" href="bebe/" data-cta="clic:etapa_bebe"><b>Posparto y bebé</b><span>Mes a mes · guía gratis</span></a>
-            <button type="button" class="stg-p prog-go" data-prog="bebe" aria-expanded="false"><small>Programa</small><b>49 €</b></button>
-          </div>
-          <div class="stg-more" hidden>
-            <p class="stg-t"><b>Hera Bebé, los primeros 100 días</b> · con Lucía y Marina</p>
-            <ul class="prog-l"><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Sueño, lactancia, alimentación, piel, fiebre y desarrollo, día a día</span></li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Tus dudas por escrito con tu pediatra y tu matrona</span></li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Señales para ir a urgencias, claras y a mano</span></li></ul>
-            <form class="prog-f" data-prog="bebe" novalidate>
-              <label class="sr" for="prog-mail-bebe">Tu correo</label>
-              <input id="prog-mail-bebe" type="email" inputmode="email" autocomplete="email" enterkeyhint="send" placeholder="Tu correo">
-              <button class="btn btn-p" type="submit">Reservar mi plaza sin pagar</button>
-              <p class="prog-n" aria-live="polite">Precio de lanzamiento. No se cobra nada ahora: te escribimos antes de abrirlo y decides entonces.</p>
-            </form>
-          </div>
-        </div>
-        <div class="stg" id="prog-menopausia">
-          <div class="stg-r">
-            <a class="stg-n" href="menopausia/" data-cta="clic:etapa_menopausia"><b>Menopausia</b><span>Síntomas y cuestionario · guía gratis</span></a>
-            <button type="button" class="stg-p prog-go" data-prog="menopausia" aria-expanded="false"><small>Programa</small><b>49 €</b></button>
-          </div>
-          <div class="stg-more" hidden>
-            <p class="stg-t"><b>Hera Menopausia, entender lo que te pasa</b> · con Gonzalo</p>
-            <ul class="prog-l"><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>El cuestionario de síntomas, revisado por tu ginecólogo</span></li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Tus dudas por escrito con él</span></li><li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Preparar la conversación sobre tratamientos</span></li></ul>
-            <form class="prog-f" data-prog="menopausia" novalidate>
-              <label class="sr" for="prog-mail-menopausia">Tu correo</label>
-              <input id="prog-mail-menopausia" type="email" inputmode="email" autocomplete="email" enterkeyhint="send" placeholder="Tu correo">
-              <button class="btn btn-p" type="submit">Reservar mi plaza sin pagar</button>
-              <p class="prog-n" aria-live="polite">Precio de lanzamiento. No se cobra nada ahora: te escribimos antes de abrirlo y decides entonces.</p>
-            </form>
-          </div>
-        </div>
-        <div class="stg"><div class="stg-r"><a class="stg-n" href="ciclo/" data-cta="clic:etapa_ciclo"><b>Regla y ciclo</b><span>Fases, retrasos y dolor · guía gratis</span></a></div></div>
-      </div>
-    </div>
-  </div>
-</section>
 
 <section class="claim rv" aria-labelledby="claim-h">
   <div class="wrap claim-in">
@@ -1046,6 +996,35 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
   </div>
 </section>
 
+<section class="etapas rv" id="etapas" aria-labelledby="stages-h">
+  <div class="wrap stages-in">
+    <div class="lifering" aria-hidden="true">
+      <svg viewBox="0 0 320 320" width="280" height="280">
+        <circle class="ob-ring" cx="160" cy="160" r="60"/><circle class="ob-ring" cx="160" cy="160" r="140"/>
+        <circle class="ob-route" cx="160" cy="160" r="110"/>
+        <path id="lr-arc" class="lr-arc" d="M160 50 A110 110 0 1 1 159.9 50"/>
+        <circle class="ob-pulse" cx="160" cy="160" r="8"/>
+        <circle cx="160" cy="160" r="26" fill="#fff" stroke="#45574C" stroke-width="1.5"/>
+        <text x="160" y="165" text-anchor="middle" class="lr-c">Hera</text>
+        <g fill="#fff" stroke="#45574C" stroke-width="1.5"><circle cx="160" cy="50" r="7"/><circle cx="270" cy="160" r="7"/><circle cx="160" cy="270" r="7"/><circle cx="50" cy="160" r="7"/></g>
+        <text class="lr-l" x="160" y="32" text-anchor="middle">Regla y ciclo</text><text class="lr-l" x="278" y="185" text-anchor="middle">Embarazo</text>
+        <text class="lr-l" x="160" y="298" text-anchor="middle">Posparto y bebé</text><text class="lr-l" x="44" y="185" text-anchor="middle">Menopausia</text>
+        <g class="ob-motion"><circle r="5" fill="#45574C"><animateMotion dur="12s" repeatCount="indefinite"><mpath href="#lr-arc"/></animateMotion></circle></g>
+      </svg>
+    </div>
+    <div>
+      <p class="mono k">Para cada etapa</p>
+      <h2 id="stages-h">Te acompañamos en cada etapa.</h2>
+      <p class="stages-s">Guías gratis para cada momento y, cuando tengas una duda, tu consulta con Gonzalo, Marina o Lucía.</p>
+      <div class="stages-l">
+        <a href="ciclo/" data-cta="clic:etapa_ciclo"><b>Regla y ciclo</b><span>Fases, retrasos y dolor</span></a>
+        <a href="embarazo/" data-cta="clic:etapa_embarazo"><b>Embarazo</b><span>Semana a semana</span></a>
+        <a href="bebe/" data-cta="clic:etapa_bebe"><b>Posparto y bebé</b><span>Mes a mes</span></a>
+        <a href="menopausia/" data-cta="clic:etapa_menopausia"><b>Menopausia</b><span>Síntomas y cuestionario</span></a>
+      </div>
+    </div>
+  </div>
+</section>
 
 <section class="appsec rv" id="app" aria-labelledby="app-h">
   <div class="wrap app-in">
@@ -1149,32 +1128,36 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
   }
   hit('portada');
 
-  // Programas (27 nov): «Reservar mi plaza» → correo → /reserva (sin pagar). Eventos: clic:programa_<p>, programa_visto
+  // Acompañamiento (27 nov): elegir etapa → correo → «Reservar mi plaza» → /reserva (sin pagar). Eventos: programas_vistos, clic:programa_<p>
   {
-    const sec = $('programas');
-    if (sec && 'IntersectionObserver' in window) { const io = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) { hit('programas_vistos'); io.disconnect(); } }, { threshold: 0.3 }); io.observe(sec); }
-    document.querySelectorAll('.prog-go').forEach((b) => b.addEventListener('click', () => {
-      const p = b.dataset.prog, row = b.closest('.stg'), more = row.querySelector('.stg-more'), open = more.hidden;
-      more.hidden = !open; b.setAttribute('aria-expanded', String(open));
-      if (!open) return;
-      hit(`clic:programa_${p}`);
-      const i = more.querySelector('input'); if (i && !i.value) i.value = store.get('hera-ask-email');
-    }));
-    document.querySelectorAll('.prog-f').forEach((f) => f.addEventListener('submit', async (ev) => {
-      ev.preventDefault();
-      const p = f.dataset.prog, i = f.querySelector('input'), n = f.querySelector('.prog-n'), btn = f.querySelector('button');
-      const v = i.value.trim();
-      if (!isEmail(v)) { i.classList.add('bad'); n.textContent = 'Revisa tu correo: así podremos avisarte.'; i.focus(); return; }
-      i.classList.remove('bad'); btn.disabled = true; btn.textContent = 'Reservando…';
-      try {
-        if (local || isTeam()) throw Object.assign(new Error('equipo'), { team: true });
-        const r = await fetch(`${API}/reserva`, { method: 'POST', body: JSON.stringify({ email: v, prog: p, p: ptag, ...viaSrc(), ...adSrc() }) });
-        if (!r.ok) throw new Error();
-      } catch (e) { if (!e.team) { btn.disabled = false; btn.textContent = 'Reservar sin pagar'; n.textContent = 'No se ha podido reservar. Inténtalo en un momento.'; return; } }
-      store.set('hera-ask-email', v);
-      const card = f.closest('.stg'); card.classList.add('reservada');
-      card.querySelector('.stg-more').insertAdjacentHTML('beforeend', `<p class="prog-ok"><b>Plaza reservada.</b> Te escribiremos a ${esc(v)} antes de abrirlo, con todos los detalles. No se ha cobrado nada.</p>`);
-    }));
+    const box = $('stagebox'), mail = $('prog-mail'), note = box?.querySelector('.sbx-n');
+    if (box) {
+      if ('IntersectionObserver' in window) { const io = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) { hit('programas_vistos'); io.disconnect(); } }, { threshold: 0.3 }); io.observe(box); }
+      const pick = () => box.querySelector('input[name="etapa"]:checked')?.value || '';
+      box.addEventListener('change', (ev) => {
+        if (ev.target.name !== 'etapa') return;
+        const p = pick(); hit(`clic:programa_${p}`);
+        box.querySelectorAll('.sdet').forEach((d) => { d.hidden = d.dataset.etapa !== p; });
+        note.classList.remove('err'); note.textContent = 'Precio de lanzamiento. Te escribimos antes de abrirlo y decides entonces.';
+        if (!mail.value) mail.value = store.get('hera-ask-email');
+      });
+      box.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const p = pick(), v = mail.value.trim(), btn = box.querySelector('.sbx-go');
+        if (!p) { note.classList.add('err'); note.textContent = 'Elige tu etapa: embarazo, bebé o menopausia.'; box.querySelector('.sopt').focus?.(); return; }
+        if (!isEmail(v)) { mail.classList.add('bad'); note.classList.add('err'); note.textContent = 'Escribe tu correo para reservar tu plaza.'; mail.focus(); return; }
+        mail.classList.remove('bad'); btn.disabled = true;
+        try {
+          if (local || isTeam()) throw Object.assign(new Error('equipo'), { team: true });
+          const r = await fetch(`${API}/reserva`, { method: 'POST', body: JSON.stringify({ email: v, prog: p, p: ptag, ...viaSrc(), ...adSrc() }) });
+          if (!r.ok) throw new Error();
+        } catch (e) { if (!e.team) { btn.disabled = false; note.classList.add('err'); note.textContent = 'No se ha podido reservar. Inténtalo en un momento.'; return; } }
+        store.set('hera-ask-email', v);
+        const name = { embarazo: 'Hera Embarazo', bebe: 'Hera Bebé', menopausia: 'Hera Menopausia' }[p];
+        box.classList.add('reservada');
+        box.insertAdjacentHTML('beforeend', `<p class="sbx-ok"><b>Plaza reservada en ${name}.</b> Te escribiremos a ${esc(v)} antes de abrirlo, con todos los detalles. No se ha cobrado nada.</p>`);
+      });
+    }
   }
   // Anuncios (vera-backlog#56): quien llega con gclid o utm_medium=cpc queda marcado 30 días en este dispositivo
   // (localStorage, sin cookies). Solo se usa para contar consultas y pagos que vienen de anuncios.
@@ -1568,7 +1551,7 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     const camp = (new URLSearchParams(location.search).get('utm_campaign') || '').toLowerCase().replace(/(_resto)?_latam$/, '') || VIA_PRO[via0] || ''; // gineco_latam (Argentina) y gineco_resto_latam (México, Chile y Colombia) → gineco
     const page = AD_PAGE[camp];
     if (page) {
-      const h1 = document.querySelector('.hero h1, h1');
+      const h1 = document.getElementById('ask-h');
       const lead = document.querySelector('p.lead');
       if (h1) h1.innerHTML = page[0];
       // Sin gratis (BF / PAGO): el titular de la profesional no promete consultas gratis

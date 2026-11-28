@@ -1150,13 +1150,14 @@ header.top .wrap>.nav,header.top .wrap>.top-cta,header.top .wrap>.btn,header.top
     if (box) {
       if ('IntersectionObserver' in window) { const io = new IntersectionObserver((es) => { if (es.some((x) => x.isIntersecting)) { hit('programas_vistos'); io.disconnect(); } }, { threshold: 0.3 }); io.observe(box); }
       // Anuncios de acompañamiento (27 nov): ?etapa=embarazo|bebe|menopausia llega con esa etapa ya elegida
-      { const e0 = new URLSearchParams(location.search).get('etapa'); const r0 = e0 && box.querySelector(`input[name="etapa"][value="${e0.replace(/[^a-z]/g, '')}"]`); if (r0) { r0.checked = true; setTimeout(() => r0.dispatchEvent(new Event('change', { bubbles: true })), 0); } }
+      let auto = false; // la etapa que viene marcada desde el anuncio no cuenta como clic
+      { const e0 = new URLSearchParams(location.search).get('etapa'); const r0 = e0 && box.querySelector(`input[name="etapa"][value="${e0.replace(/[^a-z]/g, '')}"]`); if (r0) { r0.checked = true; setTimeout(() => { auto = true; r0.dispatchEvent(new Event('change', { bubbles: true })); auto = false; }, 0); } }
       const pick = () => box.querySelector('input[name="etapa"]:checked')?.value || '';
       const plan = () => box.querySelector('input[name="plan"]:checked')?.value || 'base';
       box.addEventListener('change', (ev) => { if (ev.target.name === 'plan') { $('sbx-price').textContent = `${plan() === 'plus' ? 149 : 49} € los 3 meses · no pagas nada ahora`; hit(`clic:plan_${plan()}`); } });
       box.addEventListener('change', (ev) => {
         if (ev.target.name !== 'etapa') return;
-        const p = pick(); hit(`clic:programa_${p}`);
+        const p = pick(); if (!auto) hit(`clic:programa_${p}`);
         box.querySelectorAll('.sdet').forEach((d) => { d.hidden = d.dataset.etapa !== p; });
         note.classList.remove('err'); note.textContent = 'Cómo funciona: reservas sin pagar, tu especialista te escribe con unas preguntas para conocer tu caso y, cuando lo tengáis claro, te envía el enlace de pago y empieza tu plan.';
         if (!mail.value) mail.value = store.get('hera-ask-email');

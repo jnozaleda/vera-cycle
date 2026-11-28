@@ -1290,7 +1290,10 @@ ${fuera ? '<p style="font-size:14px;color:#6E6C67;margin:6px 0 0">Lo pagas con t
       if (!prog) return reply(400, { error: 'bad_prog' });
       if (!norm) return reply(400, { error: 'bad_email' });
       const h = (await hmac(env.HASH_SALT, norm)).slice(0, 24);
-      const src = body.src === 'ads' ? `anuncio${body.camp ? `:${String(body.camp).slice(0, 24)}` : ''}` : /^[a-z0-9_]{1,20}$/.test(String(body.via || '')) ? `via:${body.via}` : '';
+      const src0 = body.src === 'ads' ? `anuncio${body.camp ? `:${String(body.camp).slice(0, 24)}` : ''}` : /^[a-z0-9_]{1,20}$/.test(String(body.via || '')) ? `via:${body.via}` : '';
+      // Caja de acompañamiento en guías y semanas (28 nov): la página de origen va con la reserva (guia:<slug> o semana:<n>)
+      const from = /^(guia:[a-z0-9-]{1,60}|semana:\d{1,2})$/.test(String(body.from || '')) ? body.from : '';
+      const src = [src0, from].filter(Boolean).join(' · ');
       let isNew = true;
       try { const r = await env.DB.prepare('INSERT OR IGNORE INTO reservas (ts, prog, h, u, src, plan, sem) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)').bind(Date.now(), prog, h, await sealEmail(env, norm), src, plan, sem).run(); isNew = (r?.meta?.changes ?? 1) > 0; } catch (e) { console.log(`reservas ${e.message}`); }
       if (isNew) {

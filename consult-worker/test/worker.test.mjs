@@ -379,6 +379,8 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   assert.equal(reservas.at(-1).plan, 'plus');
   await call('/reserva', { email: 'semanas@example.com', prog: 'embarazo', sem: 't2' }); assert.equal(reservas.at(-1).sem, 't2');
   await call('/reserva', { email: 'semanas2@example.com', prog: 'embarazo', sem: 'x' }); assert.equal(reservas.at(-1).sem, '');
+  await call('/reserva', { email: 'guia@example.com', prog: 'embarazo', sem: 't1', from: 'guia:nauseas-en-el-embarazo', src: 'ads', camp: 'acomp_dudas' }); assert.equal(reservas.at(-1).src, 'anuncio:acomp_dudas · guia:nauseas-en-el-embarazo');
+  await call('/reserva', { email: 'guia2@example.com', prog: 'embarazo', from: 'x<y' }); assert.equal(reservas.at(-1).src, '');
   assert.ok(sent.slice(sp0).some((m) => m.to[0] === 'plus@example.com' && /Hera Embarazo Plus/.test(m.subject) && /149 €/.test(m.html)), 'confirmación del Plus');
   const ph = await (await worker.fetch(new Request('https://w/panel?k=dk&d=7'), env)).text();
   assert.match(ph, /Programas: reservas/); assert.match(ph, /12–27 sem/); assert.match(ph, /reserva@example\.com/);

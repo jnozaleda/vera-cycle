@@ -6,7 +6,7 @@ import { writeFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { babyCompare, babyWeek } from '../app/js/baby.js';
 import { pregnancyNormal, pregnancyFaqs } from '../app/js/today.js';
 import { PREGNANCY_TIMELINE, TRIMESTER_LABEL, TRIMESTER_TEXT } from '../app/js/pregnancy.js';
-import { SITE, esc, shell, askBox, stickyAsk } from './web-shell.mjs';
+import { SITE, esc, shell, askBox, stickyAsk, acompBox } from './web-shell.mjs';
 
 const UPDATED = '2026-11-07';
 const FIRST = 4;
@@ -61,6 +61,7 @@ for (const p of weeks) {
 <div class="art"><article class="secs">
 <section class="sec"><h2>Tu bebé esta semana</h2><p class="big">${esc(clean(p.b.text))}</p></section>
 <section class="sec"><h2>Lo normal estas semanas</h2><ul>${p.normal.map((x) => `<li>${esc(x)}</li>`).join('')}</ul></section>
+${acompBox(`semana:${p.w}`)}
 ${todo}
 <section class="sec"><h2>Dudas frecuentes</h2>${faqs}</section>
 <p class="urg"><b>Ve a urgencias o llama al 112</b> si sangras, pierdes líquido, tienes un dolor fuerte o notas que el bebé se mueve menos. Esta información es general y no sustituye la valoración de tu matrona o tu médico.</p></article>

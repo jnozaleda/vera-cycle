@@ -23,7 +23,7 @@ const DB = { async batch(list) { const out = []; for (const st of list) out.push
   if (sql.startsWith('INSERT INTO opiniones')) { opiniones.push({ ts: a[0], pro: a[1], rating: a[2], texto: a[3], nombre: a[4], publicable: a[5] }); return { meta: { changes: 1 } }; }
   if (sql.startsWith('INSERT INTO taps')) { taps.push({ ts: a[0], pg: a[1], x: a[2], y: a[3], w: a[4], h: a[5], el: a[6], act: a[7], d: a[8], p: a[9] }); return { meta: { changes: 1 } }; }
   if (sql.startsWith('INSERT INTO activity')) { activity.push({ ts: a[0], e: a[1], d: a[2], p: a[3] }); return { meta: { changes: 1 } }; }
-  if (sql.startsWith('INSERT OR IGNORE INTO reservas')) { if (reservas.some((r) => r.prog === a[1] && r.h === a[2])) return { meta: { changes: 0 } }; reservas.push({ ts: a[0], prog: a[1], h: a[2], u: a[3], src: a[4], plan: a[5] }); return { meta: { changes: 1 } }; }
+  if (sql.startsWith('INSERT OR IGNORE INTO reservas')) { if (reservas.some((r) => r.prog === a[1] && r.h === a[2])) return { meta: { changes: 0 } }; reservas.push({ ts: a[0], prog: a[1], h: a[2], u: a[3], src: a[4], plan: a[5], sem: a[6] }); return { meta: { changes: 1 } }; }
   if (sql.startsWith('INSERT OR IGNORE')) { const k = a.join('|'); if (visitors.has(k)) return { meta: { changes: 0 } }; visitors.add(k); return { meta: { changes: 1 } }; }
   return { meta: { changes: 0 } }; },
   async all() { if (sql.includes('FROM reservas')) return { results: reservas }; if (sql.includes('FROM taps')) return { results: taps.filter((t) => t.pg === a[0] && t.ts > a[1]) }; if (sql.includes('FROM opiniones')) return { results: opiniones }; if (sql.includes('FROM activity')) return { results: activity.filter((r) => r.ts > a[0] && r.ts <= a[1]) }; return { results: [...counts].map(([k, n]) => ({ day: k.split('|')[0], k: k.split('|')[1], n })) }; } }; } }; } };
@@ -377,9 +377,11 @@ pg = await worker.fetch(new Request('https://w/panel?k=mal'), env); assert.equal
   assert.equal((await call('/reserva', { email: 'reserva@example.com', prog: 'otro' })).s, 400);
   const sp0 = sent.length; await call('/reserva', { email: 'plus@example.com', prog: 'embarazo', plan: 'plus' });
   assert.equal(reservas.at(-1).plan, 'plus');
+  await call('/reserva', { email: 'semanas@example.com', prog: 'embarazo', sem: 't2' }); assert.equal(reservas.at(-1).sem, 't2');
+  await call('/reserva', { email: 'semanas2@example.com', prog: 'embarazo', sem: 'x' }); assert.equal(reservas.at(-1).sem, '');
   assert.ok(sent.slice(sp0).some((m) => m.to[0] === 'plus@example.com' && /Hera Embarazo Plus/.test(m.subject) && /149 €/.test(m.html)), 'confirmación del Plus');
   const ph = await (await worker.fetch(new Request('https://w/panel?k=dk&d=7'), env)).text();
-  assert.match(ph, /Programas: reservas/); assert.match(ph, /reserva@example\.com/);
+  assert.match(ph, /Programas: reservas/); assert.match(ph, /12–27 sem/); assert.match(ph, /reserva@example\.com/);
   console.log('Reservas de programas: OK');
 }
 // Consulta sin texto (26 nov): no va a la profesional; a la usuaria le pedimos su duda y su respuesta llega como consulta nueva

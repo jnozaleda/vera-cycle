@@ -1284,20 +1284,22 @@ ${fuera ? '<p style="font-size:14px;color:#6E6C67;margin:6px 0 0">Lo pagas con t
       const PROGS = { embarazo: 'Hera Embarazo', bebe: 'Hera Bebé · primeros 100 días', menopausia: 'Hera Menopausia' };
       const prog = PROGS[body.prog] ? body.prog : '';
       const plan = body.plan === 'plus' ? 'plus' : 'base'; // Plus (27 nov): 149 € los 3 meses, con videollamadas y llamadas
+      const SEMS = { t1: 'menos de 12 semanas', t2: 'de 12 a 27 semanas', t3: '28 semanas o más' }; // portada de embarazo (28 nov)
+      const sem = prog === 'embarazo' && SEMS[body.sem] ? body.sem : '';
       const norm = normalizeEmail(body.email);
       if (!prog) return reply(400, { error: 'bad_prog' });
       if (!norm) return reply(400, { error: 'bad_email' });
       const h = (await hmac(env.HASH_SALT, norm)).slice(0, 24);
       const src = body.src === 'ads' ? `anuncio${body.camp ? `:${String(body.camp).slice(0, 24)}` : ''}` : /^[a-z0-9_]{1,20}$/.test(String(body.via || '')) ? `via:${body.via}` : '';
       let isNew = true;
-      try { const r = await env.DB.prepare('INSERT OR IGNORE INTO reservas (ts, prog, h, u, src, plan) VALUES (?1, ?2, ?3, ?4, ?5, ?6)').bind(Date.now(), prog, h, await sealEmail(env, norm), src, plan).run(); isNew = (r?.meta?.changes ?? 1) > 0; } catch (e) { console.log(`reservas ${e.message}`); }
+      try { const r = await env.DB.prepare('INSERT OR IGNORE INTO reservas (ts, prog, h, u, src, plan, sem) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)').bind(Date.now(), prog, h, await sealEmail(env, norm), src, plan, sem).run(); isNew = (r?.meta?.changes ?? 1) > 0; } catch (e) { console.log(`reservas ${e.message}`); }
       if (isNew) {
         // Confirmación a la usuaria (Noza, 27 nov: «no ha recibido ningún correo tipo "hemos recibido tu reserva"»)
         const WHO = { embarazo: 'Gonzalo, ginecólogo, y Marina, matrona', bebe: 'Lucía, pediatra, y Marina, matrona', menopausia: 'Gonzalo, ginecólogo' };
         await sendMail(env, { to: norm, replyTo: 'contacto@hera-gine.com', ...reservaEmail(PROGS[prog], WHO[prog], plan) });
         await bump(env, `reserva:${prog}`); if (plan === 'plus') await bump(env, `reserva_plus:${prog}`);
         await record(env, { e: `reserva:${prog}`, p: await personTag(env, request, madridDay(), body.p) }, sendMail, ctx);
-        const job = notify(env, `Reserva · ${PROGS[prog]}${plan === 'plus' ? ' Plus' : ''} · ${norm}`, `Alguien ha reservado plaza (sin pagar) en ${PROGS[prog]}${plan === 'plus' ? ' Plus (149 € los 3 meses: respuesta en menos de 6 h, una videollamada de 30 min al mes y llamadas de 15 min, hasta 2 al mes)' : ' (49 € los 3 meses)'}. Toca escribirle con unas preguntas para conocer su caso y, cuando esté de acuerdo, pasarle el enlace de pago.\n\nCorreo: ${norm}${src ? `\nOrigen: ${src}` : ''}\n\nEstá en el panel, en «Programas: reservas».`, sendMail);
+        const job = notify(env, `Reserva · ${PROGS[prog]}${plan === 'plus' ? ' Plus' : ''} · ${norm}`, `Alguien ha reservado plaza (sin pagar) en ${PROGS[prog]}${plan === 'plus' ? ' Plus (149 € los 3 meses: respuesta en menos de 6 h, una videollamada de 30 min al mes y llamadas de 15 min, hasta 2 al mes)' : ' (49 € los 3 meses)'}. Toca escribirle con unas preguntas para conocer su caso y, cuando esté de acuerdo, pasarle el enlace de pago.\n\nCorreo: ${norm}${sem ? `\nEstá de ${SEMS[sem]}` : ''}${src ? `\nOrigen: ${src}` : ''}\n\nEstá en el panel, en «Programas: reservas».`, sendMail);
         if (ctx?.waitUntil) ctx.waitUntil(job); else await job;
       }
       return reply(200, { ok: true });
